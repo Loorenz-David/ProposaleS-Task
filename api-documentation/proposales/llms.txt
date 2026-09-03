@@ -1,0 +1,48 @@
+# Proposales
+
+- [Introduction](https://docs.proposales.com/introduction.md)
+- [Integrations](https://docs.proposales.com/connections.md): How to build a new integration towards Proposales
+- [Integration Config Schema](https://docs.proposales.com/webhooks/integration-config-schema.md)
+- [Content Import](https://docs.proposales.com/webhooks/content-import.md)
+- [Content Availability](https://docs.proposales.com/webhooks/content-availability.md)
+- [Content Details](https://docs.proposales.com/webhooks/content-details.md)
+- [Proposal Status Update](https://docs.proposales.com/webhooks/proposal-status-update.md)
+- [Proposal Invoice Update](https://docs.proposales.com/webhooks/proposal-invoice-update.md)
+- [Proposal Data Widget](https://docs.proposales.com/webhooks/data-widget.md)
+- [Proposal Editor Widget](https://docs.proposales.com/webhooks/editor-widget.md)
+- [Recipients Search](https://docs.proposales.com/webhooks/recipients-search.md)
+- [Introduction](https://docs.proposales.com/api-reference/introduction.md)
+- [Integration Field](https://docs.proposales.com/api-reference/entities/integration-field.md)
+- [Integrations Session Data](https://docs.proposales.com/api-reference/entities/integrations-session-data.md)
+- [Package Split](https://docs.proposales.com/api-reference/entities/package-split.md): Describes the VAT value(s) that applies to the product.
+- [Proposal](https://docs.proposales.com/api-reference/entities/proposal.md): Represents a proposal in Proposales. A proposal is the document that you send to your recipient with an offer for your services.
+- [Proposal Block](https://docs.proposales.com/api-reference/entities/proposal-block.md): Represents an item (product or video) in a proposal
+- [Multi-Product Row](https://docs.proposales.com/api-reference/entities/multi-product-row.md): A row in the breakdown of a multi-product block.
+- [Proposal Attachment](https://docs.proposales.com/api-reference/entities/proposal-attachment.md): An attachment linked to a proposal. Attachments are displayed at the end of a proposal, after all the products are listed. Usually they link to a PDF file containing administrative details, like the terms and conditions that apply to your property.
+- [Unit values](https://docs.proposales.com/api-reference/entities/unit-values.md): In multiple places across products, we pre-calculate a set of four unit values to ensure consistency in calculations.
+- [List Attachments](https://docs.proposales.com/api-reference/attachments/list.md): Lists all attachments.
+- [List Companies](https://docs.proposales.com/api-reference/companies/list.md): Lists all companies the user is a member of.
+- [List Company Templates](https://docs.proposales.com/api-reference/companies/[companyId]/templates.md): Lists proposal templates for a company.
+- [List Content](https://docs.proposales.com/api-reference/content/list.md): Lists all content.
+- [Create Content](https://docs.proposales.com/api-reference/content/create.md): Create a new content item in the library.
+- [Update Content](https://docs.proposales.com/api-reference/content/update.md): Update an existing content item in the library. This endpoint can update both active and archived content.
+- [Delete Content](https://docs.proposales.com/api-reference/content/delete.md): Delete a content item from the library.
+- [Bulk Archive Content](https://docs.proposales.com/api-reference/content/bulk-archive.md): Archive multiple content items at once.
+- [Bulk Restore Content](https://docs.proposales.com/api-reference/content/bulk-restore.md): Restore multiple archived content items at once.
+- [Product IDs vs Variation IDs](https://docs.proposales.com/api-reference/content/product-variation-ids.md): Understanding the difference between product_id and variation_id parameters in the Content API.
+- [Get Proposal](https://docs.proposales.com/api-reference/proposals/get.md): Get a proposal by its UUID
+- [Create Proposal](https://docs.proposales.com/api-reference/proposals/create.md): Create a new draft for a proposal.
+- [Create new version of proposal](https://docs.proposales.com/api-reference/proposals/new-version.md): Create a new draft version of an existing proposal in the same proposal series.
+- [Patch proposal (draft)](https://docs.proposales.com/api-reference/proposals/patch-draft.md): Partially update an existing draft or template proposal in place (same UUID).
+- [Patch Proposal Data](https://docs.proposales.com/api-reference/proposals/patch-data.md): Patch the proposal data field.
+- [Create an RFP](https://docs.proposales.com/api-reference/inbox/create-rfp.md): Creates a request for a proposal.
+- [Proposal Search](https://docs.proposales.com/api-reference/proposals/search.md): Search for proposals by company ID and filtering based on its data.
+
+## OpenAPI Specs
+
+- [openapi](/openapi.json)
+
+## Optional
+
+- [Status](https://status.proposales.com)
+- [Help](https://help.proposales.com)
