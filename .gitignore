@@ -1,8 +1,14 @@
 node_modules/
 .next/
 
+test-results/
+tsconfig.tsbuildinfo
+playwright-report/
+
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+
