@@ -4,7 +4,7 @@ Policy: Architecture Context
 Policy version: 1
 Status: normative
 
-This is the single authoritative source for how an agent working in this repository acquires architectural context. Platform skill files (`.claude/skills/architecture-context/SKILL.md`, `.codex/skills/architecture-context/SKILL.md`) are adapters to this file; `CLAUDE.md` and `AGENTS.md` only guarantee it is invoked. Routing to individual contracts is owned by [architectural_contracts/implementation-contract-guide.md](../../architectural_contracts/implementation-contract-guide.md); this policy never restates that routing table and never caches contract rules.
+This is the single authoritative source for how an agent working in this repository acquires architectural context. Platform skill files (`.claude/skills/architecture-context/SKILL.md`, `.codex/skills/architecture-context/SKILL.md`) are adapters to this file; `CLAUDE.md` and `AGENTS.md` only guarantee it is invoked. Routing to individual contracts is owned by [architectural_contracts/01-implementation-contract-guide.md](../../architectural_contracts/01-implementation-contract-guide.md); this policy never restates that routing table and never caches contract rules.
 
 ## 1. Rule
 
@@ -15,7 +15,7 @@ This applies before substantive reasoning, not only before writing code. It cove
 ## 2. Protocol
 
 1. Understand the task and the intended outcome.
-2. Read `architectural_contracts/implementation-contract-guide.md`.
+2. Read `architectural_contracts/01-implementation-contract-guide.md`.
 3. Classify the concerns the task touches.
 4. Determine which architecture contracts apply, using the guide's routing table and applicability labels.
 5. Read the applicable contracts, only the relevant sections, before making material planning or implementation decisions.
@@ -26,7 +26,7 @@ This applies before substantive reasoning, not only before writing code. It cove
 10. Do not introduce infrastructure or capabilities merely because a contract exists for them.
 11. If contracts conflict with the approved intention, with existing implementation, or with each other, apply the conflict protocol in the guide (§6). Do not silently choose, weaken, or normalize.
 12. After implementation, verify actual behavior.
-13. Before closeout, perform the documentation impact review required by `architectural_contracts/documentation-principles.md` §8.
+13. Before closeout, perform the documentation impact review required by `architectural_contracts/14-documentation-principles.md` §8.
 
 ## 3. Classification before reasoning
 
@@ -35,7 +35,7 @@ Classification happens before the first design idea, so that the contract shapes
 ```
 "Remember generated proposals between browser sessions."
     → durable application-owned state detected
-    → guide: database-and-persistence.md applies
+    → guide: 09-database-and-persistence.md applies
     → read it → first decide whether persistence is justified at all
     (not: "add Prisma + Postgres")
 
@@ -68,4 +68,4 @@ This policy never summarizes, copies, or caches architecture rules. It always ro
 
 ## 8. Maintenance
 
-Update this policy when bootstrap behavior, the routing lifecycle, applicability behavior, or conflict handling changes; bump `Policy version` and update the `Implements policy version` line in both adapters in the same change. Update adapters only when the policy version or path changes, or a native skill format changes. Update `CLAUDE.md` / `AGENTS.md` only when the bootstrap entry point, path, or invocation changes. Adding an architecture contract updates `architectural_contracts/implementation-contract-guide.md`, not this file.
+Update this policy when bootstrap behavior, the routing lifecycle, applicability behavior, or conflict handling changes; bump `Policy version` and update the `Implements policy version` line in both adapters in the same change. Update adapters only when the policy version or path changes, or a native skill format changes. Update `CLAUDE.md` / `AGENTS.md` only when the bootstrap entry point, path, or invocation changes. Adding an architecture contract updates `architectural_contracts/01-implementation-contract-guide.md`, not this file.

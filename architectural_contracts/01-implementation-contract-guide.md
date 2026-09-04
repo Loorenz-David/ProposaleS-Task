@@ -12,11 +12,11 @@ Reading a contract does not imply introducing the capability it governs:
 
 | Reading | Does not mean |
 |---|---|
-| [database-and-persistence.md](database-and-persistence.md) | adding a database |
-| [agent-architecture.md](agent-architecture.md) | every feature needs an LLM |
-| [security-and-trust-boundaries.md](security-and-trust-boundaries.md) | adding authentication |
-| [testing-principles.md](testing-principles.md) | every change needs a Playwright test |
-| [integrations.md](integrations.md) | adding abstraction layers without a real boundary |
+| [09-database-and-persistence.md](09-database-and-persistence.md) | adding a database |
+| [08-agent-architecture.md](08-agent-architecture.md) | every feature needs an LLM |
+| [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) | adding authentication |
+| [11-testing-principles.md](11-testing-principles.md) | every change needs a Playwright test |
+| [07-integrations.md](07-integrations.md) | adding abstraction layers without a real boundary |
 
 The target is **minimum sufficient authoritative context**: not the whole corpus by default, and never less than what clearly applies. Context efficiency is not a reason to skip an applicable contract.
 
@@ -33,7 +33,7 @@ Apply before planning, before implementing, and (in reverse, §8) before reviewi
 7. Do not import capabilities or infrastructure because a contract exists for them.
 8. If applicable contracts conflict with each other, with the approved intention, or with existing code, surface the conflict before implementing (§6).
 9. Implement, then verify actual behavior.
-10. Run the documentation impact question from [documentation-principles.md](documentation-principles.md) §8 before closeout.
+10. Run the documentation impact question from [14-documentation-principles.md](14-documentation-principles.md) §8 before closeout.
 
 ## 3. Applicability vocabulary
 
@@ -51,26 +51,26 @@ Routing is many-to-many: one change usually touches several concerns, and one co
 
 | Task involves | Read |
 |---|---|
-| React components, hooks, forms, view state, loading/error/retry UI, accessibility | [client-architecture.md](client-architecture.md) |
-| Where a file runs: Server vs Client Components, `"use client"`, `server-only`, `"use server"`, what crosses the boundary, env vars | [runtime-boundaries.md](runtime-boundaries.md) |
-| Route Handlers, Server Actions, services, domain rules, error taxonomy, idempotency, deterministic mutation | [server-architecture.md](server-architecture.md) + [runtime-boundaries.md](runtime-boundaries.md) |
-| Creating or reorganizing a feature, deciding where a module lives, cross-feature imports | [feature-architecture.md](feature-architecture.md) |
-| Zod schemas, parsing input, DTO shapes, money, dates, enums, ids, mapping wire shapes to domain shapes | [data-contracts-and-validation.md](data-contracts-and-validation.md) |
-| Proposales, the AI provider, any external HTTP, webhooks, retries, timeouts, error translation | [integrations.md](integrations.md) |
-| LLM reasoning, prompts, tools, prepared actions, approval, human-in-the-loop, provider adapter | [agent-architecture.md](agent-architecture.md) |
-| Secrets, authorization, trust of inputs, logging, SSRF, redirects, dependencies, least capability | [security-and-trust-boundaries.md](security-and-trust-boundaries.md) |
-| Durable application-owned state, database, ORM, migrations, durable idempotency or audit records | [database-and-persistence.md](database-and-persistence.md) |
-| What to test, at which layer, with which tool; agent evals | [testing-principles.md](testing-principles.md) |
-| Root README, feature README, integration README, plans vs current-state docs, closeout | [documentation-principles.md](documentation-principles.md) |
-| Any new file, dependency, or feature (pre-work questions) | [decision-checklist.md](decision-checklist.md) |
-| Any meaningful change (what reviewers reject) | [anti-patterns.md](anti-patterns.md), the sections matching the concerns above |
+| React components, hooks, forms, view state, loading/error/retry UI, accessibility | [05-client-architecture.md](05-client-architecture.md) |
+| Where a file runs: Server vs Client Components, `"use client"`, `server-only`, `"use server"`, what crosses the boundary, env vars | [02-runtime-boundaries.md](02-runtime-boundaries.md) |
+| Route Handlers, Server Actions, services, domain rules, error taxonomy, idempotency, deterministic mutation | [04-server-architecture.md](04-server-architecture.md) + [02-runtime-boundaries.md](02-runtime-boundaries.md) |
+| Creating or reorganizing a feature, deciding where a module lives, cross-feature imports | [03-feature-architecture.md](03-feature-architecture.md) |
+| Zod schemas, parsing input, DTO shapes, money, dates, enums, ids, mapping wire shapes to domain shapes | [06-data-contracts-and-validation.md](06-data-contracts-and-validation.md) |
+| Proposales, the AI provider, any external HTTP, webhooks, retries, timeouts, error translation | [07-integrations.md](07-integrations.md) |
+| LLM reasoning, prompts, tools, prepared actions, approval, human-in-the-loop, provider adapter | [08-agent-architecture.md](08-agent-architecture.md) |
+| Secrets, authorization, trust of inputs, logging, SSRF, redirects, dependencies, least capability | [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) |
+| Durable application-owned state, database, ORM, migrations, durable idempotency or audit records | [09-database-and-persistence.md](09-database-and-persistence.md) |
+| What to test, at which layer, with which tool; agent evals | [11-testing-principles.md](11-testing-principles.md) |
+| Root README, feature README, integration README, plans vs current-state docs, closeout | [14-documentation-principles.md](14-documentation-principles.md) |
+| Any new file, dependency, or feature (pre-work questions) | [13-decision-checklist.md](13-decision-checklist.md) |
+| Any meaningful change (what reviewers reject) | [12-anti-patterns.md](12-anti-patterns.md), the sections matching the concerns above |
 
 Example of overlap: adding `POST /api/proposals` involves server-architecture (thin handler, service, errors), runtime-boundaries (`server-only`, serialization), data-contracts-and-validation (input schema, DTO), security-and-trust-boundaries (untrusted input, scope), integrations (the Proposales call), and testing-principles (boundary and service tests). It does not involve database-and-persistence unless it stores application-owned state.
 
 ## 5. Contract entries
 
 ### Runtime Boundaries
-- **Contract:** [runtime-boundaries.md](runtime-boundaries.md) · **CROSS-CUTTING**
+- **Contract:** [02-runtime-boundaries.md](02-runtime-boundaries.md) · **CROSS-CUTTING**
 - **Intent:** Keep browser and server runtimes explicit and defensible; define what may cross between them.
 - **Read when:** creating any file that could be reached from a `"use client"` graph; adding `"use client"`, `server-only`, or `"use server"`; passing data between server and client; reading environment variables; choosing Node vs Edge.
 - **Governs:** directive placement, import reachability, serialization rules, env access, secret placement.
@@ -78,7 +78,7 @@ Example of overlap: adding `POST /api/proposals` involves server-architecture (t
 - **Related:** feature-architecture, server-architecture, security-and-trust-boundaries.
 
 ### Feature Architecture
-- **Contract:** [feature-architecture.md](feature-architecture.md) · **CROSS-CUTTING**
+- **Contract:** [03-feature-architecture.md](03-feature-architecture.md) · **CROSS-CUTTING**
 - **Intent:** Organize code by feature with explicit runtime folders and a downward dependency direction.
 - **Read when:** creating a feature; adding a folder; deciding whether code goes in a feature, `src/lib/`, or `src/components/ui/`; importing across features.
 - **Governs:** folder responsibilities, dependency direction, prohibited imports, when to split or merge features, where integrations live.
@@ -86,7 +86,7 @@ Example of overlap: adding `POST /api/proposals` involves server-architecture (t
 - **Related:** runtime-boundaries, documentation-principles (feature README).
 
 ### Server Architecture
-- **Contract:** [server-architecture.md](server-architecture.md) · **CONDITIONAL**
+- **Contract:** [04-server-architecture.md](04-server-architecture.md) · **CONDITIONAL**
 - **Intent:** Keep transport thin and put authority in services and domain rules, with a shared error taxonomy.
 - **Read when:** adding or changing a Route Handler, Server Action, service, domain rule, or error; designing a mutation; handling repeats and retries.
 - **Governs:** layer order, entry-point validation, `AppError` codes and HTTP mapping, idempotency approach, deterministic execution after approval.
@@ -94,7 +94,7 @@ Example of overlap: adding `POST /api/proposals` involves server-architecture (t
 - **Related:** runtime-boundaries, data-contracts-and-validation, integrations, agent-architecture.
 
 ### Client Architecture
-- **Contract:** [client-architecture.md](client-architecture.md) · **CONDITIONAL**
+- **Contract:** [05-client-architecture.md](05-client-architecture.md) · **CONDITIONAL**
 - **Intent:** Keep components declarative, orchestration in hooks, and authority off the client.
 - **Read when:** adding or changing components, hooks, forms, async state, error and loading rendering, interaction or accessibility behavior.
 - **Governs:** component vs hook responsibilities, flow-state unions, local vs server-authoritative vs transient state, UX-only validation, accessibility rules.
@@ -102,7 +102,7 @@ Example of overlap: adding `POST /api/proposals` involves server-architecture (t
 - **Related:** runtime-boundaries, data-contracts-and-validation, agent-architecture (rendering prepared actions).
 
 ### Data Contracts and Validation
-- **Contract:** [data-contracts-and-validation.md](data-contracts-and-validation.md) · **CROSS-CUTTING**
+- **Contract:** [06-data-contracts-and-validation.md](06-data-contracts-and-validation.md) · **CROSS-CUTTING**
 - **Intent:** Runtime validation at every trust boundary; schemas are the source of truth for types.
 - **Read when:** data enters from the browser, a model, an external API, a webhook, storage, or env; defining a DTO; handling money, dates, enums, ids, nullable or unknown fields; mapping wire shapes.
 - **Governs:** where `parse` happens, schema location and naming, strip vs strict, value-kind rules, domain vs external representation.
@@ -110,7 +110,7 @@ Example of overlap: adding `POST /api/proposals` involves server-architecture (t
 - **Related:** server-architecture, integrations, agent-architecture, security-and-trust-boundaries.
 
 ### Integrations
-- **Contract:** [integrations.md](integrations.md) · **CONDITIONAL**
+- **Contract:** [07-integrations.md](07-integrations.md) · **CONDITIONAL**
 - **Intent:** One server-only client module per external system owns auth, HTTP, validation, mapping, and error translation.
 - **Read when:** calling Proposales or the AI provider; adding any external HTTP; receiving a webhook; changing retry, timeout, or error behavior of an adapter; adding a new external system.
 - **Governs:** module layout, what the client hides, response validation, error translation, retries and timeouts, configuration ownership, integration README.
@@ -118,7 +118,7 @@ Example of overlap: adding `POST /api/proposals` involves server-architecture (t
 - **Related:** server-architecture, data-contracts-and-validation, security-and-trust-boundaries, agent-architecture (tools call clients).
 
 ### Agent Architecture
-- **Contract:** [agent-architecture.md](agent-architecture.md) · **CONDITIONAL**
+- **Contract:** [08-agent-architecture.md](08-agent-architecture.md) · **CONDITIONAL**
 - **Intent:** Server-only agents with explicit, kinded tools; consequential mutations pass through human approval and execute deterministically.
 - **Read when:** adding or changing prompts, tools, agent runs, prepared actions, approval or execution flows, provider usage, or UI that renders model output.
 - **Governs:** tool contract and kinds, consequential fields and provenance, clarification, the HITL lifecycle, prompt rules, provider independence, run budgets.
@@ -126,7 +126,7 @@ Example of overlap: adding `POST /api/proposals` involves server-architecture (t
 - **Related:** server-architecture, integrations, security-and-trust-boundaries, database-and-persistence (only if durable records are introduced).
 
 ### Database and Persistence
-- **Contract:** [database-and-persistence.md](database-and-persistence.md) · **CONDITIONAL**
+- **Contract:** [09-database-and-persistence.md](09-database-and-persistence.md) · **CONDITIONAL**
 - **Intent:** Record that there is no application database, and govern how application-owned persistence would be introduced.
 - **Read when:** introducing durable application-owned state; adding database access, an ORM, migrations, durable idempotency, or workflow/audit records; being tempted to cache or mirror Proposales data.
 - **Governs:** justification, data ownership modes, layer boundaries, migrations, identifiers, timestamps, transactions and consistency with Proposales, concurrency, secrets, minimization, agent access, the decision record, serverless constraints.
@@ -134,7 +134,7 @@ Example of overlap: adding `POST /api/proposals` involves server-architecture (t
 - **Related:** server-architecture, data-contracts-and-validation, security-and-trust-boundaries, testing-principles.
 
 ### Security and Trust Boundaries
-- **Contract:** [security-and-trust-boundaries.md](security-and-trust-boundaries.md) · **CROSS-CUTTING**
+- **Contract:** [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) · **CROSS-CUTTING**
 - **Intent:** State what is trusted and the rules that follow: secrets server-side, authorization server-side, untrusted inputs parsed, least capability.
 - **Read when:** handling any input from browser, model, external API, or webhook; touching secrets or env; adding an endpoint, tool, redirect, log line, or dependency; scoping an operation.
 - **Governs:** trust table, secret handling, authorization placement, logging redaction, SSRF and injection, tool capability, redirects, dependencies, headers.
@@ -142,7 +142,7 @@ Example of overlap: adding `POST /api/proposals` involves server-architecture (t
 - **Related:** runtime-boundaries, data-contracts-and-validation, agent-architecture, integrations.
 
 ### Testing Principles
-- **Contract:** [testing-principles.md](testing-principles.md) · **CROSS-CUTTING**
+- **Contract:** [11-testing-principles.md](11-testing-principles.md) · **CROSS-CUTTING**
 - **Intent:** Test each layer at the lowest layer that can prove it; Vitest below the browser, Playwright for critical flows.
 - **Read when:** deciding what to test and where; adding tests for a schema, service, adapter, handler, component, or agent; changing a critical flow.
 - **Governs:** test layers, what each must prove, doubles, agent tests and evals, rules on real systems.
@@ -150,7 +150,7 @@ Example of overlap: adding `POST /api/proposals` involves server-architecture (t
 - **Related:** every contract whose layer is being tested.
 
 ### Documentation Principles
-- **Contract:** [documentation-principles.md](documentation-principles.md) · **ALWAYS** (the closeout question), CONDITIONAL for the rest
+- **Contract:** [14-documentation-principles.md](14-documentation-principles.md) · **ALWAYS** (the closeout question), CONDITIONAL for the rest
 - **Intent:** Documentation as part of the engineering system: one owner per fact, current-state documents patched in place, impact review after verification.
 - **Read when:** finishing any change (closeout question); writing or changing the root README, a feature README, an integration README, a plan, an investigation, or a decision record.
 - **Governs:** hierarchy, artifact classes and authority, ownership table, README and feature README contracts, closeout checklist, writing standard, agent constraints.
@@ -158,14 +158,14 @@ Example of overlap: adding `POST /api/proposals` involves server-architecture (t
 - **Related:** feature-architecture, integrations, this guide (§7, §9).
 
 ### Decision Checklist
-- **Contract:** [decision-checklist.md](decision-checklist.md) · **ALWAYS**
+- **Contract:** [13-decision-checklist.md](13-decision-checklist.md) · **ALWAYS**
 - **Intent:** The questions to answer before adding a file, dependency, or feature, plus naming and dependency-direction summaries.
 - **Read when:** before creating anything; when unsure which layer a piece of logic belongs to.
 - **Governs:** nothing new; it routes to the contracts above and makes their questions explicit.
 - **Related:** all.
 
 ### Anti-Patterns
-- **Contract:** [anti-patterns.md](anti-patterns.md) · **ALWAYS** (the sections matching the task's concerns)
+- **Contract:** [12-anti-patterns.md](12-anti-patterns.md) · **ALWAYS** (the sections matching the task's concerns)
 - **Intent:** What reviewers reject, with the replacement for each.
 - **Read when:** planning and reviewing any meaningful change; read the sections for the concerns touched, not the whole file.
 - **Governs:** nothing new; it is the negative image of the contracts above.
@@ -194,7 +194,7 @@ Contracts explain **how** the system must be built. Feature documentation explai
 applicable architecture contracts  +  current feature README  +  approved intention  →  implementation context
 ```
 
-Authority of each artifact class, using the terms from [documentation-principles.md](documentation-principles.md) §3:
+Authority of each artifact class, using the terms from [14-documentation-principles.md](14-documentation-principles.md) §3:
 
 | Artifact | Authority |
 |---|---|
@@ -215,7 +215,7 @@ When modifying an existing feature: check whether it has a README; read it as cu
 - **Implementation.** Follow §2. Read the plan's applicable-contracts list, add any the plan missed, and say so in the review log.
 - **Review.** Run the protocol in reverse: from the diff, identify the concerns changed, route to the contracts, and review against them. A review that cites no contract for a boundary-touching change is incomplete.
 - **Refactoring.** The same routing applies; a refactor that preserves behavior still has to respect boundary contracts and may still change durable documentation (rarely).
-- **Closeout.** Verified implementation → "could durable documentation now be false or incomplete?" → yes: apply [documentation-principles.md](documentation-principles.md) §8; no: no mechanical rewrite.
+- **Closeout.** Verified implementation → "could durable documentation now be false or incomplete?" → yes: apply [14-documentation-principles.md](14-documentation-principles.md) §8; no: no mechanical rewrite.
 
 ## 9. Scoping: prevent over-application
 

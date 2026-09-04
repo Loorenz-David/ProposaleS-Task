@@ -10,7 +10,7 @@ This directory is a local snapshot of the official Proposales documentation.
 
 Coding agents should prefer these local files when answering implementation questions about the Proposales API. This directory is reference material, not application source code.
 
-Every file here except this README is vendor content and is never edited by hand; the refresh script replaces them wholesale and carries this README over unchanged. Our own interpretation of the API (endpoints used, quirks, mappings) belongs in the integration documentation at `src/lib/proposales/README.md` once the adapter exists, per [architectural_contracts/documentation-principles.md](../../architectural_contracts/documentation-principles.md) §9.
+Every file here except this README is vendor content and is never edited by hand; the refresh script replaces them wholesale and carries this README over unchanged. Our own interpretation of the API (endpoints used, quirks, mappings) belongs in the integration documentation at `src/lib/proposales/README.md` once the adapter exists, per [architectural_contracts/14-documentation-principles.md](../../architectural_contracts/14-documentation-principles.md) §9.
 
 ## After a refresh
 

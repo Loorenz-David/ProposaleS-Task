@@ -23,26 +23,28 @@ One repository, one deployment unit, two runtimes. The browser renders and coord
 
 ## Start here
 
-Implementation, planning, and review agents read [implementation-contract-guide.md](implementation-contract-guide.md) first. Reading it is mandatory bootstrap behavior for Claude Code and Codex through the shared Architecture Context policy in [`agent-skills/policy/architecture-context-policy.md`](../agent-skills/policy/architecture-context-policy.md), auto-loaded via `CLAUDE.md` and `AGENTS.md`. It is the routing layer from "what am I changing" to "which contracts apply", so that a task loads the contracts it needs and not the whole folder. This README is the human-readable map; the guide is the operational protocol. They link to the same documents and do not duplicate each other.
+Implementation, planning, and review agents read [01-implementation-contract-guide.md](01-implementation-contract-guide.md) first. Reading it is mandatory bootstrap behavior for Claude Code and Codex through the shared Architecture Context policy in [`agent-skills/policy/architecture-context-policy.md`](../agent-skills/policy/architecture-context-policy.md), auto-loaded via `CLAUDE.md` and `AGENTS.md`. It is the routing layer from "what am I changing" to "which contracts apply", so that a task loads the contracts it needs and not the whole folder. This README is the human-readable map; the guide is the operational protocol. They link to the same documents and do not duplicate each other.
 
 ## Index
 
+Numbered in read order. Refer to a contract by its number in plans and reviews ("per 09 §14").
+
 | Document | Responsibility |
 |---|---|
-| [implementation-contract-guide.md](implementation-contract-guide.md) | First read for agents: contract descriptions, applicability, concern-based routing table, conflict handling, role-specific use, scenarios |
-| [runtime-boundaries.md](runtime-boundaries.md) | Browser vs server runtime, `"use client"`, `server-only`, `"use server"`, what may cross the boundary, secrets |
-| [feature-architecture.md](feature-architecture.md) | Feature folder structure, responsibilities per folder, dependency direction, where integrations live |
-| [server-architecture.md](server-architecture.md) | Thin Route Handlers and Server Actions, services, domain rules, error taxonomy, idempotency, deterministic mutations |
-| [client-architecture.md](client-architecture.md) | Components vs flows/hooks, request orchestration, UI state vs server state, loading/error/retry, accessibility |
-| [data-contracts-and-validation.md](data-contracts-and-validation.md) | TypeScript vs Zod, validation at trust boundaries, shared schemas, money/dates/enums/unknown fields, external model isolation |
-| [integrations.md](integrations.md) | One client module per external system, configuration ownership, typed responses, retries and error translation |
-| [agent-architecture.md](agent-architecture.md) | Server-only agents, explicit tools, read vs prepare vs mutate, human-in-the-loop lifecycle, deterministic execution after approval |
-| [database-and-persistence.md](database-and-persistence.md) | No application database today, and the normative contract for introducing application-owned persistence later: ownership, boundaries, migrations, ids, consistency with Proposales, serverless constraints |
-| [security-and-trust-boundaries.md](security-and-trust-boundaries.md) | Untrusted inputs, secrets, authorization, logging, SSRF/injection, least capability, safe redirects, dependencies |
-| [testing-principles.md](testing-principles.md) | Test layers, what each layer proves, agent evals |
-| [anti-patterns.md](anti-patterns.md) | Prohibited and strongly discouraged patterns |
-| [decision-checklist.md](decision-checklist.md) | Questions to answer before adding a file or feature; naming and dependency direction summary |
-| [documentation-principles.md](documentation-principles.md) | Documentation governance: hierarchy, ownership and single sources of truth, root README and feature README contracts, current-state vs planning/investigation/decision artifacts, documentation impact at closeout |
+| [01-implementation-contract-guide.md](01-implementation-contract-guide.md) | First read for agents: contract descriptions, applicability, concern-based routing table, conflict handling, role-specific use, scenarios |
+| [02-runtime-boundaries.md](02-runtime-boundaries.md) | Browser vs server runtime, `"use client"`, `server-only`, `"use server"`, what may cross the boundary, secrets |
+| [03-feature-architecture.md](03-feature-architecture.md) | Feature folder structure, responsibilities per folder, dependency direction, where integrations live |
+| [04-server-architecture.md](04-server-architecture.md) | Thin Route Handlers and Server Actions, services, domain rules, error taxonomy, idempotency, deterministic mutations |
+| [05-client-architecture.md](05-client-architecture.md) | Components vs flows/hooks, request orchestration, UI state vs server state, loading/error/retry, accessibility |
+| [06-data-contracts-and-validation.md](06-data-contracts-and-validation.md) | TypeScript vs Zod, validation at trust boundaries, shared schemas, money/dates/enums/unknown fields, external model isolation |
+| [07-integrations.md](07-integrations.md) | One client module per external system, configuration ownership, typed responses, retries and error translation |
+| [08-agent-architecture.md](08-agent-architecture.md) | Server-only agents, explicit tools, read vs prepare vs mutate, human-in-the-loop lifecycle, deterministic execution after approval |
+| [09-database-and-persistence.md](09-database-and-persistence.md) | No application database today, and the normative contract for introducing application-owned persistence later: ownership, boundaries, migrations, ids, consistency with Proposales, serverless constraints |
+| [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) | Untrusted inputs, secrets, authorization, logging, SSRF/injection, least capability, safe redirects, dependencies |
+| [11-testing-principles.md](11-testing-principles.md) | Test layers, what each layer proves, agent evals |
+| [12-anti-patterns.md](12-anti-patterns.md) | Prohibited and strongly discouraged patterns |
+| [13-decision-checklist.md](13-decision-checklist.md) | Questions to answer before adding a file or feature; naming and dependency direction summary |
+| [14-documentation-principles.md](14-documentation-principles.md) | Documentation governance: hierarchy, ownership and single sources of truth, root README and feature README contracts, current-state vs planning/investigation/decision artifacts, documentation impact at closeout |
 
 Read order for a new human contributor: this file, runtime-boundaries, feature-architecture, then the document matching the layer being touched. Agents route through the implementation contract guide instead of reading in order. The decision checklist is the short form for day-to-day use; documentation-principles governs what to write down and where when work is done.
 
@@ -59,15 +61,15 @@ These are fixed by this contract and MUST be honored when the application is sca
 | Source root | `src/`. Path alias `@/*` → `src/*`. No other aliases. |
 | Runtime validation | Zod. One library for all runtime schemas. |
 | Server-only guard | The `server-only` package on every module that must not reach the client graph. |
-| Lint | ESLint with the Next.js config plus the boundary rules described in [runtime-boundaries.md](runtime-boundaries.md). |
+| Lint | ESLint with the Next.js config plus the boundary rules described in [02-runtime-boundaries.md](02-runtime-boundaries.md). |
 | Formatting | Prettier, default config, enforced in CI. |
 | Package manager | npm. One `package-lock.json`, committed. No other lockfiles. |
-| Unit / integration test runner | Vitest. See [testing-principles.md](testing-principles.md). |
-| Browser / end-to-end testing | Playwright, for critical flows only. See [testing-principles.md](testing-principles.md). |
+| Unit / integration test runner | Vitest. See [11-testing-principles.md](11-testing-principles.md). |
+| Browser / end-to-end testing | Playwright, for critical flows only. See [11-testing-principles.md](11-testing-principles.md). |
 | Node.js version | Pinned by the repository at initialization in `package.json` `engines` and matched to the Vercel project setting. The value is the concrete version the runtime establishes when the app is created, not a number chosen in advance. |
-| Application database | None. Deliberate. See "Resolved decisions" and [database-and-persistence.md](database-and-persistence.md). |
+| Application database | None. Deliberate. See "Resolved decisions" and [09-database-and-persistence.md](09-database-and-persistence.md). |
 | Authentication system | None. Deliberate. See "Resolved decisions". |
-| Global state library | None. See [client-architecture.md](client-architecture.md). |
+| Global state library | None. See [05-client-architecture.md](05-client-architecture.md). |
 
 ## Resolved decisions
 
@@ -75,10 +77,10 @@ Decisions that were open questions and are now closed. Reopening one requires a 
 
 | Topic | Decision |
 |---|---|
-| **Persistence** | The MVP has no application database. Transient browser/application state holds in-progress work; Proposales is the system of record for proposals and content; stable correlation metadata is attached where useful. Introducing a database requires the decision record in [database-and-persistence.md](database-and-persistence.md) §14. Do not add PostgreSQL, SQLite, Redis, an ORM, migration tooling, or a hosted database until then. |
-| **HITL traceability** | The system MUST preserve the integrity of the transition prepared → reviewed → approved → executed for consequential mutations ([agent-architecture.md](agent-architecture.md) §6). Durable audit storage is not required for every interaction; it MAY be introduced when product, security, compliance, debugging, or operational needs justify it. Transient application/client state is acceptable for prepared proposal state in the MVP. |
-| **Proposales timestamps** | The public OpenAPI types the relevant timestamps as int64 without establishing the epoch unit; runtime observations are millisecond-scale. Parsing is isolated in the Proposales adapter and assumptions about units never spread into application code ([data-contracts-and-validation.md](data-contracts-and-validation.md) §6). Not architecture-blocking. |
-| **Proposales create idempotency** | No public idempotency-key mechanism exists. The UI MUST block duplicate submission while a mutation is pending; the server SHOULD attach a stable `generation_id` through app-owned `proposal.data` metadata. Runtime testing confirmed that such metadata can participate in `/v3/proposal-search` filtering via `filter[<key>]`, so the server MAY use it as a lightweight recovery and duplicate-detection mechanism. Not an exactly-once guarantee; not a substitute for durable persistence if stronger cross-session guarantees are ever required; no claim that arbitrary keys or value shapes are filterable ([server-architecture.md](server-architecture.md) §8). |
+| **Persistence** | The MVP has no application database. Transient browser/application state holds in-progress work; Proposales is the system of record for proposals and content; stable correlation metadata is attached where useful. Introducing a database requires the decision record in [09-database-and-persistence.md](09-database-and-persistence.md) §14. Do not add PostgreSQL, SQLite, Redis, an ORM, migration tooling, or a hosted database until then. |
+| **HITL traceability** | The system MUST preserve the integrity of the transition prepared → reviewed → approved → executed for consequential mutations ([08-agent-architecture.md](08-agent-architecture.md) §6). Durable audit storage is not required for every interaction; it MAY be introduced when product, security, compliance, debugging, or operational needs justify it. Transient application/client state is acceptable for prepared proposal state in the MVP. |
+| **Proposales timestamps** | The public OpenAPI types the relevant timestamps as int64 without establishing the epoch unit; runtime observations are millisecond-scale. Parsing is isolated in the Proposales adapter and assumptions about units never spread into application code ([06-data-contracts-and-validation.md](06-data-contracts-and-validation.md) §6). Not architecture-blocking. |
+| **Proposales create idempotency** | No public idempotency-key mechanism exists. The UI MUST block duplicate submission while a mutation is pending; the server SHOULD attach a stable `generation_id` through app-owned `proposal.data` metadata. Runtime testing confirmed that such metadata can participate in `/v3/proposal-search` filtering via `filter[<key>]`, so the server MAY use it as a lightweight recovery and duplicate-detection mechanism. Not an exactly-once guarantee; not a substitute for durable persistence if stronger cross-session guarantees are ever required; no claim that arbitrary keys or value shapes are filterable ([04-server-architecture.md](04-server-architecture.md) §8). |
 | **Company scope** | Single company per deployment. `PROPOSALES_COMPANY_ID` is server-side deployment configuration. Multi-company or multi-tenant support is out of scope; if introduced, company identity moves into authenticated server-side tenant context under a dedicated architecture decision. |
 | **Vendor documentation drift** | The Proposales snapshot is refreshed mechanically; the diff is reviewed against what the application relies on, and only affected adapter assumptions, schemas, tests, and integration documentation are re-evaluated. No full API audit per refresh. Rule lives in [`api-documentation/proposales/README.md`](../api-documentation/proposales/README.md). |
 | **Project name** | "Proposal Copilot" is the current working name. Repository labeling, not an architectural invariant: if renamed, patch the root README and other authoritative references in place; no aliases or naming history. |
@@ -88,7 +90,7 @@ Decisions that were open questions and are now closed. Reopening one requires a 
 
 ```
 .
-├── README.md                       # Entry point and map of the repository (documentation-principles.md §5)
+├── README.md                       # Entry point and map of the repository (14-documentation-principles.md §5)
 ├── CLAUDE.md                       # Claude Code bootstrap: invokes the Architecture Context policy on every run
 ├── AGENTS.md                       # Codex bootstrap: same guarantee
 ├── agent-skills/                   # Shared agent policies (authoritative behavior); see agent-skills/README.md
@@ -100,29 +102,30 @@ Decisions that were open questions and are now closed. Reopening one requires a 
 ├── scripts/                        # Repo maintenance scripts
 ├── src/
 │   ├── app/                        # Next.js routes: layouts, pages, route handlers. Thin.
-│   ├── features/<feature>/         # Vertical slices. See feature-architecture.md; README.md per meaningful feature
+│   ├── features/<feature>/         # Vertical slices. See 03-feature-architecture.md; README.md per meaningful feature
 │   ├── lib/                        # Cross-cutting infrastructure and external-system adapters
 │   │   ├── env/                    # Validated environment access (server.ts, client.ts)
 │   │   ├── errors/                 # Error taxonomy and serialization
 │   │   ├── proposales/             # Proposales integration client (server-only); README.md documents how we use it
-│   │                           # (a future src/lib/db/ adapter, if ever justified, sits beside these; see database-and-persistence.md)
+│   │                           # (a future src/lib/db/ adapter, if ever justified, sits beside these; see 09-database-and-persistence.md)
 │   │   ├── ai/                     # AI provider adapter (server-only)
 │   │   └── agent/                  # Agent runtime primitives: tool definition, approval envelope (server-only)
 │   └── components/ui/              # Shared presentational primitives with no domain knowledge
 └── .env.example                    # Committed. Lists every variable, no values.
 ```
 
-Feature-specific planning, implementation notes, phase plans, and trackers do NOT live in this folder. They live under `docs/` as defined in [documentation-principles.md](documentation-principles.md) §2 and reference these contracts by link.
+Feature-specific planning, implementation notes, phase plans, and trackers do NOT live in this folder. They live under `docs/` as defined in [14-documentation-principles.md](14-documentation-principles.md) §2 and reference these contracts by link.
 
 ## How to update this contract
 
 - Patch the stable guidance in place. Do not append "as of <date> we now do X" paragraphs. A reader must never have to reconcile historical layers.
 - One change, one reason. State the rationale in the document, not in the commit message alone.
+- Contracts are numbered in read order (`01-` … `14-`); this README stays unnumbered as the entry point. A new contract takes the next free number. Numbers are never reused and existing contracts are never renumbered, so citations such as "09 §14" stay stable.
 - If a rule is removed, remove it everywhere it is referenced. Search the folder for the rule's key terms before merging.
-- If a contract is added, removed, or renamed, or its applicability changes, update its entry and routing row in [implementation-contract-guide.md](implementation-contract-guide.md) and its applicability block in the same change.
+- If a contract is added, removed, or renamed, or its applicability changes, update its entry and routing row in [01-implementation-contract-guide.md](01-implementation-contract-guide.md) and its applicability block in the same change.
 - If an architectural change invalidates existing code, list the affected code under "Known conflicts" here and open the refactor as separate work.
 - Never add product decisions, screen designs, or feature requirements to these documents.
-- These contracts are current-state governance documents under [documentation-principles.md](documentation-principles.md): patched in place, never appended with history. Rationale for a superseded rule goes to `docs/decisions/` if it has lasting value.
+- These contracts are current-state governance documents under [14-documentation-principles.md](14-documentation-principles.md): patched in place, never appended with history. Rationale for a superseded rule goes to `docs/decisions/` if it has lasting value.
 
 ## Known conflicts
 
@@ -130,6 +133,6 @@ Recorded, not yet resolved. Each entry names the conflict, the contract rule, an
 
 | Conflict | Contract rule | Intended resolution |
 |---|---|---|
-| `.env.example` is listed in `.gitignore` | `.env.example` MUST be committed so every variable is discoverable ([runtime-boundaries.md](runtime-boundaries.md)) | Remove it from `.gitignore` and commit it with empty values. |
+| `.env.example` is listed in `.gitignore` | `.env.example` MUST be committed so every variable is discoverable ([02-runtime-boundaries.md](02-runtime-boundaries.md)) | Remove it from `.gitignore` and commit it with empty values. |
 | Repository branch is `master`; tooling reports the main branch as `main` | Not an architectural rule; noted to avoid confusion in CI and PR automation | Align the default branch name in one direction when CI is set up. |
 | No application code exists | Entire contract | Scaffold according to the "Scaffold decisions record". Pin the Node.js version at that moment. |

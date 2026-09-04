@@ -4,7 +4,7 @@
 - **Intent:** State what is trusted and the rules that follow: secrets server-side, authorization server-side, untrusted inputs parsed, least capability.
 - **Applies when:** handling any input from browser, model, external API, or webhook; touching secrets or env; adding an endpoint, tool, redirect, log line, or dependency; scoping an operation.
 - **Does not imply:** adding authentication; the application has none by decision.
-- **Related:** [runtime-boundaries.md](runtime-boundaries.md), [data-contracts-and-validation.md](data-contracts-and-validation.md), [agent-architecture.md](agent-architecture.md), [integrations.md](integrations.md)
+- **Related:** [02-runtime-boundaries.md](02-runtime-boundaries.md), [06-data-contracts-and-validation.md](06-data-contracts-and-validation.md), [08-agent-architecture.md](08-agent-architecture.md), [07-integrations.md](07-integrations.md)
 
 Security in this codebase is a consequence of the runtime boundary and the validation rules, applied consistently. This document lists the trust assumptions and the rules that follow from them. It does not replace a security review before production.
 
@@ -22,7 +22,7 @@ Security in this codebase is a consequence of the runtime boundary and the valid
 
 ## 2. Secrets
 
-- Secrets exist only in server runtime and are read only in `src/lib/env/server.ts`. See [runtime-boundaries.md](runtime-boundaries.md) §8.
+- Secrets exist only in server runtime and are read only in `src/lib/env/server.ts`. See [02-runtime-boundaries.md](02-runtime-boundaries.md) §8.
 - `NEXT_PUBLIC_*` variables are public. Nothing sensitive is ever named that way.
 - Secrets MUST NOT be: logged, included in error `message` or `details`, sent to the model in any prompt or tool result, placed in URLs, stored in client state, or committed. `.env` is ignored; `.env.example` has no values.
 - Integration clients hold the credential in module scope on the server and attach it inside `http.ts`. No function outside `src/lib/<system>/` ever receives a token as an argument.
@@ -36,7 +36,7 @@ Security in this codebase is a consequence of the runtime boundary and the valid
 
 ## 4. Input validation
 
-Every trust boundary parses with a schema before use. The complete list is in [data-contracts-and-validation.md](data-contracts-and-validation.md) §2. Additional security-specific rules:
+Every trust boundary parses with a schema before use. The complete list is in [06-data-contracts-and-validation.md](06-data-contracts-and-validation.md) §2. Additional security-specific rules:
 
 - Length limits on every string that reaches storage, a prompt, or an external system.
 - Identifiers validated by format (uuid, positive integer) before being interpolated into any path or query, and always URL-encoded at the transport layer.
@@ -44,12 +44,12 @@ Every trust boundary parses with a schema before use. The complete list is in [d
 
 ## 5. Mutation approval boundary
 
-Consequential mutations pass through the approval lifecycle in [agent-architecture.md](agent-architecture.md) §6. Security properties of that boundary:
+Consequential mutations pass through the approval lifecycle in [08-agent-architecture.md](08-agent-architecture.md) §6. Security properties of that boundary:
 
-- The approval Server Action re-validates the payload it receives and rejects a payload that still carries `missing` entries or consequential assumptions. Where the application keeps prepared-action state (transient in the MVP), it SHOULD refuse a second execution of the same `preparedActionId` within that state's lifetime with `ConflictError`; durable cross-session protection is not claimed unless persistence exists ([database-and-persistence.md](database-and-persistence.md) §11).
+- The approval Server Action re-validates the payload it receives and rejects a payload that still carries `missing` entries or consequential assumptions. Where the application keeps prepared-action state (transient in the MVP), it SHOULD refuse a second execution of the same `preparedActionId` within that state's lifetime with `ConflictError`; durable cross-session protection is not claimed unless persistence exists ([09-database-and-persistence.md](09-database-and-persistence.md) §11).
 - The payload the human approved is re-validated on the server. Client-side edits are input, not truth.
 - Execution is by ordinary code with no model in the path, so prompt injection cannot alter an approved payload.
-- The executing service accepts only an `ApprovedAction`; a consequential mutation reached through any other path is refused with `ApprovalRequiredError`. The result is returned as an `ExecutionResult` to the caller and logged with its ids. Durable audit storage of that result is not required by this contract; see [agent-architecture.md](agent-architecture.md) §6.
+- The executing service accepts only an `ApprovedAction`; a consequential mutation reached through any other path is refused with `ApprovalRequiredError`. The result is returned as an `ExecutionResult` to the caller and logged with its ids. Durable audit storage of that result is not required by this contract; see [08-agent-architecture.md](08-agent-architecture.md) §6.
 
 ## 6. Prompt injection and model-mediated attacks
 

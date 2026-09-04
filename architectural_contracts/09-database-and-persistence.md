@@ -4,7 +4,7 @@
 - **Intent:** Record that there is no application database, and govern how application-owned persistence would be introduced.
 - **Applies when:** introducing durable application-owned state; adding database access, an ORM, migrations, durable idempotency, or workflow/audit records; being tempted to cache or mirror Proposales data.
 - **Does not imply:** the application requires or should get a database. The feature requirement must justify persistence first; this contract governs only how.
-- **Related:** [server-architecture.md](server-architecture.md), [data-contracts-and-validation.md](data-contracts-and-validation.md), [security-and-trust-boundaries.md](security-and-trust-boundaries.md), [testing-principles.md](testing-principles.md)
+- **Related:** [04-server-architecture.md](04-server-architecture.md), [06-data-contracts-and-validation.md](06-data-contracts-and-validation.md), [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md), [11-testing-principles.md](11-testing-principles.md)
 
 The current application has **no application database**. That is a deliberate decision, not an omission. This document records why, what the application relies on instead, and the contract any future feature MUST follow if it introduces application-owned persistence.
 
@@ -16,7 +16,7 @@ Proposal Copilot (the MVP) relies on:
 
 - **Browser and application state** for transient work: a brief being entered, an agent-prepared proposal under review, corrections before approval, the in-flight status of a mutation.
 - **Proposales as the system of record** for every proposal, proposal version, and content-library resource the application creates or reads.
-- **Stable correlation metadata** where useful: a `generation_id` attached to a created proposal through Proposales' app-owned `data` metadata, which runtime testing confirmed is filterable through `/v3/proposal-search`, so a creation can later be recognized ([server-architecture.md](server-architecture.md) §8). This is duplicate detection, not exactly-once execution; §11 governs the durable form if it is ever required.
+- **Stable correlation metadata** where useful: a `generation_id` attached to a created proposal through Proposales' app-owned `data` metadata, which runtime testing confirmed is filterable through `/v3/proposal-search`, so a creation can later be recognized ([04-server-architecture.md](04-server-architecture.md) §8). This is duplicate detection, not exactly-once execution; §11 governs the durable form if it is ever required.
 
 The following MUST NOT be added unless a future approved requirement establishes a persistence need through the decision record in §14: PostgreSQL, SQLite, Redis, any ORM, migration tooling, or a hosted database service.
 
@@ -95,7 +95,7 @@ Rules:
 
 - Business logic MUST NOT be embedded in queries, ORM models, or Route Handlers unless the rule is intrinsically a storage invariant (uniqueness, referential integrity).
 - Route Handlers, Server Actions, and React components MUST NOT perform database access. Services call explicit persistence functions.
-- Location, when introduced: the client or adapter lives in `src/lib/db/` (`server-only`, configuration read from `src/lib/env/server.ts`); persistence functions or repository ports for a feature live in `features/<x>/server/persistence/`. See [feature-architecture.md](feature-architecture.md) §3.
+- Location, when introduced: the client or adapter lives in `src/lib/db/` (`server-only`, configuration read from `src/lib/env/server.ts`); persistence functions or repository ports for a feature live in `features/<x>/server/persistence/`. See [03-feature-architecture.md](03-feature-architecture.md) §3.
 - Do not build a generic repository abstraction for a single trivial table. A module of named functions (`saveGeneration`, `findGenerationById`) is enough. Once multiple features depend on persistence behavior, ownership and boundaries MUST remain clear and a port interface with a test double becomes justified.
 - Agent tools never reach the persistence layer directly; they call services (§13).
 
@@ -107,7 +107,7 @@ An ORM entity or a row type is not automatically the application's domain model.
 database row  ──(mapper)──▶  application entity
 ```
 
-Separation is appropriate when storage naming differs from domain naming, nullable storage columns differ from domain invariants, persistence metadata (version columns, soft-delete flags) must not leak into business logic, or domain values need transformation (money objects, branded ids). When none of these apply, use the row type directly; mapping layers added mechanically are prohibited. The same rule that governs external API shapes in [data-contracts-and-validation.md](data-contracts-and-validation.md) §7 applies here.
+Separation is appropriate when storage naming differs from domain naming, nullable storage columns differ from domain invariants, persistence metadata (version columns, soft-delete flags) must not leak into business logic, or domain values need transformation (money objects, branded ids). When none of these apply, use the row type directly; mapping layers added mechanically are prohibited. The same rule that governs external API shapes in [06-data-contracts-and-validation.md](06-data-contracts-and-validation.md) §7 applies here.
 
 ## 7. Schema evolution and migrations
 
@@ -131,12 +131,12 @@ Do not overload one identifier with several meanings. Keep these distinct:
 | external-system identifier | reference into the system of record | `proposal_uuid`, `series_uuid`, `company_id` |
 | correlation identifier | ties a workflow across systems and requests | `generation_id` |
 
-Proposales identifiers are stored explicitly under their own names and typed with the same branded types used in the integration module ([data-contracts-and-validation.md](data-contracts-and-validation.md) §6). A proposal uuid is never stored in a column called `external_id` "for flexibility".
+Proposales identifiers are stored explicitly under their own names and typed with the same branded types used in the integration module ([06-data-contracts-and-validation.md](06-data-contracts-and-validation.md) §6). A proposal uuid is never stored in a column called `external_id` "for flexibility".
 
 ## 9. Timestamps
 
 - Timestamp semantics MUST be explicit. Store application timestamps in the normalized representation appropriate to the chosen database and runtime (for most relational databases, a timezone-aware type in UTC).
-- External timestamps are normalized at the integration boundary before persistence. Ambiguous third-party units never reach a table; the Proposales adapter owns that conversion ([data-contracts-and-validation.md](data-contracts-and-validation.md) §6).
+- External timestamps are normalized at the integration boundary before persistence. Ambiguous third-party units never reach a table; the Proposales adapter owns that conversion ([06-data-contracts-and-validation.md](06-data-contracts-and-validation.md) §6).
 - Keep created time, updated time, external status-change time, approval time, and execution time as distinct columns when those concepts matter to the product. Do not add `created_at`/`updated_at` to every table by reflex; add them where they answer a question someone will ask.
 
 ## 10. Transactions and consistency with external systems
@@ -162,7 +162,7 @@ If durable persistence is later introduced for idempotency, use a stable applica
 generation_id → approved mutation → execution record → external proposal uuid
 ```
 
-The system must then be able to distinguish **never attempted**, **currently executing**, **successfully executed**, and **failed / retryable**, enforced by a unique constraint on the correlation identifier rather than by application code alone. Exactly-once claims without a mechanism are prohibited; design for detectable and retry-safe behavior. Until such persistence exists, the MVP rules in [server-architecture.md](server-architecture.md) §8 apply.
+The system must then be able to distinguish **never attempted**, **currently executing**, **successfully executed**, and **failed / retryable**, enforced by a unique constraint on the correlation identifier rather than by application code alone. Exactly-once claims without a mechanism are prohibited; design for detectable and retry-safe behavior. Until such persistence exists, the MVP rules in [04-server-architecture.md](04-server-architecture.md) §8 apply.
 
 ## 12. Concurrency, constraints, and integrity
 
@@ -175,7 +175,7 @@ The system must then be able to distinguish **never attempted**, **currently exe
 - **Secrets**: deployment secrets (Proposales API key, model provider key) remain server-side configuration and are never stored in ordinary tables. If user-provided third-party credentials are ever stored, encryption at rest, access control, key management, rotation, and logging restrictions MUST be designed first as their own decision.
 - **Data minimization**: persist only what the product requires. Full prompts, full model transcripts, raw external payloads, tool-call histories, and personal data are not stored by default. If required, the decision record states why, the retention period, and the privacy and security implications.
 - **Logging is not persistence**: application logs are not a substitute for durable business records, and tables are not a substitute for structured logs. Keep operational logs, audit records, domain history, and analytics events distinct in both purpose and storage.
-- **Agent tools**: the model never receives database access. Tools expose domain capabilities (`get_approved_draft`, `find_generation`, `list_relevant_proposals`) that call services; tools such as `execute_sql` or `query_database` are prohibited. Least capability per [agent-architecture.md](agent-architecture.md) §3.
+- **Agent tools**: the model never receives database access. Tools expose domain capabilities (`get_approved_draft`, `find_generation`, `list_relevant_proposals`) that call services; tools such as `execute_sql` or `query_database` are prohibited. Least capability per [08-agent-architecture.md](08-agent-architecture.md) §3.
 
 ## 14. Persistence decision record
 
@@ -205,4 +205,4 @@ No provider is selected now. That is the point of this document.
 
 ## 16. Testing persistence
 
-If a database is introduced, tests MUST cover persistence mappings, database constraints, repository or persistence-function behavior where relied upon, migration correctness for significant schema changes, transaction-sensitive invariants, and idempotency and concurrency behavior where it matters. Pure domain and application logic remains testable without a live database. Do not mock storage so heavily that the behavior the application relies on (constraints, uniqueness, transactions) is never exercised. Tooling per [testing-principles.md](testing-principles.md).
+If a database is introduced, tests MUST cover persistence mappings, database constraints, repository or persistence-function behavior where relied upon, migration correctness for significant schema changes, transaction-sensitive invariants, and idempotency and concurrency behavior where it matters. Pure domain and application logic remains testable without a live database. Do not mock storage so heavily that the behavior the application relies on (constraints, uniqueness, transactions) is never exercised. Tooling per [11-testing-principles.md](11-testing-principles.md).

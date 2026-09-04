@@ -12,11 +12,11 @@ Patterns that are prohibited or strongly discouraged in this repository. Each en
 
 | Pattern | Status | Instead |
 |---|---|---|
-| Importing anything from `**/server/**`, `@/lib/proposales`, `@/lib/ai`, `@/lib/agent`, or `@/lib/env/server` into a `"use client"` file | Prohibited | Call a Server Action or a `client/` adapter. [runtime-boundaries.md](runtime-boundaries.md) §5 |
+| Importing anything from `**/server/**`, `@/lib/proposales`, `@/lib/ai`, `@/lib/agent`, or `@/lib/env/server` into a `"use client"` file | Prohibited | Call a Server Action or a `client/` adapter. [02-runtime-boundaries.md](02-runtime-boundaries.md) §5 |
 | Reading `process.env` outside `src/lib/env/` | Prohibited | Import the validated value |
 | Exposing a secret as `NEXT_PUBLIC_*` | Prohibited | It is not a secret anymore. Move the call server-side |
 | `"use client"` on a page or layout to make one button work | Prohibited | Push the directive to the leaf component |
-| `"use server"` on a service, domain, or integration file | Prohibited | Use `server-only`; `"use server"` creates public endpoints. [runtime-boundaries.md](runtime-boundaries.md) §4 |
+| `"use server"` on a service, domain, or integration file | Prohibited | Use `server-only`; `"use server"` creates public endpoints. [02-runtime-boundaries.md](02-runtime-boundaries.md) §4 |
 | Relying on the framework to infer that a module is server-side | Discouraged | Add `server-only` so the boundary is a build failure, not a hope |
 | Passing class instances, `Date`, `Map`, or thrown errors across the client/server boundary | Prohibited | Plain JSON data, ISO strings, `ErrorDto` |
 
@@ -24,12 +24,12 @@ Patterns that are prohibited or strongly discouraged in this repository. Each en
 
 | Pattern | Status | Instead |
 |---|---|---|
-| Giant Client Component that fetches, validates, computes, and renders | Prohibited | Hook for orchestration, server for authority, component for rendering. [client-architecture.md](client-architecture.md) |
+| Giant Client Component that fetches, validates, computes, and renders | Prohibited | Hook for orchestration, server for authority, component for rendering. [05-client-architecture.md](05-client-architecture.md) |
 | Business rules embedded in JSX (`price * 1.25`, eligibility conditions, "can send" logic) | Prohibited | Server domain rule or shared schema; component renders the result |
 | `isLoading` / `isError` / `data?` boolean soup | Prohibited | Discriminated flow-state union |
 | Unnecessary global state (a store for data one screen uses) | Prohibited | Local state in the owning hook; lift only as far as needed |
 | Hand-rolled cache of server data in client state | Discouraged | Re-fetch via Server Component, `router.refresh()`, or a re-called action |
-| Raw `fetch("https://external...")` in a component or hook | Prohibited | The server calls integrations. [integrations.md](integrations.md) |
+| Raw `fetch("https://external...")` in a component or hook | Prohibited | The server calls integrations. [07-integrations.md](07-integrations.md) |
 | Client-side validation that differs from the server schema | Prohibited | Import the shared schema |
 | Catching an error and rendering "Something went wrong" when an `ErrorDto` with a message exists | Prohibited | Render the DTO message; generic fallback only for unknown codes |
 | `div` with `onClick` as a button | Prohibited | Native control or `components/ui` primitive |
@@ -38,20 +38,20 @@ Patterns that are prohibited or strongly discouraged in this repository. Each en
 
 | Pattern | Status | Instead |
 |---|---|---|
-| Giant `route.ts` or `actions.ts` with business logic, loops over external calls, or `switch(action)` | Prohibited | Thin transport; one service per use case. [server-architecture.md](server-architecture.md) §2–3 |
+| Giant `route.ts` or `actions.ts` with business logic, loops over external calls, or `switch(action)` | Prohibited | Thin transport; one service per use case. [04-server-architecture.md](04-server-architecture.md) §2–3 |
 | Business rules duplicated in UI and Route Handler / service | Prohibited | One owner in `server/domain/` or `schemas/` |
 | Server Action parameter typed as the trusted shape instead of `unknown` | Prohibited | Accept `unknown`, parse |
 | Catching an error and rethrowing a generic one without `cause` | Prohibited | Add context, keep the cause; the transport layer serializes |
-| Logging with `console.log` in server code or logging request bodies, tokens, prompts | Prohibited | Structured logger with redaction. [security-and-trust-boundaries.md](security-and-trust-boundaries.md) §7 |
+| Logging with `console.log` in server code or logging request bodies, tokens, prompts | Prohibited | Structured logger with redaction. [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) §7 |
 | Module-level mutable state used as storage across requests | Prohibited | Serverless functions do not share memory; use the application's actual state |
-| Introducing a database, auth system, queue, or cache infrastructure inside a feature change | Prohibited | Architectural decision recorded in [README.md](README.md) first; for storage, the decision record in [database-and-persistence.md](database-and-persistence.md) §14 |
+| Introducing a database, auth system, queue, or cache infrastructure inside a feature change | Prohibited | Architectural decision recorded in [README.md](README.md) first; for storage, the decision record in [09-database-and-persistence.md](09-database-and-persistence.md) §14 |
 | Retrying a non-idempotent external write automatically | Prohibited | Surface the failure; let a human or flow decide |
 
 ## Data and validation
 
 | Pattern | Status | Instead |
 |---|---|---|
-| Relying on TypeScript types for data from HTTP, models, storage, or forms | Prohibited | Zod at the boundary. [data-contracts-and-validation.md](data-contracts-and-validation.md) |
+| Relying on TypeScript types for data from HTTP, models, storage, or forms | Prohibited | Zod at the boundary. [06-data-contracts-and-validation.md](06-data-contracts-and-validation.md) |
 | `as SomeType` on parsed JSON | Prohibited | `schema.parse` |
 | `.passthrough()` on a schema whose output is stored, rendered, or forwarded | Prohibited | Strip by default; opaque fields as `z.record(z.string(), z.unknown())` |
 | Third-party response types used as parameters or props outside `src/lib/<system>/` | Prohibited | Map to a domain/DTO shape in the integration module |
@@ -72,7 +72,7 @@ Patterns that are prohibited or strongly discouraged in this repository. Each en
 
 | Pattern | Status | Instead |
 |---|---|---|
-| Model output directly triggering a consequential mutation | Prohibited | `prepare` tool → human approval → deterministic execution. [agent-architecture.md](agent-architecture.md) §6 |
+| Model output directly triggering a consequential mutation | Prohibited | `prepare` tool → human approval → deterministic execution. [08-agent-architecture.md](08-agent-architecture.md) §6 |
 | Model regenerating, reformatting, or "cleaning" data after human approval | Prohibited | Execute the approved payload exactly |
 | Model inventing prices, recipients, quantities, dates, terms, or ids | Prohibited | Provenance from user or tool, or a clarification |
 | A single tool that both reads and writes, or a tool whose kind is unclear | Prohibited | One kind per tool |
@@ -85,7 +85,7 @@ Patterns that are prohibited or strongly discouraged in this repository. Each en
 
 ## Persistence
 
-The MVP has no application database. These apply the moment one is proposed. [database-and-persistence.md](database-and-persistence.md)
+The MVP has no application database. These apply the moment one is proposed. [09-database-and-persistence.md](09-database-and-persistence.md)
 
 | Pattern | Status | Instead |
 |---|---|---|
@@ -107,7 +107,7 @@ The MVP has no application database. These apply the moment one is proposed. [da
 
 ## Documentation
 
-Governed by [documentation-principles.md](documentation-principles.md); the entries here are the ones reviewers most often catch.
+Governed by [14-documentation-principles.md](14-documentation-principles.md); the entries here are the ones reviewers most often catch.
 
 | Pattern | Status | Instead |
 |---|---|---|
@@ -123,7 +123,7 @@ Governed by [documentation-principles.md](documentation-principles.md); the entr
 | Pattern | Status | Instead |
 |---|---|---|
 | Feature folders holding arbitrary miscellaneous utilities (`utils.ts` with twelve unrelated helpers) | Prohibited | Put a helper next to its only consumer; move to `src/lib/` when a second feature needs it |
-| Global `frontend/` vs `backend/` split | Prohibited | Feature-oriented organization with explicit runtime folders. [feature-architecture.md](feature-architecture.md) |
+| Global `frontend/` vs `backend/` split | Prohibited | Feature-oriented organization with explicit runtime folders. [03-feature-architecture.md](03-feature-architecture.md) |
 | Premature generic repositories, base services, or abstract "managers" with one implementation and no boundary | Prohibited | Plain functions; add an interface when a second implementation or a test double is real |
 | Dependency-injection containers, decorators, or reflection-based wiring | Prohibited | Function parameters with defaults |
 | Framework magic with unclear ownership (implicit middleware side effects, hidden global providers, auto-registered modules) | Discouraged | Explicit imports and explicit call sites |

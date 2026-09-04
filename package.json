@@ -1,0 +1,12 @@
+{
+  "name": "proposales",
+  "version": "1.0.0",
+  "description": "An AI-assisted proposal workflow built on the [Proposales](https://proposales.com) API. Its intended shape is a Next.js App Router application, deployed on Vercel, in which an agent gathers information and prepares proposal data, a human reviews and approves it, and the approved payload is created in Proposales deterministically.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

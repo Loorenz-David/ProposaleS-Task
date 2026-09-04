@@ -11,7 +11,7 @@ platform adapters        .claude/skills/<skill>/SKILL.md                exposes 
 auto-loaded bootstrap    CLAUDE.md, AGENTS.md                           guarantees the behavior is considered on every run
 ```
 
-For architecture context there is a fourth, downstream layer that the policy routes to and never copies: `architectural_contracts/implementation-contract-guide.md`, which routes to the architecture contracts themselves.
+For architecture context there is a fourth, downstream layer that the policy routes to and never copies: `architectural_contracts/01-implementation-contract-guide.md`, which routes to the architecture contracts themselves.
 
 ## What is authoritative
 

@@ -4,7 +4,7 @@
 - **Intent:** Documentation as part of the engineering system: one owner per fact, current-state documents patched in place, impact review after verification.
 - **Applies when:** finishing any change; writing or changing the root README, a feature README, an integration README, a plan, an investigation, or a decision record.
 - **Does not imply:** rewriting documentation because files changed.
-- **Related:** [feature-architecture.md](feature-architecture.md), [integrations.md](integrations.md) §10, [implementation-contract-guide.md](implementation-contract-guide.md)
+- **Related:** [03-feature-architecture.md](03-feature-architecture.md), [07-integrations.md](07-integrations.md) §10, [01-implementation-contract-guide.md](01-implementation-contract-guide.md)
 
 Documentation is part of the engineering system. It MUST remain synchronized with approved, verified implementation, and it is governed by the same ownership discipline as code: one authoritative home per durable fact, patched in place when the truth changes.
 
@@ -74,10 +74,10 @@ A plan is not documentation of implemented behavior. An intention is not a speci
 | Repository structure | root `README.md` (map) and [README.md](README.md) "Repository layout" (contract) | links |
 | Environment variables: name, purpose, required, server-only vs public | root `README.md` "Environment", kept consistent with `.env.example` and `src/lib/env/` | links; never a second list |
 | Runtime boundaries, feature layout, server/client rules, validation, security | the matching contract in `architectural_contracts/` | links |
-| Which contracts apply to a given task, and their applicability | [implementation-contract-guide.md](implementation-contract-guide.md) | contracts carry a matching applicability block; nothing else lists applicability |
+| Which contracts apply to a given task, and their applicability | [01-implementation-contract-guide.md](01-implementation-contract-guide.md) | contracts carry a matching applicability block; nothing else lists applicability |
 | How agents are made to consult the guide (bootstrap behavior) | `agent-skills/policy/architecture-context-policy.md` | `CLAUDE.md`, `AGENTS.md`, and the two `SKILL.md` adapters only point to it |
-| Agent safety and human-in-the-loop principles | [agent-architecture.md](agent-architecture.md) | feature READMEs state feature-specific invariants and link |
-| Persistence rules and the no-database decision | [database-and-persistence.md](database-and-persistence.md) | links |
+| Agent safety and human-in-the-loop principles | [08-agent-architecture.md](08-agent-architecture.md) | feature READMEs state feature-specific invariants and link |
+| Persistence rules and the no-database decision | [09-database-and-persistence.md](09-database-and-persistence.md) | links |
 | Resolved architecture decisions (summary) | [README.md](README.md) "Resolved decisions" | an ADR only when rationale exceeds a table row; the row links to it |
 | How this application uses Proposales (endpoints used, quirks, mappings, error handling) | `src/lib/proposales/README.md` | feature READMEs link; never re-document endpoints |
 | What Proposales' API is | `api-documentation/proposales/` | never paraphrased at length elsewhere |
@@ -106,7 +106,7 @@ It SHOULD contain, where applicable and only when true today:
 | Technology stack | Framework, language, validation, testing, hosting. |
 | Repository structure | Annotated tree of top-level folders. |
 | Local setup, environment, commands | Verified commands only (§10.4); the environment table (§10.5). |
-| Testing | How to run each layer, linking to [testing-principles.md](testing-principles.md). |
+| Testing | How to run each layer, linking to [11-testing-principles.md](11-testing-principles.md). |
 | Deployment | How and where it deploys, once it does. |
 | External integrations | Named at a high level, linking to `src/lib/<system>/README.md`. |
 | Known limitations and current scope | What is deliberately not there. |
@@ -120,7 +120,7 @@ For review as a take-home: a reviewer should be able to follow problem → solut
 
 ### 6.1 Location and scope
 
-Durable feature documentation lives at `src/features/<feature>/README.md`. Rationale: the feature folder is the unit of ownership ([feature-architecture.md](feature-architecture.md)); a developer opening the folder finds the explanation beside the code, and the document moves, renames, and dies with the feature.
+Durable feature documentation lives at `src/features/<feature>/README.md`. Rationale: the feature folder is the unit of ownership ([03-feature-architecture.md](03-feature-architecture.md)); a developer opening the folder finds the explanation beside the code, and the document moves, renames, and dies with the feature.
 
 - Every **meaningful, non-trivial** feature SHOULD have exactly one feature README. A feature is meaningful when another developer needs to understand its behavior, states, or invariants to maintain or extend it safely.
 - No feature README is required for a button, a component, a styling change, or an implementation detail.
@@ -156,7 +156,7 @@ Example of an invariants section for an agent-driven feature:
 - Human approval precedes every Proposales mutation.
 - The approved payload is executed without model reinterpretation.
 - Proposales remains authoritative for the proposal's lifecycle after creation.
-See architectural_contracts/agent-architecture.md §4 and §6 for the general rules.
+See architectural_contracts/08-agent-architecture.md §4 and §6 for the general rules.
 ```
 
 ### 6.3 Feature READMEs are current-state documents
@@ -219,7 +219,7 @@ Judgment applies. "Files changed" is not a trigger.
 
 Implementation prompts SHOULD include this sentence verbatim:
 
-> Before closing implementation, evaluate documentation impact according to `architectural_contracts/documentation-principles.md`. Update any authoritative documentation made false, incomplete, or misleading by the verified implementation. Do not modify documentation merely because files changed.
+> Before closing implementation, evaluate documentation impact according to `architectural_contracts/14-documentation-principles.md`. Update any authoritative documentation made false, incomplete, or misleading by the verified implementation. Do not modify documentation merely because files changed.
 
 In pipeline-driven builds this step belongs after verification and before the tracker row is marked implemented; the plan's review log records what was evaluated and what was patched, so a reviewer can check the claim.
 
@@ -240,7 +240,7 @@ Documentation closeout
 [ ] Can a developer unfamiliar with this feature understand its important behavior?
 ```
 
-This is the only documentation checklist in the repository. [decision-checklist.md](decision-checklist.md) points here rather than repeating it.
+This is the only documentation checklist in the repository. [13-decision-checklist.md](13-decision-checklist.md) points here rather than repeating it.
 
 ## 9. Integration documentation
 
@@ -274,7 +274,7 @@ A documented command MUST exist in the repository at the time of writing. Before
 
 ### 10.5 Environment variables
 
-The root README carries one table: name, purpose, required or optional, **server-only secret** vs **server-only configuration** vs **public (`NEXT_PUBLIC_*`)**, and a safe example value. It MUST agree with `.env.example` and the schema in `src/lib/env/`, and with the rules in [runtime-boundaries.md](runtime-boundaries.md) §8 and [security-and-trust-boundaries.md](security-and-trust-boundaries.md) §2. Real credentials never appear anywhere.
+The root README carries one table: name, purpose, required or optional, **server-only secret** vs **server-only configuration** vs **public (`NEXT_PUBLIC_*`)**, and a safe example value. It MUST agree with `.env.example` and the schema in `src/lib/env/`, and with the rules in [02-runtime-boundaries.md](02-runtime-boundaries.md) §8 and [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) §2. Real credentials never appear anywhere.
 
 ### 10.6 Links
 
@@ -306,6 +306,6 @@ Every documentation claim is grounded in one of: verified implementation, reposi
 | Rhythm | Documents | Trigger |
 |---|---|---|
 | Frequently updated current-state documentation | root README, feature READMEs, integration READMEs, setup and configuration, architecture facts affected by approved changes | Any verified implementation that changes durable developer knowledge (§8) |
-| Rarely updated governance | this document, [implementation-contract-guide.md](implementation-contract-guide.md) | Only when documentation policy, hierarchy, ownership model, maintenance process, or the set and applicability of contracts changes |
+| Rarely updated governance | this document, [01-implementation-contract-guide.md](01-implementation-contract-guide.md) | Only when documentation policy, hierarchy, ownership model, maintenance process, or the set and applicability of contracts changes |
 
 Product changes update the documentation this contract governs. Policy changes update this contract. The two are never mixed in one edit.

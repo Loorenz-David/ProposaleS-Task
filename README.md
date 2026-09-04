@@ -14,7 +14,7 @@ Human intent → agent reasons and gathers information → agent prepares a prop
 → human reviews in Proposales and performs the final consequential action there
 ```
 
-The rules that will govern that flow are already fixed in [architectural_contracts/agent-architecture.md](architectural_contracts/agent-architecture.md).
+The rules that will govern that flow are already fixed in [architectural_contracts/08-agent-architecture.md](architectural_contracts/08-agent-architecture.md).
 
 ## What exists today
 
@@ -56,17 +56,17 @@ Application commands (install, dev, test, lint, build) will be added to this sec
 ## External integrations
 
 - **Proposales**: system of record for proposals and content. Vendor reference under [api-documentation/proposales/](api-documentation/proposales/README.md). How this application uses it will be documented in `src/lib/proposales/README.md` once the adapter exists.
-- **AI model provider**: not yet selected; will be wrapped behind `src/lib/ai/` per [architectural_contracts/integrations.md](architectural_contracts/integrations.md).
+- **AI model provider**: not yet selected; will be wrapped behind `src/lib/ai/` per [architectural_contracts/07-integrations.md](architectural_contracts/07-integrations.md).
 
 ## Current scope and limitations
 
 - Single Proposales company per deployment.
-- No application database, by decision. See [architectural_contracts/database-and-persistence.md](architectural_contracts/database-and-persistence.md).
+- No application database, by decision. See [architectural_contracts/09-database-and-persistence.md](architectural_contracts/09-database-and-persistence.md).
 - No application-level authentication.
 
 ## Documentation map
 
 - Engineering contracts: [architectural_contracts/README.md](architectural_contracts/README.md)
-- Which contracts apply to a task (first read for coding agents): [architectural_contracts/implementation-contract-guide.md](architectural_contracts/implementation-contract-guide.md)
-- How documentation is organized and maintained: [architectural_contracts/documentation-principles.md](architectural_contracts/documentation-principles.md)
+- Which contracts apply to a task (first read for coding agents): [architectural_contracts/01-implementation-contract-guide.md](architectural_contracts/01-implementation-contract-guide.md)
+- How documentation is organized and maintained: [architectural_contracts/14-documentation-principles.md](architectural_contracts/14-documentation-principles.md)
 - Feature documentation will live at `src/features/<feature>/README.md`; intentions, plans, decisions, and investigations under `docs/`. Neither exists yet.

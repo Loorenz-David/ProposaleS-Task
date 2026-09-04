@@ -4,7 +4,7 @@
 - **Intent:** One server-only client module per external system owns authentication, HTTP, validation, mapping, and error translation.
 - **Applies when:** calling Proposales or the AI provider; adding any external HTTP; receiving a webhook; changing an adapter's retry, timeout, or error behavior; adding a new external system.
 - **Does not imply:** wrapping unused endpoints or adding adapters for systems the application does not call.
-- **Related:** [server-architecture.md](server-architecture.md), [data-contracts-and-validation.md](data-contracts-and-validation.md), [security-and-trust-boundaries.md](security-and-trust-boundaries.md), [agent-architecture.md](agent-architecture.md) §3
+- **Related:** [04-server-architecture.md](04-server-architecture.md), [06-data-contracts-and-validation.md](06-data-contracts-and-validation.md), [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md), [08-agent-architecture.md](08-agent-architecture.md) §3
 
 Every external system the application talks to is wrapped by exactly one integration module. Feature code, services, and agent tools call that module. Nothing else in the codebase knows the external system's URL, authentication, wire format, or error shape.
 
@@ -29,7 +29,7 @@ Rules:
 - There is one client per external system, not one per feature and not one per endpoint. Features share it.
 - Authentication and configuration are read **inside** the module from `src/lib/env/server.ts`. Callers never pass tokens.
 - The module exposes **operations named after what they do for the domain**, not after HTTP verbs: `createProposalDraft(input)`, not `post("/v3/proposals", body)`.
-- No `fetch` to an external host exists anywhere outside `src/lib/<system>/http.ts`. This is lint-enforced by restricting `fetch` usage patterns in review and by the folder rule in [feature-architecture.md](feature-architecture.md) §4.
+- No `fetch` to an external host exists anywhere outside `src/lib/<system>/http.ts`. This is lint-enforced by restricting `fetch` usage patterns in review and by the folder rule in [03-feature-architecture.md](03-feature-architecture.md) §4.
 
 ## 2. What the client hides
 
@@ -87,12 +87,12 @@ Schemas, mappers, and fixtures are derived from the vendored snapshot in `api-do
 ## 6. Configuration ownership
 
 - `PROPOSALES_API_KEY` and `PROPOSALES_COMPANY_ID` are read by `src/lib/env/server.ts` and consumed only by `src/lib/proposales/`. The deployment is single-company by decision ([README.md](README.md) "Resolved decisions"); the client injects the configured company id and exposes no per-call company override. If multi-company support is ever introduced, company identity moves into authenticated server-side tenant context under its own architecture decision, and only then does the client gain a `companyId` parameter. Features never read these variables.
-- Correlation metadata: the proposal `data` object accepts app-owned metadata, and runtime testing confirmed that `GET /v3/proposal-search` can filter on such keys with `filter[<key>]=<value>` for the keys tested. The client exposes a typed way to attach the application's `generation_id` on create and to search by it ([server-architecture.md](server-architecture.md) §8). The mapper owns the key name; features pass the id, not the wire shape. The adapter's fixture tests cover the specific keys the application relies on; nothing broader is assumed about which keys or value shapes are filterable.
+- Correlation metadata: the proposal `data` object accepts app-owned metadata, and runtime testing confirmed that `GET /v3/proposal-search` can filter on such keys with `filter[<key>]=<value>` for the keys tested. The client exposes a typed way to attach the application's `generation_id` on create and to search by it ([04-server-architecture.md](04-server-architecture.md) §8). The mapper owns the key name; features pass the id, not the wire shape. The adapter's fixture tests cover the specific keys the application relies on; nothing broader is assumed about which keys or value shapes are filterable.
 - A test double (`createFakeProposalesClient()`) lives beside the real client so services and tools can be tested without HTTP. It implements the same interface, which is exported as a type from `index.ts`.
 
 ## 7. Agent tools and integrations
 
-Agent tools (see [agent-architecture.md](agent-architecture.md)) MUST call feature services or integration client methods. A tool MUST NOT contain `fetch`, construct URLs, or hold credentials. The tool shapes the result for the model; the client shapes the result for the application. Two different responsibilities, two different modules.
+Agent tools (see [08-agent-architecture.md](08-agent-architecture.md)) MUST call feature services or integration client methods. A tool MUST NOT contain `fetch`, construct URLs, or hold credentials. The tool shapes the result for the model; the client shapes the result for the application. Two different responsibilities, two different modules.
 
 ## 8. The AI provider is an integration
 
@@ -114,4 +114,4 @@ When an external system calls us:
 4. Write mappers and their tests.
 5. Export a client interface type and a fake.
 6. Only then write the service that uses it.
-7. Write `src/lib/<system>/README.md` describing how this application uses the system: endpoints used, configuration ownership, quirks, mapping and error-translation decisions ([documentation-principles.md](documentation-principles.md) §9). Vendor documentation is linked, not paraphrased.
+7. Write `src/lib/<system>/README.md` describing how this application uses the system: endpoints used, configuration ownership, quirks, mapping and error-translation decisions ([14-documentation-principles.md](14-documentation-principles.md) §9). Vendor documentation is linked, not paraphrased.

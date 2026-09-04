@@ -4,11 +4,11 @@
 - **Intent:** Organize code by feature with explicit runtime folders and a downward dependency direction.
 - **Applies when:** creating a feature; adding a folder; deciding whether code belongs in a feature, `src/lib/`, or `src/components/ui/`; importing across features.
 - **Does not imply:** creating every listed folder; a feature has only the folders it uses.
-- **Related:** [runtime-boundaries.md](runtime-boundaries.md), [documentation-principles.md](documentation-principles.md) §6
+- **Related:** [02-runtime-boundaries.md](02-runtime-boundaries.md), [14-documentation-principles.md](14-documentation-principles.md) §6
 
 Code is organized by **feature** (a vertical slice of one business capability), not by technical layer across the whole app. A global `frontend/` vs `backend/` split is prohibited because it hides which server code exists to serve which UI and encourages generic "utils" piles.
 
-Runtime boundaries inside a feature are still explicit: each feature has clearly client, clearly server, and clearly shared folders. See [runtime-boundaries.md](runtime-boundaries.md).
+Runtime boundaries inside a feature are still explicit: each feature has clearly client, clearly server, and clearly shared folders. See [02-runtime-boundaries.md](02-runtime-boundaries.md).
 
 ## 1. Default feature structure
 
@@ -20,11 +20,11 @@ src/features/<feature>/
 ├── server/         # Authority. Services, domain rules, Server Actions, agent tools. server-only.
 ├── schemas/        # Runtime contracts (Zod). Shared. Runtime-neutral.
 ├── types/          # Compile-time-only contracts where a schema is not warranted. Shared.
-├── README.md       # Durable feature documentation for meaningful features. Contract: documentation-principles.md §6
+├── README.md       # Durable feature documentation for meaningful features. Contract: 14-documentation-principles.md §6
 └── index.ts        # Optional public surface for other features. See §4.
 ```
 
-Do not create empty folders. A feature with no client interactivity has no `hooks/`. A feature that only calls Server Actions has no `client/`. A feature whose types are all inferred from schemas has no `types/`. A trivial feature has no `README.md`; a meaningful one has exactly one, describing current behavior only ([documentation-principles.md](documentation-principles.md) §6).
+Do not create empty folders. A feature with no client interactivity has no `hooks/`. A feature that only calls Server Actions has no `client/`. A feature whose types are all inferred from schemas has no `types/`. A trivial feature has no `README.md`; a meaningful one has exactly one, describing current behavior only ([14-documentation-principles.md](14-documentation-principles.md) §6).
 
 Larger `server/` folders MAY be subdivided by responsibility, and MUST be when the folder exceeds roughly a dozen files:
 
@@ -59,10 +59,10 @@ Rationale for `server/` being one folder rather than `api/`, `services/`, `domai
 
 | Kind of code | Location | Notes |
 |---|---|---|
-| External-system adapters (Proposales, AI provider) | `src/lib/<system>/` | One folder per external system. Reusable across features. `server-only`. See [integrations.md](integrations.md) |
+| External-system adapters (Proposales, AI provider) | `src/lib/<system>/` | One folder per external system. Reusable across features. `server-only`. See [07-integrations.md](07-integrations.md) |
 | Agent runtime primitives (tool definition helper, approval envelope, run loop) | `src/lib/agent/` | Feature-agnostic. Feature-specific agents and tools live in `features/<feature>/server/` |
 | Environment access | `src/lib/env/` | Only place that reads `process.env` |
-| Database adapter (does not exist today) | `src/lib/db/` if ever justified | `server-only`; feature persistence functions would live in `features/<x>/server/persistence/`. Introduction requires the decision record in [database-and-persistence.md](database-and-persistence.md) §14 |
+| Database adapter (does not exist today) | `src/lib/db/` if ever justified | `server-only`; feature persistence functions would live in `features/<x>/server/persistence/`. Introduction requires the decision record in [09-database-and-persistence.md](09-database-and-persistence.md) §14 |
 | Error taxonomy and serialization | `src/lib/errors/` | Shared between server and client (the DTO half is runtime-neutral) |
 | Logging | `src/lib/logger.ts` | Server-side structured logger; client uses `console` sparingly |
 | Shared presentational primitives (Button, Dialog, Field) | `src/components/ui/` | No domain knowledge, no data fetching, no feature imports |

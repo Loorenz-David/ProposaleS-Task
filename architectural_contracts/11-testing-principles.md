@@ -6,7 +6,7 @@
 - **Does not imply:** every change needs a Playwright test, or coverage numbers are a target.
 - **Related:** the contract governing the layer under test
 
-Tests exist to make the architecture checkable. Each layer in [feature-architecture.md](feature-architecture.md) has a test layer that proves its contract without depending on layers above it. The layering rule is: **if a thing can be tested one layer lower, test it there.**
+Tests exist to make the architecture checkable. Each layer in [03-feature-architecture.md](03-feature-architecture.md) has a test layer that proves its contract without depending on layers above it. The layering rule is: **if a thing can be tested one layer lower, test it there.**
 
 ## 1. Tooling
 
@@ -71,4 +71,4 @@ Evals are scored by code (schema and provenance checks), not by another model, w
 - Fixtures for external responses are refreshed deliberately, reviewed in the diff, and scrubbed of real customer data.
 - A bug fix comes with a test at the lowest layer that could have caught it.
 - Coverage numbers are not a target. Untested consequential paths (money, approval, execution) are a blocker; untested presentational details are not.
-- If application persistence is ever introduced, the additional expectations in [database-and-persistence.md](database-and-persistence.md) §16 apply.
+- If application persistence is ever introduced, the additional expectations in [09-database-and-persistence.md](09-database-and-persistence.md) §16 apply.

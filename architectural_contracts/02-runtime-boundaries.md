@@ -4,7 +4,7 @@
 - **Intent:** Keep browser and server runtimes explicit and defensible; define what may cross between them.
 - **Applies when:** creating any file reachable from a `"use client"` graph; adding `"use client"`, `server-only`, or `"use server"`; passing data between server and client; reading environment variables; choosing Node vs Edge.
 - **Does not imply:** every component is a Client Component, or every module needs a directive.
-- **Related:** [feature-architecture.md](feature-architecture.md), [server-architecture.md](server-architecture.md), [security-and-trust-boundaries.md](security-and-trust-boundaries.md)
+- **Related:** [03-feature-architecture.md](03-feature-architecture.md), [04-server-architecture.md](04-server-architecture.md), [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md)
 
 One repository, one Vercel deployment, two runtimes that must never be confused:
 
@@ -56,7 +56,7 @@ Rationale: without this guard, a refactor that moves an import one file up can s
 Rules:
 
 - Use `"use server"` only in files that export Server Actions, and only at the top of those files. Recommended location: `features/<feature>/server/actions.ts`.
-- Every export from a `"use server"` file is a public network endpoint. Such a file MUST export only async functions intended to be called from the client, and each function MUST validate its input and check authorization ([server-architecture.md](server-architecture.md) §3).
+- Every export from a `"use server"` file is a public network endpoint. Such a file MUST export only async functions intended to be called from the client, and each function MUST validate its input and check authorization ([04-server-architecture.md](04-server-architecture.md) §3).
 - Never add `"use server"` to a service, domain, or integration module "to make it server-side". Those modules are server-side because they are only imported by server code and carry `server-only`. Adding `"use server"` there would expose every export as an endpoint.
 
 ## 5. Import reachability
@@ -109,8 +109,8 @@ Data crossing from server to client (Server Component props, Server Action argum
 
 Consequences:
 
-- Server Actions MUST return a discriminated result (`{ ok: true, data } | { ok: false, error: ErrorDto }`) rather than throwing for expected failures. See [server-architecture.md](server-architecture.md) §6.
-- Data returned to the client MUST be explicitly shaped (a "view DTO"), never the raw object returned by an integration. See [data-contracts-and-validation.md](data-contracts-and-validation.md) §7.
+- Server Actions MUST return a discriminated result (`{ ok: true, data } | { ok: false, error: ErrorDto }`) rather than throwing for expected failures. See [04-server-architecture.md](04-server-architecture.md) §6.
+- Data returned to the client MUST be explicitly shaped (a "view DTO"), never the raw object returned by an integration. See [06-data-contracts-and-validation.md](06-data-contracts-and-validation.md) §7.
 - Anything the client sends back is untrusted input and MUST be re-validated on the server, even if the client validated it first.
 
 ## 7. Enforcement
@@ -119,7 +119,7 @@ The boundary is enforced by three layers, in order of strength:
 
 1. **Build**: `server-only` on every authority module.
 2. **Lint**: an ESLint `no-restricted-imports` (or equivalent boundary plugin) rule that forbids the "MUST NOT" edges in §5 and forbids `process.env` outside `src/lib/env/`. This rule MUST be added when the app is scaffolded.
-3. **Review**: the [decision-checklist.md](decision-checklist.md) question "Does this dependency direction violate the runtime boundary?"
+3. **Review**: the [13-decision-checklist.md](13-decision-checklist.md) question "Does this dependency direction violate the runtime boundary?"
 
 Framework inference (Next.js deciding what is server or client based on where a file is imported) is treated as a **safety net**, not the design. Every boundary MUST be readable from the file itself: the directive at the top, the `server-only` import, or the folder it lives in.
 
@@ -131,10 +131,10 @@ Framework inference (Next.js deciding what is server or client based on where a 
   - `src/lib/env/client.ts` — parses only `NEXT_PUBLIC_*` variables. These are inlined into the client bundle at build time and are therefore **public by definition**. A value that must not be public MUST NOT be `NEXT_PUBLIC_*`.
 - `.env.example` MUST be committed and list every variable the application reads, with empty values and a one-line comment each. `.env` and `.env.local` MUST be ignored.
 - Current server variables: `PROPOSALES_API_KEY` (secret), `PROPOSALES_COMPANY_ID` (configuration, not secret, still server-only because it has no client use). Adding a variable means adding it to the schema, to `.env.example`, and to the Vercel project.
-- Secrets MUST NOT appear in logs, error messages, error `details`, URLs, or client-visible state. See [security-and-trust-boundaries.md](security-and-trust-boundaries.md).
+- Secrets MUST NOT appear in logs, error messages, error `details`, URLs, or client-visible state. See [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md).
 
 ## 9. Vercel-specific notes that affect architecture
 
 - Route Handlers and Server Actions run as serverless or edge functions. Module-level state is not shared across invocations and MUST NOT be used as a cache or a store of record.
 - Prefer the Node.js runtime for anything that touches integrations or agents. Do not opt a route into the Edge runtime unless its full dependency graph is verified edge-compatible; `server-only` modules that use Node APIs will break there.
-- Long-running agent work must respect function duration limits. Design agent runs to be resumable or bounded rather than assuming unlimited execution time. See [agent-architecture.md](agent-architecture.md) §9.
+- Long-running agent work must respect function duration limits. Design agent runs to be resumable or bounded rather than assuming unlimited execution time. See [08-agent-architecture.md](08-agent-architecture.md) §9.

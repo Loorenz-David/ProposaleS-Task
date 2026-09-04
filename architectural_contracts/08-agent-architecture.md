@@ -4,7 +4,7 @@
 - **Intent:** Server-only agents with explicit, kinded tools; consequential mutations pass through human approval and execute deterministically.
 - **Applies when:** adding or changing prompts, tools, agent runs, prepared actions, approval or execution flows, provider usage, or UI that renders model output.
 - **Does not imply:** a feature involves a model, or durable audit storage is required.
-- **Related:** [server-architecture.md](server-architecture.md), [integrations.md](integrations.md), [security-and-trust-boundaries.md](security-and-trust-boundaries.md), [database-and-persistence.md](database-and-persistence.md) only if durable records are introduced
+- **Related:** [04-server-architecture.md](04-server-architecture.md), [07-integrations.md](07-integrations.md), [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md), [09-database-and-persistence.md](09-database-and-persistence.md) only if durable records are introduced
 
 This application runs AI agents that read business data, prepare actions, and, after human approval, cause mutations in an external commercial system. The model is a reasoning component inside a deterministic application. It is never the application itself.
 
@@ -39,7 +39,7 @@ src/features/<feature>/server/
     └── execute-approved-proposal-draft.ts   # deterministic execution; no model
 ```
 
-The AI provider adapter is `src/lib/ai/` ([integrations.md](integrations.md) §8).
+The AI provider adapter is `src/lib/ai/` ([07-integrations.md](07-integrations.md) §8).
 
 ## 3. Tool contract
 
@@ -66,7 +66,7 @@ Rules:
 - `description` states what the tool does, when to use it, and what it does not do. It is the model's only documentation.
 - `execute` calls a service or an integration client. It contains no business rules and no HTTP.
 - `output` is **shaped for the model**: the fields needed to reason, with ids to reference and short human-readable summaries. Bounded lists, truncated text with an explicit `truncated: true`, no raw upstream objects. Rationale: large raw payloads waste context, leak fields the model should not see, and invite the model to echo internal identifiers as facts.
-- Tools MUST NOT accept URLs, file paths, or raw query fragments that the runtime would fetch or execute. See [security-and-trust-boundaries.md](security-and-trust-boundaries.md) §8.
+- Tools MUST NOT accept URLs, file paths, or raw query fragments that the runtime would fetch or execute. See [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) §8.
 - `ctx` carries: caller identity (when the app has one), `traceId`, `runId`, remaining budget, and the `companyId` scope. The tool never widens scope beyond `ctx`.
 
 ### Tool kinds
@@ -158,7 +158,7 @@ Rules:
 - The executing service receives `ApprovedAction` and calls the integration client with a mapper. If the payload does not validate, execution fails; nothing "fixes" it.
 - After execution, the result is shown to the human with a link or reference into the external system. The final consequential step (sending, signing, invoicing) is performed by the human in that system unless a feature plan explicitly and deliberately automates it, in which case that automation is itself an approved mutation.
 - **Integrity invariant.** The system MUST preserve the integrity of the transition from agent-prepared action to human-reviewed action to executed mutation. For a consequential mutation: (1) the model may reason and prepare structured business data; (2) the human may review and correct it; (3) the human explicitly approves the resulting payload; (4) the server validates the exact approved payload; (5) the mutation executes deterministically from that payload; (6) no model regenerates, reinterprets, or silently modifies the approved payload before execution. This invariant is about the **flow within a request sequence**, not about storage.
-- **Durable audit storage is not required** for every HITL interaction. In the MVP, prepared-action state MAY live in transient application or client state; the `PreparedAction`, `ApprovedAction`, and `ExecutionResult` shapes above are serialization contracts, not tables. Durable traceability MAY be introduced when product, security, compliance, debugging, or operational requirements justify it, through the decision record in [database-and-persistence.md](database-and-persistence.md) §14. A database is never introduced merely to satisfy HITL terminology.
+- **Durable audit storage is not required** for every HITL interaction. In the MVP, prepared-action state MAY live in transient application or client state; the `PreparedAction`, `ApprovedAction`, and `ExecutionResult` shapes above are serialization contracts, not tables. Durable traceability MAY be introduced when product, security, compliance, debugging, or operational requirements justify it, through the decision record in [09-database-and-persistence.md](09-database-and-persistence.md) §14. A database is never introduced merely to satisfy HITL terminology.
 - The ids in these structures (`runId`, `preparedActionId`, `generation_id`) exist so that logs and external metadata can be correlated when needed; correlation through logs is sufficient for the MVP.
 
 ## 7. Prompts
@@ -183,4 +183,4 @@ Rules:
 
 ## 10. Observability
 
-Every run emits structured log events with `runId`, `traceId`, tool names, durations, token counts, and outcomes. Logs are the MVP's traceability mechanism; they are operational records, not a business ledger ([database-and-persistence.md](database-and-persistence.md) §13). Logs contain **ids and shapes**, not prompt bodies, tool arguments with personal data, or model output text, unless a dedicated, redacted debug mode is explicitly enabled in a non-production environment.
+Every run emits structured log events with `runId`, `traceId`, tool names, durations, token counts, and outcomes. Logs are the MVP's traceability mechanism; they are operational records, not a business ledger ([09-database-and-persistence.md](09-database-and-persistence.md) §13). Logs contain **ids and shapes**, not prompt bodies, tool arguments with personal data, or model output text, unless a dedicated, redacted debug mode is explicitly enabled in a non-production environment.

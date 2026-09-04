@@ -4,9 +4,9 @@
 - **Intent:** Keep components declarative, orchestration in hooks, and authority off the client.
 - **Applies when:** adding or changing components, hooks, forms, async state, error and loading rendering, interaction or accessibility behavior.
 - **Does not imply:** a data-fetching or state library; none is part of the contract.
-- **Related:** [runtime-boundaries.md](runtime-boundaries.md), [data-contracts-and-validation.md](data-contracts-and-validation.md), [agent-architecture.md](agent-architecture.md) §6
+- **Related:** [02-runtime-boundaries.md](02-runtime-boundaries.md), [06-data-contracts-and-validation.md](06-data-contracts-and-validation.md), [08-agent-architecture.md](08-agent-architecture.md) §6
 
-The browser runtime owns **interaction**: rendering, input, view state, optimistic feedback, and calling the server. It owns nothing authoritative. See [runtime-boundaries.md](runtime-boundaries.md).
+The browser runtime owns **interaction**: rendering, input, view state, optimistic feedback, and calling the server. It owns nothing authoritative. See [02-runtime-boundaries.md](02-runtime-boundaries.md).
 
 ## 1. Two kinds of client code
 
@@ -79,7 +79,7 @@ No data-fetching or global state library is part of the contract. If one is intr
 ## 6. Errors, loading, retry
 
 - Loading: represent per operation, via the flow state union, and render with dedicated components (`<Skeleton>`, `<Spinner>`) from `src/components/ui/`. Use `loading.tsx` and `Suspense` for route-level loading of Server Components.
-- Errors: the client receives `ErrorDto` (see [server-architecture.md](server-architecture.md) §6). Hooks map `code` to UI behavior; components render `message`. Components MUST NOT invent messages for known codes; they MAY add a generic fallback for unknown codes.
+- Errors: the client receives `ErrorDto` (see [04-server-architecture.md](04-server-architecture.md) §6). Hooks map `code` to UI behavior; components render `message`. Components MUST NOT invent messages for known codes; they MAY add a generic fallback for unknown codes.
 - Retry: offered only when `retryable` is true (integration timeouts, rate limits). Validation errors are never "retried"; they are corrected. Retry re-invokes the same intent with the same input and idempotency key.
 - Route-level failures use `error.tsx` boundaries per route segment. Boundaries render, log a client-side breadcrumb, and offer navigation; they do not attempt recovery logic.
 - Never swallow an error into a generic "Something went wrong" when a specific `ErrorDto` is available.
@@ -87,9 +87,9 @@ No data-fetching or global state library is part of the contract. If one is intr
 ## 7. Accessibility and predictable interaction
 
 - Every interactive element is a native control (`button`, `a`, `input`, `select`) or a `src/components/ui/` primitive built on one. No click handlers on `div`s.
-- Every form control has a label. Every async action has a visible pending state and disables re-submission while pending. For consequential mutations this is the first line of duplicate protection ([server-architecture.md](server-architecture.md) §8), so it is required, not cosmetic.
+- Every form control has a label. Every async action has a visible pending state and disables re-submission while pending. For consequential mutations this is the first line of duplicate protection ([04-server-architecture.md](04-server-architecture.md) §8), so it is required, not cosmetic.
 - Focus is managed on route change, dialog open/close, and after an action completes or fails (focus the error summary or the next logical control).
-- Destructive or consequential actions (anything that ends in an external system) require an explicit confirmation step that shows **the exact data** to be sent. This is the same review surface the agent lifecycle uses ([agent-architecture.md](agent-architecture.md) §6).
+- Destructive or consequential actions (anything that ends in an external system) require an explicit confirmation step that shows **the exact data** to be sent. This is the same review surface the agent lifecycle uses ([08-agent-architecture.md](08-agent-architecture.md) §6).
 - Keyboard operation must work for every flow. Colors are never the only carrier of state.
 - Interaction must be predictable: the same input in the same state yields the same visible result. No hidden auto-submits, no actions triggered by hover alone, no silent background mutations.
 
@@ -102,4 +102,4 @@ No data-fetching or global state library is part of the contract. If one is intr
 
 ## 9. Components that render agent output
 
-Anything a model produced is displayed as **proposed** until a human approves it. Components rendering agent-prepared actions MUST show every consequential field (recipients, quantities, prices, dates, obligations) as editable review data, MUST visually distinguish model assumptions from user-provided facts, and MUST route approval through the approval action, never through a generic "save". Details in [agent-architecture.md](agent-architecture.md).
+Anything a model produced is displayed as **proposed** until a human approves it. Components rendering agent-prepared actions MUST show every consequential field (recipients, quantities, prices, dates, obligations) as editable review data, MUST visually distinguish model assumptions from user-provided facts, and MUST route approval through the approval action, never through a generic "save". Details in [08-agent-architecture.md](08-agent-architecture.md).
