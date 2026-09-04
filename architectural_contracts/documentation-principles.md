@@ -75,6 +75,7 @@ A plan is not documentation of implemented behavior. An intention is not a speci
 | Environment variables: name, purpose, required, server-only vs public | root `README.md` "Environment", kept consistent with `.env.example` and `src/lib/env/` | links; never a second list |
 | Runtime boundaries, feature layout, server/client rules, validation, security | the matching contract in `architectural_contracts/` | links |
 | Which contracts apply to a given task, and their applicability | [implementation-contract-guide.md](implementation-contract-guide.md) | contracts carry a matching applicability block; nothing else lists applicability |
+| How agents are made to consult the guide (bootstrap behavior) | `agent-skills/policy/architecture-context-policy.md` | `CLAUDE.md`, `AGENTS.md`, and the two `SKILL.md` adapters only point to it |
 | Agent safety and human-in-the-loop principles | [agent-architecture.md](agent-architecture.md) | feature READMEs state feature-specific invariants and link |
 | Persistence rules and the no-database decision | [database-and-persistence.md](database-and-persistence.md) | links |
 | Resolved architecture decisions (summary) | [README.md](README.md) "Resolved decisions" | an ADR only when rationale exceeds a table row; the row links to it |

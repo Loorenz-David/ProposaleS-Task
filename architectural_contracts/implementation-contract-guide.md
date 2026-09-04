@@ -1,6 +1,6 @@
 # Implementation Contract Guide
 
-**Role:** the routing layer between an implementation intent and this repository's normative engineering contracts. Read this first; it tells you which contracts to read next. It is a set of descriptions and decision rules for a coding agent, planner, or reviewer. It performs no automatic retrieval, injection, or enforcement.
+**Role:** the routing layer between an implementation intent and this repository's normative engineering contracts. Read this first; it tells you which contracts to read next. Agents reach this guide through the Architecture Context policy (`agent-skills/policy/architecture-context-policy.md`), which `CLAUDE.md` and `AGENTS.md` invoke on every run; the policy owns *when* to route, this guide owns *where*. It is a set of descriptions and decision rules for a coding agent, planner, or reviewer. It performs no automatic retrieval, injection, or enforcement.
 
 The [README.md](README.md) is the human-readable map and holds precedence, scaffold decisions, and resolved decisions. This guide is the operational counterpart: how to go from "what am I changing" to "which contracts govern that change".
 

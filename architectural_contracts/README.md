@@ -23,7 +23,7 @@ One repository, one deployment unit, two runtimes. The browser renders and coord
 
 ## Start here
 
-Implementation, planning, and review agents read [implementation-contract-guide.md](implementation-contract-guide.md) first. It is the routing layer from "what am I changing" to "which contracts apply", so that a task loads the contracts it needs and not the whole folder. This README is the human-readable map; the guide is the operational protocol. They link to the same documents and do not duplicate each other.
+Implementation, planning, and review agents read [implementation-contract-guide.md](implementation-contract-guide.md) first. Reading it is mandatory bootstrap behavior for Claude Code and Codex through the shared Architecture Context policy in [`agent-skills/policy/architecture-context-policy.md`](../agent-skills/policy/architecture-context-policy.md), auto-loaded via `CLAUDE.md` and `AGENTS.md`. It is the routing layer from "what am I changing" to "which contracts apply", so that a task loads the contracts it needs and not the whole folder. This README is the human-readable map; the guide is the operational protocol. They link to the same documents and do not duplicate each other.
 
 ## Index
 
@@ -89,6 +89,11 @@ Decisions that were open questions and are now closed. Reopening one requires a 
 ```
 .
 ├── README.md                       # Entry point and map of the repository (documentation-principles.md §5)
+├── CLAUDE.md                       # Claude Code bootstrap: invokes the Architecture Context policy on every run
+├── AGENTS.md                       # Codex bootstrap: same guarantee
+├── agent-skills/                   # Shared agent policies (authoritative behavior); see agent-skills/README.md
+├── .claude/skills/                 # Claude adapters to shared policies
+├── .codex/skills/                  # Codex adapters to shared policies
 ├── api-documentation/proposales/   # Vendored Proposales docs and openapi.json (reference, not source)
 ├── architectural_contracts/        # This folder
 ├── docs/                           # Intentions, implementation plans, decisions, investigations (created on first need)

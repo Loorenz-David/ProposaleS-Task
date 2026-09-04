@@ -24,6 +24,7 @@ The rules that will govern that flow are already fixed in [architectural_contrac
 | [api-documentation/proposales/](api-documentation/proposales/README.md) | Read-only snapshot of the official Proposales documentation and OpenAPI spec. Refreshed by script, never hand-edited. |
 | [scripts/update-proposales-api-docs.sh](scripts/update-proposales-api-docs.sh) | Refreshes that snapshot. |
 | `.env.example` | Names the environment variables the application will read, with empty values. |
+| [agent-skills/](agent-skills/README.md) | Shared agent policies. `CLAUDE.md` and `AGENTS.md` bootstrap the Architecture Context policy for Claude Code and Codex; `.claude/skills/` and `.codex/skills/` hold the platform adapters. |
 
 ## Architecture in three sentences
 
