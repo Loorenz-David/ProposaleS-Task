@@ -57,10 +57,15 @@ npx playwright install chromium   # once, for end-to-end tests
 
 All variables are read by server code only. Nothing is exposed to the browser.
 
-| Variable | Purpose | Required | Kind |
-|---|---|---|---|
-| `PROPOSALES_API_KEY` | Bearer token for the Proposales API | yes | server-only secret |
-| `PROPOSALES_COMPANY_ID` | The single Proposales company this deployment operates on | yes | server-only configuration |
+| Variable | Purpose | Required | Kind | Safe example |
+|---|---|---|---|---|
+| `PROPOSALES_API_KEY` | Bearer token for the Proposales API | yes | server-only secret | `test-placeholder-not-a-key` |
+| `PROPOSALES_COMPANY_ID` | The single Proposales company this deployment operates on | yes | server-only configuration | `1` |
+| `PROPOSALES_EDITOR_ORIGIN` | Exact HTTPS origin for human-facing proposal editor URLs | yes | server-only configuration | `https://proposales.example` |
+| `AI_PROVIDER` | Provider selected for AI generation | yes | server-only configuration | `anthropic` |
+| `AI_MODEL` | Provider-specific model identifier | yes | server-only configuration | `test-placeholder-model` |
+| `ANTHROPIC_API_KEY` | Anthropic credential when Anthropic is selected | conditional | server-only secret | `test-placeholder-not-a-key` |
+| `OPENAI_API_KEY` | OpenAI credential when OpenAI is selected | conditional | server-only secret | `test-placeholder-not-a-key` |
 
 Copy `.env.example` to `.env` and fill in the values. `.env` is ignored by git.
 

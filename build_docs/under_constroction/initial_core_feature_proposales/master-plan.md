@@ -57,7 +57,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 
 | # | Phase | Plan file | State | Date | Actor | Note |
 |---|---|---|---|---|---|---|
-| 1 | Repository topology and environment | `plans/phase-01-topology-and-env.md` | `PROMPT_READY` | 2026-09-05 | coordinator | 5 criteria; **projection waived** — §3 marks phase 1 waivable and it touches no silent-failure mechanism: the env module's only failure mode is a load-time crash, which is loud by construction (charter rule 6) |
+| 1 | Repository topology and environment | `plans/phase-01-topology-and-env.md` | `IMPLEMENTED` | 2026-09-05 | Codex | 5 criteria; 17 rows; 6 named mutations; 7 files / 24 tests green; checkpoint pending review |
 | 2 | Errors, logger, shared value shapes | `plans/phase-02-errors-logger-values.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
 | 3 | Proposales adapter: transport, error translation, content read | `plans/phase-03-proposales-transport-and-content.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
 | 4 | Proposales adapter: create, recovery search, read-back, Applied Pricing | `plans/phase-04-proposales-proposals.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |

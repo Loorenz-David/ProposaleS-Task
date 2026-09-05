@@ -1,7 +1,7 @@
 ---
 plan: 1
 phase: Repository topology and environment
-state: NOT_STARTED
+state: IMPLEMENTED
 date: 2026-09-05
 author: implementation-planner round 1
 ---
@@ -78,3 +78,15 @@ Criteria: 5 (C1–C5), 17 rows (a table line is one row; a lettered span counts 
 ## Review log
 
 *(append-only; implementer and reviewer)*
+
+### Implementer round 1 — 2026-09-05
+
+- Built the server-only environment boundary, node/jsdom Vitest projects, suite-wide placeholder environment and offline fetch guard, boundary lint rules, seven-variable `.env.example`, and root README environment table.
+- Verified the pre-existing `server-only` dependency instead of reinstalling it: resolved version `0.0.1` in `package-lock.json`; `package.json` and `package-lock.json` were not modified by this phase.
+- Vitest 5 accepted inline `test.projects`; no workspace fallback or master-plan amendment was needed. The jsdom project includes the existing `.ts` component test as well as `.tsx` tests so the baseline suite is not silently narrowed.
+- Judgment: `test/setup/node.ts`, its test, and the pre-existing `playwright.config.ts` are explicit test/tooling exceptions to the `process.env` lint guard. The application boundary remains restricted, and C3(a) proves a planted feature file reddens.
+- Baseline before production edits: `npx vitest run src/lib/env/server.test.ts test/setup/node.test.ts` could not execute rows because the new module and setup file were absent (2 failed suites, 0 tests); this is recorded rather than reconstructed.
+- Targeted phase result: 17 tests passed. Full candidate result after retaining the baseline component test: 7 files, 24 tests passed. The final closing stamp is recorded in the implementer handoff.
+- Boundary lint probes all reddened and were deleted: client → `@/lib/ai` (`no-restricted-imports`); shared schema → `react` (`no-restricted-imports`); `src/lib` → `@/features/**` (`no-restricted-imports`); outside env → `process.env` (`no-restricted-properties`).
+- Named mutations MUT-01-1 through MUT-01-6 were each applied at the planned site, observed red, and reverted. MUT-01-6 reached the real endpoint after the guard assignment was removed and returned HTTP 401; the guard was restored immediately.
+- Documentation impact: the root README environment table was incomplete after the verified implementation, so it was updated. No feature or integration README exists yet and no other authoritative document became false.
