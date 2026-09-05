@@ -100,8 +100,8 @@ export function createProposalesHttp({
       ]);
       if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
 
-      const responseBody = await readResponseBody(response);
       if (!response.ok) {
+        const responseBody = await readResponseBody(response);
         throw fromUpstream({
           status: response.status,
           ...responseBody,
@@ -111,6 +111,7 @@ export function createProposalesHttp({
           kind: "http",
         });
       }
+      const responseBody = await readResponseBody(response);
       if (responseBody.parsedBody === undefined) {
         throw fromUpstream({
           status: response.status,
