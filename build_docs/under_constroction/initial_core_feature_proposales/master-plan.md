@@ -529,6 +529,42 @@ Each earned from this project's artifacts:
 12. **Two caller-held objects, never merged.** `ProposalWorkflowState` (authority) and `ConversationContext` (context) are siblings on `TurnResult`; neither schema admits the other (phase 10 C6). A future capability adds its own typed state (§6.9 forward principle); nobody adds a global one.
 13. **Checkpoint provenance is per cycle.** Before an implementer checkpoint, stage only that cycle's declared code/tests and any tracker/review-log edits it actually made; coordinator folds already present in the worktree are committed separately or named in the checkpoint handoff's full observed perimeter. A checkpoint never claims a narrower diff than it contains.
 
+### 9.2 Parallel frontend/backend coordination (owner direction, 2026-09-05)
+
+The Proposal Copilot is one eventual vertical capability, developed temporarily in two
+worktrees from the common checkpoint `d528ed9`: backend/domain work continues on `main`
+at `/Users/davidloorenz/Desktop/Developer/Proposales`; the production frontend port
+continues on `proposal-copilot-frontend` at
+`/Users/davidloorenz/Desktop/Developer/Proposales-frontend`. Periodic merges of `main`
+into the frontend branch replace temporary frontend seams with landed contracts; the
+frontend branch ultimately merges back into `main`. These are development streams, not
+separate applications or architectures.
+
+- **Canonical feature ownership:** `src/features/proposal-preparation/` is the sole
+  feature root for this capability. Later backend/domain work that is genuinely
+  proposal-specific may add real files there. Do not introduce competing roots such as
+  `src/features/proposals/`, `src/features/copilot/`, or `src/features/proposal-agent/`
+  unless an explicit later architectural decision replaces this one.
+- **No speculative topology:** the frontend stream creates folders under that feature
+  only when real frontend-owned files require them; the same no-empty-folder rule binds
+  all backend/domain phases (03 §1).
+- **Current integration ownership stays put:** starting frontend work does not alter
+  backend phase plans. In particular, Phase 4 remains `src/lib/proposales/`; reusable
+  external-system and runtime infrastructure remains outside the feature where planned,
+  including `src/lib/proposales/`, `src/lib/ai/`, and `src/lib/agent/` (03 §3).
+- **Temporary frontend shapes are not backend contracts:** presentation View Models,
+  fixtures, adapters, and page-lifetime UI runtime state exist to enable the parallel
+  production port. They do not define commercial or workflow semantics; frontend code
+  adapts as authoritative backend/domain contracts land.
+- **Truth boundary is unchanged:** `ProposalWorkflowState` is the authoritative
+  structured workflow/proposal truth; `ConversationContext` is linguistic continuity;
+  frontend runtime state is presentation/page-lifetime interaction mechanics. Temporary
+  VMs are a presentation boundary, never business truth.
+- **Coordination threshold:** do not rewrite existing backend phase plans merely because
+  this frontend stream exists. Surface an owner decision only if a later backend phase
+  would conflict with this canonical ownership, the established runtime/server boundary,
+  or an already implemented frontend/backend integration seam.
+
 ## 10. Environment topology (verified 2026-09-05; if reality disagrees, update this section)
 
 ### 10.1 Runtime and tools
