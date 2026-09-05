@@ -67,6 +67,7 @@ From phase 1 review round 1. Both are plan-level hazards, not phase-1 defects; t
 
 1. **Every `*.test.ts(x)` in the tree is claimed by exactly one Vitest project** (review N2, demonstrated: a failing test outside all include globs was collected by neither project and `vitest list` reported as if it did not exist). Needs its own planted-violation row per the C2(e) pattern — a test file at an unclaimed path must make the criterion red.
 2. **No file containing the `"use client"` directive imports a restricted module** (review F2). ESLint core rules cannot select on the directive, and a blanket `src/app/**` restriction would be wrong because contract 03 §4 permits `src/app/` Server Components to import feature `server/` modules. `scanTree` is the right instrument. **Deprioritized by the owner (MVP scoping, 2026-09-05): this project builds no UI, so nothing is reachable today.** Implement only if a UI phase is ever added; recorded here so the reasoning is not re-derived.
+3. **The tracked `tsconfig.tsbuildinfo` must not make routine verification stamps appear dirty** (phase-4 review N4). Resolve it in the dedicated repository-hygiene change already registered as master follow-up 8; do not silently restore or ignore it within a feature phase.
 
 ## Notes
 
