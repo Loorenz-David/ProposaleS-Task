@@ -157,6 +157,7 @@ brief → understand intent → missing core info? ── no ───┤
 Each stage is one bounded server invocation that receives the current workflow state from the caller and returns the next state (02 §9, 08 §9). The server keeps nothing between turns. Consequences the planner must honor:
 
 - The caller round-trips the workflow state (brief, clarification history, current proposition, generation ID, and, once a draft exists, the **draft reference**: the Proposales uuid and editor URL). The server re-validates it on every turn; a tampered or stale state is indistinguishable from a human edit and is treated as such, because the human is the authority anyway.
+- Beside the workflow state, the caller round-trips a **conversation context**: a bounded window of the human's free-text instructions and the application's rendered summaries of each result, held for the page's lifetime only and lost on reload by design. It exists so the human can refer to earlier turns ("use the second one"). It is never authority: every resolved reference is written into the workflow state with provenance, and approval and execution never read it. Its contract is §17A.17.
 - There is no server-side memory of "already executed" between two requests. Cross-request duplicate protection is the draft reference in the state when the caller has it, and the Proposales-side recovery search when it does not (§13).
 
 ## 6. Behavioral invariants
@@ -202,6 +203,7 @@ Conceptual definitions with **state ownership** (who writes the value, what may 
 | **Applied Pricing** | The totals (with and without tax), currency, tax options, and per-block unit values and VAT split that Proposales actually applied to the created or recovered draft, read back after creation and mapped without arithmetic. Reviewer information for the handoff; never an input to execution. | Proposales, read by the server | the application (no derivation, no rounding, no recomputation) |
 | **Proposales Draft Result** | Application-owned result of execution: the created (or recovered) draft's identity and editor URL, whether it was newly created or recovered, and the Applied Pricing when the read-back succeeded (marked unavailable, with the reason, when it did not). | server | — |
 | **Draft Reference** | The Proposales uuid and editor URL of the draft created for this workflow, carried in the workflow state from the first successful create onward. Its presence makes the workflow terminal: further approvals are refused (§11.3, §13). | server, once | anyone |
+| **Conversation Context** | Bounded, caller-held record of prior human instructions and application-rendered assistant summaries for one workflow; linguistic continuity for resolving references. Not persisted. | human (instructions); system (summaries) | never an input to approval or execution; never a provenance source |
 
 ## 8. Information classes, clarification, and provenance
 
@@ -245,7 +247,7 @@ Provenance sources, kept deliberately coarse:
 |---|---|---|
 | `brief` | stated in the brief text (with a reference to the supporting passage where practical) | yes |
 | `proposales_content` | taken from a content item returned by a read tool (with the content identity) | yes |
-| `human` | supplied through a clarification answer or a manual edit | yes |
+| `human` | supplied through a clarification answer, a manual edit, or — with a reference to the turn and a verbatim quote — the human's current revision instruction | yes |
 | `inferred` | produced by the model | **no**, unless mechanically derivable from sourced values (for example a total computed from sourced quantity and a sourced unit value); a mechanical derivation names its inputs |
 
 Validation of a proposition rejects any consequential field whose provenance is `inferred` without a derivation. This rule lives in schema/domain code, not only in the prompt (08 §7).
@@ -337,7 +339,7 @@ A separate content-creation agent that proposes or creates missing content when 
 ### 12.1 Proposales
 
 - One server-only client module owns authentication, `company_id` injection (server-side configuration; features never pass it), timeouts, response validation, mapping, and error translation (07 §1–§6).
-- Operations this feature needs, named by domain purpose and mapped to the public endpoints in the evidence doc: list/search content, get content by variation id, create proposal draft, search proposals by generation ID, and (for result enrichment, if the planner chooses) get proposal by uuid.
+- Operations this feature needs, named by domain purpose and mapped to the public endpoints in the evidence doc: list/search content, get content by variation id, create proposal draft, search proposals by generation ID, get company (currency and tax mode; used only to warn when a stated currency differs from the company's, never written), and (for result enrichment, if the planner chooses) get proposal by uuid.
 - Creation uses **one** `POST /v3/proposals` with the complete approved payload (company id, language, title, description, recipient when set, selected blocks by `content_id` with `quantity` and `optional`, application metadata in `data`). In v1 the create request **never** carries `unit_value_*`, `package_split`, block or proposal `currency`, or `tax_options`; the content library and company configuration supply them (§9.2). No create-then-patch sequence is expected; a patch would be used only if implementation evidence shows the single request cannot express the approved payload, and that would be surfaced.
 - The create response provides `uuid` and `url` only. Execution therefore follows the create (or a recovery hit) with **one `GET /v3/proposals/{uuid}`** to read the Applied Pricing: `value_without_tax` and `value_with_tax` (integer cents), `currency`, `tax_options`, and per block the four `unit_value_*` fields (cents), `quantity`, `optional`, and `package_split`. These are established response fields (evidence doc §4, §6, §8); the mapper converts them to the application's money representation without arithmetic. The same read yields `series_uuid` and `status` at no extra cost; including them in the result is a planning decision, not a scope change.
 - The read-back is a `read` operation on the execution path: it is idempotent, bounded, retryable, and never a model call. Its failure does not undo or mask a successful create (§11.3).
@@ -465,6 +467,485 @@ Observable outcomes that, measured true, mean this intention shipped. Every down
 | **M6** | Re-submitting an approval whose generation ID already matches a Proposales proposal returns that proposal flagged recovered with no create; every created or recovered result carries the Applied Pricing read from Proposales and mapped without arithmetic, or marks it unavailable without downgrading the creation; every Proposales or provider failure surfaces as a taxonomy error with no raw upstream body. | duplicate drafts; invented or computed money in the result; leaked vendor errors |
 | **M7** | The complete workflow (prepare, clarify, revise, approve, execute) runs green against a scripted fake model and a fake Proposales client; a run that exhausts its budget ends in clarification or failed; every run result carries provider, model, and token usage. | provider lock-in; unbounded loops; uncomparable cost |
 
+### 17.1 Appended by mechanism-inventory round 1 — **RATIFIED** (2026-09-05, by the owner, David)
+
+M1–M7 above are ratified and unchanged; nothing in this block restates or narrows them. The entries below register the invariants of the mechanism contracts in §17A. Each is a planner's trace target.
+
+Ratified as a post-ratification amendment to the ledger, on the surface in §21.2, recorded in §23 round 7. All eleven entries were ratified; none was cut. **M1–M19 are one ledger** from this point: a criterion's trace cell may cite any of them, and every entry must be served by at least one criterion row or recorded as a planning gap. M19 was added and ratified in round 8; M8–M18 in round 7.
+
+| ID | Objective (observable) | Defect family guarded | Contract |
+|---|---|---|---|
+| **M8** | A Generation ID is created on exactly the turn that receives no inbound workflow state, is byte-identical in every later state and in the created proposal's metadata, and an approval whose state carries a Draft Reference is refused with `conflict` **before** any envelope, completeness, or provenance check, with the fake Proposales client observing no create, no search, and no patch. | a regenerated identity producing a second draft; error-precedence drift making a criterion pass by fixture luck | §17A.2 |
+| **M9** | "No sourced value" is a representable value in the proposition, not a missing key; it survives a JSON round-trip unchanged; and it maps to an **omitted** key in the create request. No mapper path can emit `quantity`, `optional`, `unit_value_*`, `package_split`, block or proposal `currency`, or `tax_options` from an absent value. | silent defaulting; a placeholder read back as a sourced fact | §17A.5 |
+| **M10** | Provenance is structural: every proposition leaf carries its own source inside the leaf, `inferred` is **unrepresentable** on a consequential leaf (a fixture carrying it fails the schema parse, not a refinement), and `human` is the only mark of a human-set value. | a forgotten refinement; a second source of truth for "human-set" that can disagree with provenance | §17A.4 |
+| **M11** | A `human`-sourced leaf survives an agent revision unless the revision returned an explicit override request naming that leaf's path; an unauthorized attempt keeps the human value and records a warning, and an authorized override records a warning naming path, before, and after. | preservation enforced only by the prompt | §17A.9 |
+| **M12** | Over a fixture catalog **larger than the candidate cap**, the same query yields the same bounded, identically ordered candidate list on repeated runs, ties broken by variation id; match strength is a total function of an integer score with every threshold boundary enumerated; auto-selection as the recommended default requires `strong`. | ranking that silently depends on the vendor's list order; an unfalsifiable "bounded" claim | §17A.8 |
+| **M13** | Every money value in a created or recovered result equals the vendor's integer cents verbatim, including for a fixture whose stored totals are inconsistent with its unit values; the "unavailable" variant carries **no** money fields; the Applied Pricing mapper contains no arithmetic operator on a money field. | reconciliation of vendor numbers; zero rendered as unavailable | §17A.12 |
+| **M14** | The recovery search sends exactly `company_id` and `filter[<generation-id key>]` with `limit` at the documented maximum, re-verifies the returned `data` value on every row, and returns `conflict` on two or more verified matches. | the documented default `limit=1` hiding a duplicate; undocumented filter semantics trusted blind | §17A.11 |
+| **M15** | An exhausted wall-time, tool-call, or token budget ends the run in `clarification` or `failed` naming which budget was exhausted, never a partial proposition, and the run result still carries provider, model, and token usage. | a partial proposition presented as complete; failed runs reporting no cost | §17A.14 |
+| **M16** | No call into the AI SDK receives a string model id, `globalThis.AI_SDK_DEFAULT_PROVIDER` is never assigned, and a missing or unknown provider, model, or vendor key fails at configuration load rather than routing through the bundled gateway. | a run silently served by the Vercel AI Gateway — including Vercel OIDC authentication with no configured secret — making provider, model, and cost attribution false | §17A.15 |
+| **M17** | The workflow-state schema is strict; every turn re-parses the whole state; an extra or misspelled key fails loudly rather than being stripped; the editor URL is validated against the expected Proposales origin; a state over the size bound fails with a named validation error. | a stripped Draft Reference re-enabling a create; an oversized body failing as transport noise | §17A.3 |
+| **M18** | A clarification answer binds to a question id; a skip is an explicit value; an unanswered question leaves its information item `unresolved`, never `deferred_by_user`. | an omission recorded as a human decision | §17A.7 |
+| **M19** | A reference in a later human turn to an option the assistant presented earlier resolves to that option's content identity in the proposition with `proposales_content` provenance, and approval and execution operate from the workflow state alone. | conversation text treated as authority; a reference resolved to something never presented | §17A.17 |
+
+## 17A. Mechanism contracts (mechanism-inventory round 1)
+
+### 17A.0 What this section is, and how it binds
+
+This section is the round-1 mechanism inventory's delta. It deepens the sections it cites; it moves nothing on the ratification surface (§21.1) and adds no scope. Where §17A and an earlier section appear to disagree, the earlier section's *behavior* wins and the disagreement is a defect in this section.
+
+Three reading rules:
+
+1. **Wire names are binding. Internal names are illustrative.** Proposales request and response keys, the proposal-metadata key names (§17A.11), and the environment-variable names (§17A.15) are exact. Every other identifier here (`known`, `source`, `SourcedOrAbsent`, …) names a *shape*, and planning may rename it as long as the shape and its rules survive.
+2. **Every rule here is written so a test can make it fail.** Where a rule is a construction requirement ("the mapper cannot emit this field") rather than a check, the contract names the mutation that must turn its test red, because a guard that cannot fail is decoration (charter rule 15).
+3. **No adjectives.** Where an earlier section says "stable", "bounded", "ranked", "matching", or "without arithmetic", this section replaces the adjective with a per-type, per-field rule. If a mechanism below still reads as an adjective, it is unfinished.
+
+### 17A.1 Shared value shapes
+
+Everything else in §17A is built from four shapes. They exist so that absence, provenance, and money cannot each invent their own encoding.
+
+**Path.** A path is `string[]` — an array of segments, array indices as decimal strings (`["blocks","0","quantity"]`). One path vocabulary is used by validation errors (contract `06-data-contracts-and-validation.md` §8), the approval diff (§17A.10), and the provenance projection (§17A.4). No dotted-string paths anywhere; they are ambiguous over keys containing a dot.
+
+**Sourced\<T\>.** A leaf that has a value:
+
+```
+{ value: T, source: <one of the leaf's admissible sources>, ref?: Ref }
+```
+
+`ref` is **required** when `source = proposales_content` (it carries the content's `variation_id` as a string) and optional otherwise: for `brief` it MAY carry a quoted supporting passage (§8.3), for `human` it MAY carry the clarification question id or the edit turn. `ref` is never interpreted; it is reviewer and log material.
+
+**SourcedOrAbsent\<T\>.** A leaf that may have no sourced value:
+
+```
+{ known: true, value: T, source: …, ref?: Ref }  |  { known: false }
+```
+
+**`{ known: false }` is a value, not a missing key.** The field is *required* by the schema; a proposition in which the key is missing fails to parse. Rationale: JSON round-trips drop `undefined`, so if absence were encoded as a missing key, "the human deliberately set no quantity" and "a serializer ate the field" would be indistinguishable — and the second silently becomes the first. This is the single most load-bearing shape in §17A (M9).
+
+**Money.** `{ amountMinor: integer, currency: <ISO-4217, 3 uppercase letters> }`, per contract `06-data-contracts-and-validation.md` §6. `amountMinor` is an integer; a non-integer fails the parse rather than being rounded. Money is never constructed by arithmetic (§17A.12).
+
+### 17A.2 Workflow identity: Generation ID, proposition version, Draft Reference
+
+Deepens §5.2, §7, §11.3, §13. Ledger: **M8**.
+
+**Generation ID — form.** An RFC 4122 version 4 UUID in lowercase canonical 36-character hyphenated form. Validated by that exact pattern on every turn (§17A.3), not by "is a non-empty string".
+
+**Generation ID — who and exactly when.** The server creates it, once, in the prepare-from-brief service, and the creating turn is defined *mechanically*:
+
+```
+generationId = inboundState is absent ? newGenerationId() : inboundState.generationId
+```
+
+"The first turn" means **the turn that receives no inbound workflow state** — never a caller-supplied "isFirst" flag and never a heuristic over the brief. If an inbound state exists, its id is reused verbatim; there is no path that regenerates it. `newGenerationId` is injected as a dependency with a default (contract `04-server-architecture.md` §4) so tests are deterministic.
+
+**What makes two states the same workflow.** Equality of the Generation ID string, and nothing else. The brief text, the proposition version, `preparedAt`, and the proposition contents **do not** participate in workflow identity. Consequence, stated so nobody builds on the opposite assumption: a caller that copies a state has two states in one workflow, and both resolve against the same Proposales draft — by design (§13).
+
+**Proposition version.** A positive integer, `1` on the first proposition, incremented by exactly 1 by the server on every emitted proposition (agent revision or manual edit), computed from the inbound state. A caller-supplied version is not trusted for the increment. The version is **display and log material only**: no identity, approvability, recovery, or concurrency decision reads it. Stated explicitly because a monotonic counter in a caller-held state invites an optimistic-concurrency scheme that the no-database decision (§4) cannot support.
+
+**Draft Reference — when it becomes present.** At exactly one place: the executing service, after `POST /v3/proposals` returned 200 **and** its response parsed, or after a recovery search produced exactly one verified match. It is written into the returned state. Once present in an inbound state it is copied forward unchanged; there is no path that clears or overwrites it.
+
+**Terminality, mechanically.** On an approval turn the check order is fixed (§17A.13): the state is parsed, and then, **before the approval envelope is parsed and before any completeness or provenance check**, a present Draft Reference produces `conflict` carrying `{ proposalUuid, editorUrl }` — no create, no recovery search, no patch, no model call. The order is part of the contract, not an implementation detail: with any other order, an approval that is both terminal and malformed returns a different code, and criterion 21 would pass or fail on fixture luck.
+
+**Terminality is a property of the state, not of Proposales.** A caller that drops the Draft Reference reaches the recovery path (§13) instead of the conflict. That is the intended lost-response fallback and must not be "hardened" by a live lookup; hardening it would add a Proposales read to a path §11.1 forbids.
+
+### 17A.3 The caller-held workflow state
+
+Deepens §5.2, §16.2. Ledger: **M17**.
+
+**Serializable contract.** The state is plain JSON: no `undefined`, no `Date`, no `Map`, no class instances, no functions. Every timestamp inside it is an ISO 8601 UTC string (§17A.16).
+
+**Contents.** Generation ID; brief; the information-item registry with each item's resolution state (§17A.6); the clarification round, if one occurred (§17A.7); **exactly two propositions** — `preparedProposition` (the last one the server emitted) and `currentProposition` (that one plus any manual edits) — and the Draft Reference once it exists. The state carries **no version history**: two propositions, not a list. This is what makes the approval diff computable (§17A.10) while keeping the state bounded.
+
+**Parsed every turn, whole, strictly.** Every turn re-parses the entire state before doing anything else, including fields that turn does not use, because every turn returns the state and a silently dropped field is a silently lost fact. The state schema is **strict** (contract `06-data-contracts-and-validation.md` §3): an unknown or misspelled key fails with a path rather than being stripped. The reason is concrete: Zod's default strip would silently remove a misspelled `draftReference`, and a stripped Draft Reference re-enables a create — a duplicate draft produced by a typo.
+
+**Validated beyond shape**, without I/O: Generation ID pattern (§17A.2); Draft Reference `uuid` matched against the UUID pattern; Draft Reference `editorUrl` parsed as an absolute `https:` URL whose **origin equals the configured Proposales editor origin** (contract `10-security-and-trust-boundaries.md` §10 — an upstream-provided URL is validated against the expected origin before it is ever handed back to a human as a link).
+
+**Size bound.** The serialized state is bounded by a named constant (`MAX_WORKFLOW_STATE_BYTES`), checked at parse, failing with a dedicated `validation_error` reason. Without it a long revision chain silently exceeds the platform request-body limit and surfaces as transport noise rather than as a bounded, explainable failure. The brief cap and the per-block alternative cap (§17A.16, §17A.8) are set so that a conforming workflow cannot reach the state bound by ordinary use.
+
+**A state that parses but is stale is accepted** (§5.2). The reachable cases, enumerated, so none is handled by accident:
+
+| Stale case | Outcome |
+|---|---|
+| Draft Reference points at a proposal since archived or sent | approval refused with `conflict` naming that uuid; the application does **not** read the draft's live status (that read is not on the permitted execution path, §11.1) |
+| a selected `contentId` is no longer in the catalog | not detected at approval; the create fails at Proposales → `integration_error` (§17A.4 states this limit) |
+| proposition version lower than one previously emitted | accepted; the version decides nothing |
+| an older state replayed without the Draft Reference | recovery search hits → `recovered` (the designed path, §13) |
+| a Generation ID belonging to another workflow | accepted; recovery may return that workflow's draft, flagged `recovered`. It can never cause a second create for that id |
+
+**There is no signature, HMAC, or server-side nonce on the state**, and none is to be added: the application has no authentication (§11.3), the human is the authority (§5.2), and a signature would imply a tamper guarantee the deployment cannot make.
+
+### 17A.4 Provenance and consequential fields
+
+Deepens §8.3, §9.2. Ledger: **M10**. Serves **M1**.
+
+**Provenance is structural, not a side-map.** Every proposition leaf carries its own source *inside the leaf* (`Sourced` / `SourcedOrAbsent`, §17A.1). There is no `Record<path, source>` map that the validator walks.
+
+The reason is a specific silent failure: a validator that iterates a provenance map and checks each entry passes a consequential field that has **no entry at all**. Inverting it (enumerate the consequential paths from the value, demand an entry for each) fixes that hole but leaves a path list that must be kept in sync with the schema. Making the source part of the leaf removes both problems: a value cannot be written without its source, and "which paths are consequential" is answered by the leaf's type.
+
+§9.2's "provenance map" category is satisfied by a **derived flat projection** (`Array<{path, source, ref?}>`) computed from the proposition for display. The projection is never the authority and is never an input to validation.
+
+**Granularity is the leaf, never the object.** `recipient` as a whole has no source; each of its five fields does. A recipient whose email came from the brief and whose phone came from a human must not collapse to one source.
+
+**Three source policies. Every leaf carries exactly one; the assignment is total.**
+
+| Policy | Admissible sources | Applies to |
+|---|---|---|
+| `consequential` | `brief`, `proposales_content`, `human` | the fields enumerated below |
+| `catalog_verbatim` | `proposales_content` only | a selected block's reviewer-facing content title and description — copied from the candidate, never authored |
+| `presentational` | `brief`, `proposales_content`, `human`, `inferred` | everything else |
+
+**The consequential leaves, enumerated.** Derived from §8.3's prohibition list and contract `08-agent-architecture.md` §4, intersected with the fields v1's proposition actually has:
+
+| Leaf | Policy note |
+|---|---|
+| `recipient` (object-level `SourcedOrAbsent`) and each of `firstName`, `lastName`, `email`, `phone`, `companyName` | recipient identity |
+| `blocks[i].contentId` | identifier of an existing record; `brief` is **not** admissible — a brief cannot establish a variation id |
+| `blocks[i].quantity` | `proposales_content` is not admissible; content carries no quantity |
+| `blocks[i].optional` | consequential per §23 round 4; sources `brief`, `human` |
+| `commercialNotes[i].amount`, `.currency`, `.taxBasis` | stated price expectations; sources `brief`, `human` only |
+| `commercialAssumptions[i].statedValue` for kinds `deadline`, `term`, `scope_commitment` | sources `brief`, `human` only |
+| `emptyDraftConfirmation` | **`human` only** — a human act (§8.1), structurally unreachable by the agent |
+
+**Explicitly not consequential**, and therefore `inferred`-admissible: `language`, `title`, `descriptionNarrative`, `blocks[i].reviewerComment`, `alternatives[i].reason`, `agentRationale`, `warnings[i].text`, `assumptions[i].note`, and the **order** of `blocks`. Language is not on §8.3's prohibition list nor on contract 08 §4's, and §8.1 requires the agent to derive it — treating it as consequential would contradict the ratified "derive, then ask".
+
+**Required-to-create and consequential are orthogonal axes**, not a ranking. `language` and `title` are required-to-create and presentational; `blocks[i].quantity` is consequential and not required-to-create. §17A.6 gives the total rule.
+
+**How the schema rejects, and why it cannot be forgotten.** A consequential leaf's schema is a discriminated union on `source` whose members are exactly `brief | proposales_content | human` (plus `{known:false}` where absence is admissible). `inferred` is **not a member**, so a payload carrying it fails the union parse with a path — an absence from the union, not a `.refine()` that a later edit can drop. Named mutation the planner's criterion must record: *add `inferred` to the consequential source union in the schema module; the provenance test must redden.*
+
+**`derived` / "a mechanical derivation naming its inputs" has no reachable target in v1**, so the variant is **not in the v1 schema**. §8.3 admits `inferred` on a consequential field when the value is mechanically derived from sourced inputs; its example is a total computed from a sourced quantity and a sourced unit value. v1 writes no prices, computes nothing (invariant 17), and criterion 20 forbids the proposition from carrying any block price or total — so no consequential leaf exists that a derivation could target. Adding the variant later is a schema change with its own criteria. M1's text is unchanged and stays true; its derivation clause is simply vacuous in v1.
+
+**Stated limit: `contentId` is not verified against the live catalog at approval.** It is checked for form (positive int64) and source. Verifying membership would require a catalog read on the execution path, which §11.1 does not permit. A wrong or withdrawn id fails at `POST /v3/proposals` and surfaces as `integration_error`. This is a limit, not a gap to be closed inside this feature.
+
+**A `human` leaf's `ref` names exactly one of** the answered `questionId` (clarification), the `editTurn` (manual edit), or `{ turnId, quote }` where `turnId` is the current revision instruction's turn and `quote` occurs verbatim in it. The validator resolves each form; an unresolvable `human` ref is `model_output_invalid`. Prior conversation turns are not a valid target: history informs, it never sources. (Added round 8 with §17A.17.)
+
+### 17A.5 Absence, omission, and defaults
+
+Deepens §8.3 ("absence is not invention"), §9.2, §12.1. Ledger: **M9**. Serves **M1**, **M5**.
+
+**Four words, four layers, never interchangeable:**
+
+| Word | Layer | Meaning | Encoding |
+|---|---|---|---|
+| **absent** | proposition (domain) | the application has no sourced value | `{ known: false }` — a present field with a union variant |
+| **omitted** | wire (create request) | the key is not in the JSON body | the mapper does not add the key |
+| **default** | Proposales | what the vendor applies to an omitted key (`quantity` 1, `optional` false) | **never represented in our domain before creation** |
+| **unset** | proposition, recipient only | the human deliberately leaves the recipient for the editor (§9.2) | the recipient object at `{ known: false }` |
+
+The proposition **never stores `1` or `false` as a placeholder.** "Default" is a rendering derived from `{ known: false }` ("default — Proposales applies 1"), never a stored value, or the "default" the reviewer read would become a sourced fact on the next round-trip.
+
+**How the mapper is constructed so it cannot emit the field.** The block request object is assembled **only** from spreads of per-field helpers, each returning `{}` or `{ key: value }`:
+
+```
+{ content_id, type, ...q(block.quantity), ...o(block.optional) }
+     where  q(f) = f.known ? { quantity: f.value } : {}
+```
+
+There is no object literal that lists an optional key with a possibly-`undefined` value, and no `??`, `||`, or default parameter anywhere on this path. Relying on `JSON.stringify` dropping `undefined` is prohibited: it produces the right bytes by accident and cannot be mutation-tested. Named mutation: *change `q` to `f.known ? f.value : 1`; the omission test must redden.*
+
+**Price fields are unrepresentable, not merely unwritten** (criterion 16, "the mapper has no path that emits them"). The block request schema **does not declare** `unit_value_with_discount_without_tax`, `unit_value_with_discount_with_tax`, `unit_value_without_discount_without_tax`, `unit_value_without_discount_with_tax`, `package_split`, block `currency`, or proposal `currency` / `tax_options`, and the request schema is strict, so adding one fails at parse rather than at review.
+
+**Recipient.** `{ known: false }` at the object level → the `recipient` key is omitted entirely. `{ known: true }` → an inline recipient object containing exactly the leaves that are themselves `known: true`. **If every leaf is absent, the recipient is treated as absent and the key is omitted** — never `recipient: {}`, which a strict vendor schema may reject and which asserts an empty contact.
+
+### 17A.6 Information items, classes, and approvability
+
+Deepens §8.1, §11.3. Serves **M2**.
+
+§8.1's four "classes" are **not a ranked enum and need no precedence**. They are projections of two independent policies plus a resolution state. Stating them as a ranking is how they become a broken enum.
+
+| Axis | Values |
+|---|---|
+| **ask policy** | `ask_if_underivable` · `do_not_ask` |
+| **create policy** | `required_to_create` · `not_required` |
+| **resolution state** | `supplied` · `unresolved` · `deferred_by_user` |
+
+Projections back to §8.1's vocabulary, unchanged in meaning: *required-to-ask* = `ask_if_underivable`; *required-to-create* = `required_to_create`; *optional* = `do_not_ask` ∧ `not_required`; *deferred-by-user* = state `deferred_by_user`, reachable only from `ask_if_underivable`.
+
+**Approvability, total and decidable:** approval is refused **iff** some item has create policy `required_to_create` and resolution state ≠ `supplied`. Deferral has no effect on approvability except through the create policy. This is §8.1's reconciliation of "the human can always defer" with contract 08 §6, expressed as one predicate.
+
+**The registry, total over the items §8.1 names.** Item keys are illustrative; the two policies per row are binding.
+
+| Item | ask policy | create policy |
+|---|---|---|
+| `language` | `ask_if_underivable` | `required_to_create` |
+| `title` | `do_not_ask` | `required_to_create` |
+| `block_selection` (≥1 block **or** `emptyDraftConfirmation`) | `do_not_ask` | `required_to_create` |
+| `sold_scope` (what is being sold, when the brief is ambiguous) | `ask_if_underivable` | `not_required` |
+| `recipient_identity` | `ask_if_underivable` | `not_required` |
+| `quantities` (brief implies units without stating them) | `ask_if_underivable` | `not_required` |
+| `recipient_contact_detail`, `description_narrative`, `block_comments`, `deadline_and_terms_notes` | `do_not_ask` | `not_required` |
+
+`block_selection` is satisfied by either disjunct; `emptyDraftConfirmation` is `human`-sourced only (§17A.4), so the agent cannot satisfy it.
+
+### 17A.7 Clarification questions and answers
+
+Deepens §8.2. Ledger: **M18**. Serves **M2**.
+
+- A question carries a stable `questionId` (server-generated, unique within the workflow) and the `itemKey` it resolves. Answers bind by `questionId`; an answer for an unknown id is a `validation_error` naming its path.
+- **A skip is an explicit value, never an absence.** The answer for a question is `{ kind: "answer", text } | { kind: "skip" }`. A question with **no** answer entry leaves its item `unresolved` — it does **not** become `deferred_by_user`. Treating an omission as a skip converts a caller's oversight into a recorded human decision, which is exactly what §8.2's "the skip is a first-class answer" forbids.
+- Only a skip moves an item to `deferred_by_user`; only an answer that yields a value moves it to `supplied`.
+- **Bounded count.** The clarification schema caps the question array with a named maximum. Model output exceeding the cap fails the output schema → bounded model retry → on continued failure the run ends `failed` (§15.2 row 2). Extra questions are never silently truncated; truncation loses a question the agent judged necessary.
+- **"Asks once per preparation"** (§8.2) is decidable from the state: a `clarification` result may be emitted only when the inbound state carries no prior clarification round for this Generation ID. A later-discovered gap becomes unresolved information on the proposition, never a second blocking round.
+
+### 17A.8 Content retrieval, matching, and ranking
+
+Deepens §10.1, §10.2. Ledger: **M12**. Serves **M4**.
+
+**Retrieval.** `GET /v3/content` with `company_id` only — the full active catalog, live, per run (§21.1(d)); no filters, no pagination (evidence §3), no cache. **The vendor's list order is never relied upon** for anything.
+
+**Ranking is a pure total function**, `rank(query, catalog, language) → Candidate[]`, in `server/domain/`: no I/O, no model, no clock, no randomness. The same inputs always produce the same ordered list. This is what makes §10.2's "ranked" and criterion 4 testable.
+
+**What the model may and may not do.** §10.2 permits "lexical, model-assisted ranking, or both". The model assists by **producing the query strings** — synonyms and terms drawn from the brief — which are tool *inputs*. The model does not order candidates and does not emit `matchStrength`: those are not fields it writes, and the tool's output schema is the only place they exist. The model may select a candidate other than the top-ranked one and must state its reason (that is judgment, and it is reviewable); it cannot silently change what "strong" means. Rationale: match strength gates auto-selection and the no-acceptable-match warning below, so a model-set strength would make a correctness signal unfalsifiable.
+
+**Score type.** An **integer on a fixed 0–1000 scale**, never a float. Float thresholds have no testable "exactly at the boundary" point and drift between engines.
+
+**Strength is a total function of the score**, with two named thresholds and a floor:
+
+| Condition | Strength |
+|---|---|
+| `score ≥ T_strong` | `strong` |
+| `T_possible ≤ score < T_strong` | `possible` |
+| `T_floor ≤ score < T_possible` | `weak` |
+| `score < T_floor` | **excluded from the candidate list** |
+
+Thresholds are named constants in one module. Criteria assert the **contract** — a positive integer scale, half-open intervals, one row per adjacent boundary pair (a score of exactly `T_strong` is `strong`; `T_strong − 1` is `possible`; exactly `T_possible` is `possible`; `T_possible − 1` is `weak`; `T_floor − 1` is excluded) — never the literal values (charter rule 13).
+
+**"No acceptable match" (§10.2) means: no candidate at `possible` or above** for that part of the intent. A weak-only result is precisely the case the reviewer must be warned about, so it produces the warning plus unresolved information, not a quiet selection.
+
+**Auto-selection as the recommended default requires `strong`** (§10.2). A `possible` or `weak` candidate may be selected only with a warning attached naming the strength.
+
+**Ordering is total, ties decidable.** Sort key: `(strength descending, score descending, variationId ascending)`. The final tie-break on `variationId` — unique per content item — makes the order independent of the catalog's arrival order. Without it, sort stability leaks the vendor's list order into our output, which is the drift this contract exists to prevent.
+
+**Bounds** (contract `08-agent-architecture.md` §3). The candidate list returned to the model is capped at a named maximum; each candidate's description is truncated to a named character maximum with an explicit `truncated: true`. Per-block retained alternatives (§9.2) are capped separately.
+
+**The cap must be provably applied.** The fixture catalog in the test suite is **larger than the candidate cap**, or "bounded" is unfalsifiable and the criterion is decoration — the owner states the real catalog is very small (§20), so a fixture sized to the real catalog would never exercise the bound.
+
+**Language.** Matching runs on the localized text in the **proposal language**: `title[language]` concatenated with `description[language]`. A content item without `title[language]` is **excluded from candidates**, and the set of languages the catalog carries is an input to the language derivation (§8.1). This is what criterion 13 measures.
+
+### 17A.9 Revision merge and human-set preservation
+
+Deepens §11.2. Ledger: **M11**. Serves **M4**.
+
+**"Human-set" is exactly `source === "human"`.** There is no second flag. A `humanEdited: true` marker beside provenance would be a second source of truth that can disagree with the first, and the disagreement would be invisible.
+
+Because every leaf carries a source (§17A.4) — presentational leaves included — a human-rewritten title is as protected as a human-supplied recipient email.
+
+**The merge is application code, not the prompt.** A revision turn:
+
+1. sends the current proposition and the human instruction to the model;
+2. parses the model's output as a proposition **and** an explicit `requestedOverrides: Array<{ path, reason }>`;
+3. merges deterministically in `server/domain/`, per leaf:
+
+| Case | Result |
+|---|---|
+| current leaf source ≠ `human` | the model's leaf is taken |
+| current leaf source = `human`, path **not** in `requestedOverrides` | **the human leaf is kept**, unchanged, `ref` included; if the model proposed a different value, a warning is recorded naming the path (§11.2's "when in doubt the agent keeps the human value and records a warning") |
+| current leaf source = `human`, path **in** `requestedOverrides` | the model's leaf is taken **and** a warning is recorded naming the path, the previous value, and the new one, quoting the model's reason |
+
+A path absent from `requestedOverrides` is **structurally** un-overwritable, whatever the model put in the proposition body. That is the mechanism M4 rests on; the prompt merely explains it.
+
+**An override cannot launder an invention.** The replacing leaf is parsed by the same schema, so on a consequential leaf it must carry `brief`, `proposales_content`, or `human` (§17A.4). A revision therefore cannot replace a human-set recipient email with a model-authored one; it can only replace it with a value it can attribute to the brief or the catalog.
+
+**Manual edits** produce leaves with `source: "human"` and are validated by the same schema; an edit violating a domain rule (a non-positive quantity, §11.2) is a `validation_error`, never silently corrected.
+
+**Both paths emit the same proposition shape**, so approval never depends on which produced the final version (§11.2), and both increment the version by exactly 1 (§17A.2).
+
+### 17A.10 The approval envelope and the prepared → approved diff
+
+Deepens §11.3, §3.1. Serves **M5**.
+
+**The library-pricing acknowledgment is a required literal, not a boolean:**
+
+```
+pricingAcknowledgment: { acknowledged: true (literal), statement: "<statement id>" }
+```
+
+`z.literal(true)` rather than `boolean` so that **absent** and **`false`** are the same parse failure at the same path; a boolean invites a caller to send `false` and an implementer to read it as "not yet". The `statement` id is a version constant naming the exact wording the human acknowledged; if that wording ever changes, envelopes carrying the old id fail loudly instead of silently meaning something else.
+
+**Its refusal is `validation_error`**, at path `pricingAcknowledgment` (criterion 17), *not* `approval_required`. §15.2's `approval_required` row covers a different case: a consequential mutation reached without passing through the approval entry point at all (contract `10-security-and-trust-boundaries.md` §5). The two are easy to conflate; §17A.13 fixes both in one order.
+
+**The diff needs both sides in the state.** §11.3 records the diff of the approved proposition against the prepared one, and the server keeps nothing between turns — so `preparedProposition` (the last proposition the server emitted) travels in the workflow state beside `currentProposition` (§17A.3). Without it the diff is uncomputable and an implementer will either drop it silently or diff against nothing.
+
+**The diff is a log and review record, not a tamper control.** The caller supplies both sides. §11.3 already places the responsibility with the human; nothing downstream may treat a small diff as evidence of anything.
+
+**What counts as a difference — total:**
+
+- both sides are compared as **canonical JSON**: recursive key sort, then structural comparison;
+- **arrays are compared positionally.** `blocks` is ordered and its order reaches the vendor, so a reorder is a difference at each moved index — never a set difference;
+- **the leaf's source and `ref` are part of the comparison.** Re-sourcing the same value (agent-proposed → human-confirmed) **is** a difference, because who stands behind a value is the thing approval is about;
+- **`{known:false}` vs `{known:true}` is a difference**, in both directions;
+- `propositionVersion` and `preparedAt` are **excluded**; they always differ and would drown the record;
+- output: `Array<{ path: string[], before, after }>` sorted by path — a total order, so the record is reproducible.
+
+**Logging.** The diff object may carry values in-process and to the reviewer. The **log event carries only the paths and a count** — never `before`/`after` values — because the diff can contain recipient email and free text, which contract `10-security-and-trust-boundaries.md` §7 keeps out of logs. "Record the diff for logs" must not become "log the diff".
+
+### 17A.11 Execution: order, recovery search, and proposal metadata
+
+Deepens §12.1, §13, §14. Ledger: **M14**. Serves **M5**, **M6**.
+
+**The recovery search request is fully determined.** `GET /v3/proposal-search` with exactly:
+
+| Parameter | Value | Why |
+|---|---|---|
+| `company_id` | the configured company | injected by the client (contract `07-integrations.md` §6) |
+| `filter[proposal_copilot_generation_id]` | the Generation ID | the one recovery key |
+| `limit` | the documented maximum (25) | **the documented default is 1** (evidence §5); at the default, "more than one proposal carries the Generation ID" (§13, criterion 8) is undetectable and the search silently returns one |
+| `recipient_email`, `exclude_revision_drafts`, `include_archived` | **not sent** | v1 creates no versions; the default already excludes archived drafts, and an archived draft must not be recovered as a live editor URL |
+
+**Every returned row is re-verified in the client:** `row.data["proposal_copilot_generation_id"] === generationId`, exact string equality, before the row is counted. The vendor's filter semantics (exact vs prefix, case sensitivity) are not documented (evidence §5, §7), so the filter is treated as a narrowing hint and the equality is ours. Zero verified rows → create; one → `recovered`; two or more → `conflict` (§13).
+
+**Proposal metadata (§14) — exact and closed.** The create request's `data` object contains **exactly** these three keys and nothing else (a closed request schema, so nothing can leak in):
+
+| Key (binding) | Value type | Value |
+|---|---|---|
+| `proposal_copilot_source` | string | the fixed marker `"proposal-copilot"` |
+| `proposal_copilot_generation_id` | string | the Generation ID, lowercase canonical UUID |
+| `proposal_copilot_created_at` | string | ISO 8601 UTC with `Z`, millisecond precision, from the injected clock |
+
+Rules: **all values are strings** — only flat keys with tested value shapes are established as filterable (evidence §5), and `filter[k]=v` is a query parameter, so a non-string value's filter encoding is unestablished. Keys are top-level only and contain no `.`. Not written in v1: the brief summary (§14 "only if the owner wants it" — the default is no, and it would place model-authored text in a vendor system) and the generating model name (§14 "not by default"; correlate through logs by Generation ID). Both are additive later without changing any existing key's meaning.
+
+**Prefix collision (§14).** `data` also feeds a company's proposal variables, and no public endpoint enumerates those variables — so a collision is **improbable by prefix choice, not detectable**. `proposal_copilot_` is chosen to be long and self-describing where a human might see it in Proposales. The application writes no key without the prefix and interprets no key it did not write. The integration README states the reserved prefix.
+
+**No metadata version key.** It was considered and rejected: a version key earns its place when an existing key's *meaning* can change, and a UUID's cannot. Adding keys is already safe. The condition to revisit is a change in meaning, never an addition.
+
+**Create.** Exactly one `POST /v3/proposals`, never auto-retried (contract `07-integrations.md` §5, §12.1), from a single call site with no surrounding loop — which is why §15.2's "second execution detected within one turn" has no reachable path in v1 (§17A.13 notes this).
+
+### 17A.12 Applied Pricing and money
+
+Deepens §7 (Applied Pricing), §12.1, §15.1. Ledger: **M13**. Serves **M6**, invariant 17.
+
+**In.** From `GET /v3/proposals/{uuid}`: `value_without_tax`, `value_with_tax` (integer cents), `currency`, `tax_options`, and per block the four `unit_value_*` (integer cents), `quantity` (a `number`, not necessarily an integer), `optional`, and `package_split[]`.
+
+**Out.** Every money value becomes `Money` (§17A.1) carrying **the proposal's** currency. A block's own `currency` is documented as informational (evidence §6): it is carried verbatim as a string and **never used to construct a `Money`**, because a block whose informational currency drifted would otherwise produce two currencies inside one proposal. If a block currency is present and differs from the proposal currency, a **warning** is attached to the result — string inequality, reported, never reconciled.
+
+`quantity` is parsed as `z.number()` and carried verbatim; it is **not** coerced to an integer, because the vendor types it as `number`. (On the input side, the proposition's quantity domain rule is: finite and `> 0`; `≤ 0`, `NaN`, and `Infinity` are rejected. No integer rule is invented — the vendor has none, and services are sold in fractional units.)
+
+`package_split[].vat` is a **rate, not money** (a 0–1 float; the investigation observed `0` and `0.25`, evidence §8.3). It is carried as the parsed number, marked display-only, and **never multiplied, compared numerically, or rounded**. No rounding rule is needed anywhere in this mapper, because every money field Proposales returns is already integer cents.
+
+**"Without arithmetic", stated as a closed pair of lists.**
+
+*Forbidden on any money field:* addition, subtraction, multiplication, division, modulo; rounding, flooring, ceiling, `toFixed`; minor⇄major unit conversion; currency inference or conversion; summing blocks into a total; recomputing a total from unit values and quantity; any numeric comparison, including checking whether `value_with_tax − value_without_tax` is consistent; defaulting a missing money field to `0`.
+
+*Permitted:* renaming keys, changing case, wrapping an integer into `{ amountMinor, currency }`, and **string** equality comparison (used only for the currency warning above).
+
+**The application does not detect inconsistency**, because detecting it is arithmetic. A draft whose stored totals disagree with its unit values is reported exactly as Proposales returned it (criterion 18) and the reviewer sees the numbers. Named mutation: *replace the mapped total with the sum of block unit values × quantity; the inconsistent-fixture test must redden.*
+
+**"Unavailable, with reason" is a variant that carries no money at all:**
+
+```
+appliedPricing: { available: true, … }  |  { available: false, reason: <closed enum>, status?: integer }
+```
+
+The reason enum is closed — `read_failed_upstream`, `read_failed_timeout`, `read_failed_schema_mismatch`, `read_budget_exhausted` — never free text, because a free-text reason is where a raw vendor body gets forwarded (§15.2). The unavailable variant declares **no** money fields, so "unavailable" can never be rendered as `0` — which is what an implementer reaching for optional fields would produce.
+
+**Read-back bounds.** The read is idempotent and retried only on a `retryable` failure (429, 5xx, timeout), at most a named maximum of attempts, with bounded backoff and a total elapsed cap that leaves headroom inside the function duration limit (contract `02-runtime-boundaries.md` §9). On exhaustion the result is still `created` or `recovered` with `available: false` and the matching reason (§11.3, criterion 19). A `404` on the read-back after a successful create is `available: false, reason: read_failed_upstream` — never a `not_found` error, because the draft exists and its editor URL is valid.
+
+### 17A.13 Errors: the total precedence order and the taxonomy map
+
+Deepens §15. Serves **M6**.
+
+**§15.1 is missing a state.** §4, §15.2, M7, and criterion 10 all rely on a `failed` run outcome that §15.1's "Domain result states" table does not list. Resolved by contract: **`failed` is a fifth domain result state**, alongside `clarification`, `proposition`, `created`, and `recovered`. This is a correction of an omission four other sections already depend on, and it is listed for owner ratification in the round-1 handoff.
+
+**Check order on an approval / execution turn. The first failure wins; the order is binding** (M8):
+
+| # | Check | Failure |
+|---|---|---|
+| 1 | workflow-state schema parse (strict, §17A.3) | `validation_error` with paths |
+| 2 | **Draft Reference present** | `conflict` with `{ proposalUuid, editorUrl }` — no create, no search, no patch (§11.3) |
+| 3 | approval-envelope parse, including `pricingAcknowledgment` | `validation_error` |
+| 4 | proposition schema parse, including the provenance unions | `validation_error` |
+| 5 | required-to-create completeness and `emptyDraftConfirmation` (§17A.6) | `validation_error` naming the items |
+| 6 | recovery search | request failure → `integration_error`; ≥2 verified matches → `conflict`; 1 → `recovered` |
+| 7 | create | failure → `integration_error`; never auto-retried |
+| 8 | read-back | never fails the turn (§17A.12) |
+
+Separately, the executing service refuses any call that does not carry a parsed approved proposal with `approval_required` (contract `10-security-and-trust-boundaries.md` §5). That is a guard on the service's own entry, distinct from check 3.
+
+**§15.2's "second execution detected within one turn" has no reachable path in v1.** Execution has one call site with no surrounding loop and no auto-retry (§17A.11), so a second execution within one turn is structurally impossible rather than guarded. The taxonomy assignment is preserved; **no criterion should be written for it**, because writing one would require inventing the path it guards.
+
+**Proposales failures → the client's `IntegrationError` (contract `07-integrations.md` §4), total over what the transport can produce:**
+
+| Upstream condition | `details.reason` | `details.retryable` |
+|---|---|---|
+| DNS / connect / socket failure | `transport` | true |
+| timeout or abort | `timeout` | true |
+| 400 (carries `error.issues`) | `bad_request` | false |
+| 401 | `unauthenticated_upstream` | false |
+| 403 | `forbidden_upstream` | false |
+| 404 | `not_found_upstream` | false |
+| 409 | `conflict_upstream` | false |
+| 429 | `rate_limited_upstream` | true |
+| 5xx | `server_error` | true |
+| any other 4xx | `bad_request` | false |
+| body is not JSON | `invalid_body` | false |
+| body parses as JSON but fails the response schema | `schema_mismatch` | false |
+
+All carry `details.system = "proposales"` and `details.status` where an HTTP status exists. **What may cross:** `error.message`, only when the body parsed as `{ error: { message: string } }` and the string is within a named length cap — the vendor documents these as user-safe (evidence §1) — and `error.issues` as `{ path: string[], message: string }` under the same cap. **What may never cross:** the raw body, headers, the request URL, or any string that failed those checks; a generic message is used instead and the original goes to `cause` (contract `04-server-architecture.md` §6).
+
+**AI provider failures.** Same shape, `details.system` naming the provider generically, and — because contract `07-integrations.md` §4 assumes only Proposales' messages are safe — **the provider message never crosses**; it lives in `cause`. Reasons: `unauthenticated_upstream`, `timeout`, `rate_limited_upstream`, `server_error`, `transport`, `content_filtered`, and `not_configured` (§17A.15).
+
+**Model output that fails our schema after bounded retries is not an integration failure:** `validation_error` with `details.reason = "model_output_invalid"` and the issue **paths only** — never the model's text — and the run ends `failed` (§15.2 row 2).
+
+**Budget exhaustion is a domain result, not an error.** §15.2 leaves the choice to planning and requires only distinguishability; contract `08-agent-architecture.md` §9 already says an exceeded budget "ends the run with a `failed` result". Resolved accordingly: no `AppError` is thrown. The run result carries `{ status: "failed" | "clarification", failure: { reason: "budget_exhausted", budget: "wall_time" | "tool_calls" | "tokens" } }`. An exception would lose the clarification path, and `internal_error` (HTTP 500) would misreport an expected, budgeted outcome.
+
+### 17A.14 Run budgets and run-result reporting
+
+Deepens §4, §12.2. Ledger: **M15**. Serves **M7**.
+
+| Budget | Unit | Measured | Checked |
+|---|---|---|---|
+| `wallTimeMs` | integer milliseconds | a monotonic clock from run start | before every model call and every tool call; also passed down as the per-request timeout ceiling, so one long call cannot overshoot the run |
+| `maxToolCalls` | integer count of tool `execute` **invocations** — not steps, not tool results | incremented immediately before `execute` | before dispatching the next tool call |
+| `maxTokens` | integer, summed over every provider call's reported usage in the run | after each call (it is unknowable before) | before starting the next call |
+
+All three are inputs to `run()` and are configured in `src/lib/ai/` (contract `08-agent-architecture.md` §8, §9), never as literals at call sites. `wallTimeMs` is set below the platform function duration limit with stated headroom (contract `02-runtime-boundaries.md` §9).
+
+**Honest limit, stated so a criterion is not written against a false promise:** the token budget bounds the **run**, not any single call. One call may overshoot it; the loop then starts no further call.
+
+**Detection is between calls.** The loop never interrupts an in-flight call except through that call's own timeout.
+
+**Outcome on exhaustion, decidable:** `clarification` if at least one item with ask policy `ask_if_underivable` is still `unresolved` at the moment of exhaustion, otherwise `failed`. Either way the exhausted budget is named. **The run's accumulated draft is discarded, never emitted** — "here is what we have so far" is precisely the fabricated proposition §4 forbids.
+
+**Cost reporting on every result, including failures.** Every run result carries `{ provider, model, usage: { inputTokens, outputTokens, totalTokens } }` (§12.2, criterion 14) — a budget-exhausted run that reported no cost would defeat the comparison the reporting exists for. A usage figure the provider did not report is `null`, never `0`; the absent-is-not-zero rule of §17A.5 applies to usage as it does to money.
+
+### 17A.15 AI provider selection
+
+Deepens §12.2 and the §23 round-4 mechanism note. Ledger: **M16**. Evidence: §9.1.
+
+**The hazard, established from the installed package** (evidence §9.1): in `ai` 7.0.92 a plain **string** model id is resolved through `globalThis.AI_SDK_DEFAULT_PROVIDER ?? gateway`, and `@ai-sdk/gateway` authenticates with `AI_GATEWAY_API_KEY` **or a Vercel OIDC token**. On Vercel a string model id can therefore succeed with **no configured secret at all**, and every run's reported provider, model, and cost would describe the gateway's routing rather than the configured vendor — the exact silent failure §12.2's comparison requirement cannot survive.
+
+**"Explicitly", as code shape.** `src/lib/ai/` resolves a **provider instance** from configuration and passes a **model instance** to every SDK call. A string model id is unrepresentable at the call site: the internal `generate` / `generateStructured` / `stream` signatures accept the SDK's language-model type, which a `string` does not satisfy. One registry, keyed by the configured provider enum, is the only place a model id becomes a model. `globalThis.AI_SDK_DEFAULT_PROVIDER` is **never assigned** — assigning it would install a second, hidden selection mechanism.
+
+**"Explicitly", as configuration.** `AI_PROVIDER` (a closed enum; `gateway` is **not** a member), `AI_MODEL` (string), and the matching vendor key, all validated in `src/lib/env/server.ts` at module load (contract `06-data-contracts-and-validation.md` §2) with **no defaults and no fallbacks**, and a refinement requiring the vendor key that `AI_PROVIDER` selects. A missing or unknown value throws at load. A provider that cannot be constructed surfaces as `not_configured` (§17A.13), never as a gateway call.
+
+**Named mutation** the planner's criterion must record: *widen the internal signature to accept `string` and pass `AI_MODEL` through; the provider-selection test must redden.*
+
+**Test-suite consequence for the master plan's environment topology.** Criterion 12 requires `npm test` to run without network or secrets, while the env module fails loudly on missing AI variables. Resolution: the suite runs against the scripted fake `@/lib/ai` implementation and supplies non-secret placeholder values for `AI_PROVIDER`, `AI_MODEL`, and the vendor key from the test setup. Fail-loud is preserved in every real environment; no test ever reaches a provider. No `@ai-sdk/<vendor>` package is installed today (evidence §9), and installing the first candidate remains a planning decision (§12.2).
+
+### 17A.16 Text bounds, timestamps, and clocks
+
+Deepens §7 (Brief), §9.2; contract `10-security-and-trust-boundaries.md` §4.
+
+- **Every free-text field has a named maximum length and is trimmed** at the schema: brief, revision instruction, title, narrative, per-block reviewer comment, commercial-note text, question text, answer text, agent rationale, warning text, assumption note, and `ref.quote`. The brief cap and the alternatives cap are set so a conforming workflow cannot reach `MAX_WORKFLOW_STATE_BYTES` (§17A.3) by ordinary use.
+- **Free text is data.** Narrative and title are Markdown per the vendor's subset (§9.2); this application never renders model or human text as HTML (contract `10-security-and-trust-boundaries.md` §4).
+- **A stated price expectation is never parsed out of free text.** `commercialNotes[i].amount` is `SourcedOrAbsent<Money>`: a brief saying "around 12k" cannot be represented as `Money`, so the amount is `{ known: false }` and the stated wording is preserved in the note's text. Extracting a number from prose with a pattern is invention, not sourcing. `currency` must be a valid ISO-4217 code or the note carries none. `taxBasis` is the closed enum `including_tax | excluding_tax | unstated`, with `unstated` explicit — never defaulted to one of the other two.
+- **Time.** All application-produced timestamps come from an injected `now()` (contract `04-server-architecture.md` §4), never an inline `Date.now()`, and are ISO 8601 UTC with `Z` at millisecond precision. Proposales' int64 epoch values are interpreted **only** inside the adapter's mapper (contract `06-data-contracts-and-validation.md` §6, §2.1); no application code ever sees an epoch integer.
+
+
+### 17A.17 Conversation context
+
+Deepens §5.2, §11.2, §12.2. Ledger **M19**; also serves M4 and M10.
+
+1. **Two objects, never merged.** `ConversationContext` is a sibling of the workflow state on every turn's input and result, owned by the feature's schemas; neither schema admits the other. Strict, JSON-serializable, no signature (§17A.3's reasoning applies).
+2. **Contents.** Human turns are free-text instructions only; clarification answers (§8.2) and manual edits (§11.2) are structured data and never become turns. Assistant turns are rendered by the application from the validated result — ids, catalog-verbatim titles, enum kinds, the rationale — never model-authored text, never warning or assumption free text.
+3. **Bounded.** A named turn cap and a named per-turn text cap at the schema; beyond the cap the oldest turns are dropped and counted, never the newest.
+4. **The latest human turn is distinct.** It is passed separately from the context, rendered as the final labeled block of the run, and appended to the returned context after the run together with the assistant turn. The inbound context never contains it.
+5. **Prompts.** History and the current instruction reach the model only as labeled untrusted data blocks (10 §6); nothing user-provided enters the system prompt.
+6. **Resolution, not authority.** A conversational reference becomes a fact only as a content identity present in the run's retrieval record — the current proposition's blocks and alternatives plus this run's tool results — with `proposales_content` provenance; anything else is `model_output_invalid`. Prior conversation text is not a provenance source. A value the human states in the current instruction may become a `human` leaf only through `ref: { turnId, quote }` (§17A.4), so the reviewer sees the exact words it came from.
+7. **Approval and execution have no conversation parameter**; the envelope is strict, so a caller cannot smuggle it in.
+
+**Named mutations:** seed the retrieval record empty → the "use the second one" row reddens; append the instruction into the history block → the separation row reddens; skip the window trim → the cap row reddens.
+
+
 ## 18. Scope ladder
 
 ### Must ship
@@ -527,6 +1008,18 @@ Ratified on the surface below (§23, round 5). All seven cards are closed. Cards
 2. **Measurement ledger.** §17, M1 to M7, verbatim.
 3. **Scope.** Must ship: §18 "Must ship". Non-goals: §18 "Explicitly deferred", including no price writes, no content creation, no database, no UI, no send automation.
 4. **Consequential resolutions to confirm.** (a) Required-to-create is language, title, and one content block or an explicit empty-draft confirmation. (b) v1 writes no prices; brief-stated prices are reviewer notes. (c) Language is derived then asked, with no default-language configuration. (d) Full live catalog retrieval per run, no cache. (e) Provider pluggable between Anthropic and OpenAI by configuration, none permanent, usage reported per run. (f) Documentation root is `build_docs/`; the contract patch is a separate change. (g) Shaper resolutions in the round 0 changelog: one generation ID per workflow, no proposal-history agent tools, flat prefixed metadata keys, single create call. (h) Approval in v1 is structural and content approval plus authorization to create at library pricing, carried as data in the approval envelope and refused when absent; it is not monetary approval. (i) Execution reads the created or recovered draft back and reports the Applied Pricing without arithmetic; a failed read never downgrades a successful create. (j) Once a draft exists, the workflow is terminal: a re-approval carrying the draft reference is refused with a conflict pointing at the existing draft; no patch by uuid. (k) Inline recipients may duplicate existing Proposales contacts; accepted for v1 and stated to the human. (l) Unsourced quantity and optional flag are omitted so Proposales applies its defaults; the optional flag is consequential; title and narrative are written in the proposal language; a brief currency differing from the company's is a warning, never written; no approver identity is asserted.
+
+### 21.2 Ledger-extension ratification surface (presented 2026-09-05, round 7)
+
+§21.1 above records what was presented at the round-5 ratification and is left exactly as it was presented; it is a historical record of that act, not a running summary. This section records the **second, narrower** ratification act, which extended the ledger only.
+
+**Presented:** the eleven measurement objectives M8–M18 in §17.1, each with its objective, the defect family it guards, and the §17A mechanism contract whose invariant it registers; grouped for the owner as: nothing gets invented (M9, M10, M11, M18) · duplicate drafts (M8, M14, M17) · money reported never computed (M13) · reproducible content ranking (M12) · honest cost and provider reporting (M15, M16).
+
+**Approved:** all eleven, none cut. The owner confirmed in session after asking whether the extension was about idempotency or about the absent application database, and receiving the distinction: the ledger declares what the build must demonstrate, not what it must contain; three of the eleven concern duplicate drafts precisely *because* there is no server-side memory, and the no-database decision (§4, §18) is not reopened.
+
+**Also relayed and accepted at the same time:** the five internal inconsistencies §23 round 6 lists as resolved by contract, and the coordinator's statement that a small number of the §17A contracts do change what gets built (the recovery search's `limit`, explicit provider selection) as mechanical consequences of rules already ratified in round 5, rather than as new product decisions. The owner did not object to that reading.
+
+**Not on this surface:** nothing in §21.1 moved. No scope change, no new endpoint or capability, no change to any resolution (a)–(l). The intention's status stays `RATIFIED` throughout.
 
 ## 22. Acceptance criteria (behavioral, for a future planner or reviewer)
 
@@ -606,3 +1099,30 @@ A later implementation satisfies this intention when all of the following hold. 
 - **Date:** 2026-09-05.
 - **Surface presented and approved:** §21.1 as it stands after round 4: (1) the outcome statement, including that v1 approval is structural and content approval plus authorization to create at library pricing, not monetary approval; (2) the measurement ledger M1 to M7 verbatim (§17); (3) the scope ladder (§18); (4) consequential resolutions (a) through (l). The owner confirmed in the session with "this is confirmed", including item (k), the accepted inline-recipient duplicate risk, which had been called out for explicit confirmation.
 - **Handoff:** the intention is the ratified root of the trace chain. Next gate is mechanism inventory, which the owner starts after bootstrapping the project build folder through the pipeline coordinator. Post-ratification amendments follow the decision-card path; a material semantic change re-opens this gate.
+
+**Round 6 (2026-09-05, mechanism inventory round 1).** Status stays `RATIFIED`; no material semantic change, so the intention gate does not re-open. One owner decision card is outstanding (the ledger extension) and the mechanism-inventory exit gate holds until it is answered.
+
+- **New lettered section §17A, "Mechanism contracts"**, placed between §17 and §18 so it sits beside the measurement ledger whose entries it registers. Nothing was renumbered; every existing citation stays true. §17A defines, contract-grade: shared value shapes (§17A.1); workflow identity, proposition version, and terminality (§17A.2); the caller-held state, its strictness, its origin-validated editor URL, and its size bound (§17A.3); structural provenance and the enumerated consequential leaves (§17A.4); absence / omission / default / unset as four distinct layers and the mapper construction that cannot emit an absent field (§17A.5); information items as two orthogonal policies plus a resolution state, with one approvability predicate (§17A.6); clarification question and answer binding (§17A.7); retrieval, the pure ranking function, the integer score scale, the total strength function and the total candidate order (§17A.8); the revision merge and human-set preservation (§17A.9); the approval acknowledgment literal and the total diff rule (§17A.10); the fully determined recovery search and the exact metadata keys (§17A.11); Applied Pricing, money, and "without arithmetic" as a closed pair of permitted and forbidden operations (§17A.12); the total error-precedence order and the total upstream taxonomy maps (§17A.13); the three run budgets and cost reporting on every result (§17A.14); explicit AI provider selection (§17A.15); text bounds, stated-price handling, and clocks (§17A.16).
+- **Measurement ledger appended, M8–M18**, as a new §17.1 block inside §17. M1–M7 are untouched and unrestated. The appended entries are marked **pending owner ratification** and are presented as a decision card, because §17 is part of the surface the owner ratified in round 5.
+- **Totality checks discharged** (all four the gate required): match-strength ordering (§17A.8, thresholds with enumerated adjacent boundary rows); information-class precedence — resolved as *no precedence exists*, the four labels being projections of two independent axes (§17A.6); provenance sources (§17A.4, three source policies, `inferred` unrepresentable on a consequential leaf); domain result states and error mapping (§17A.13, a fixed check order plus total upstream tables).
+- **Internal inconsistencies resolved by contract, listed for owner ratification** (detail in the round-1 handoff): (i) §15.1's result-state table omits the `failed` state that §4, §15.2, M7, and criterion 10 all rely on — `failed` is a fifth domain result state; (ii) §15.2's "second execution detected within one turn" row has no reachable path in v1's single-call-site execution, so no criterion should be written for it; (iii) §8.3's derivation exception has no reachable target in v1 (criterion 20 forbids any price or total field on the proposition), so the `derived` variant is absent from the v1 schema and M1's derivation clause is vacuous, not weakened; (iv) §15.2 could be read as mapping a missing pricing acknowledgment to `approval_required`, but §11.3 and criterion 17 make it `validation_error`; `approval_required` is reserved for execution reached outside the approval entry point; (v) contract `06-data-contracts-and-validation.md` §6's "no arithmetic" companion clause about converting decimal package-split values does not fire in v1, because the split's money fields are integer cents (evidence §6, §8.1, §8.3) — reported as a candidate contract patch, not folded into this feature.
+- **Vendor and repository facts established** went to the evidence doc, not here: evidence §9.1 records how `ai` 7.0.92 resolves a string model id and how the bundled gateway authenticates. §17A.15 cites it.
+- **No scope change.** No new endpoint, capability, or Proposales call. The two additions to the shape of things the intention already required are the second proposition in the caller-held state (which makes §11.3's diff computable) and the AI configuration variables (which §12.2 already required as configuration).
+
+**Round 7 (2026-09-05, owner ratification of the ledger extension).** Status stays `RATIFIED`. The mechanism-inventory exit gate is now open.
+
+- **M8–M18 ratified, all eleven, none cut.** §17.1's "pending owner ratification" marker is replaced by the ratification record. M1–M18 are one ledger from this point; a criterion's trace cell may cite any entry, and every entry must be served by at least one criterion row or recorded as a planning gap.
+- **New §21.2** records the ratification surface for this narrower act. §21.1 is left exactly as presented in round 5, because it is the record of that act rather than a running summary; editing it would falsify what the owner was shown.
+- **Round 6's five contract-resolved inconsistencies were relayed and accepted** with the ratification (§21.2).
+- **Owner question recorded, because the answer is load-bearing for planning:** the owner asked whether the extension concerned idempotency or the absent application database. Neither is its subject — the ledger declares what the build must demonstrate, not what it must contain. But three entries (M8, M14, M17) exist *because* there is no server-side memory: with no database, duplicate protection rests entirely on the caller-held Draft Reference and the recovery search, so both are held to a proof standard a database would not need (§5.2, §13, §17A.2, §17A.3, §17A.11).
+- **No material semantic change**, so the intention gate does not re-open. The next artifact is the master plan (implementation-planner).
+- **Carried to the follow-up register, not folded here:** the candidate patch to contract `06-data-contracts-and-validation.md` §6's Money row (round 6, item (v)). Its example directs an implementer to convert package-split values to minor units; the OpenAPI schema does type them as `number`, so the contract is accurate about the vendor's documentation and wrong about the values, which are integer cents at runtime (evidence §8.1). The only genuinely decimal field on `PackageSplit` is `vat`, a rate rather than money. A contract patch is its own change.
+
+**Round 8 (2026-09-05, owner decision and ratification: multi-turn conversational continuity).** Status stays `RATIFIED`. Raised by implementation-planner round 2 as fold-back FB-2 after the owner, reading the phase plans, identified that the intention was silent on natural-language continuity between turns.
+
+- **Owner:** David (repository owner). **Date:** 2026-09-05. **Approved:** the addition as proposed, together with the two planning cards it depends on (below).
+- **What the addition is.** The caller round-trips a bounded **conversation context** alongside the workflow state, so the human can say "use the second one" and be understood. It is linguistic context, never authority: a reference becomes a fact only by resolving to a content identity already present in the run's retrieval record, and approval and execution never read it. **New §17A.17**, new §5.2 bullet, new §7 concept row, ledger **M19**.
+- **Why it did not re-open the intention gate.** It is an addition, not a contradiction. No ratified text was changed in substance and nothing on the §21.1 or §21.2 surfaces moved; the planner checked it against §5.2, §8.2, §8.3, §11.2, §12.2, §16.2, §17A.3, §17A.4, §17A.8, §17A.9, §17A.13 and contracts 05, 06 §7, 08 §6–§10, 09 §1, 10 §6, 12. The owner ratified the added text itself, so the trace chain's root covers M19 exactly as it covers M1–M18.
+- **Planning card 1 → A (company currency).** The company's currency is read from `GET /v3/companies` during preparation and revision, and used only to warn when a stated currency differs from it. Never written. **§12.1** operation list extended. Capture task for the coordinator: the evidence doc §2 row calling `GET /v3/companies` "not needed" is now stale; §8.1 already records the observed keys.
+- **Planning card 2 → A (values stated in an instruction).** A consequential value the human states in the **current** revision instruction may be recorded with `human` provenance, carrying the turn id and a verbatim quote that the server checks; prior turns never resolve. **§8.3** `human` row extended; **§17A.4** gains the `ref` paragraph; **§17A.17** item 6 states the boundary. Without this, "keep that one but make the quantity 3" could not be honored by a revision at all.
+- **No scope change.** No new endpoint beyond the company read the warning already required, no persistence (the context is caller-held and lost on reload by design, per §4 and §18), no authentication, no UI. Nothing was renumbered: §17A.17 is appended within §17A and M19 within §17.1.

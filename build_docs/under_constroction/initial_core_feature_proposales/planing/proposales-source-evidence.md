@@ -29,7 +29,7 @@
 | `PATCH /v3/proposals/{uuid}` | Update proposal draft | not expected; fallback only if a single create cannot express the payload |
 | `PATCH /v3/proposals/{uuid}/data` | Update proposal data (shallow merge) | not expected |
 | `GET /v3/proposal-search` | Search proposals | duplicate recovery by generation ID |
-| `GET /v3/companies` | List companies | not needed (company id is configured) |
+| `GET /v3/companies` | List companies | **used** (intention §12.1, round 8): the client selects the configured company id and maps `currency` and `tax_mode`, to warn when a stated currency differs from the company's. Never written. Observed response keys are in §8.1. |
 | `GET /v3/companies/{companyId}/templates` | List company templates | deferred (templates out of scope) |
 | `GET /v1/attachments` | List attachments | deferred (attachments out of scope) |
 | `POST /v1/inbox/{token}` | Create an RFP | out of scope |
@@ -159,6 +159,17 @@ Amounts below are cents. `wd-wo`, `wd-w`, `wo-wo`, and `wo-w` mean the four docu
 - No AI-related environment variable exists in `.env.example`.
 - The root README states: "Vercel AI SDK (`ai`) installed; no model provider configured yet."
 - Consequence: provider choice is genuinely open (owner card 5); the intention binds provider neutrality through `@/lib/ai` (contracts 07 §8, 08 §8) and requires the test suite to run on a scripted fake.
+
+### 9.1 Default model-id resolution and gateway authentication in `ai` 7.0.92 (established from the installed package, 2026-09-05)
+
+Established by reading the installed package, not by running it. Recorded here because the intention's provider boundary (§12.2) depends on it and because the behaviour is silent.
+
+- `node_modules/ai/dist/index.d.ts` declares a global `var AI_SDK_DEFAULT_PROVIDER`, documented as: "String model ids are resolved to the default provider and model id. **If not set, the default provider is the Vercel AI gateway provider.**"
+- `node_modules/ai/dist/index.js` implements exactly that. `getGlobalProvider()` is `globalThis.AI_SDK_DEFAULT_PROVIDER ?? gateway`, and each `resolve*Model()` helper takes the same branch when the `model` argument is `typeof model === "string"`. Passing a model **instance** does not go through this path.
+- `node_modules/@ai-sdk/gateway/dist/index.js` resolves credentials from the `AI_GATEWAY_API_KEY` environment variable **or** from a Vercel OIDC token (`getVercelOidcToken()` from `@vercel/oidc`); its `GatewayAuthenticationError` message enumerates the API-key, Vercel-access-token, and OIDC options.
+- **Consequence:** a call that passes a plain string model id needs no vendor package and no vendor key. On a Vercel deployment it can authenticate through the platform's OIDC token and succeed with **no configured secret**, while the provider, model, and token usage the run reports describe the gateway's routing rather than a chosen vendor. That defeats the cost- and result-comparison requirement the owner set in round 1 (intention §12.2). The provider boundary must therefore pass a model instance and never a string; the mechanism contract is intention §17A.15.
+- **Not established:** the gateway's behaviour when neither credential is present in a non-Vercel environment was not exercised; no network call was made. `@ai-sdk/gateway` is present only as a transitive dependency of `ai` (§9), and no vendor provider package is installed.
+
 
 ## 10. Experiment P1 status (superseded)
 
