@@ -47,7 +47,7 @@ Phase 4 `APPROVED`.
 | C1(c) | content ref required | `{ value: "x", source: "proposales_content" }` (no `ref.variationId`) | fails at `["ref"]` or `["ref","variationId"]` | — | §17A.1 |
 | C1(d) | quote cap | `ref.quote` of `MAX_QUOTE_CHARS + 1` | fails | — | §17A.16 |
 | C1(e) | instruction-turn ref (card 2 → A) | `{ value: 3, source: "human", ref: { turnId: <uuid v4>, quote: "quantity 3" } }` against `consequentialSchema(number, [brief, human])` | parses; an uppercase `turnId` fails at `["ref","turnId"]`; `ref: { turnId }` without `quote` fails at `["ref","quote"]` (refinement: `turnId` requires `quote`) | — | §17A.4 (as amended by FB-2), §17A.1 |
-| C2(a–o) | `inferred` unrepresentable, one row per consequential leaf | `validProposition()` with `source: "inferred"` at: `recipient.value.firstName`, `.lastName`, `.email`, `.phone`, `.companyName`, `blocks.0.contentId`, `blocks.0.quantity`, `blocks.0.optional`, `commercialNotes.0.amount`, `.currency`, `.taxBasis`, `commercialAssumptions.0.statedValue` for kinds `deadline`, `term`, `scope_commitment`, `emptyDraftConfirmation` (15 rows; `CONSEQUENTIAL_LEAF_PATHS.length === 15` asserted) | `propositionSchema.safeParse` fails; an issue path is a prefix-match of the leaf path | MUT-05-1 `shared.ts` · `consequentialSchema` · add an `inferred` member to the union → every C2 row red (record all 15) | M10, M1, crit 2, crit 22 |
+| C2(a–o) | `inferred` unrepresentable, one row per consequential leaf | `validProposition()` with `source: "inferred"` at: `recipient.value.firstName`, `.lastName`, `.email`, `.phone`, `.companyName`, `blocks.0.contentId`, `blocks.0.quantity`, `blocks.0.optional`, `commercialNotes.0.amount`, `.currency`, `.taxBasis`, `commercialAssumptions.0.statedValue` for kinds `deadline`, `term`, `scope_commitment`, `emptyDraftConfirmation` (15 rows; `CONSEQUENTIAL_LEAF_PATHS.length === 15` asserted) | `propositionSchema.safeParse` fails; an issue path is a prefix-match of the leaf path | MUT-05-1a…1o (15 distinct mutations): in `proposition.ts`, admit `inferred` only at the corresponding leaf's schema construction — `1a` firstName, `1b` lastName, `1c` email, `1d` phone, `1e` companyName, `1f` contentId, `1g` quantity, `1h` optional, `1i` amount, `1j` currency, `1k` taxBasis, `1l` deadline, `1m` term, `1n` scope_commitment, `1o` emptyDraftConfirmation — → its corresponding C2 row red | M10, M1, crit 2, crit 22 |
 | C3(a) | contentId from brief | `blocks.0.contentId.source = "brief"` | fails | — | §17A.4 |
 | C3(b) | quantity from content | `source = "proposales_content"` | fails | — | §17A.4 |
 | C3(c) | optional from content | | fails | — | §17A.4 |
@@ -71,7 +71,7 @@ Phase 4 `APPROVED`.
 | C8(c) | absent leaves produce no entry | `blocks.0.quantity = { known: false }` | no entry with that path | — | §17A.4 |
 | C8(d) | projection is not an input | proposition with a `provenance: [...]` key | fails (strict) | — | §17A.4 |
 
-Criteria: 8 (C1–C8), 61 rows (a table line is one row; a lettered span counts its letters). Named mutations: 5.
+Criteria: 8 (C1–C8), 61 rows (a table line is one row; a lettered span counts its letters). Named mutations: 19.
 
 ## Notes
 
@@ -79,7 +79,14 @@ Criteria: 8 (C1–C8), 61 rows (a table line is one row; a lettered span counts 
 - `blocks[i].productId` and `alternatives[i].productId/title/variationId` are plain strings (display material copied by the application in phase 11); only `reason` carries a source.
 - `recipient` is `knownOrAbsent` at object level (master plan §6.4): sources live only on its five leaves; the master plan resolves §17A.4's "object-level SourcedOrAbsent" wording as object-level `KnownOrAbsent` because leaf granularity forbids an object-level source.
 - Projection gate: mandatory (rank 2).
+- Phase-4 review N6 fold: the 15 C2 leaves require 15 independently observed mutations; do not restore an all-leaves mutation that can fail only on the first loop assertion.
 
 ## Review log
 
 *(append-only)*
+
+**Coordinator pre-projection fold (2026-09-05, Codex).** Phase-4 delta review N6 found
+that one all-keys mutation cannot prove every loop row when the first failed assertion
+aborts the test. C2(a–o) now declares 15 independently observed mutations, one for each
+consequential leaf; counts re-derived at 8 criteria / 61 rows / 19 mutations. This is a
+test-ledger refinement only; the ratified proposition semantics are unchanged.

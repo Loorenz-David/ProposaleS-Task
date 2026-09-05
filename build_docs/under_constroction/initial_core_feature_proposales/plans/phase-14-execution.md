@@ -84,6 +84,7 @@ Criteria: 8 (C1–C8), 32 rows (a table line is one row; a lettered span counts 
 - The read-back retry lives in the lib transport (phase 3); C7(e)/(f) exercise it through the fake by giving the fake an injected `attempts` policy mirroring the real one **or** by wiring the real client with a mocked `fetch` for these two rows — choose the second (it tests the production path, charter rule 3) and say so in the Review log.
 - A recovered draft's `editorUrl` comes from the search row's `url`; the same origin notice applies.
 - Projection gate: mandatory (ranks 1, 3, 5, 8, 10).
+- Phase-4 review N5: `proposal-readback.consistent.json` currently has distinct block values but totals that no longer represent a consistent vendor read-back. This phase relies on the explicitly inconsistent fixture for C6(c); do not use the consistent fixture as a consistency oracle. If a future execution test needs one, first correct its totals to `10100` / `10200` and record the fixture premise in the test.
 
 ## Review log
 

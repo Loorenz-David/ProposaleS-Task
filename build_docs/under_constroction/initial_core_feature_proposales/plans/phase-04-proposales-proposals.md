@@ -395,3 +395,120 @@ seeded read-backs by proposal UUID. No deviations or owner decisions arose. Docu
 impact review under contract 14 §8 found the integration README incomplete on the
 reserved prefix/unknown-key rule and patched it; no other durable documentation became
 false, incomplete, or misleading.
+
+**Independent delta re-review — round 2 (2026-09-05, Claude). Verdict: `APPROVED`.**
+Tree reviewed: `f342549` (dispatch commit), clean apart from the two pre-existing
+untracked reviewer handoffs. Perimeter verified: `00fe990..d937fe8` touched exactly the
+13 allowed `src/lib/proposales/**` paths (`schemas.ts`, `mappers.ts`, `mappers.test.ts`,
+`index.ts`, `client.test.ts`, `fake.ts`, `fake.test.ts`, `applied-pricing.mapper.ts`,
+`applied-pricing.mapper.test.ts`, `README.md`, and the three fixtures), the deletion of
+`test/helpers/proposales-arithmetic-scan.test.ts`, tracker row 4, this Review log, and
+the round-2 implementer handoff — 17 files, nothing outside. `d937fe8..23a096e` changed
+only the handoff's checkpoint-SHA line; `23a096e..f342549` changed only tracker row 4 and
+added the re-review prompt. `client.ts` and `test/helpers/proposales-arithmetic-scan.ts`
+are byte-identical to `00fe990`, confirming the handoff's mutation-only claim. The two
+files the fix prompt's narrower enumeration omitted — `index.ts` and
+`applied-pricing.mapper.ts` — changed only in the vendor `mode` repair (one line each);
+the plan has always named both. Counts re-derived from the acceptance table: 76 table
+lines expanding to 80 rows (`C2(a–d)` +3, `C2(g–h)` +1) and 35 distinct `MUT-04-*` ids —
+the plan's 8 / 80 / 35 declaration is correct.
+
+*Blocking:* none. *Should-fix:* none.
+
+*Repaired defects, adversarially verified (all probes applied at L1, observed red, and
+reverted; every touched file re-verified byte-identical by SHA-256).*
+
+- **B1 resolved.** Vendor `TaxOptions` in `openapi.json` is `{ mode, tax_included,
+  tax_label_key }` with `additionalProperties: false`; `mode` is now the sole consumed
+  wire key. Four independent single-site regressions each reddened
+  `applied-pricing.mapper.test.ts › P4-C7(e-g)`: RP1a `schemas.ts` `taxOptionsSchema.mode`
+  → `tax_mode`; RP1b `mappers.ts` `wire.tax_options.mode` → `.tax_mode`; RP1c the
+  `consistent` fixture key `mode` → `tax_mode`; RP1d `applied-pricing.mapper.ts`
+  `readback.taxOptions.mode` → `.taxMode`. `grep -rn "tax_mode|taxMode" src/` leaves only
+  the `GET /v3/companies` field, which is a different vendor property.
+- **B2 resolved.** RP2 removed `parseCreateProposalRequest` from the `createProposalDraft`
+  POST path (`client.ts:69`): `P4-C3(j)` reddened with `expected ProposalesError … to be
+  an instance of ValidationError` — the injected bare `fetch` spy was reached, which is the
+  positive proof the round-1 finding demanded. Fixture isolation confirmed by direct parse
+  (RP3): the `C3(i)` fixture produces exactly one issue (`unrecognized_keys ["forbidden"]`)
+  and the `C3(j)` fixture exactly one (`too_small` at `["language"]`).
+- **B3 resolved, with variation the ledger did not use.** Instead of the plan's
+  all-keys-at-once MUT-04-3/34, each prohibited key was declared optional **individually**
+  at its own location. All eight reddened `mappers.test.ts › P4-C2(a-h)` on their own
+  labelled sub-assertion: block `unit_value_with_discount_without_tax`,
+  `unit_value_with_discount_with_tax`, `unit_value_without_discount_without_tax`,
+  `unit_value_without_discount_with_tax`, `package_split`, `currency`; proposal-root
+  `currency`, `tax_options`. Each row therefore bites at the location `ProposalBlockInput`
+  and `CreateProposalRequest` actually declare.
+- **S1 resolved.** RP-S1 recorded `{ ...request, company_id: 999 }` in `fake.ts`;
+  `fake.test.ts › P4-C3(h)` reddened on the deep-equality against real mapper output.
+- **S2 resolved.** RP-S2 emptied the seeded `storedReadbacks` map; `P4-C3(l)` reddened
+  with `No fake read-back for 22222222-…`, so the seeded recovery → `getProposal`
+  traversal is genuinely exercised.
+- **S3 resolved.** RP-S3 returned `{ mode: "none" }` for absent `tax_options` in
+  `toProposalReadback`; `P4-C7(e-g)` reddened (`{ mode: 'none' }` vs `{}`).
+- **S4 resolved.** RP-S4 dropped `block.blockCurrency !== undefined &&` from the warning
+  filter; `P4-C7(c-d)` reddened on the absent-currency arm.
+- **S5 resolved.** RP-S5 made the client's re-verification case-insensitive; `P4-C5(a-f)`
+  reddened with length 2, so the new `GENERATION-1` fixture row is exercised by the client.
+- **S6 resolved.** Three permutations each reddened `P4-C6(a)`: RP-S6a swapped two Money
+  sources in `applied-pricing.mapper.ts`; RP-S6b swapped the two with-discount wire fields
+  in `toProposalReadback`; RP-S6c (new) swapped the two without-discount wire fields. A
+  fourth, RP-S6d, mapped `wire.tax_options.tax_included` onto `taxLabelKey` and reddened
+  `P4-C7(e-g)` — the snake/camel boundary mutant the ledger did not use.
+- **S7 resolved.** `npx vitest list` collects 12 files and names no
+  `test/helpers/proposales-arithmetic-scan.test.ts`; the helper module itself is retained
+  and imported by `applied-pricing.mapper.test.ts`, which collects all 22 scanner rows
+  (20 `it.each` kinds plus the two exclusion rows) — 29 tests in that file.
+- **S8 resolved.** No leaf test title is duplicated in any file, and no `C<n>(<x>)` label
+  collides within a file: every Phase-4 test carries the `P4-` prefix (26 titles), and each
+  maps to a coverage-map row. No orphan Phase-4 test.
+- **N1 resolved.** `P4-C1(a-d)` parses the *absent*-shape request itself
+  (`mappers.test.ts:58`); RP3 confirmed the absent request parses standalone.
+- **N2 resolved.** `src/lib/proposales/README.md:30-31` states the reserved
+  `proposal_copilot_` prefix and that the application interprets no key it did not write.
+- **N3 resolved.** `P4-C2(i)` now bounds the source slice from `function quantityField`
+  to `export function toContentItem`, covering all four helpers plus the assembler; RP-N3
+  emitted `currency: "EUR"` from inside `blockField` and the row reddened.
+
+*Notes (new).*
+
+- **N5 — `proposal-readback.consistent.json` is no longer internally consistent.** The S6
+  repair gave the block distinct unit values (10100/10200/10300/10400) but left the
+  proposal totals at `10000`/`10000` with `quantity: 1`, so the fixture now encodes a state
+  the vendor was never observed to produce (evidence §8.3: each stored price component is
+  multiplied by quantity into the totals) and its name is false. No guard is weakened —
+  M13 and §17A.12 pin the *inconsistent* fixture as MUT-04-7's target, and C6(a) asserts
+  only verbatim mapping. Suggested correction: set `value_without_tax: 10100` and
+  `value_with_tax: 10200`, which restores the name, restores the C6(a)/C6(b) contrast, and
+  makes MUT-04-7 redden only the row it names.
+- **N6 — MUT-04-3 and MUT-04-34 each cover more rows than one mutation can demonstrate.**
+  `P4-C2(a-h)` asserts inside `for` loops, so the first failing `expect` aborts the test:
+  MUT-04-3 (six keys optional at once) can only be observed on the first block key, and
+  MUT-04-34 only on root `currency`. Charter rule 12. The underlying rows are sound — this
+  review's eight per-key probes above discharge all of C2(a–h) individually — but the
+  plan's ledger should name one mutation per row. Lesson for phases 5–15.
+
+*Carry-forward dispositions.* N4 (round 1) — `tsconfig.tsbuildinfo` is still tracked and
+was rewritten by this session's `npm run typecheck`, then restored to its pre-run bytes;
+remains routed to phase 15 with master follow-up 8. N5 → phase 14 (execution read-back
+fixtures), or folded into this plan's fixture note at the coordinator's discretion.
+N6 → implementation-planner, binding on every plan authored after this phase.
+
+*Evidence and tree identity.* Tree `f342549`, `git status --porcelain` showing only the
+two pre-existing untracked reviewer handoffs; `tsconfig.tsbuildinfo` SHA-256
+`3adf45b9…` before and after. `npm run typecheck` clean, `npm run lint` clean,
+`git diff --check` clean. One authorized L4 stamp on the handed-over tree:
+`npm test` → 12 files / 163 tests green (1.09 s). All probe runs were L1
+(`npx vitest run --project node <file> -t "<plain title fragment>"`); one initial
+selector using the literal `P4-C7(e-g)` silently skipped all 29 tests and was re-run with
+a parenthesis-free selector before any conclusion was drawn — the same false-measurement
+shape the round-2 implementer recorded for MUT-04-7.
+
+**Coordinator approval fold — round 2 (2026-09-05, Codex).** Approved after the
+independent delta re-review: all B1–B3, S1–S8, and N1–N3 are closed; no owner decision
+is open. N4 remains master follow-up 8 / phase 15. N5 is routed to the phase-14 fixture
+note: the execution phase must not use `proposal-readback.consistent.json` as a
+consistency oracle until its totals are reconciled. N6 is folded into master rule 14 and
+Phase 5 C2: every enumerated row now has an independently biting mutation. The prompt
+perimeter and `-t` regex lessons are folded into the coordinator's standing practice.
