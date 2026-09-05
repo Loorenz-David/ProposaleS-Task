@@ -20,7 +20,11 @@ describe("shared value shapes", () => {
     if (!result.success) expect(result.error.issues[0].path).toEqual(["value"]);
   });
   it("C4(d) rejects extra keys on absent", () => expect(knownOrAbsentSchema(z.number()).safeParse({ known: false, value: 1 }).success).toBe(false));
-  it("C4(e) round-trips through JSON", () => expect(JSON.parse(JSON.stringify({ known: false }))).toEqual({ known: false }));
+  it("C4(e) round-trips through JSON", () => {
+    const schema = knownOrAbsentSchema(z.number());
+    expect(schema.parse(JSON.parse(JSON.stringify(schema.parse({ known: false }))))).toEqual({ known: false });
+    expect(schema.parse(JSON.parse(JSON.stringify(schema.parse({ known: true, value: 1 }))))).toEqual({ known: true, value: 1 });
+  });
 
   it("C5(a) parses integer minor units", () => expect(moneySchema.parse({ amountMinor: 1200000, currency: "EUR" })).toEqual({ amountMinor: 1200000, currency: "EUR" }));
   it("C5(b) rejects non-integer minor units", () => {

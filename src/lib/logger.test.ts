@@ -11,7 +11,7 @@ function capturingLogger(now = () => new Date(0)) {
 function recordFor(fields: Record<string, unknown>) {
   const { logger, writes } = capturingLogger();
   logger.info("e", fields);
-  return { record: JSON.parse(writes[0]) as Record<string, unknown>, line: writes[0], fields };
+  return { record: JSON.parse(writes[0]) as Record<string, unknown>, line: writes[0], writes, fields };
 }
 
 describe("structured logger", () => {
@@ -60,6 +60,21 @@ describe("structured logger", () => {
     expect(record.cycle).toBe("[unserializable]");
     expect(line.split("\n")).toHaveLength(2);
     expect(fields.cycle).toBe(fields);
+  });
+
+  it("C3(p) preserves hostile own keys", () => {
+    const { record } = recordFor(JSON.parse('{"__proto__":{"authorization":"S12","plain":"kept"}}'));
+    expect(Object.prototype.hasOwnProperty.call(record, "__proto__")).toBe(true);
+    expect((record["__proto__"] as Record<string, unknown>).authorization).toBe("[redacted]");
+    expect((record["__proto__"] as Record<string, unknown>).plain).toBe("kept");
+  });
+
+  it("C3(q) writes one line for a cyclic value", () => {
+    const fields: { cycle: unknown } = { cycle: null };
+    fields.cycle = fields;
+    const { writes } = recordFor(fields);
+    expect(writes).toHaveLength(1);
+    expect(writes[0].endsWith("\n")).toBe(true);
   });
 
   it("C3(n) owns fixed frame fields", () => {

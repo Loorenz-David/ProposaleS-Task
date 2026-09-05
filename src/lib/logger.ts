@@ -38,7 +38,7 @@ function redact(value: unknown, ancestors: Set<object>): unknown {
 
     if (!isPlainObject(value)) return UNSERIALIZABLE;
 
-    const result: Record<string, unknown> = {};
+    const result: Record<string, unknown> = Object.create(null);
     for (const key of Object.keys(value)) {
       const descriptor = Object.getOwnPropertyDescriptor(value, key);
       if (!descriptor || !("value" in descriptor)) {
