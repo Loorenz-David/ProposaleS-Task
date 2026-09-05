@@ -4,7 +4,7 @@
 - **Intent:** Keep browser and server runtimes explicit and defensible; define what may cross between them.
 - **Applies when:** creating any file reachable from a `"use client"` graph; adding `"use client"`, `server-only`, or `"use server"`; passing data between server and client; reading environment variables; choosing Node vs Edge.
 - **Does not imply:** every component is a Client Component, or every module needs a directive.
-- **Related:** [03-feature-architecture.md](03-feature-architecture.md), [04-server-architecture.md](04-server-architecture.md), [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md)
+- **Related:** [03-feature-architecture.md](03-feature-architecture.md), [04-server-architecture.md](04-server-architecture.md), [05-client-architecture.md](05-client-architecture.md), [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md)
 
 One repository, one Vercel deployment, two runtimes that must never be confused:
 
@@ -24,6 +24,7 @@ Every rule below is a consequence of that sentence.
 - Every file under `src/app/` and every component is a **Server Component by default**. That is the correct default: it keeps secrets, data access, and heavy dependencies off the client bundle.
 - A component becomes a Client Component only by carrying the `"use client"` directive at the top of its file, or by being imported from a file that does. The directive marks a **bundle boundary**, not a single component: everything imported below it becomes client code.
 - Server Components MAY render Client Components and pass them serializable props. Client Components MUST NOT import Server Components; they MAY receive them as `children` or other React-node props.
+- **Interactivity somewhere does not make a tree client code.** A feature with a rich interactive surface is still composed of server-rendered structure with client islands at the points that actually handle input. The `children` prop is the mechanism: a client shell (a resizable panel, a tab container) receives server-rendered content it never imports. Marking a page or a feature root `"use client"` because something below it is interactive is the failure this rule exists to prevent.
 
 ## 2. `"use client"`
 
@@ -31,7 +32,7 @@ Every rule below is a consequence of that sentence.
 
 Rules:
 
-- Place the directive on the **smallest leaf** that needs it. A page that has one interactive button gets a small client `SubmitButton`, not a client page.
+- Place the directive on the **smallest leaf** that needs it. A page that has one interactive button gets a small client `SubmitButton`, not a client page. When a whole surface is genuinely interactive, the boundary is still drawn at the surface, not at the route: the client subtree is as small as the interaction requires and no smaller, and it is a deliberate decision, not a default.
 - A `"use client"` file MUST NOT import anything from a `server/` folder, from `src/lib/proposales/`, `src/lib/ai/`, `src/lib/agent/`, or `src/lib/env/server.ts`. The build fails on `server-only` imports; the lint rule (see §7) fails on the rest.
 - `"use client"` does not mean "this only renders in the browser". Client Components are still server-rendered for the initial HTML. Browser-only APIs MUST be guarded inside effects or event handlers.
 

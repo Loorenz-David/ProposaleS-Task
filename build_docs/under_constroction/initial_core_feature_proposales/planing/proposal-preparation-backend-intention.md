@@ -48,7 +48,7 @@ Classified as a new proposal-generation backend/agent feature (guide §10 scenar
 | `10-security-and-trust-boundaries.md` | model output untrusted, least capability, approval boundary (§5) |
 | `11-testing-principles.md` | layers, agent tests and evals, no live systems by default |
 | `12-anti-patterns.md` | server, data, integrations, agents, persistence sections |
-| `13-decision-checklist.md` | questions 13–24 |
+| `13-decision-checklist.md` | §3, §4 (cited by section; question numbers moved when the frontend questions were added) |
 | `14-documentation-principles.md` | this artifact's class and the closeout question |
 
 `05-client-architecture.md` does not apply: no UI is built.

@@ -27,12 +27,51 @@ Patterns that are prohibited or strongly discouraged in this repository. Each en
 | Giant Client Component that fetches, validates, computes, and renders | Prohibited | Hook for orchestration, server for authority, component for rendering. [05-client-architecture.md](05-client-architecture.md) |
 | Business rules embedded in JSX (`price * 1.25`, eligibility conditions, "can send" logic) | Prohibited | Server domain rule or shared schema; component renders the result |
 | `isLoading` / `isError` / `data?` boolean soup | Prohibited | Discriminated flow-state union |
-| Unnecessary global state (a store for data one screen uses) | Prohibited | Local state in the owning hook; lift only as far as needed |
+| Unnecessary global state (a store for data one screen uses) | Prohibited | Local state in the owning hook; lift only as far as needed. [05-client-architecture.md](05-client-architecture.md) §5.1 |
+| One application-wide store holding every feature's state | Prohibited | Feature-scoped stores, one concern each, in `features/<x>/hooks/` |
+| Server-authoritative data copied into a store because a store exists | Prohibited | The server's response is the value; hold one copy with a named owner |
+| The same value living as a server response, a store copy, a component copy, and a query cache | Prohibited | One owner, others derive. A duplicate with no written synchronization rule is a defect |
+| Workflow state, conversation context, and UI mechanics merged into one untyped state object | Prohibited | Three kinds, three shapes, per [05-client-architecture.md](05-client-architecture.md) §5 |
+| Adding TanStack Query (or an equivalent) without a named requirement it satisfies | Prohibited | Server Components, Server Actions, `router.refresh()`. Introduce on evidence, recorded in [README.md](README.md) |
+| Adding TanStack Router or TanStack Start | Prohibited | Next.js App Router owns routing and the application runtime |
+| `localStorage`, `sessionStorage`, IndexedDB, or session-restore affordances | Prohibited | The session is page-lifetime by decision. [05-client-architecture.md](05-client-architecture.md) §5.2 |
+| `"use client"` on a feature root because something deep inside is interactive | Prohibited | Client islands with server-rendered `children`. [02-runtime-boundaries.md](02-runtime-boundaries.md) §1 |
+| Hand-rolled ARIA on a `div` reproducing a native control's semantics | Prohibited | The native element, or a primitive that owns the behavior. [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §5 |
+| Accessibility deferred to a later polish pass | Prohibited | Keyboard, labels, and focus are part of implementing the element |
+| `as` casting to make a component compile against a mismatched shape | Prohibited | Fix the boundary; infer the type from the schema |
 | Hand-rolled cache of server data in client state | Discouraged | Re-fetch via Server Component, `router.refresh()`, or a re-called action |
 | Raw `fetch("https://external...")` in a component or hook | Prohibited | The server calls integrations. [07-integrations.md](07-integrations.md) |
 | Client-side validation that differs from the server schema | Prohibited | Import the shared schema |
 | Catching an error and rendering "Something went wrong" when an `ErrorDto` with a message exists | Prohibited | Render the DTO message; generic fallback only for unknown codes |
 | `div` with `onClick` as a button | Prohibited | Native control or `components/ui` primitive |
+
+## Styling and UI system
+
+Governed by [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md).
+
+| Pattern | Status | Instead |
+|---|---|---|
+| Inline `style={{...}}` objects as the general styling mechanism | Prohibited | Tailwind classes; `style` only for values computed at runtime (a dragged width, a transform, a popover coordinate) |
+| A second styling system beside Tailwind (CSS-in-JS, styled-components, SCSS) | Prohibited | One mechanism. [15](15-ui-styling-and-component-system.md) §1 |
+| Hard-coded colors, spacing, and type sizes repeated across components | Prohibited | A token in `src/styles/tokens.css`, wired into the Tailwind theme |
+| A design-token taxonomy (semantic layers, component tokens, theme scales) built before repeated patterns demand it | Prohibited | One small flat set of values |
+| Promoting a component to `src/components/ui/` with one consumer, or because it "looks reusable" | Prohibited | It lives beside its consumer until a second feature uses it |
+| Domain knowledge, fetching, or feature state inside a `src/components/ui/` primitive | Prohibited | It belongs in the feature |
+| Adopting a component library because a design tool or generator assumes one | Prohibited | Project-owned components on native elements; adopt accessible primitives only for a composite widget, under a recorded decision |
+| Half-converting a component (Tailwind classes beside its CSS Module) | Prohibited | A component is one or the other |
+
+## Prototype porting
+
+Governed by [16-design-prototype-porting.md](16-design-prototype-porting.md).
+
+| Pattern | Status | Instead |
+|---|---|---|
+| Porting a prototype's architecture (monolithic component, mock data layer, ad-hoc state bag) into `src/` because it works | Prohibited | Translate per [16](16-design-prototype-porting.md) §4; the prototype is evidence, not authority |
+| Redesigning layout, flow, or behavior during a port because the implementation conventions changed | Prohibited | Preserve the product decision; a visual change is the owner's call |
+| Bending a feature schema or the domain model to match a shape the prototype invented | Prohibited | The schemas win. A genuine gap amends the intention deliberately |
+| Porting a stateful concept without classifying it (domain / conversation / UI / prototype mechanism / mock) | Prohibited | Classify first, in the plan. [16](16-design-prototype-porting.md) §3 |
+| Prototype mock data surviving the port as an unmarked hard-coded value | Prohibited | A named placeholder, or real data |
+| Justifying a rule exception with "it matches the prototype" | Prohibited | The contracts apply to ported code identically |
 
 ## Server
 

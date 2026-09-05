@@ -4,7 +4,7 @@
 - **Intent:** Organize code by feature with explicit runtime folders and a downward dependency direction.
 - **Applies when:** creating a feature; adding a folder; deciding whether code belongs in a feature, `src/lib/`, or `src/components/ui/`; importing across features.
 - **Does not imply:** creating every listed folder; a feature has only the folders it uses.
-- **Related:** [02-runtime-boundaries.md](02-runtime-boundaries.md), [14-documentation-principles.md](14-documentation-principles.md) §6
+- **Related:** [02-runtime-boundaries.md](02-runtime-boundaries.md), [05-client-architecture.md](05-client-architecture.md), [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md), [14-documentation-principles.md](14-documentation-principles.md) §6
 
 Code is organized by **feature** (a vertical slice of one business capability), not by technical layer across the whole app. A global `frontend/` vs `backend/` split is prohibited because it hides which server code exists to serve which UI and encourages generic "utils" piles.
 
@@ -15,7 +15,7 @@ Runtime boundaries inside a feature are still explicit: each feature has clearly
 ```
 src/features/<feature>/
 ├── components/     # React rendering and interaction. Server Components by default, "use client" on leaves.
-├── hooks/          # Client orchestration: flows, controllers, view-state hooks. Always "use client".
+├── hooks/          # Client orchestration: flows, controllers, view-state hooks, feature stores. Always "use client".
 ├── client/         # Optional. Browser-safe transport adapters (fetch wrappers to our own Route Handlers).
 ├── server/         # Authority. Services, domain rules, Server Actions, agent tools. server-only.
 ├── schemas/        # Runtime contracts (Zod). Shared. Runtime-neutral.
@@ -24,7 +24,7 @@ src/features/<feature>/
 └── index.ts        # Optional public surface for other features. See §4.
 ```
 
-Do not create empty folders. A feature with no client interactivity has no `hooks/`. A feature that only calls Server Actions has no `client/`. A feature whose types are all inferred from schemas has no `types/`. A trivial feature has no `README.md`; a meaningful one has exactly one, describing current behavior only ([14-documentation-principles.md](14-documentation-principles.md) §6).
+Do not create empty folders. A feature with no client interactivity has no `hooks/`. A feature that only calls Server Actions has no `client/`. A feature whose types are all inferred from schemas has no `types/`. There is no `stores/` folder: a feature store is a hook (`hooks/use-<noun>-store.ts`) and lives with the other client orchestration it coordinates. A trivial feature has no `README.md`; a meaningful one has exactly one, describing current behavior only ([14-documentation-principles.md](14-documentation-principles.md) §6).
 
 Larger `server/` folders MAY be subdivided by responsibility, and MUST be when the folder exceeds roughly a dozen files:
 
@@ -45,7 +45,7 @@ Naming: feature folders are kebab-case nouns (`proposals`, `content-library`, `p
 | Folder | Owns | Must not contain |
 |---|---|---|
 | `components/` | Markup, styling, composition, wiring events to hooks, rendering loading/empty/error states | Business rules, request orchestration, `fetch`, `process.env`, integration imports, multi-step state machines |
-| `hooks/` | UI orchestration and view state: form flows, multi-step wizards, optimistic updates, calling Server Actions or `client/` adapters, mapping error DTOs to UI states | Business invariants, pricing, authorization decisions, direct external-system calls |
+| `hooks/` | UI orchestration and view state: form flows, multi-step wizards, optimistic updates, calling Server Actions or `client/` adapters, mapping error DTOs to UI states, and this feature's client store when one is justified ([05-client-architecture.md](05-client-architecture.md) §5.1) | Business invariants, pricing, authorization decisions, direct external-system calls, server-authoritative data copied in for convenience |
 | `client/` | Typed wrappers around **our own** Route Handlers when a Server Action is not appropriate (streaming, file upload, third-party webhooks calling us). Parses responses with schemas | Calls to external services, secrets, business logic |
 | `server/` | Application services, domain rules, Server Actions, Route Handler bodies, agent tools and agents, privileged operations, authorization checks | React, `"use client"`, browser APIs |
 | `schemas/` | Zod schemas for inputs, outputs, view DTOs, and their inferred types | I/O, React, environment access, anything not importable from both runtimes |
@@ -65,7 +65,8 @@ Rationale for `server/` being one folder rather than `api/`, `services/`, `domai
 | Database adapter (does not exist today) | `src/lib/db/` if ever justified | `server-only`; feature persistence functions would live in `features/<x>/server/persistence/`. Introduction requires the decision record in [09-database-and-persistence.md](09-database-and-persistence.md) §14 |
 | Error taxonomy and serialization | `src/lib/errors/` | Shared between server and client (the DTO half is runtime-neutral) |
 | Logging | `src/lib/logger.ts` | Server-side structured logger; client uses `console` sparingly |
-| Shared presentational primitives (Button, Dialog, Field) | `src/components/ui/` | No domain knowledge, no data fetching, no feature imports |
+| Global styles and design tokens | `src/styles/` | The single definition of visual values. [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §2 |
+| Shared presentational primitives (Button, Dialog, Field) | `src/components/ui/` | No domain knowledge, no data fetching, no feature imports. Promotion rule: [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §4 |
 | Route entry points | `src/app/` | Layouts, pages, `route.ts`. Thin: import from features, render, return |
 
 A module goes to `src/lib/` only when **at least two features need it or it wraps an external system**. "It might be reused later" is not a reason. Move it when the second consumer appears.

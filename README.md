@@ -159,6 +159,13 @@ Decided and deliberately absent:
 - Single Proposales company per deployment.
 - No application database ([09-database-and-persistence.md](architectural_contracts/09-database-and-persistence.md)).
 - No application-level authentication.
+- No client-side persistence: a session lives for the browser page lifetime ([05-client-architecture.md](architectural_contracts/05-client-architecture.md) §5.2).
+- No client data-fetching library and no component library; neither is forbidden, neither is earned yet ([05-client-architecture.md](architectural_contracts/05-client-architecture.md) §4, [15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md) §5).
+
+Decided for the frontend, not yet installed (the shell currently uses CSS Modules; see the contracts README "Known conflicts"):
+
+- Tailwind CSS as the styling mechanism, with `src/styles/tokens.css` as the single definition of visual values ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md)).
+- Zustand for feature-scoped client stores only, above `useState` and `useReducer` ([05-client-architecture.md](architectural_contracts/05-client-architecture.md) §5.1).
 
 Future product implementation (not started): brief intake, agent reasoning and tools, prepared-proposal review and approval, the Proposales adapter, and the editor handoff.
 

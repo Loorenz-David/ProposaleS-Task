@@ -17,6 +17,8 @@ Reading a contract does not imply introducing the capability it governs:
 | [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) | adding authentication |
 | [11-testing-principles.md](11-testing-principles.md) | every change needs a Playwright test |
 | [07-integrations.md](07-integrations.md) | adding abstraction layers without a real boundary |
+| [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) | adopting a component library or building a design system |
+| [16-design-prototype-porting.md](16-design-prototype-porting.md) | that a prototype's structure is what gets built |
 
 The target is **minimum sufficient authoritative context**: not the whole corpus by default, and never less than what clearly applies. Context efficiency is not a reason to skip an applicable contract.
 
@@ -51,7 +53,9 @@ Routing is many-to-many: one change usually touches several concerns, and one co
 
 | Task involves | Read |
 |---|---|
-| React components, hooks, forms, view state, loading/error/retry UI, accessibility | [05-client-architecture.md](05-client-architecture.md) |
+| React components, hooks, client state, forms, loading/error/retry UI, accessibility | [05-client-architecture.md](05-client-architecture.md) |
+| Styling, Tailwind, design tokens, inline styles, shared UI primitives, component libraries | [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) |
+| Porting an external prototype or design artifact into the repository; replacing mock adapters | [16-design-prototype-porting.md](16-design-prototype-porting.md) + [05-client-architecture.md](05-client-architecture.md) |
 | Where a file runs: Server vs Client Components, `"use client"`, `server-only`, `"use server"`, what crosses the boundary, env vars | [02-runtime-boundaries.md](02-runtime-boundaries.md) |
 | Route Handlers, Server Actions, services, domain rules, error taxonomy, idempotency, deterministic mutation | [04-server-architecture.md](04-server-architecture.md) + [02-runtime-boundaries.md](02-runtime-boundaries.md) |
 | Creating or reorganizing a feature, deciding where a module lives, cross-feature imports | [03-feature-architecture.md](03-feature-architecture.md) |
@@ -96,10 +100,26 @@ Example of overlap: adding `POST /api/proposals` involves server-architecture (t
 ### Client Architecture
 - **Contract:** [05-client-architecture.md](05-client-architecture.md) · **CONDITIONAL**
 - **Intent:** Keep components declarative, orchestration in hooks, and authority off the client.
-- **Read when:** adding or changing components, hooks, forms, async state, error and loading rendering, interaction or accessibility behavior.
-- **Governs:** component vs hook responsibilities, flow-state unions, local vs server-authoritative vs transient state, UX-only validation, accessibility rules.
-- **Does not imply:** a data-fetching or state library; none is part of the contract.
-- **Related:** runtime-boundaries, data-contracts-and-validation, agent-architecture (rendering prepared actions).
+- **Read when:** adding or changing components, hooks, client state, forms, async state, error and loading rendering, interaction or accessibility behavior.
+- **Governs:** component vs hook responsibilities, flow-state unions, the three kinds of client state and their owners, the `useState` → `useReducer` → feature store ladder, the page-lifetime session model, when a remote-state library is justified, UX-only validation, accessibility rules.
+- **Does not imply:** a remote-data-fetching library or a global store. Zustand is ratified for feature-scoped stores under §5.1's conditions; TanStack Query is conditional on a named requirement (§4); a single global store is prohibited.
+- **Related:** runtime-boundaries, data-contracts-and-validation, ui-styling-and-component-system, design-prototype-porting, agent-architecture (rendering prepared actions).
+
+### UI Styling and Component System
+- **Contract:** [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) · **CONDITIONAL**
+- **Intent:** One styling mechanism, one place for visual values, and a shared-primitive layer that stays small and generic.
+- **Read when:** writing or changing markup or styling; adding a shared UI primitive; promoting a component out of a feature; considering a component library, icon set, or design-system abstraction.
+- **Governs:** Tailwind as the styling mechanism, design tokens, when the `style` prop is allowed, the `src/components/ui/` promotion rule, the component-library decision, the existing CSS Modules foundation.
+- **Does not imply:** a design system, a component library, or a theming layer. Adopting accessible primitives is a recorded decision, not a default.
+- **Related:** client-architecture (component responsibility and accessibility), feature-architecture §3, design-prototype-porting.
+
+### Design Prototype Porting
+- **Contract:** [16-design-prototype-porting.md](16-design-prototype-porting.md) · **CONDITIONAL**
+- **Intent:** Turn an external interactive prototype into production code without letting the prototype become the architecture.
+- **Read when:** porting UI from a prototype, generated app, or design tool; replacing a mock adapter with a real service; deciding whether a concept the prototype invented is real.
+- **Governs:** what the prototype is and is not authoritative for, the port protocol, the classification of every stateful concept, the translation table, what must never be ported.
+- **Does not imply:** rebuilding a prototype from scratch, or re-opening its product decisions.
+- **Related:** client-architecture, ui-styling-and-component-system, feature-architecture, data-contracts-and-validation, testing-principles.
 
 ### Data Contracts and Validation
 - **Contract:** [06-data-contracts-and-validation.md](06-data-contracts-and-validation.md) · **CROSS-CUTTING**
@@ -223,7 +243,7 @@ Applicability is scoped to the concern being changed, not to the feature as a wh
 
 A feature with a React form, a Server Action, an agent, and a Proposales mutation plausibly needs client-architecture, runtime-boundaries, server-architecture, data-contracts-and-validation, agent-architecture, integrations, security-and-trust-boundaries, testing-principles, and documentation-principles. It does not need database-and-persistence unless it stores application-owned durable state.
 
-A CSS-only change to one component needs client-architecture (accessibility and state rendering rules) and the closeout question. It does not need the rest of the corpus.
+A CSS-only change to one component needs ui-styling-and-component-system, client-architecture (accessibility and state rendering rules), and the closeout question. It does not need the rest of the corpus.
 
 ## 10. Routing scenarios
 
@@ -231,7 +251,9 @@ A CSS-only change to one component needs client-architecture (accessibility and 
 
 **B. Introduce application persistence later.** Concerns: persistence justification and ownership, service and persistence layering, storage vs domain shapes, secrets and minimization, tests against real constraints, serverless runtime, decision record and documentation. Read: database-and-persistence first, then server-architecture, data-contracts-and-validation, security-and-trust-boundaries, testing-principles, runtime-boundaries (deployment implications), documentation-principles. The contract's applicability does not justify the database; the feature requirement and the §14 decision record must.
 
-**C. Adjust a component's visual layout.** Read: client-architecture (interaction, accessibility, state rendering). Then the closeout question; the feature README changes only if documented behavior changed. Do not load persistence, agent, or integration contracts.
+**C. Adjust a component's visual layout.** Read: client-architecture (interaction, accessibility, state rendering) and ui-styling-and-component-system (styling mechanism, tokens, inline-style rule). Then the closeout question; the feature README changes only if documented behavior changed. Do not load persistence, agent, or integration contracts.
+
+**E. Port a screen from an interactive prototype.** Concerns: what the prototype decides versus what the contracts decide, classification of its state, runtime placement of the interactive parts, styling translation, schemas for the data it renders, tests for the ported behavior, feature documentation. Read: design-prototype-porting first, then client-architecture, ui-styling-and-component-system, runtime-boundaries, feature-architecture, data-contracts-and-validation, testing-principles, documentation-principles. Add server-architecture and agent-architecture only for the surfaces that call them.
 
 **D. Change the Proposales adapter (new endpoint, changed mapping).** Concerns: adapter layout and error translation, wire vs domain shapes, timestamp and money handling, secrets and scope, fixture-based tests, integration README. Read: integrations, data-contracts-and-validation, server-architecture (error taxonomy, idempotency if a write), security-and-trust-boundaries, testing-principles, documentation-principles (integration README, vendor reference untouched).
 

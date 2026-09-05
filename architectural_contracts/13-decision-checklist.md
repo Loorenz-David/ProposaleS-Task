@@ -6,7 +6,7 @@
 - **Does not imply:** a new rule; every question points to the contract that owns the answer.
 - **Related:** all contracts
 
-Apply this before adding a file, a function, a dependency, or a feature. If any answer is "I don't know", the design is not finished. Each question links to the contract that decides it. Select which contracts apply to the task first with [01-implementation-contract-guide.md](01-implementation-contract-guide.md); this checklist then makes their questions explicit.
+Apply this before adding a file, a function, a dependency, or a feature. If any answer is "I don't know", the design is not finished. Cite this document **by section** (`13 §2`), never by question number: questions are inserted as concerns are added, so their numbers move; section numbers and the naming table do not. Each question links to the contract that decides it. Select which contracts apply to the task first with [01-implementation-contract-guide.md](01-implementation-contract-guide.md); this checklist then makes their questions explicit.
 
 ## 1. Before adding a file
 
@@ -45,62 +45,79 @@ Apply this before adding a file, a function, a dependency, or a feature. If any 
 
 12. **Is every interactive element a real control, labeled, keyboard-operable, with a visible pending state?** [05-client-architecture.md](05-client-architecture.md) §7
 
+13. **Which kind of state is this: workflow/domain, conversational context, or UI mechanics?**
+    They are three shapes with three owners and are never merged. [05-client-architecture.md](05-client-architecture.md) §5
+
+14. **Is `useState` enough? If not, `useReducer`? If not, does this genuinely need a feature store?**
+    The ladder is climbed for a reason, not by default; a store is feature-scoped and never holds server-authoritative data. [05-client-architecture.md](05-client-architecture.md) §5.1
+
+15. **Does this component need `"use client"`, or does only a leaf inside it?**
+    Interactivity deeper in the tree does not make the tree client code. [02-runtime-boundaries.md](02-runtime-boundaries.md) §1–§2
+
+16. **Is this styling a class or a runtime value?**
+    Anything identical on every render is a Tailwind class; `style` is for computed values only. Is a hard-coded visual value actually a token? [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §1–§3
+
+17. **Does this component belong in the feature or in `src/components/ui/`?**
+    It stays in the feature until a second feature uses it or it carries a cross-feature interaction contract. [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §4
+
+18. **If this is ported from a prototype: has every stateful concept been classified, and is anything being redesigned or copied wholesale?** [16-design-prototype-porting.md](16-design-prototype-porting.md) §2–§4
+
 ## 3. Before adding a Route Handler, Server Action, or service
 
-13. **Is this Route Handler or Server Action too thick?**
+19. **Is this Route Handler or Server Action too thick?**
     Parse, context, one service call, map result. Roughly 60 lines. Business logic goes to a service. [04-server-architecture.md](04-server-architecture.md) §2–3
 
-14. **Is the input parameter `unknown` and parsed before use?** [04-server-architecture.md](04-server-architecture.md) §3
+20. **Is the input parameter `unknown` and parsed before use?** [04-server-architecture.md](04-server-architecture.md) §3
 
-15. **Which `AppError` does each failure map to, and does the `message` stay safe?** [04-server-architecture.md](04-server-architecture.md) §6
+21. **Which `AppError` does each failure map to, and does the `message` stay safe?** [04-server-architecture.md](04-server-architecture.md) §6
 
-16. **What happens if this runs twice?**
+22. **What happens if this runs twice?**
     The UI blocks re-submission while pending; creates carry a `generation_id` in Proposales `data` metadata; recovery MAY search for it (verified filterable via `/v3/proposal-search`). Detection, not exactly-once. No persistent ledger. [04-server-architecture.md](04-server-architecture.md) §8
 
-17. **Is the rule this service enforces already defined somewhere else (a component, another service)?**
+23. **Is the rule this service enforces already defined somewhere else (a component, another service)?**
     One owner. [04-server-architecture.md](04-server-architecture.md) §5
 
 ## 4. Before adding an agent, tool, or prompt
 
-18. **Is the tool `read`, `prepare`, or `mutate`, and is that the least capability that works?** [08-agent-architecture.md](08-agent-architecture.md) §3
+24. **Is the tool `read`, `prepare`, or `mutate`, and is that the least capability that works?** [08-agent-architecture.md](08-agent-architecture.md) §3
 
-19. **Is an AI model deciding a mutation that should require approval?**
+25. **Is an AI model deciding a mutation that should require approval?**
     Consequential mutations are `prepare` → approval → deterministic execution. [08-agent-architecture.md](08-agent-architecture.md) §6
 
-20. **After approval, is the exact reviewed data what gets executed, with no model in the path?** [08-agent-architecture.md](08-agent-architecture.md) §6, [04-server-architecture.md](04-server-architecture.md) §9
+26. **After approval, is the exact reviewed data what gets executed, with no model in the path?** [08-agent-architecture.md](08-agent-architecture.md) §6, [04-server-architecture.md](04-server-architecture.md) §9
 
-21. **Can the model invent a consequential field (price, recipient, quantity, date, term, id) here, and does provenance make that detectable?** [08-agent-architecture.md](08-agent-architecture.md) §4
+27. **Can the model invent a consequential field (price, recipient, quantity, date, term, id) here, and does provenance make that detectable?** [08-agent-architecture.md](08-agent-architecture.md) §4
 
-22. **Does the tool output carry only what the model needs, with no secrets, raw upstream objects, or out-of-scope data?** [08-agent-architecture.md](08-agent-architecture.md) §3, [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) §6
+28. **Does the tool output carry only what the model needs, with no secrets, raw upstream objects, or out-of-scope data?** [08-agent-architecture.md](08-agent-architecture.md) §3, [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) §6
 
-23. **Would this rule still be enforced if the prompt were deleted?** If not, it is not a rule yet. [08-agent-architecture.md](08-agent-architecture.md) §7
+29. **Would this rule still be enforced if the prompt were deleted?** If not, it is not a rule yet. [08-agent-architecture.md](08-agent-architecture.md) §7
 
-24. **Does this couple anything outside `src/lib/ai/` to a specific provider?** [07-integrations.md](07-integrations.md) §8
+30. **Does this couple anything outside `src/lib/ai/` to a specific provider?** [07-integrations.md](07-integrations.md) §8
 
 ## 5. Before adding a dependency or infrastructure
 
-25. **What does this package do that the platform or an existing dependency does not?** [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) §11
+31. **What does this package do that the platform or an existing dependency does not?** [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) §11
 
-26. **Does this introduce a database, authentication, a state library, a queue, or a cache?**
-    Stop. That is an architectural decision recorded in [README.md](README.md) "Resolved decisions", not a feature change.
+32. **Does this introduce a database, authentication, a client state or data-fetching library, a component library, a queue, or a cache?**
+    Stop. That is an architectural decision recorded in [README.md](README.md) "Resolved decisions", not a feature change. Zustand and Tailwind are already ratified there, with the conditions that govern their use ([05-client-architecture.md](05-client-architecture.md) §5.1, [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §1); TanStack Query, a component library, and client-side persistence are not, and each needs the named requirement first ([05-client-architecture.md](05-client-architecture.md) §4, §5.2, [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §5).
 
 ## 6. Before persisting anything
 
-27. **Does this feature genuinely require application-owned durable state?**
+33. **Does this feature genuinely require application-owned durable state?**
     State that must survive beyond a request or browser session, and cannot live in Proposales. [09-database-and-persistence.md](09-database-and-persistence.md) §3
 
-28. **Who owns this data?**
+34. **Who owns this data?**
     Application-owned, or Proposales-owned? If it references a Proposales entity, which mode: external id only, snapshot, cache, projection, or authoritative copy? [09-database-and-persistence.md](09-database-and-persistence.md) §4
 
-29. **Could this remain transient, or live in the external system of record?**
+35. **Could this remain transient, or live in the external system of record?**
     Prepared proposals under review, corrections, and pending status are transient in the MVP by decision. Created proposals live in Proposales.
 
-30. **What durability or consistency requirement justifies persistence, and what happens between the database write and the Proposales call?**
+36. **What durability or consistency requirement justifies persistence, and what happens between the database write and the Proposales call?**
     Name the requirement, the consistency strategy, and the race. If you cannot, the answer is "no database". [09-database-and-persistence.md](09-database-and-persistence.md) §10–12, §14
 
 ## 7. Before closing implementation
 
-31. **Did this implementation make any durable documentation false, incomplete, or misleading?**
+37. **Did this implementation make any durable documentation false, incomplete, or misleading?**
     Evaluate after behavior is verified, not before. If yes, patch the authoritative owner in the same change; if no, leave documentation alone. The closeout checklist and the ownership table live in [14-documentation-principles.md](14-documentation-principles.md) §4 and §8 and are not repeated here.
 
 ## 8. Naming conventions
@@ -111,6 +128,7 @@ Apply this before adding a file, a function, a dependency, or a feature. If any 
 | Files | kebab-case; suffix by role where it aids search | `use-create-proposal-flow.ts`, `create-proposal.ts`, `search-proposals.tool.ts`, `proposal.test.ts` |
 | React components (exports) | PascalCase, named export | `export function CreateProposalForm()` |
 | Hooks | `use` prefix, camelCase | `useCreateProposalFlow` |
+| Feature stores | hook naming, file `use-<noun>-store.ts` in the feature's `hooks/` | `useProposalSessionStore` |
 | Server Actions | `<verb><Noun>Action`; never stack the word "Action" twice, rename the noun instead | `createProposalAction`, `approvePreparedProposalAction` |
 | Services | verb + noun, one exported function per file | `createProposal`, `executeApprovedProposalDraft` |
 | Domain rules | descriptive verb or `assert`/`can` prefix | `assertDraftIsSendable`, `canApplyDiscount` |

@@ -93,7 +93,7 @@ Selection protocol run against `architectural_contracts/01-implementation-contra
 | `10-security-and-trust-boundaries.md` | **selected** | trust table, secrets, input validation (§4), approval boundary (§5), injection (§6), logging (§7), tool inputs (§8), least capability (§9), upstream-URL origin validation (§10), dependencies (§11) |
 | `11-testing-principles.md` | **selected** | layers (§2–§3), agent tests and evals (§4), rules (§5) |
 | `12-anti-patterns.md` | **selected** | sections: runtime boundary, server, data and validation, integrations, agents, structure |
-| `13-decision-checklist.md` | **selected** | questions 1–8, 13–26 |
+| `13-decision-checklist.md` | **selected** | §1, §3, §4, §5 (cited by section: question numbers moved when the frontend questions were added, and the contract now requires section citations) |
 | `14-documentation-principles.md` | **selected** | closeout question (§8); feature README (§6); integration READMEs (§9); root README environment table (§10.5) |
 | `05-client-architecture.md` | **excluded** | no UI, no component, no hook, no Server Action is built |
 
@@ -359,7 +359,7 @@ All services: `(input, deps = defaultDeps): Promise<TurnResult | …>`; `deps` b
 ### 6.9 The two caller-held objects, and the forward principle
 
 ```
-Browser page lifetime (caller; nothing survives a reload — by design; contract 05 §74 makes the future UI say so)
+Browser page lifetime (caller; nothing survives a reload — by design; contract 05 §5.2 makes the future UI say so)
 │
 ├── ProposalWorkflowState        authoritative: generation id, brief, items, clarification round,
 │                                prepared/current proposition (with structural provenance), draft reference
