@@ -5,10 +5,10 @@
 | **Project** | `initial_core_feature_proposales` |
 | **Feature** | Proposal Preparation Backend (product: Proposal Copilot) |
 | **Owner** | David (repository owner) |
-| **Intention** | [planing/proposal-preparation-backend-intention.md](planing/proposal-preparation-backend-intention.md) — `RATIFIED` 2026-09-05; ledger M1–M18 ratified (§17, §17.1); mechanism contracts §17A |
+| **Intention** | [planing/proposal-preparation-backend-intention.md](planing/proposal-preparation-backend-intention.md) — `RATIFIED` 2026-09-05; ledger M1–M20 ratified (§17, §17.1); mechanism contracts §17A |
 | **Evidence** | [planing/proposales-source-evidence.md](planing/proposales-source-evidence.md) |
 | **Written** | 2026-09-05, implementation-planner round 1; **amended 2026-09-05, round 2** (multi-turn conversational continuity: new phase 10, phases 10–14 renumbered 11–15, `ProposalWorkflowState` naming, R13–R15, §6.9, rules 11–12, card 2, FB-2) |
-| **Phases** | 15, all `NOT_STARTED` (§4) |
+| **Phases** | 15: phases 1–2 `APPROVED`, phase 3 `PROMPT_READY`, phases 4–15 `NOT_STARTED` (§4) |
 | **Absorbs** | the project `README.md` index — its folder-table mapping and follow-up register now live in §11 of this file; `README.md` is left as a one-screen pointer (see §11) |
 
 This is the shared skeleton every session reads: names, contracts, environment, standing rules, the tracker. It states shared truths once. It never restates product semantics — the intention owns those — and never restates a phase's tasks or criteria — the phase plan owns those.
@@ -17,7 +17,7 @@ This is the shared skeleton every session reads: names, contracts, environment, 
 
 ## 1. Goal
 
-Build the backend described by the intention: a server-only workflow that turns a free-form brief into a reviewable, editable, approvable **proposal proposition** assembled from the existing Proposales content library, and — on explicit human approval carrying the library-pricing acknowledgment — deterministically creates one Proposales draft, reads back the Applied Pricing, and returns the editor URL. No UI, no database, no price writes, no send. Across turns the human can refer back to what was said ("use the second one") because the caller carries a bounded conversation context beside the workflow state; the state stays the only authority (§6.9). Fifteen phases, each closing green on its own, each ≤ 8 criteria, every criterion row tracing to one of M1–M18 or a §17A contract.
+Build the backend described by the intention: a server-only workflow that turns a free-form brief into a reviewable, editable, approvable **proposal proposition** assembled from the existing Proposales content library, and — on explicit human approval carrying the library-pricing acknowledgment — deterministically creates one Proposales draft, reads back the Applied Pricing, and returns the editor URL. No UI, no database, no price writes, no send. Across turns the human can refer back to what was said ("use the second one") because the caller carries a bounded conversation context beside the workflow state; the state stays the only authority (§6.9). Fifteen phases, each closing green on its own, each ≤ 8 criteria, every criterion row tracing to one of M1–M20 or a §17A contract.
 
 Semantics: intention §1–§16, §18. Mechanisms: intention §17A. Facts: evidence doc. This file decides *how the build is organized*, nothing about *what* the product does.
 
@@ -27,7 +27,7 @@ Semantics: intention §1–§16, §18. Mechanisms: intention §17A. Facts: evide
 |---|---|---|
 | Product semantics, invariants, domain concepts, scope ladder | intention | `planing/proposal-preparation-backend-intention.md` |
 | Mechanism contracts (shapes, orders, tables, named mutations) | intention §17A | same file |
-| Measurement ledger M1–M18 (the trace targets) | intention §17, §17.1 | same file |
+| Measurement ledger M1–M20 (the trace targets) | intention §17, §17.1 | same file |
 | Behavioral acceptance criteria 1–23 (product-level; distributed in §7.3) | intention §22 | same file |
 | External facts: Proposales public API, AI SDK behavior | evidence doc | `planing/proposales-source-evidence.md` |
 | Engineering contracts (how code is written) | `architectural_contracts/` | routed by `01-implementation-contract-guide.md` |
@@ -59,7 +59,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 |---|---|---|---|---|---|---|
 | 1 | Repository topology and environment | `plans/phase-01-topology-and-env.md` | `APPROVED` | 2026-09-05 | coordinator | 5 criteria; 22 rows; 11 mutations; 8 files / 29 tests green at `3c136e7`. Round 1 `CHANGES_REQUESTED` (5 findings), fix round 2 resolved the 6 scoped items; F2, F4's comment half and N2 excluded by owner MVP scoping and recorded. **Approved on a coordinator re-review, not an independent session** — caveat in the phase Review log |
 | 2 | Errors, logger, shared value shapes | `plans/phase-02-errors-logger-values.md` | `APPROVED` | 2026-09-05 | coordinator | Owner-authorized coordinator re-review approved checkpoint `2fc6a309`: exact three-file fix perimeter and hashes verified; 19-mutation ledger and closing evidence reconciled. Caveat: no separate independent re-review after fix round 2. |
-| 3 | Proposales adapter: transport, error translation, content read | `plans/phase-03-proposales-transport-and-content.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
+| 3 | Proposales adapter: transport, error translation, content read | `plans/phase-03-proposales-transport-and-content.md` | `PROMPT_READY` | 2026-09-05 | coordinator | Projection round 0 consumed and all D1–D21 routes folded; handoff prose says 20 but its ledger has 21 rows. Owner ratified both Option-A cards in §21.4. Dispatch lint: 6 criteria / 44 rows / 9 mutations; 18-file perimeter (16 new, 2 shared-error amendments). Prompt: `prompts/implementer/phase-03-round-1.implementer.md` |
 | 4 | Proposales adapter: create, recovery search, read-back, Applied Pricing | `plans/phase-04-proposales-proposals.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
 | 5 | Proposition schema and structural provenance | `plans/phase-05-proposition-and-provenance.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
 | 6 | Information items, clarification, workflow state, identity | `plans/phase-06-items-clarification-state.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
@@ -73,7 +73,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 | 14 | Execution: recovery, create, read-back, result | `plans/phase-14-execution.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
 | 15 | Whole-workflow proof, isolation scans, opt-in live suites, documentation closeout | `plans/phase-15-closeout.md` | `NOT_STARTED` | 2026-09-05 | planner | 5 criteria |
 
-Criteria total: 103; rows: 499; named mutations: 92 — derived from the phase acceptance tables on 2026-09-05 after the phase-2 review-round-1 fold (a criterion is a distinct `C<n>` in a phase's table; each table line is one row unless its ID explicitly spans letters). Re-derive after any plan amendment; never edit these numbers by hand.
+Criteria total: 103; rows: 508; named mutations: 97 — derived from the phase acceptance tables on 2026-09-05 after the phase-3 projection fold: 5 + 7 + 6 + 8 + 8 + 8 + 7 + 6 + 6 + 6 + 8 + 8 + 7 + 8 + 5 criteria; 22 + 52 + 44 + 46 + 61 + 45 + 28 + 26 + 22 + 25 + 28 + 33 + 26 + 32 + 18 rows; 11 + 19 + 9 + 9 + 5 + 5 + 3 + 4 + 4 + 5 + 7 + 4 + 4 + 4 + 4 mutations. A criterion is a distinct `C<n>` in a phase table; each table line is one row unless its ID explicitly spans letters. Re-derive after any plan amendment; never edit these numbers by hand.
 
 **Coordinator note (projection fold, 2026-09-05):** the prior summary `102 / 477 / 71` was not reproducible from the phase tables even before this fold: the fifteen declared phase headers summed to `102 / 483 / 79`. The current re-derivation reports the actual table rows and named mutation identifiers after phase 2 grew by 12 rows and 8 mutations, phase 15 grew by 2 rows and 2 mutations, and phase 2 gained one criterion. Historical handoffs remain records of the counts their sessions saw and are not rewritten.
 
@@ -294,8 +294,8 @@ Type names are the inferred pair of each schema (`xSchema` / `X`). Sources: `Pro
 | `PROPOSAL_SEARCH_LIMIT` | `lib/proposales/client.ts` | 25 | equals the documented maximum (evidence §5) |
 | `PROPOSALES_BASE_URL` | `lib/proposales/http.ts` | `https://api.proposales.com` | evidence §1 |
 | `PROPOSALES_TIMEOUT_MS` | `lib/proposales/http.ts` | 10000 | positive int |
-| `PROPOSALES_READ_MAX_ATTEMPTS`, `PROPOSALES_READ_BACKOFF_MS`, `PROPOSALES_READ_TOTAL_MS` | `lib/proposales/http.ts` | 3 / 300 / 8000 | attempts ≥ 1; total elapsed cap (§17A.12 read-back bounds) |
-| `MAX_UPSTREAM_MESSAGE_CHARS` | `lib/proposales/errors.ts` | 500 | message forwarded only when ≤ cap (§17A.13) |
+| `PROPOSALES_READ_MAX_ATTEMPTS`, `PROPOSALES_READ_BACKOFF_MS`, `PROPOSALES_READ_TOTAL_MS` | `lib/proposales/http.ts` | 3 / 300 / 8000 | attempts ≥ 1; an overall read deadline: every attempt's abort timeout is `min(PROPOSALES_TIMEOUT_MS, remaining total)` and no retry starts after the deadline (§17A.12 read-back bounds) |
+| `MAX_UPSTREAM_MESSAGE_CHARS`, `MAX_UPSTREAM_ISSUES`, `GENERIC_UPSTREAM_ERROR_MESSAGE` | `lib/proposales/errors.ts` | 500 / 25 / `"The Proposales request could not be completed."` | a forwarded upstream message or issue message is used only when ≤ the message cap; at most `MAX_UPSTREAM_ISSUES` issues cross; every other upstream text uses the exported generic message (§17A.13) |
 | `DEFAULT_RUN_BUDGETS` | `lib/ai/config.ts` | `{ wallTimeMs: 60000, maxToolCalls: 12, maxTokens: 60000 }` | each positive int (§17A.14) |
 | `AI_CALL_TIMEOUT_MS` | `lib/ai/config.ts` | 45000 | ≤ `wallTimeMs`; passed per call |
 | `MAX_OUTPUT_RETRIES` | `lib/agent/run.ts` | 1 | int ≥ 0; bounded model retry on invalid structured output |
@@ -334,7 +334,7 @@ All services: `(input, deps = defaultDeps): Promise<TurnResult | …>`; `deps` b
 | `labeledBlock` / `buildPreparationMessages` | `agent/build-messages.ts` | `(name, text) → string` · `({ brief, catalogLanguages, language, answers?, currentProposition?, conversation, instruction? }) → AgentMessage[]` — fixed block order `brief · catalog_languages · clarification_answers · current_proposition · conversation_history · current_instruction` (present only when given; the instruction always last; nothing goes to `system`) |
 | `searchContentTool` | `tools/search-content.tool.ts` | name `search_content`, kind `read`, input `{ query: string(1..200) }`, output `{ candidates }` |
 | `getContentTool` | `tools/get-content.tool.ts` | name `get_content`, kind `read`, input `{ variationId: string }`, output `{ item \| null }` |
-| `createFakeProposalesClient` | `lib/proposales/fake.ts` | `({ catalog?, company?, proposals?, editorOrigin?, failNext? }) → FakeProposalesClient` with `calls: Array<{ op, input }>`, `writes: number`, `stored: Map<uuid, StoredDraft>`, `assertNoWrites()` |
+| `createFakeProposalesClient` | `lib/proposales/fake.ts` | `({ catalog?, company?, proposals?, editorOrigin?, failNext? }) → FakeProposalesClient` with `calls: Array<{ op, input? }>`, `writes: number`, `stored: Map<uuid, StoredDraft>`, `assertNoWrites()`; `input` is omitted for no-argument reads |
 | `createScriptedAiClient` | `lib/ai/scripted.ts` | `(steps: GenerateStepResult[]) → AiClient & { calls: GenerateStepInput[] }`; throws `script_exhausted` past the end |
 | `createFailingAiClient` | `lib/ai/scripted.ts` | `() → AiClient` whose `generateStep` throws `new Error("model must not be called")` |
 | `createAiClient` | `lib/ai/client.ts` | `(env = serverEnv) → AiClient` via `registry.ts` |
@@ -400,7 +400,7 @@ Phase 4 (Proposales proposal operations) is needed only from phase 13 onward; ph
 
 ### 7.2 Ledger coverage — which phase serves each entry
 
-Every M1–M18 is served by at least one criterion row (derived by script from the phase files; zero gaps). Regenerate this table after any plan amendment.
+Every M1–M20 is served by at least one criterion row (derived from the phase trace cells; zero gaps). Regenerate this table after any plan amendment.
 
 | Ledger | Served by (phase.criterion) — derived from the trace cells |
 |---|---|
@@ -423,6 +423,7 @@ Every M1–M18 is served by at least one criterion row (derived by script from t
 | M17 | 1.C2, 6.C5, 6.C6, 6.C7 |
 | M18 | 6.C3, 11.C3 |
 | M19 | 10.C3, 10.C5, 12.C7, 15.C1 |
+| M20 | 2.C3 |
 
 ### 7.3 Intention §22 criteria — where each is sharpened into rows
 
@@ -602,7 +603,7 @@ rename, never a bare `mv` of several files into one directory.
 
 **Folder tables** (charter layout instantiated): master plan at this root (this file) · `plans/` phases · `prompts/{implementer,reviewer,coordinator,maintenance}/` live directives · `handoffs/<role>/` unconsumed reports · `archive/pre_plan/` gate rows before phase 1, `archive/plan_<n>/` created at each closeout · `planing/` the intention and evidence doc (owner-authored, not renamed) · `context/` owner-supplied context. Mechanism inventory and planning ran under the coordinator role tables. State is positional; a transition is a file move.
 
-**Gate log:** intention `RATIFIED` round 5 (2026-09-05, §21.1); ledger extension M8–M18 ratified round 7; **FB-2 ratified round 8 (2026-09-05): §17A.17, M19, §5.2, §7, §8.3, §17A.4, §12.1 — folded, no longer proposed** · **logging/redaction M20 ratified round 10 (2026-09-05): §17A.18, §21.3 — phase 2 projection card 1 → A** · mechanism inventory `PASSED` round 1 (17 mechanisms, 17 contracts) · ledger extension `RATIFIED` round 7 (M8–M18, none cut) · planning round 1: this plan set (2026-09-05) · planning round 2 (2026-09-05): multi-turn continuity refactor — phase 10 inserted, 10–14 → 11–15; FB-2 raised · owner decisions (2026-09-05): card 1 → A, card 2 → A, folded into phases 3, 5, 10, 11, 12.
+**Gate log:** intention `RATIFIED` round 5 (2026-09-05, §21.1); ledger extension M8–M18 ratified round 7; **FB-2 ratified round 8 (2026-09-05): §17A.17, M19, §5.2, §7, §8.3, §17A.4, §12.1 — folded, no longer proposed** · **logging/redaction M20 ratified round 10 (2026-09-05): §17A.18, §21.3 — phase 2 projection card 1 → A** · **phase-3 transport precedence and timestamp validation ratified round 12 (2026-09-05): §17A.13, §17A.16, §21.4 — projection cards 1 and 2 → A** · mechanism inventory `PASSED` round 1 (17 mechanisms, 17 contracts) · ledger extension `RATIFIED` round 7 (M8–M18, none cut) · planning round 1: this plan set (2026-09-05) · planning round 2 (2026-09-05): multi-turn continuity refactor — phase 10 inserted, 10–14 → 11–15; FB-2 raised · owner decisions (2026-09-05): card 1 → A, card 2 → A, folded into phases 3, 5, 10, 11, 12.
 
 **Follow-up register** — none blocks any phase:
 

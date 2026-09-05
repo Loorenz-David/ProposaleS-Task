@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | `RATIFIED` (2026-09-05, by the owner, David, on the round-9 logging/redaction surface in §21.3; recorded in §23 round 10. The round-5 and round-7/8 ratifications remain historical records in §23.) |
+| **Status** | `RATIFIED` (2026-09-05, by the owner, David, on the phase-3 transport-precedence and timestamp-validation surface in §21.4; recorded in §23 round 12. The earlier ratifications remain historical records in §23.) |
 | **Product** | Proposal Copilot |
 | **Feature working name** | Proposal Preparation Backend |
 | **Owner** | David (repository owner) |
@@ -882,6 +882,8 @@ Separately, the executing service refuses any call that does not carry a parsed 
 
 All carry `details.system = "proposales"` and `details.status` where an HTTP status exists. **What may cross:** `error.message`, only when the body parsed as `{ error: { message: string } }` and the string is within a named length cap — the vendor documents these as user-safe (evidence §1) — and `error.issues` as `{ path: string[], message: string }` under the same cap. **What may never cross:** the raw body, headers, the request URL, or any string that failed those checks; a generic message is used instead and the original goes to `cause` (contract `04-server-architecture.md` §6).
 
+**Transport precedence.** Classify a non-2xx reply by its HTTP status before examining whether its body is readable. Thus a `429` is `rate_limited_upstream` and a `5xx` is `server_error`, both retryable, even when the body is HTML, empty, or otherwise not JSON. `invalid_body` applies only when a successful (2xx) reply cannot be parsed as JSON; a successful JSON reply that fails its response schema remains `schema_mismatch`. A readable non-2xx body may supply only the bounded safe message and issues described above; it never changes the status classification. This closes the status × body-shape product rather than leaving retry behavior to parser order.
+
 **AI provider failures.** Same shape, `details.system` naming the provider generically, and — because contract `07-integrations.md` §4 assumes only Proposales' messages are safe — **the provider message never crosses**; it lives in `cause`. Reasons: `unauthenticated_upstream`, `timeout`, `rate_limited_upstream`, `server_error`, `transport`, `content_filtered`, and `not_configured` (§17A.15).
 
 **Model output that fails our schema after bounded retries is not an integration failure:** `validation_error` with `details.reason = "model_output_invalid"` and the issue **paths only** — never the model's text — and the run ends `failed` (§15.2 row 2).
@@ -930,6 +932,8 @@ Deepens §7 (Brief), §9.2; contract `10-security-and-trust-boundaries.md` §4.
 - **Free text is data.** Narrative and title are Markdown per the vendor's subset (§9.2); this application never renders model or human text as HTML (contract `10-security-and-trust-boundaries.md` §4).
 - **A stated price expectation is never parsed out of free text.** `commercialNotes[i].amount` is `SourcedOrAbsent<Money>`: a brief saying "around 12k" cannot be represented as `Money`, so the amount is `{ known: false }` and the stated wording is preserved in the note's text. Extracting a number from prose with a pattern is invention, not sourcing. `currency` must be a valid ISO-4217 code or the note carries none. `taxBasis` is the closed enum `including_tax | excluding_tax | unstated`, with `unstated` explicit — never defaulted to one of the other two.
 - **Time.** All application-produced timestamps come from an injected `now()` (contract `04-server-architecture.md` §4), never an inline `Date.now()`, and are ISO 8601 UTC with `Z` at millisecond precision. Proposales' int64 epoch values are interpreted **only** inside the adapter's mapper (contract `06-data-contracts-and-validation.md` §6, §2.1); no application code ever sees an epoch integer.
+
+**External epoch bound.** Before mapping a Proposales content item's `created_at`, the adapter accepts only an integer millisecond epoch for which `new Date(value).toISOString()` is a four-digit-year value accepted by `isoTimestampSchema`. A value outside that range is a Proposales response-schema failure (`schema_mismatch`) naming `created_at`; it fails the entire content read. The adapter never drops the item, substitutes a time, or lets a `RangeError` escape. This validates vendor input at the integration boundary and does not widen or alter the shared ISO timestamp value contract.
 
 
 ### 17A.17 Conversation context
@@ -1040,6 +1044,14 @@ Ratified on the surface below (§23, round 5). All seven cards are closed. Cards
 **Approved:** §17A.18 and M20, verbatim. In plain terms: server diagnostics are structured one-line JSON; the logger itself removes values held under the eight listed sensitive-key spellings, regardless of case or nesting; arrays and normal JSON values retain their shape; malformed, cyclic, or opaque diagnostics become `[unserializable]` rather than crashing or invoking foreign serialization; and application fields cannot rewrite the event metadata. The rule adds no user-facing capability, persistence, network call, UI, or change to the approved proposal workflow.
 
 **What approval does:** ratifies M20 as a trace target and makes §17A.18 the source of truth for phase 2's logging criteria. It does not approve logging raw request/response bodies, prompt/model text, credentials, or personal data beyond correlation ids; those remain prohibited by contract 10 §7.
+
+### 21.4 Phase-3 transport precedence and timestamp-validation ratification surface (presented and approved 2026-09-05, rounds 11–12)
+
+**Owner decisions:** projection card 1 option **A** and projection card 2 option **A**.
+
+**Approved:** For a non-successful Proposales HTTP response, status decides the error class before body parsing: `429` and `5xx` retain their retryable upstream classifications even if the vendor sends HTML or another unreadable body. Only a successful reply with an unreadable body is `invalid_body`. A content `created_at` that cannot be represented as the application's four-digit ISO timestamp fails the entire catalogue read as a named upstream schema mismatch; the item is never silently omitted.
+
+**What approval does:** ratifies the two additions above to §17A.13 and §17A.16 as the semantic authority for phase 3. It adds no endpoint, persistence, UI, or vendor write; it makes an existing retry policy and an existing validation boundary total at their previously undecided edges.
 
 ## 22. Acceptance criteria (behavioral, for a future planner or reviewer)
 
@@ -1156,3 +1168,12 @@ A later implementation satisfies this intention when all of the following hold. 
 
 - **Owner:** David (repository owner). **Approved:** §21.3 exactly as presented, by the explicit response "approved".
 - **Ratified addition:** M20 and §17A.18. The owner approved centralized case-insensitive redaction of the eight listed key spellings; preserved `null` and JSON shapes; fail-closed handling of opaque/cyclic values; immutable caller fields; and owned JSON-line metadata. No workflow, data, integration, UI, persistence, or scope-ladder decision changed.
+
+**Round 11 (2026-09-05, phase-3 projection owner decisions).** Status `RATIFIED` → `COLLABORATING`.
+
+- **Projection card 1 → A.** A non-2xx response is classified by status before body parsing: a `429` or `5xx` remains retryable even with an unreadable body. Folded into §17A.13's new Transport precedence paragraph.
+- **Projection card 2 → A.** An out-of-range Proposales content epoch fails the entire content read as `schema_mismatch`; it is neither dropped nor allowed to escape as a runtime date error. Folded into §17A.16's new External epoch bound paragraph.
+
+**Round 12 (2026-09-05, owner ratification: phase-3 transport precedence and timestamp validation).** Status `COLLABORATING` → `RATIFIED`.
+
+- **Ratified:** the owner approved both Option-A branches verbatim from the projection cards. §21.4 records the exact ratification surface; the new §17A.13 and §17A.16 paragraphs are binding for phase 3.
