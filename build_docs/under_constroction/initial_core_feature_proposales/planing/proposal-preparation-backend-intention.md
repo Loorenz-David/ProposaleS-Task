@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | `RATIFIED` (2026-09-05, by the owner, David, on the round 4 ratification surface in §21.1; recorded in §23. Material semantic changes re-open the gate to `COLLABORATING`; smaller amendments follow the mechanism-inventory delta path.) |
+| **Status** | `RATIFIED` (2026-09-05, by the owner, David, on the round-9 logging/redaction surface in §21.3; recorded in §23 round 10. The round-5 and round-7/8 ratifications remain historical records in §23.) |
 | **Product** | Proposal Copilot |
 | **Feature working name** | Proposal Preparation Backend |
 | **Owner** | David (repository owner) |
@@ -471,7 +471,7 @@ Observable outcomes that, measured true, mean this intention shipped. Every down
 
 M1–M7 above are ratified and unchanged; nothing in this block restates or narrows them. The entries below register the invariants of the mechanism contracts in §17A. Each is a planner's trace target.
 
-Ratified as a post-ratification amendment to the ledger, on the surface in §21.2, recorded in §23 round 7. All eleven entries were ratified; none was cut. **M1–M19 are one ledger** from this point: a criterion's trace cell may cite any of them, and every entry must be served by at least one criterion row or recorded as a planning gap. M19 was added and ratified in round 8; M8–M18 in round 7.
+Ratified as a post-ratification amendment to the ledger, on the surface in §21.2, recorded in §23 round 7. All eleven entries were ratified; none was cut. **M1–M20 are one ratified ledger** from this point: a criterion's trace cell may cite any of them, and every entry must be served by at least one criterion row or recorded as a planning gap. M19 was added and ratified in round 8; M8–M18 in round 7; M20 in round 10.
 
 | ID | Objective (observable) | Defect family guarded | Contract |
 |---|---|---|---|
@@ -487,6 +487,7 @@ Ratified as a post-ratification amendment to the ledger, on the surface in §21.
 | **M17** | The workflow-state schema is strict; every turn re-parses the whole state; an extra or misspelled key fails loudly rather than being stripped; the editor URL is validated against the expected Proposales origin; a state over the size bound fails with a named validation error. | a stripped Draft Reference re-enabling a create; an oversized body failing as transport noise | §17A.3 |
 | **M18** | A clarification answer binds to a question id; a skip is an explicit value; an unanswered question leaves its information item `unresolved`, never `deferred_by_user`. | an omission recorded as a human decision | §17A.7 |
 | **M19** | A reference in a later human turn to an option the assistant presented earlier resolves to that option's content identity in the proposition with `proposales_content` provenance, and approval and execution operate from the workflow state alone. | conversation text treated as authority; a reference resolved to something never presented | §17A.17 |
+| **M20** | Every server log emission is one JSON line whose fixed frame cannot be overwritten by caller fields; denylisted values are redacted before serialization at every object depth, including inside arrays; null and JSON primitives preserve their value; unsupported or cyclic values become `"[unserializable]"`; logging never mutates the caller's fields or throws while handling them. | credentials or personal data emitted to logs; a malformed diagnostic field crashes production logging; a field falsifies its event metadata | §17A.18 |
 
 ## 17A. Mechanism contracts (mechanism-inventory round 1)
 
@@ -946,6 +947,17 @@ Deepens §5.2, §11.2, §12.2. Ledger **M19**; also serves M4 and M10.
 **Named mutations:** seed the retrieval record empty → the "use the second one" row reddens; append the instruction into the history block → the separation row reddens; skip the window trim → the cap row reddens.
 
 
+### 17A.18 Structured logging and redaction
+
+Deepens contract `10-security-and-trust-boundaries.md` §7. Ledger **M20**. This is a server-only diagnostic boundary; it creates no product data, external call, persistence, or UI surface.
+
+1. **One owned frame.** Each logger call sends its sink exactly `JSON.stringify(record) + "\\n"`. `record` has fixed `level`, `event`, and ISO timestamp `time` fields; caller fields cannot overwrite any of them. The logger does not mutate the caller's value.
+2. **Central, exact redaction.** Before serialization, every object key whose lowercase spelling is one of `authorization`, `apikey`, `api_key`, `token`, `password`, `secret`, or `email` has its value replaced with `"[redacted]"`. This is a closed v1 denylist: widening it is a future intention amendment, never an ad-hoc call-site exception. It deliberately extends contract 10 §7 by adding `api_key`, because environment-derived values commonly use that spelling.
+3. **Total walk.** `null`, strings, booleans, and finite JSON numbers pass through unchanged. Arrays remain arrays and every element is processed recursively. Plain objects retain their keys and are processed recursively. A non-plain value, a non-finite number, a bigint, or a cycle becomes the literal `"[unserializable]"`; the logger never invokes a foreign `toJSON`, calls arbitrary methods, or throws while serializing diagnostic fields. A transport that needs a causal diagnosis first maps it to deliberately safe plain fields; raw upstream bodies, prompt/model text, and unapproved personal data never reach this boundary.
+
+**Named mutations:** remove `api_key` → its row reddens; stop recursive handling inside an array → its row reddens; preserve a cyclic value → the total-serialization row reddens; spread caller fields after the frame → the frame-ownership row reddens.
+
+
 ## 18. Scope ladder
 
 ### Must ship
@@ -1020,6 +1032,14 @@ Ratified on the surface below (§23, round 5). All seven cards are closed. Cards
 **Also relayed and accepted at the same time:** the five internal inconsistencies §23 round 6 lists as resolved by contract, and the coordinator's statement that a small number of the §17A contracts do change what gets built (the recovery search's `limit`, explicit provider selection) as mechanical consequences of rules already ratified in round 5, rather than as new product decisions. The owner did not object to that reading.
 
 **Not on this surface:** nothing in §21.1 moved. No scope change, no new endpoint or capability, no change to any resolution (a)–(l). The intention's status stays `RATIFIED` throughout.
+
+### 21.3 Logging and redaction ratification surface (presented and approved 2026-09-05, rounds 9–10)
+
+**Owner decision:** card 1 option **A** — record the logging and redaction rule in the intention before phase 2 builds it. The addition re-opened the intention gate because it creates a new, testable safety contract that later phases will rely on.
+
+**Approved:** §17A.18 and M20, verbatim. In plain terms: server diagnostics are structured one-line JSON; the logger itself removes values held under the eight listed sensitive-key spellings, regardless of case or nesting; arrays and normal JSON values retain their shape; malformed, cyclic, or opaque diagnostics become `[unserializable]` rather than crashing or invoking foreign serialization; and application fields cannot rewrite the event metadata. The rule adds no user-facing capability, persistence, network call, UI, or change to the approved proposal workflow.
+
+**What approval does:** ratifies M20 as a trace target and makes §17A.18 the source of truth for phase 2's logging criteria. It does not approve logging raw request/response bodies, prompt/model text, credentials, or personal data beyond correlation ids; those remain prohibited by contract 10 §7.
 
 ## 22. Acceptance criteria (behavioral, for a future planner or reviewer)
 
@@ -1126,3 +1146,13 @@ A later implementation satisfies this intention when all of the following hold. 
 - **Planning card 1 → A (company currency).** The company's currency is read from `GET /v3/companies` during preparation and revision, and used only to warn when a stated currency differs from it. Never written. **§12.1** operation list extended. Capture task for the coordinator: the evidence doc §2 row calling `GET /v3/companies` "not needed" is now stale; §8.1 already records the observed keys.
 - **Planning card 2 → A (values stated in an instruction).** A consequential value the human states in the **current** revision instruction may be recorded with `human` provenance, carrying the turn id and a verbatim quote that the server checks; prior turns never resolve. **§8.3** `human` row extended; **§17A.4** gains the `ref` paragraph; **§17A.17** item 6 states the boundary. Without this, "keep that one but make the quantity 3" could not be honored by a revision at all.
 - **No scope change.** No new endpoint beyond the company read the warning already required, no persistence (the context is caller-held and lost on reload by design, per §4 and §18), no authentication, no UI. Nothing was renumbered: §17A.17 is appended within §17A and M19 within §17.1.
+
+**Round 9 (2026-09-05, owner decision: logging and redaction).** Status `RATIFIED` → `COLLABORATING`.
+
+- **Card 1 → A.** The owner selected the projection's recommendation to record logging and redaction at the intention layer before phase 2 implements it. The coordinator added proposed §17A.18 and M20 and presented §21.3 for explicit ratification; option A approved the direction, not this proposed wording.
+- **Why the gate re-opened.** This is a new safety mechanism with a measurement target, not a restatement of an already-ratified workflow rule. Phase 2 cannot be dispatched until the owner explicitly approves §21.3 and the header returns to `RATIFIED`.
+
+**Round 10 (2026-09-05, owner ratification: logging and redaction).** Status `COLLABORATING` → `RATIFIED`.
+
+- **Owner:** David (repository owner). **Approved:** §21.3 exactly as presented, by the explicit response "approved".
+- **Ratified addition:** M20 and §17A.18. The owner approved centralized case-insensitive redaction of the eight listed key spellings; preserved `null` and JSON shapes; fail-closed handling of opaque/cyclic values; immutable caller fields; and owned JSON-line metadata. No workflow, data, integration, UI, persistence, or scope-ladder decision changed.

@@ -58,7 +58,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 | # | Phase | Plan file | State | Date | Actor | Note |
 |---|---|---|---|---|---|---|
 | 1 | Repository topology and environment | `plans/phase-01-topology-and-env.md` | `APPROVED` | 2026-09-05 | coordinator | 5 criteria; 22 rows; 11 mutations; 8 files / 29 tests green at `3c136e7`. Round 1 `CHANGES_REQUESTED` (5 findings), fix round 2 resolved the 6 scoped items; F2, F4's comment half and N2 excluded by owner MVP scoping and recorded. **Approved on a coordinator re-review, not an independent session** — caveat in the phase Review log |
-| 2 | Errors, logger, shared value shapes | `plans/phase-02-errors-logger-values.md` | `IMPLEMENTED` | 2026-09-05 | Codex | 7 criteria; 50 rows; 16 mutations; 12 files. Targeted 44 tests, typecheck, and lint green (one pre-existing warning); checkpoint `CHECKPOINT (not approved): phase 02 errors logger values` |
+| 2 | Errors, logger, shared value shapes | `plans/phase-02-errors-logger-values.md` | `APPROVED` | 2026-09-05 | coordinator | Owner-authorized coordinator re-review approved checkpoint `2fc6a309`: exact three-file fix perimeter and hashes verified; 19-mutation ledger and closing evidence reconciled. Caveat: no separate independent re-review after fix round 2. |
 | 3 | Proposales adapter: transport, error translation, content read | `plans/phase-03-proposales-transport-and-content.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
 | 4 | Proposales adapter: create, recovery search, read-back, Applied Pricing | `plans/phase-04-proposales-proposals.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
 | 5 | Proposition schema and structural provenance | `plans/phase-05-proposition-and-provenance.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
@@ -73,7 +73,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 | 14 | Execution: recovery, create, read-back, result | `plans/phase-14-execution.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
 | 15 | Whole-workflow proof, isolation scans, opt-in live suites, documentation closeout | `plans/phase-15-closeout.md` | `NOT_STARTED` | 2026-09-05 | planner | 5 criteria |
 
-Criteria total: 103; rows: 497; named mutations: 89 — derived from the phase acceptance tables on 2026-09-05 after the phase-2 projection fold (a criterion is a distinct `C<n>` in a phase's table; each table line is one row unless its ID explicitly spans letters). Re-derive after any plan amendment; never edit these numbers by hand.
+Criteria total: 103; rows: 499; named mutations: 92 — derived from the phase acceptance tables on 2026-09-05 after the phase-2 review-round-1 fold (a criterion is a distinct `C<n>` in a phase's table; each table line is one row unless its ID explicitly spans letters). Re-derive after any plan amendment; never edit these numbers by hand.
 
 **Coordinator note (projection fold, 2026-09-05):** the prior summary `102 / 477 / 71` was not reproducible from the phase tables even before this fold: the fifteen declared phase headers summed to `102 / 483 / 79`. The current re-derivation reports the actual table rows and named mutation identifiers after phase 2 grew by 12 rows and 8 mutations, phase 15 grew by 2 rows and 2 mutations, and phase 2 gained one criterion. Historical handoffs remain records of the counts their sessions saw and are not rewritten.
 
@@ -134,7 +134,7 @@ Every identifier below is fixed. A session that needs a name not listed here add
 src/lib/env/server.ts                       import "server-only"; serverEnv (§6.2)
 src/lib/errors/app-error.ts                 AppError + the nine subclasses of 04 §6; ErrorCode
 src/lib/errors/error-dto.ts                 errorDtoSchema / ErrorDto; toErrorDto(error)
-src/lib/logger.ts                           logger (structured, redacting); createLogger(sink) for tests
+src/lib/logger.ts                           createLogger(options), the structured redacting logger factory; no singleton until a real consumer needs one
 src/lib/values/path.ts                      pathSchema / Path = string[]
 src/lib/values/absence.ts                   knownOrAbsentSchema(inner) / KnownOrAbsent<T>
 src/lib/values/money.ts                     moneySchema / Money; currencyCodeSchema
@@ -526,6 +526,7 @@ Each earned from this project's artifacts:
 10. **The closing L4 stamp is `npm test` with the tree identity**, plus `npm run typecheck` and `npm run lint`. CI additionally runs `npm run test:e2e` and `npm run build`; a phase must not break either (the e2e spec is untouched by this feature but still runs).
 11. **Prior conversation is context, never a source; the conversation is never an input to approval or execution, never stored.** A `proposales_content` ref must be in the run's retrieval record (seed ∪ reads); a `human` ref must resolve per rule 7 (the current instruction turn only, by quote). The latest human turn is passed separately from history and is never in the inbound context (§6.9).
 12. **Two caller-held objects, never merged.** `ProposalWorkflowState` (authority) and `ConversationContext` (context) are siblings on `TurnResult`; neither schema admits the other (phase 10 C6). A future capability adds its own typed state (§6.9 forward principle); nobody adds a global one.
+13. **Checkpoint provenance is per cycle.** Before an implementer checkpoint, stage only that cycle's declared code/tests and any tracker/review-log edits it actually made; coordinator folds already present in the worktree are committed separately or named in the checkpoint handoff's full observed perimeter. A checkpoint never claims a narrower diff than it contains.
 
 ## 10. Environment topology (verified 2026-09-05; if reality disagrees, update this section)
 
@@ -614,6 +615,8 @@ rename, never a bare `mv` of several files into one directory.
 | 4 | **New (planning):** intention §17A.15 phrase "the SDK's language-model type, which a `string` does not satisfy" is inaccurate against `ai@7.0.92` (`LanguageModel` includes the string id). Mechanism unchanged; the accurate phrasing is `Exclude<LanguageModel, string>` (§6.4). Editorial fold-back to the intention via the coordinator; no gate re-opens. | coordinator | — | this plan §6.4, handoff finding F1 |
 | 6 | **AI model id unresolved.** `.env.example` reads `AI_MODEL=gpt-5.6-luna`; the owner stated `gpt-6.6-luna` when confirming it (2026-09-05). One is a typo; **the coordinator did not guess.** Nothing depends on it yet — phase 1 empties `.env.example`, the schema has no defaults, and the test placeholder is `test-placeholder-model`. Load-bearing from **phase 8** (provider boundary). | owner — one line | — | this section; §6.2 |
 | 7 | Contract `06` §8 says Zod's `error.issues` maps directly to `string[]` paths, but Zod 4 emits numeric array indices. Patch the contract to require `issue.path.map(String)` at a DTO boundary. | dispatchable agent session | *(raise a prompt row when dispatched)* | phase-2 projection D2 |
+| 8 | `tsconfig.tsbuildinfo` is tracked although `npm run typecheck` rewrites it. Decide in a dedicated repository-hygiene change whether to ignore it and remove it from the index, so routine evidence stamps do not create irrelevant dirty-tree identity drift. | dispatchable agent session | *(raise a prompt row when dispatched)* | phase-2 review N4 |
+| 9 | Phase 2 intentionally validates ISO timestamp **form**, not calendar validity; phase 3's mandatory projection must assess whether its epoch mapper can produce an out-of-range `Date` and route any new refinement through the intention/plan rather than silently changing the shared value contract. | phase-3 projection | phase-3 reviewer prompt | phase-2 review N6 |
 
 ## 12. Open items handed to the coordinator
 
