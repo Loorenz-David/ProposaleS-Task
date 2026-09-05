@@ -220,4 +220,8 @@ red, and reverted. The mutation probe files are separate from the fix perimeter:
 
 Checkpoint subject: `CHECKPOINT (not approved): phase 04 Proposales proposals`.
 
-Checkpoint SHA: pending final checkpoint commit.
+Checkpoint SHA: `a5771d6` (`CHECKPOINT (not approved): phase 04 Proposales proposals`).
+
+The SHA line was filled in as a docs-only provenance update after the checkpoint; no
+production source, tests, fixtures, plan criteria, tracker row, or implementation behavior
+changed after the closing `npm test` stamp.
