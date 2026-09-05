@@ -38,7 +38,7 @@ Verified against `package.json`.
 | Language | TypeScript, `strict` |
 | AI layer | Vercel AI SDK (`ai`) installed; no model provider configured yet |
 | Runtime validation | Zod 4 |
-| Unit and component tests | Vitest 5 with React Testing Library and jest-dom, jsdom environment |
+| Unit and component tests | Vitest 5 with React Testing Library and jest-dom; node project for server tests, jsdom project for app/component tests |
 | End-to-end tests | Playwright, Chromium |
 | Lint | ESLint 9 with `eslint-config-next` |
 | Hosting | Vercel |
@@ -95,7 +95,7 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs typecheck, lint, 
 
 ## Testing strategy
 
-- **Vitest and React Testing Library** cover everything below the browser: pure functions, schemas, domain rules, services, adapters with mocked HTTP, and component tests. Tests live next to the code as `*.test.ts(x)`. Vitest excludes `e2e/` so the two suites never overlap.
+- **Vitest and React Testing Library** cover everything below the browser: pure functions, schemas, domain rules, services, adapters with mocked HTTP, and component tests. The node project collects `src/lib/**`, `src/features/**`, and `test/setup/node.test.ts`; the jsdom project collects `src/app/**` and `src/components/**`. Vitest excludes `e2e/` and `*.live.test.ts` so the default projects never overlap with end-to-end or opt-in live tests.
 - **Playwright** covers critical browser-level flows from `e2e/`. It starts `npm run dev` itself and runs against Chromium. Today it has one spec that checks the application shell renders and the skip link works.
 - Layers, what each must prove, and the rules for agent evals: [11-testing-principles.md](architectural_contracts/11-testing-principles.md).
 

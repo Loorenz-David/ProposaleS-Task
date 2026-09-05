@@ -57,7 +57,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 
 | # | Phase | Plan file | State | Date | Actor | Note |
 |---|---|---|---|---|---|---|
-| 1 | Repository topology and environment | `plans/phase-01-topology-and-env.md` | `IMPLEMENTED` | 2026-09-05 | Codex | 5 criteria; 17 rows; 6 named mutations; 7 files / 24 tests green; checkpoint pending review |
+| 1 | Repository topology and environment | `plans/phase-01-topology-and-env.md` | `IMPLEMENTED` | 2026-09-05 | Codex | round 2: six scoped fixes complete; 22 rows, 11 mutations, targeted phase suite 22/22 green; checkpoint pending review |
 | 2 | Errors, logger, shared value shapes | `plans/phase-02-errors-logger-values.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
 | 3 | Proposales adapter: transport, error translation, content read | `plans/phase-03-proposales-transport-and-content.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
 | 4 | Proposales adapter: create, recovery search, read-back, Applied Pricing | `plans/phase-04-proposales-proposals.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
@@ -109,7 +109,7 @@ Selection protocol run against `architectural_contracts/01-implementation-contra
 | R4 | 07 §8 names `generate`, `generateStructured`, `stream` on the AI boundary | The v1 interface exposes one operation, `generateStep` (§6.4), because the run loop needs one step primitive (tool calls or a final structured output) and no streaming exists without a UI. No dead methods (charter rule 4). |
 | R5 | 06 §3 `.strict()` SHOULD be used on inbound mutation payloads | Used on the workflow state, the approval envelope, the edits input, and the clarification answers (§17A.3). **Also used on the outbound create-request schema** (§17A.5): strictness on our own outbound wire schema is what makes the price keys unrepresentable rather than merely unwritten. Stated reason for the extension: the guard must fail at parse, not at review. |
 | R6 | 06 §6 Money row's parenthetical example (package-split values as decimals) | Does not fire in v1: every money field on the read-back is integer cents (evidence §6, §8.1, §8.3); `package_split[].vat` is a rate and is never converted (§17A.12). Follow-up 3 (§11) patches the contract example in its own change. |
-| R7 | 02 §7 lint boundary rule "MUST be added when the app is scaffolded" | The scaffold omitted it (`eslint.config.mjs` carries only `eslint-config-next`). Phase 1 adds the `no-restricted-imports` and `process.env` rules from 03 §4's table, because phase 1 creates the first server-only modules those rules protect. Existing code is not refactored. |
+| R7 | 02 §7 lint boundary rule "MUST be added when the app is scaffolded" | The scaffold omitted it (`eslint.config.mjs` carries only `eslint-config-next`). Phase 1 adds the `no-restricted-imports` and `process.env` rules from 03 §4's table, because phase 1 creates the first server-only modules those rules protect. Existing code is not refactored. **Tested, not merely added (review round 1, F1): a lint rule with no automated regression row is added once, not kept — phase 1 C3(c)/C3(d) are that guard. Every later phase tempted to widen the `process.env` exception list must redden C3(c) to do it.** |
 | R8 | 02 §3 `server-only` on every authority module | The package is not installed (verified 2026-09-05). Phase 1 installs it and aliases it to a stub for the Vitest node project (§10.4). |
 | R9 | 04 §6 taxonomy vs intention §15.2 row 2 (model output invalid → `validation_error` **and** the run ends `failed`) | The run loop returns a `failed` run result with `failure.reason = "model_output_invalid"` and issue paths; the turn service returns the domain result `failed` (never throws). The `validation_error` code is carried as `failure.code` so a future transport maps it to 400 without re-deciding. Budget exhaustion is the same shape with `failure.reason = "budget_exhausted"` (§17A.13, §17A.14). |
 | R10 | 03 §4 `src/lib/` never imports from `features/` | The Proposales client's create operation therefore accepts a **lib-owned** input type (`CreateProposalDraftInput`, §6.4) and knows nothing about propositions. The feature maps `ApprovedProposal → CreateProposalDraftInput` in `server/domain/to-create-draft-input.ts`; the lib mapper maps input → wire. Two seams, each with its own omission mutation (§6.5 and §17A.5). |
@@ -174,7 +174,7 @@ Every file under `src/lib/env`, `src/lib/proposales`, `src/lib/ai`, `src/lib/age
 
 **No defaults, no fallbacks** on any variable. The schema is parsed once at module load in `src/lib/env/server.ts`; failure throws an `Error` whose message lists the **names** of the failing variables, never values. `.env.example` lists all seven with empty values and one comment each; the root README environment table (14 §10.5) is patched in phase 1. The Proposales base URL `https://api.proposales.com` is a constant in `src/lib/proposales/http.ts` (evidence §1), not configuration.
 
-**Test placeholders** (`test/setup/node.ts`, applied unconditionally before any `@/lib/env/server` import): `PROPOSALES_API_KEY=test-placeholder-not-a-key`, `PROPOSALES_COMPANY_ID=1`, `PROPOSALES_EDITOR_ORIGIN=https://proposales.test`, `AI_PROVIDER=anthropic`, `AI_MODEL=test-placeholder-model`, `ANTHROPIC_API_KEY=test-placeholder-not-a-key`. Tests asserting env behavior construct their own `process.env` snapshot and call `parseServerEnv(raw)` directly; they never rely on the module-level singleton.
+**Test placeholders** (`test/setup/node.ts`, applied unconditionally before any `@/lib/env/server` import) — **all seven schema names, none omitted**: `PROPOSALES_API_KEY=test-placeholder-not-a-key`, `PROPOSALES_COMPANY_ID=1`, `PROPOSALES_EDITOR_ORIGIN=https://proposales.test`, `AI_PROVIDER=anthropic`, `AI_MODEL=test-placeholder-model`, `ANTHROPIC_API_KEY=test-placeholder-not-a-key`, `OPENAI_API_KEY=test-placeholder-not-a-key`. **Corrected in review round 1 (F3): this list named six, and the omitted `OPENAI_API_KEY` left a real vendor credential reachable inside the suite from any shell or CI job that exports it. The list is binding — every key of `serverEnvSchema.shape` appears here, and phase 1 C4(d) asserts it.** Tests asserting env behavior construct their own `process.env` snapshot and call `parseServerEnv(raw)` directly; they never rely on the module-level singleton.
 
 ### 6.3 Error codes, reasons, and result states
 
@@ -506,16 +506,20 @@ The charter's 17 quality rules apply verbatim. Project-specific rules, each earn
 
 | Project | Include | Environment | Setup |
 |---|---|---|---|
-| `node` | `src/lib/**/*.test.ts`, `src/features/**/*.test.ts` | `node` | `test/setup/node.ts` |
-| `jsdom` | `src/app/**/*.test.tsx`, `src/components/**/*.test.tsx` | `jsdom` | `vitest.setup.ts` (existing) |
+| `node` | `src/lib/**/*.test.ts`, `src/features/**/*.test.ts`, `test/setup/node.test.ts` | `node` | `test/setup/node.ts` |
+| `jsdom` | `src/app/**/*.test.tsx`, `src/components/**/*.test.ts`, `src/components/**/*.test.tsx` | `jsdom` | `vitest.setup.ts` (existing) |
 
-Both exclude `e2e/**` and `**/*.live.test.ts`. `resolve.alias` maps `@` → `src` (existing) and, in the node project, `server-only` → `test/stubs/server-only.ts` (an empty module; the real package throws on import outside a React server context). If Vitest 5 rejects inline `projects`, phase 1 falls back to `vitest.workspace.mts` and records it here.
+Both exclude `e2e/**` and `**/*.live.test.ts`. `resolve.alias` maps `@` → `src` (existing) and, in the node project, `server-only` → `test/stubs/server-only.ts` (an empty module; the real package throws on import outside a React server context). If Vitest 5 rejects inline `projects`, phase 1 falls back to `vitest.workspace.mts` and records it here. (Updated 2026-09-05 to the shape phase 1 actually shipped: inline `projects` works; the node project also claims `test/setup/node.test.ts`, and jsdom claims `src/components/**/*.test.ts` so the pre-existing component test is not dropped.)
+
+**Known hazard — the include globs do not partition the tree** (review round 1, N2, demonstrated): a `*.test.ts(x)` outside all of them is claimed by **no** project and is silently not collected — `vitest list` reports as if the file did not exist, and the suite stays green. Every file phases 2–14 create lands inside the claimed globs, so the live risk is a stray helper test outside them. Phase 15 carries the candidate criterion asserting that every test file is claimed by exactly one project. **Until then, any session adding a test outside `src/lib/**`, `src/features/**`, `src/app/**`, `src/components/**` or `test/setup/` must confirm its file appears in `npx vitest list`.**
 
 ### 10.4 `test/setup/node.ts` (phase 1)
 
-1. Assigns the six placeholder values of §6.2 to `process.env` unconditionally.
+1. Assigns **all seven** placeholder values of §6.2 to `process.env` unconditionally (corrected from six; review round 1, F3).
 2. Replaces `globalThis.fetch` with a function that throws `OfflineGuardError("network access is not allowed in the default suite")`. Adapter tests pass their own `fetch` through `deps`; nothing in the default suite may reach the real one.
 3. Nothing else: no mocks of modules, no timers.
+
+**`vitest.setup.ts` (jsdom project) installs the same `fetch` guard** (review round 1, N3). The guard's home is shared so both projects import one definition rather than two copies. Reason: §10.6 rule 1 is written absolutely, and a rule written absolutely but enforced in one project is the shape that fails silently later. Phase 1 C4(e) asserts it in the jsdom project.
 
 ### 10.5 Commands and evidence scopes
 

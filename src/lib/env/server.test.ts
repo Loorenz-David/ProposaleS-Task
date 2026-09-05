@@ -25,12 +25,19 @@ function lintSource(source: string, filePath: string) {
   return linter.verify(source, eslintConfig, { filename: filePath });
 }
 
-function envExampleNames() {
+function envExampleEntries() {
   const envExamplePath = fileURLToPath(new URL("../../../.env.example", import.meta.url));
   return readFileSync(envExamplePath, "utf8")
     .split("\n")
     .filter((line) => /^[A-Z0-9_]+=/.test(line))
-    .map((line) => line.slice(0, line.indexOf("=")));
+    .map((line) => {
+      const separator = line.indexOf("=");
+      return { name: line.slice(0, separator), value: line.slice(separator + 1) };
+    });
+}
+
+function envExampleNames() {
+  return envExampleEntries().map(({ name }) => name);
 }
 
 describe("server environment schema", () => {
@@ -131,10 +138,70 @@ describe("boundary lint rules", () => {
   it("C3(b): permits process.env in src/lib/env", () => {
     expect(lintSource("const k = process.env.X;", "src/lib/env/server.ts")).toHaveLength(0);
   });
+
+  it("C3(c): rejects process.env in every application path family", () => {
+    const filePaths = [
+      "src/app/page.tsx",
+      "src/components/x.tsx",
+      "src/features/f/server/a.ts",
+      "src/features/f/components/b.tsx",
+      "src/lib/other/c.ts",
+    ];
+
+    for (const filePath of filePaths) {
+      const reports = lintSource("const k = process.env.X;", filePath);
+
+      expect(reports, filePath).toHaveLength(1);
+      expect(reports[0]?.ruleId, filePath).toBe("no-restricted-properties");
+    }
+  });
+
+  it("C3(d): enforces each import family and permits server actions", () => {
+    const cases = [
+      {
+        source: 'import env from "@/lib/env/server";',
+        filePath: "src/features/f/components/a.tsx",
+        expectedReports: 1,
+      },
+      {
+        source: 'import React from "react";',
+        filePath: "src/features/f/schemas/s.ts",
+        expectedReports: 1,
+      },
+      {
+        source: 'import feature from "@/features/f/a";',
+        filePath: "src/lib/x.ts",
+        expectedReports: 1,
+      },
+      {
+        source: 'import action from "@/features/f/server/actions";',
+        filePath: "src/features/f/components/a.tsx",
+        expectedReports: 0,
+      },
+    ];
+
+    for (const { source, filePath, expectedReports } of cases) {
+      const reports = lintSource(source, filePath);
+
+      expect(reports, `${filePath}: ${source}`).toHaveLength(expectedReports);
+      if (expectedReports === 1) {
+        expect(reports[0]?.ruleId, filePath).toBe("no-restricted-imports");
+      }
+    }
+  });
 });
 
 describe("environment inventory", () => {
   it("C5(a): keeps .env.example names equal to the schema keys", () => {
     expect(new Set(envExampleNames())).toEqual(new Set(Object.keys(serverEnvSchema.shape)));
+  });
+
+  it("C5(b): keeps every .env.example value empty", () => {
+    const entries = envExampleEntries();
+
+    expect(entries).toHaveLength(7);
+    for (const { value } of entries) {
+      expect(value).toBe("");
+    }
   });
 });

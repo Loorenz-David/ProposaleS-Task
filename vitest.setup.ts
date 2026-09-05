@@ -2,7 +2,11 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 
+import { installOfflineFetchGuard } from "./test/setup/node";
+
+installOfflineFetchGuard();
+
 // Vitest globals are off, so React Testing Library does not unmount between tests on its own.
 afterEach(() => {
-    cleanup();
+  cleanup();
 });
