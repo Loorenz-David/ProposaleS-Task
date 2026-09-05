@@ -59,6 +59,13 @@ Phase 14 `APPROVED`.
 
 Criteria: 5 (C1–C5), 16 rows (a table line is one row; a lettered span counts its letters). Named mutations: 2.
 
+## Candidate criteria routed here (coordinator, 2026-09-05)
+
+From phase 1 review round 1. Both are plan-level hazards, not phase-1 defects; the planner did not foresee them and phase 15 owns the isolation scans that are the right instrument.
+
+1. **Every `*.test.ts(x)` in the tree is claimed by exactly one Vitest project** (review N2, demonstrated: a failing test outside all include globs was collected by neither project and `vitest list` reported as if it did not exist). Needs its own planted-violation row per the C2(e) pattern — a test file at an unclaimed path must make the criterion red.
+2. **No file containing the `"use client"` directive imports a restricted module** (review F2). ESLint core rules cannot select on the directive, and a blanket `src/app/**` restriction would be wrong because contract 03 §4 permits `src/app/` Server Components to import feature `server/` modules. `scanTree` is the right instrument. **Deprioritized by the owner (MVP scoping, 2026-09-05): this project builds no UI, so nothing is reachable today.** Implement only if a UI phase is ever added; recorded here so the reasoning is not re-derived.
+
 ## Notes
 
 - C3 is automated and opt-in (intention §16.3's closing paragraph); it is the only criterion family not run by the closing L4 stamp. The Review log records the last live run's date and tree identity when one is made.

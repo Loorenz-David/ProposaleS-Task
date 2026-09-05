@@ -163,3 +163,62 @@ After targeted behavior verification, the two-project test topology and the new 
 #### Candidate criteria and E2E note
 
 No candidate criterion was needed; every test in the phase test files maps to a criterion row, including the new C4(e) test. `npx vitest list` confirms the test is collected by the jsdom project. `e2e/bootstrap.spec.ts` remains unaffected because no route imports the env module at runtime; CI has no `.env`.
+
+### Coordinator re-review (in place of an independent reviewer session) — 2026-09-05 — **APPROVED**
+
+**Independence caveat, recorded because it matters to the record's value.** The owner
+directed that the fix round be verified by the coordinator rather than by a fresh
+reviewer session (MVP scoping call). This is less independent than the charter's
+re-review: the coordinator scoped the fix round it is now judging. It is mitigated by
+the findings themselves having come from an independent round-1 reviewer, and by the
+perimeter check being mechanical. **Phase 1 is the only phase approved this way so far;
+if it becomes the pattern, the re-review protocol is being eroded and that should be a
+deliberate decision, not a drift.**
+
+**Verified perimeter.** `3c136e7` touched exactly the allowed set: `README.md`,
+`src/lib/env/server.test.ts`, `test/setup/node.test.ts`, `test/setup/node.ts`,
+`vitest.setup.ts`, the new `src/components/offline-guard.test.ts`, plus closeout
+artifacts. **`eslint.config.mjs`, `src/lib/env/server.ts`, `.env.example`,
+`vitest.config.mts`, `package.json` and the lockfile are untouched**, as the fix prompt
+required. The master-plan and phase-plan diffs in that commit are the coordinator's own
+pre-dispatch folds plus the tracker row and Review log. `src/features/` is gone
+entirely — N1 closed.
+
+**Arithmetic re-derived, not accepted.** 17 (`server.test.ts`) + 4 (`node.test.ts`) + 1
+(`offline-guard.test.ts`) = 22 rows, matching the amended plan; 24 + 5 = 29 tests and
+7 + 1 = 8 files at full suite; 11 named mutations declared, 11 executed, and every
+mutation row's pass/skip totals are consistent with its file's test count.
+
+**Guards judged capable of failing** (charter rule 15), by reading, not by ledger:
+- `C3(c)` enumerates five paths with an exact rule-id assertion and a per-path failure
+  label — not a sample. **Verified by an independent mutant the round did not use:**
+  widening the exception to `src/features/**` alone (rather than the round's
+  `src/app` + `src/components`) reddens it, naming the failing path. `eslint.config.mjs`
+  restored byte-identical, confirmed by `git status`.
+- `C3(d)` asserts three positive families **and** the sanctioned `server/actions`
+  negative at exactly zero reports.
+- `C4(d)`'s `PLACEHOLDERS` table is **declared independently in the test file, not
+  imported from `test/setup/node.ts`** — so it restates master plan §6.2's contract
+  rather than asserting `f(x) == f(x)` (charter rule 15's third named instance). Its
+  set-equality against `serverEnvSchema.shape` also fails when a schema key gains no
+  placeholder.
+- `C5(b)` pins seven entries and asserts every value empty.
+- `C4(e)` calls the real `fetch` in the jsdom project and expects the guard error.
+
+**Declared divergence, and it is right.** MUT-01-11 used a local resolving stub instead
+of literal deletion, because deleting the jsdom installer would have let the probe reach
+the live vendor — the round-1 rule-9 lesson correctly applied, and declared in its own
+handoff section per charter rule 14.
+
+**Observation carried forward, not a finding.** `vitest.setup.ts` imports
+`test/setup/node.ts` for `installOfflineFetchGuard`, which also executes that module's
+seven `process.env` assignments as a load-time side effect. The effect is *beneficial* —
+the jsdom project now gets safe placeholders instead of the ambient environment — but it
+is undeclared, and the module's name says `node` while it now serves both projects.
+Recorded so phase 2+ is not surprised; renaming is not worth a round.
+
+**Evidence discipline.** The implementer's closing stamp (`npm test` → 8 files / 29
+tests, typecheck and lint green) was consumed by citation on matching content, not
+re-run. Coordinator L4 runs: **0**. All coordinator evidence was L1 variation.
+
+**Verdict: `APPROVED`.** Phase 2 may start.

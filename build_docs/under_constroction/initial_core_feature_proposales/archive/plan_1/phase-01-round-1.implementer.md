@@ -125,4 +125,10 @@ Mutation-probe files, listed separately from the implementation changes: `src/li
 
 ## Closing stamp
 
-To be finalized on the checkpoint tree: `npm test` → expected 7 files / 24 tests green; `npm run typecheck` → green; `npm run lint` → green. The checkpoint commit is the phase-01 implementation commit with subject prefix `CHECKPOINT (not approved): phase 01`.
+Tree identity for the handed-over tree: `HEAD=ea24913`; final `git status --porcelain` is ` M build_docs/under_constroction/initial_core_feature_proposales/handoffs/implementer/phase-01-round-1.implementer.md` and no other path.
+
+- `npm test` → 7 files, 24 tests passed.
+- `npm run typecheck` → passed.
+- `npm run lint` → passed.
+
+The checkpoint commit is `ea24913` with subject `CHECKPOINT (not approved): phase 01 topology and environment`.

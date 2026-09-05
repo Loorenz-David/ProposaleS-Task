@@ -106,6 +106,12 @@ Runtime observation recorded in the repository (`architectural_contracts/README.
 | Which languages does the target company's content carry, and how large is the catalog? | unknown to the repository | owner cards 3 and 4 |
 | Is `url` on the create response always the editor URL for drafts? | create doc says "view", patch and search docs say "editor" | the intention treats it as the editor handoff URL; confirm during the first live smoke test |
 
+## 7A. Editor URL origin — owner-stated candidate (unverified)
+
+`https://secure.proposales.com` is an **owner-stated candidate** for `PROPOSALES_EDITOR_ORIGIN`, recorded 2026-09-05. It is **not established**: §2 excludes `secure.proposales.com` endpoints from the *API* contract, which says nothing about the host that serves proposal editor URLs, and no create response has been observed in this repository.
+
+Provenance: the owner set it in `.env.example` on 2026-09-05; phase 1 correctly emptied that file per contract 02 §8, which removed the repository's only copy (review round 1, N5). It is recorded here so phase 15's live smoke has something to confirm or refute rather than discovering the origin from scratch. Until that smoke runs, code treats the origin as configuration and never as a known value.
+
 ## 8. Price override investigation (public API, empirical; 2026-09-05)
 
 ### 8.1 Scope and method

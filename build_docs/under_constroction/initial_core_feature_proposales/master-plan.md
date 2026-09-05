@@ -57,7 +57,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 
 | # | Phase | Plan file | State | Date | Actor | Note |
 |---|---|---|---|---|---|---|
-| 1 | Repository topology and environment | `plans/phase-01-topology-and-env.md` | `IMPLEMENTED` | 2026-09-05 | Codex | round 2: six scoped fixes complete; 22 rows, 11 mutations, targeted phase suite 22/22 green; checkpoint pending review |
+| 1 | Repository topology and environment | `plans/phase-01-topology-and-env.md` | `APPROVED` | 2026-09-05 | coordinator | 5 criteria; 22 rows; 11 mutations; 8 files / 29 tests green at `3c136e7`. Round 1 `CHANGES_REQUESTED` (5 findings), fix round 2 resolved the 6 scoped items; F2, F4's comment half and N2 excluded by owner MVP scoping and recorded. **Approved on a coordinator re-review, not an independent session** — caveat in the phase Review log |
 | 2 | Errors, logger, shared value shapes | `plans/phase-02-errors-logger-values.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
 | 3 | Proposales adapter: transport, error translation, content read | `plans/phase-03-proposales-transport-and-content.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
 | 4 | Proposales adapter: create, recovery search, read-back, Applied Pricing | `plans/phase-04-proposales-proposals.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
@@ -539,6 +539,16 @@ Both exclude `e2e/**` and `**/*.live.test.ts`. `resolve.alias` maps `@` → `src
 - `.env` exists locally and is git-ignored; no test reads it (rule 8).
 
 ## 11. Project index, folder tables, and follow-up register (absorbed from `README.md`)
+
+**Naming rule for archived rows (earned 2026-09-05, at the phase-1 gate).** A prompt and
+its handoff can carry the **identical** filename when both belong to the same role — as
+the coordinator's `mechanism-inventory-round-1.coordinator.md` and
+`implementation-planning-round-1.coordinator.md` did. They are distinguished only by
+which table they sit in, and archiving flattens both tables into one directory, so a
+plain `mv` silently overwrites one with the other. It did, twice, and both were
+recovered from `a53a964`. **Every archived row therefore carries `.prompt.` or
+`.handoff.` before the role segment**, and archiving is done with `mv -n` or an explicit
+rename, never a bare `mv` of several files into one directory.
 
 **Folder tables** (charter layout instantiated): master plan at this root (this file) · `plans/` phases · `prompts/{implementer,reviewer,coordinator,maintenance}/` live directives · `handoffs/<role>/` unconsumed reports · `archive/pre_plan/` gate rows before phase 1, `archive/plan_<n>/` created at each closeout · `planing/` the intention and evidence doc (owner-authored, not renamed) · `context/` owner-supplied context. Mechanism inventory and planning ran under the coordinator role tables. State is positional; a transition is a file move.
 
