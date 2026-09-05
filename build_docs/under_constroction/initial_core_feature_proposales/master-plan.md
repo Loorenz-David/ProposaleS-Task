@@ -8,7 +8,7 @@
 | **Intention** | [planing/proposal-preparation-backend-intention.md](planing/proposal-preparation-backend-intention.md) — `RATIFIED` 2026-09-05; ledger M1–M20 ratified (§17, §17.1); mechanism contracts §17A |
 | **Evidence** | [planing/proposales-source-evidence.md](planing/proposales-source-evidence.md) |
 | **Written** | 2026-09-05, implementation-planner round 1; **amended 2026-09-05, round 2** (multi-turn conversational continuity: new phase 10, phases 10–14 renumbered 11–15, `ProposalWorkflowState` naming, R13–R15, §6.9, rules 11–12, card 2, FB-2) |
-| **Phases** | 15: phases 1–3 `APPROVED`, phases 4–15 `NOT_STARTED` (§4) |
+| **Phases** | 15: phases 1–3 `APPROVED`, phase 4 `PROMPT_READY`, phases 5–15 `NOT_STARTED` (§4) |
 | **Absorbs** | the project `README.md` index — its folder-table mapping and follow-up register now live in §11 of this file; `README.md` is left as a one-screen pointer (see §11) |
 
 This is the shared skeleton every session reads: names, contracts, environment, standing rules, the tracker. It states shared truths once. It never restates product semantics — the intention owns those — and never restates a phase's tasks or criteria — the phase plan owns those.
@@ -60,7 +60,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 | 1 | Repository topology and environment | `plans/phase-01-topology-and-env.md` | `APPROVED` | 2026-09-05 | coordinator | 5 criteria; 22 rows; 11 mutations; 8 files / 29 tests green at `3c136e7`. Round 1 `CHANGES_REQUESTED` (5 findings), fix round 2 resolved the 6 scoped items; F2, F4's comment half and N2 excluded by owner MVP scoping and recorded. **Approved on a coordinator re-review, not an independent session** — caveat in the phase Review log |
 | 2 | Errors, logger, shared value shapes | `plans/phase-02-errors-logger-values.md` | `APPROVED` | 2026-09-05 | coordinator | Owner-authorized coordinator re-review approved checkpoint `2fc6a309`: exact three-file fix perimeter and hashes verified; 19-mutation ledger and closing evidence reconciled. Caveat: no separate independent re-review after fix round 2. |
 | 3 | Proposales adapter: transport, error translation, content read | `plans/phase-03-proposales-transport-and-content.md` | `APPROVED` | 2026-09-05 | coordinator | Owner-directed coordinator closeout of checkpoint `5fd0e61`: exact three-file perimeter and round-3 handoff/mutation evidence validated; no further independent review by owner decision. Caveat: round 3 itself was not independently re-reviewed. |
-| 4 | Proposales adapter: create, recovery search, read-back, Applied Pricing | `plans/phase-04-proposales-proposals.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
+| 4 | Proposales adapter: create, recovery search, read-back, Applied Pricing | `plans/phase-04-proposales-proposals.md` | `PROMPT_READY` | 2026-09-05 | coordinator | Projection round 0 consumed and fully folded; owner cards 1–2 → A. 8 criteria; 75 rows; 33 named mutations. |
 | 5 | Proposition schema and structural provenance | `plans/phase-05-proposition-and-provenance.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
 | 6 | Information items, clarification, workflow state, identity | `plans/phase-06-items-clarification-state.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
 | 7 | Content ranking domain and human search | `plans/phase-07-ranking-and-human-search.md` | `NOT_STARTED` | 2026-09-05 | planner | 7 criteria |
@@ -73,7 +73,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 | 14 | Execution: recovery, create, read-back, result | `plans/phase-14-execution.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
 | 15 | Whole-workflow proof, isolation scans, opt-in live suites, documentation closeout | `plans/phase-15-closeout.md` | `NOT_STARTED` | 2026-09-05 | planner | 5 criteria |
 
-Criteria total: 103; rows: 508; named mutations: 97 — derived from the phase acceptance tables on 2026-09-05 after the phase-3 projection fold: 5 + 7 + 6 + 8 + 8 + 8 + 7 + 6 + 6 + 6 + 8 + 8 + 7 + 8 + 5 criteria; 22 + 52 + 44 + 46 + 61 + 45 + 28 + 26 + 22 + 25 + 28 + 33 + 26 + 32 + 18 rows; 11 + 19 + 9 + 9 + 5 + 5 + 3 + 4 + 4 + 5 + 7 + 4 + 4 + 4 + 4 mutations. A criterion is a distinct `C<n>` in a phase table; each table line is one row unless its ID explicitly spans letters. Re-derive after any plan amendment; never edit these numbers by hand.
+Criteria total: 103; rows: 537; named mutations: 121 — derived from the phase acceptance tables on 2026-09-05 after the phase-4 projection fold: 5 + 7 + 6 + 8 + 8 + 8 + 7 + 6 + 6 + 6 + 8 + 8 + 7 + 8 + 5 criteria; 22 + 52 + 44 + 75 + 61 + 45 + 28 + 26 + 22 + 25 + 28 + 33 + 26 + 32 + 18 rows; 11 + 19 + 9 + 33 + 5 + 5 + 3 + 4 + 4 + 5 + 7 + 4 + 4 + 4 + 4 mutations. A criterion is a distinct `C<n>` in a phase table; each table line is one row unless its ID explicitly spans letters. Re-derive after any plan amendment; never edit these numbers by hand.
 
 **Coordinator note (projection fold, 2026-09-05):** the prior summary `102 / 477 / 71` was not reproducible from the phase tables even before this fold: the fifteen declared phase headers summed to `102 / 483 / 79`. The current re-derivation reports the actual table rows and named mutation identifiers after phase 2 grew by 12 rows and 8 mutations, phase 15 grew by 2 rows and 2 mutations, and phase 2 gained one criterion. Historical handoffs remain records of the counts their sessions saw and are not rewritten.
 
@@ -156,6 +156,7 @@ src/features/proposal-preparation/
   README.md
 test/stubs/server-only.ts                   empty module aliased for the Vitest node project
 test/setup/node.ts                          placeholder env + offline fetch guard (§10.4)
+test/helpers/proposales-arithmetic-scan.ts  TypeScript-AST test helper for phase-4 no-arithmetic proof
 vitest.config.mts                           two projects (§10.3)
 vitest.live.config.mts                      opt-in live suites (phase 15)
 e2e/                                        unchanged
@@ -237,7 +238,7 @@ Type names are the inferred pair of each schema (`xSchema` / `X`). Sources: `Pro
 | `approvalEnvelopeSchema` | `{ state: ProposalWorkflowState, proposition: Proposition, pricingAcknowledgment }.strict()` — a `conversation` key is an unknown key (phase 13 C7(c)) |
 | `approvedProposalSchema` | `{ generationId, proposition, pricingAcknowledgment, approvedAt: isoTimestamp, diff: ApprovalDiff }` — produced only by `validateApproval`; `executeApprovedProposal` re-parses it |
 | `approvalDiffSchema` | `Array<{ path: Path, before: unknown, after: unknown }>` sorted by path |
-| `appliedPricingSchema` (`draft-result.ts`) | `{ available: true, totalWithoutTax: Money, totalWithTax: Money, currency: currencyCode, taxOptions: { mode?: string, taxIncluded?: boolean, taxLabelKey?: string }, blocks: Array<{ contentId: string, quantity: number, optional: boolean, blockCurrency?: string, unitValueWithDiscountWithoutTax: Money, unitValueWithDiscountWithTax: Money, unitValueWithoutDiscountWithoutTax: Money, unitValueWithoutDiscountWithTax: Money, packageSplit: Array<{ type: string, vat?: number, valueWithoutTax?: Money, valueWithTax?: Money }> }>, warnings: Array<{ kind: "block_currency_differs", contentId }> } \| { available: false, reason: AppliedPricingUnavailableReason, status?: int }` |
+| `appliedPricingSchema` (`draft-result.ts`) | `{ available: true, totalWithoutTax: Money, totalWithTax: Money, currency: currencyCode, taxOptions: { mode?: string, taxIncluded?: boolean, taxLabelKey?: string }, blocks: Array<{ contentId: string, quantity: number, optional?: boolean, blockCurrency?: string, unitValueWithDiscountWithoutTax: Money, unitValueWithDiscountWithTax: Money, unitValueWithoutDiscountWithoutTax: Money, unitValueWithoutDiscountWithTax: Money, packageSplit?: Array<{ type: string, vat?: number, valueWithoutTax?: Money, valueWithTax?: Money }> }>, warnings: Array<{ kind: "block_currency_differs", contentId }> } \| { available: false, reason: AppliedPricingUnavailableReason, status?: int }` — its available arm mirrors the lib-owned `AppliedPricing` below; omitted `optional`/`packageSplit` mean Proposales did not report those display-only fields, never `false`/`[]` |
 | `draftResultSchema` | `{ proposalUuid, editorUrl, newlyCreated: boolean, seriesUuid?: string, status?: string \| "unknown", appliedPricing, notices: Array<{ kind: "inline_recipient_may_duplicate_contact" }> }` |
 | `runReportSchema` (`turn-result.ts`) | `{ provider: "anthropic" \| "openai" \| "scripted", model: string, usage: { inputTokens: int \| null, outputTokens: int \| null, totalTokens: int \| null } }` |
 | `turnResultSchema` | `{ state: ProposalWorkflowState, conversation: ConversationContext, result: DomainResult, run?: RunReport }` where `DomainResult` is the five-state union of §6.3. `conversation` is present on every turn service's result (prepare, answer, revise append the assistant turn; edit echoes the inbound); approval/execution results carry the state only (their input has no conversation) |
@@ -249,8 +250,9 @@ Type names are the inferred pair of each schema (`xSchema` / `X`). Sources: `Pro
 | `ContentItem` | `{ variationId: string, productId: string, title: Record<lang, string>, description: Record<lang, string>, createdAt: isoTimestamp, images?: string[] }` |
 | `CreateProposalDraftInput` | `{ language, titleMd?: string, descriptionMd?: string, recipient: KnownOrAbsent<{ firstName?, lastName?, email?, phone?, companyName? }>, blocks: Array<{ contentId: string, quantity: KnownOrAbsent<number>, optional: KnownOrAbsent<boolean> }>, generationId: string }` — the client attaches `company_id` and the three metadata keys itself |
 | `CreatedDraft` | `{ proposalUuid, url: string }` (url validated as absolute https; origin check is the feature's) |
-| `RecoveredProposalSummary` | `{ proposalUuid, seriesUuid?, status, url, generationId }` |
-| `ProposalReadback` | the parsed, mapped `GET /v3/proposals/{uuid}` subset the Applied Pricing mapper consumes (§17A.12 "In"), plus `seriesUuid?`, `status` |
+| `RecoveredProposalSummary` | `{ proposalUuid, seriesUuid?, status?: string, url, generationId }` — an absent/null vendor status is omitted; an unrecognised non-null vendor status maps to the display-only literal `"unknown"` |
+| `ProposalReadback` | the parsed, mapped `GET /v3/proposals/{uuid}` subset the Applied Pricing mapper consumes (§17A.12 "In"), plus `seriesUuid?`, `status?`; same absent-versus-unknown status rule as `RecoveredProposalSummary` |
+| `AppliedPricing` | the lib-owned, `available: true` arm mirrored by `appliedPricingSchema`: `{ available: true, totalWithoutTax: Money, totalWithTax: Money, currency: currencyCode, taxOptions: { mode?, taxIncluded?, taxLabelKey? }, blocks: Array<{ contentId: string, quantity: number, optional?: boolean, blockCurrency?: string, unitValueWithDiscountWithoutTax: Money, unitValueWithDiscountWithTax: Money, unitValueWithoutDiscountWithoutTax: Money, unitValueWithoutDiscountWithTax: Money, packageSplit?: Array<{ type: string, vat?, valueWithoutTax?: Money, valueWithTax?: Money }> }>, warnings: Array<{ kind: "block_currency_differs", contentId: string }> }` — all money is strict; omitted optional flag or package split remains absent |
 | `CompanyInfo` | `{ companyId: number, currency: currencyCode, taxMode: string }` — from `GET /v3/companies`, the entry whose id is the configured company (card 1 → A; phase 3) |
 | `ProposalesClient` (interface) | `getCompany(): Promise<CompanyInfo>` · `listContent(): Promise<ContentItem[]>` · `getContent(variationId): Promise<ContentItem \| null>` · `createProposalDraft(input): Promise<CreatedDraft>` · `findProposalsByGenerationId(generationId): Promise<RecoveredProposalSummary[]>` · `getProposal(uuid): Promise<ProposalReadback>` |
 
@@ -289,7 +291,7 @@ Type names are the inferred pair of each schema (`xSchema` / `X`). Sources: `Pro
 | `T_STRONG`, `T_POSSIBLE`, `T_FLOOR` | `server/domain/strength.ts` | 700 / 400 / 150 | `0 < T_FLOOR < T_POSSIBLE < T_STRONG ≤ SCORE_MAX`; half-open intervals (§17A.8) |
 | `LIBRARY_PRICING_STATEMENT_ID` | `schemas/approval.ts` | `"library-pricing-v1"` | the literal the envelope must carry (§17A.10) |
 | `LIBRARY_PRICING_STATEMENT_TEXT` | `schemas/approval.ts` | the human-readable wording | changing the wording changes the id |
-| `PROPOSAL_METADATA_KEYS` | `lib/proposales/mappers.ts` | `proposal_copilot_source`, `proposal_copilot_generation_id`, `proposal_copilot_created_at` | **binding wire names** (§17A.11) |
+| `PROPOSAL_METADATA_KEYS` | `lib/proposales/mappers.ts` | `{ source: "proposal_copilot_source", generationId: "proposal_copilot_generation_id", createdAt: "proposal_copilot_created_at" }` | **binding wire names and property names** (§17A.11) |
 | `PROPOSAL_COPILOT_SOURCE_MARKER` | `lib/proposales/mappers.ts` | `"proposal-copilot"` | binding |
 | `PROPOSAL_SEARCH_LIMIT` | `lib/proposales/client.ts` | 25 | equals the documented maximum (evidence §5) |
 | `PROPOSALES_BASE_URL` | `lib/proposales/http.ts` | `https://api.proposales.com` | evidence §1 |
@@ -334,7 +336,7 @@ All services: `(input, deps = defaultDeps): Promise<TurnResult | …>`; `deps` b
 | `labeledBlock` / `buildPreparationMessages` | `agent/build-messages.ts` | `(name, text) → string` · `({ brief, catalogLanguages, language, answers?, currentProposition?, conversation, instruction? }) → AgentMessage[]` — fixed block order `brief · catalog_languages · clarification_answers · current_proposition · conversation_history · current_instruction` (present only when given; the instruction always last; nothing goes to `system`) |
 | `searchContentTool` | `tools/search-content.tool.ts` | name `search_content`, kind `read`, input `{ query: string(1..200) }`, output `{ candidates }` |
 | `getContentTool` | `tools/get-content.tool.ts` | name `get_content`, kind `read`, input `{ variationId: string }`, output `{ item \| null }` |
-| `createFakeProposalesClient` | `lib/proposales/fake.ts` | `({ catalog?, company?, proposals?, editorOrigin?, failNext? }) → FakeProposalesClient` with `calls: Array<{ op, input? }>`, `writes: number`, `stored: Map<uuid, StoredDraft>`, `assertNoWrites()`; `input` is omitted for no-argument reads |
+| `createFakeProposalesClient` | `lib/proposales/fake.ts` | `({ catalog?, company?, proposals?, proposalReadback?, editorOrigin?, now?, newUuid? }) → FakeProposalesClient`; `now: () => number` and `newUuid: () => string` are injectable, `proposalReadback` supplies a newly-created draft's read-back, and `proposals` seeds recovery rows/read-backs. It exposes `calls` (a create call is exactly `{ op: "createProposalDraft", input, request }`), `writes`, `stored`, `storedReadbacks: Map<uuid, ProposalReadback>`, `failNext(op, error)`, and `assertNoWrites()`. `input` is omitted for no-argument reads. |
 | `createScriptedAiClient` | `lib/ai/scripted.ts` | `(steps: GenerateStepResult[]) → AiClient & { calls: GenerateStepInput[] }`; throws `script_exhausted` past the end |
 | `createFailingAiClient` | `lib/ai/scripted.ts` | `() → AiClient` whose `generateStep` throws `new Error("model must not be called")` |
 | `createAiClient` | `lib/ai/client.ts` | `(env = serverEnv) → AiClient` via `registry.ts` |
@@ -404,7 +406,7 @@ Every M1–M20 is served by at least one criterion row (derived from the phase t
 
 | Ledger | Served by (phase.criterion) — derived from the trace cells |
 |---|---|
-| M1 | 4.C2, 5.C2, 5.C5, 11.C7, 11.C8, 13.C4 |
+| M1 | 5.C2, 5.C5, 11.C7, 11.C8, 13.C4 |
 | M2 | 6.C2, 11.C2, 11.C3, 11.C5, 13.C4 |
 | M3 | 3.C4, 4.C3, 9.C2, 11.C8, 12.C8 |
 | M4 | 7.C7, 12.C1, 12.C2, 12.C3, 13.C7, 14.C3 |
