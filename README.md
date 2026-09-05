@@ -43,6 +43,8 @@ Read only by server code. No variable is exposed to the browser.
 
 Copy `.env.example` to `.env` and fill in the values. `.env` is ignored by git.
 
+The `.env.example` principle: it is committed, it lists every variable the application reads, every value is empty, and each line carries a one-line comment. It is the discoverable inventory of configuration, never a place for real values. Adding a variable means adding it to `.env.example`, to the validation schema in `src/lib/env/`, and to the Vercel project, in the same change. `.env` and `.env.local` hold real values and are never committed. Anything sensitive is never named `NEXT_PUBLIC_*`, because that prefix inlines the value into the browser bundle. Full rule in [architectural_contracts/02-runtime-boundaries.md](architectural_contracts/02-runtime-boundaries.md) §8.
+
 ## Commands
 
 Only one command exists at this stage. Run it from the repository root:

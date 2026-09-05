@@ -133,6 +133,4 @@ Recorded, not yet resolved. Each entry names the conflict, the contract rule, an
 
 | Conflict | Contract rule | Intended resolution |
 |---|---|---|
-| `.env.example` is listed in `.gitignore` | `.env.example` MUST be committed so every variable is discoverable ([02-runtime-boundaries.md](02-runtime-boundaries.md)) | Remove it from `.gitignore` and commit it with empty values. |
-| Repository branch is `master`; tooling reports the main branch as `main` | Not an architectural rule; noted to avoid confusion in CI and PR automation | Align the default branch name in one direction when CI is set up. |
 | No application code exists | Entire contract | Scaffold according to the "Scaffold decisions record". Pin the Node.js version at that moment. |
