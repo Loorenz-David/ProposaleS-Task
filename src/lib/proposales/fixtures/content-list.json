@@ -1,0 +1,20 @@
+{
+  "data": [
+    {
+      "product_id": 12345,
+      "variation_id": 188485,
+      "title": { "en": "Premium support", "sv": "Premiumsupport" },
+      "description": { "en": "Priority help", "sv": "Prioriterad hjälp" },
+      "created_at": 1757059200000,
+      "images": ["https://cdn.proposales.test/premium.png"],
+      "integration_metadata": { "source": "crm" },
+      "future_key": "ignore me"
+    },
+    {
+      "product_id": 12346,
+      "variation_id": 188486,
+      "title": { "en": "Implementation" },
+      "created_at": 1757059200000
+    }
+  ]
+}

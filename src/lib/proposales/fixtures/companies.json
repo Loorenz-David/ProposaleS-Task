@@ -1,0 +1,6 @@
+{
+  "data": [
+    { "id": 7, "currency": "SEK", "tax_mode": "simplified", "name": "Other" },
+    { "id": 42, "currency": "eur", "tax_mode": "standard", "name": "Configured" }
+  ]
+}

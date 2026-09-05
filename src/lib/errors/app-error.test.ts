@@ -18,6 +18,13 @@ import {
 } from "@/lib/errors/app-error";
 
 describe("AppError taxonomy", () => {
+  it("C1(n) preserves typed integration issues", () => {
+    const issues = [{ path: ["data", "0"], message: "bad" }];
+    const error = new IntegrationError({ system: "proposales", retryable: false, issues });
+
+    expect(error.details).toEqual({ system: "proposales", retryable: false, issues });
+  });
+
   it.each([
     ["ValidationError", () => new ValidationError(), "validation_error", 400],
     ["AuthenticationError", () => new AuthenticationError(), "unauthenticated", 401],

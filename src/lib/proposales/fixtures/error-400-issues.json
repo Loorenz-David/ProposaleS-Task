@@ -1,0 +1,241 @@
+{
+  "error": {
+    "message": "Validation failed",
+    "issues": [
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          0,
+          "quantity"
+        ],
+        "message": "Quantity is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          1,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          2,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          3,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          4,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          5,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          6,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          7,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          8,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          9,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          10,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          11,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          12,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          13,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          14,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          15,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          16,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          17,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          18,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          19,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          20,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          21,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          22,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          23,
+          "title"
+        ],
+        "message": "Title is invalid"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          24,
+          "title"
+        ],
+        "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      {
+        "code": "invalid",
+        "path": [
+          "items",
+          25,
+          "title"
+        ],
+        "message": "Title is invalid"
+      }
+    ]
+  }
+}

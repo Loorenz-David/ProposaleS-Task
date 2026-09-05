@@ -129,6 +129,7 @@ export type IntegrationErrorOptions = {
   reason?: string;
   operation?: string;
   message?: string;
+  issues?: ErrorIssue[];
   cause?: unknown;
 };
 
@@ -137,7 +138,7 @@ export class IntegrationError extends AppError {
   readonly httpStatus = 502 as const;
 
   constructor(options: IntegrationErrorOptions) {
-    const { system, status, retryable, reason, operation, message = "An external system failed", cause } = options;
+    const { system, status, retryable, reason, operation, message = "An external system failed", issues, cause } = options;
     super(message, {
       cause,
       details: {
@@ -146,6 +147,7 @@ export class IntegrationError extends AppError {
         retryable,
         ...(reason === undefined ? {} : { reason }),
         ...(operation === undefined ? {} : { operation }),
+        ...(issues === undefined ? {} : { issues }),
       },
     });
   }
