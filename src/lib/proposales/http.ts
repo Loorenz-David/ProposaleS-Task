@@ -115,18 +115,6 @@ export function createProposalesHttp({
         throw error;
       }
 
-      if (timedOut || controller.signal.aborted) {
-        if (!responseIsOk) {
-          throw fromUpstream({
-            status: response.status,
-            headers: headersRecord(response.headers),
-            url,
-            operation,
-            kind: "http",
-          });
-        }
-        throw fromUpstream({ operation, kind: "timeout", url });
-      }
       if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
 
       if (!responseIsOk) {

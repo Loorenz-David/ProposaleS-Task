@@ -21,7 +21,9 @@ function clientFor(fetcher: typeof fetch, companyId = 42) {
 
 describe("Proposales client", () => {
   it("C1(l) translates a response schema mismatch and redacts the body", async () => {
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response({ unexpected: 1 }));
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(() =>
+      Promise.resolve(response({ data: "SCHEMA-BODY-SENTINEL" })),
+    );
     const client = clientFor(fetcher);
 
     await expect(client.listContent()).rejects.toMatchObject({
@@ -34,8 +36,9 @@ describe("Proposales client", () => {
     try {
       await client.listContent();
     } catch (error) {
+      expect((error as { details?: { reason?: string } }).details?.reason).toBe("schema_mismatch");
       const dto = toErrorDto(error);
-      expect(JSON.stringify(dto)).not.toContain("unexpected");
+      expect(JSON.stringify(dto)).not.toContain("SCHEMA-BODY-SENTINEL");
       return;
     }
     throw new Error("listContent unexpectedly resolved");

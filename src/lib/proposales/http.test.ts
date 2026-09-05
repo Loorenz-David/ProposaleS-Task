@@ -107,7 +107,9 @@ describe("Proposales HTTP transport", () => {
   });
 
   it("C1(m) keeps a retryable status when its body is unreadable", async () => {
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response(503, "<html>", "text/html"));
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(() =>
+      Promise.resolve(response(503, "<html>", "text/html")),
+    );
     const error = await rejected(
       createProposalesHttp({ fetch: fetcher, apiKey: "key", sleep: async () => {} }).get(
         "/v3/content",
@@ -249,7 +251,9 @@ describe("Proposales HTTP transport", () => {
   });
 
   it("C3(c) bounds retry attempts", async () => {
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response(503, { error: { message: "busy" } }));
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(() =>
+      Promise.resolve(response(503, { error: { message: "busy" } })),
+    );
 
     await expect(
       createProposalesHttp({ fetch: fetcher, apiKey: "key", sleep: async () => {} }).get(
