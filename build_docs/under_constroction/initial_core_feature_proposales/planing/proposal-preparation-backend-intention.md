@@ -587,6 +587,8 @@ The reason is a specific silent failure: a validator that iterates a provenance 
 
 **Granularity is the leaf, never the object.** `recipient` as a whole has no source; each of its five fields does. A recipient whose email came from the brief and whose phone came from a human must not collapse to one source.
 
+**Clarification (phase-5 projection card 1, owner confirmed 2026-09-05).** Recipient provenance is per field: `firstName`, `lastName`, `email`, `phone`, and `companyName` each carry their own source and optional ref. The recipient object itself is only present or absent. This confirms the standing reading above; it does not change the proposition's semantics or reopen ratification.
+
 **Three source policies. Every leaf carries exactly one; the assignment is total.**
 
 | Policy | Admissible sources | Applies to |
@@ -928,7 +930,7 @@ Deepens §12.2 and the §23 round-4 mechanism note. Ledger: **M16**. Evidence: �
 
 Deepens §7 (Brief), §9.2; contract `10-security-and-trust-boundaries.md` §4.
 
-- **Every free-text field has a named maximum length and is trimmed** at the schema: brief, revision instruction, title, narrative, per-block reviewer comment, commercial-note text, question text, answer text, agent rationale, warning text, assumption note, and `ref.quote`. The brief cap and the alternatives cap are set so a conforming workflow cannot reach `MAX_WORKFLOW_STATE_BYTES` (§17A.3) by ordinary use.
+- **Every free-text field has a named maximum length and is trimmed** at the schema: brief, revision instruction, title, narrative, per-block reviewer comment, alternative reason, commercial-note text, question text, answer text, agent rationale, warning text, assumption note, and `ref.quote`. The brief cap and the alternatives cap are set so a conforming workflow cannot reach `MAX_WORKFLOW_STATE_BYTES` (§17A.3) by ordinary use.
 - **Free text is data.** Narrative and title are Markdown per the vendor's subset (§9.2); this application never renders model or human text as HTML (contract `10-security-and-trust-boundaries.md` §4).
 - **A stated price expectation is never parsed out of free text.** `commercialNotes[i].amount` is `SourcedOrAbsent<Money>`: a brief saying "around 12k" cannot be represented as `Money`, so the amount is `{ known: false }` and the stated wording is preserved in the note's text. Extracting a number from prose with a pattern is invention, not sourcing. `currency` must be a valid ISO-4217 code or the note carries none. `taxBasis` is the closed enum `including_tax | excluding_tax | unstated`, with `unstated` explicit — never defaulted to one of the other two.
 - **Time.** All application-produced timestamps come from an injected `now()` (contract `04-server-architecture.md` §4), never an inline `Date.now()`, and are ISO 8601 UTC with `Z` at millisecond precision. Proposales' int64 epoch values are interpreted **only** inside the adapter's mapper (contract `06-data-contracts-and-validation.md` §6, §2.1); no application code ever sees an epoch integer.
@@ -1177,3 +1179,8 @@ A later implementation satisfies this intention when all of the following hold. 
 **Round 12 (2026-09-05, owner ratification: phase-3 transport precedence and timestamp validation).** Status `COLLABORATING` → `RATIFIED`.
 
 - **Ratified:** the owner approved both Option-A branches verbatim from the projection cards. §21.4 records the exact ratification surface; the new §17A.13 and §17A.16 paragraphs are binding for phase 3.
+
+**Round 13 (2026-09-05, phase-5 projection clarification).** Status stays `RATIFIED`.
+
+- **Projection card 1 → per field.** The owner confirmed the standing reading of §17A.4: the five recipient leaves carry independent provenance and the recipient object is only present or absent. The confirming sentence is inserted beside the governing granularity rule; it resolves contradictory wording in the enumeration, changes no behavior, and does not reopen ratification.
+- **Alternative reason made explicit in the text-bound inventory.** It was already a free-text presentational leaf under §17A.4 and the standing rule required every free-text field to be bounded; §17A.16 now names it so the phase-5 constant is traceable. No numeric cap was ratified here; the implementation plan owns that bounded-value choice.
