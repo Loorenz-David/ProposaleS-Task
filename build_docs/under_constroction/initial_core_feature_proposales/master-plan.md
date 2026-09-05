@@ -8,7 +8,7 @@
 | **Intention** | [planing/proposal-preparation-backend-intention.md](planing/proposal-preparation-backend-intention.md) — `RATIFIED` 2026-09-05; ledger M1–M20 ratified (§17, §17.1); mechanism contracts §17A |
 | **Evidence** | [planing/proposales-source-evidence.md](planing/proposales-source-evidence.md) |
 | **Written** | 2026-09-05, implementation-planner round 1; **amended 2026-09-05, round 2** (multi-turn conversational continuity: new phase 10, phases 10–14 renumbered 11–15, `ProposalWorkflowState` naming, R13–R15, §6.9, rules 11–12, card 2, FB-2) |
-| **Phases** | 15: phases 1–2 `APPROVED`, phase 3 `PROMPT_READY`, phases 4–15 `NOT_STARTED` (§4) |
+| **Phases** | 15: phases 1–3 `APPROVED`, phases 4–15 `NOT_STARTED` (§4) |
 | **Absorbs** | the project `README.md` index — its folder-table mapping and follow-up register now live in §11 of this file; `README.md` is left as a one-screen pointer (see §11) |
 
 This is the shared skeleton every session reads: names, contracts, environment, standing rules, the tracker. It states shared truths once. It never restates product semantics — the intention owns those — and never restates a phase's tasks or criteria — the phase plan owns those.
