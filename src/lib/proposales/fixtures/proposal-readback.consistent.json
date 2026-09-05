@@ -1,0 +1,39 @@
+{
+  "data": {
+    "uuid": "11111111-1111-4111-8111-111111111111",
+    "series_uuid": "33333333-3333-4333-8333-333333333333",
+    "company_id": 42,
+    "language": "en",
+    "status": "draft",
+    "data": {},
+    "currency": "EUR",
+    "value_without_tax": 10000,
+    "value_with_tax": 10000,
+    "tax_options": {
+      "tax_mode": "standard",
+      "tax_included": false,
+      "tax_label_key": "vat"
+    },
+    "blocks": [
+      {
+        "content_id": 188485,
+        "quantity": 1,
+        "currency": "EUR",
+        "optional": true,
+        "unit_value_with_discount_without_tax": 10000,
+        "unit_value_with_discount_with_tax": 10000,
+        "unit_value_without_discount_without_tax": 10000,
+        "unit_value_without_discount_with_tax": 10000,
+        "package_split": [
+          {
+            "type": "other",
+            "vat": 0.25,
+            "value_without_tax": 10000,
+            "value_with_tax": 10000
+          }
+        ]
+      }
+    ],
+    "attachments": []
+  }
+}

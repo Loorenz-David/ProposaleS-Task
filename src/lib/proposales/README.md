@@ -1,7 +1,9 @@
 # Proposales integration
 
-This adapter currently uses `GET /v3/content` for the content catalogue and variation
-reads, plus `GET /v3/companies` to resolve the configured company's currency and tax mode.
+This adapter uses `GET /v3/content` for the content catalogue and variation reads,
+`GET /v3/companies` to resolve the configured company's currency and tax mode, and the
+proposal operations `createProposalDraft`, `findProposalsByGenerationId`, and
+`getProposal`.
 The vendor reference is the repository's [vendored OpenAPI snapshot](../../../api-documentation/proposales/openapi.json);
 vendor documentation is not paraphrased here.
 
@@ -23,8 +25,17 @@ evidence-backed constant in `http.ts`. The browser never receives either configu
   error cause for server-side diagnosis.
 - Vendor response keys may be added without a version bump, so response schemas remain
   deliberately closed to the fields this application consumes.
-- Proposal metadata will use the reserved `proposal_copilot_` prefix when proposal writes
-  are added in phase 4.
+- Proposal creation sends exactly the metadata keys `proposal_copilot_source`,
+  `proposal_copilot_generation_id`, and `proposal_copilot_created_at`; all values are
+  strings. Price fields, proposal/block currency, package splits, and tax options are not
+  representable in the create request.
+- Recovery searches `GET /v3/proposal-search` with the configured `company_id`, the
+  `filter[proposal_copilot_generation_id]` metadata filter, and the documented maximum
+  limit. Every returned row is re-verified with exact metadata equality before mapping.
+- `getProposal` reads the stored totals, four unit values, quantity, optional flag,
+  package split, currency, and tax options. Applied Pricing wraps the integer cents in
+  `Money` using the proposal currency and performs no arithmetic; an informational block
+  currency mismatch becomes a warning.
 
 ## Error translation
 

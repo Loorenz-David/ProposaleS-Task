@@ -1,0 +1,44 @@
+{
+  "data": [
+    {
+      "created_at": 1757059200000,
+      "updated_at": 1757059200000,
+      "title": "Recovered proposal",
+      "uuid": "22222222-2222-4222-8222-222222222222",
+      "series_uuid": "33333333-3333-4333-8333-333333333333",
+      "company_id": 42,
+      "version": 1,
+      "status": "draft",
+      "data": {
+        "proposal_copilot_generation_id": "generation-1"
+      },
+      "url": "https://proposales.test/proposals/22222222-2222-4222-8222-222222222222"
+    },
+    {
+      "created_at": 1757059200000,
+      "updated_at": 1757059200000,
+      "title": "Wrong generation",
+      "uuid": "44444444-4444-4444-8444-444444444444",
+      "series_uuid": null,
+      "company_id": 42,
+      "version": null,
+      "status": null,
+      "data": {
+        "proposal_copilot_generation_id": "other-generation"
+      },
+      "url": "https://proposales.test/proposals/44444444-4444-4444-8444-444444444444"
+    },
+    {
+      "created_at": 1757059200000,
+      "updated_at": 1757059200000,
+      "title": "Future status",
+      "uuid": "55555555-5555-4555-8555-555555555555",
+      "series_uuid": "66666666-6666-4666-8666-666666666666",
+      "company_id": 42,
+      "version": 2,
+      "status": "vendor_future_status",
+      "data": {},
+      "url": "https://proposales.test/proposals/55555555-5555-4555-8555-555555555555"
+    }
+  ]
+}

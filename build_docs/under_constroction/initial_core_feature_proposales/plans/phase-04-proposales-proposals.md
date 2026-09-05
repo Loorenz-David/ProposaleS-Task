@@ -146,3 +146,32 @@ closed kind vocabulary plus separately mutable detection/exclusion rows. Criteri
 re-derived at **8 / 75 / 33**; master-plan totals were re-derived with the same delta.
 Projection findings F1–F12 and RC1–RC10 are resolved by those amendments; no owner
 decision or delegated freedom remains open.
+
+**Implementation — round 1 (2026-09-05, Codex).** Implemented the complete Proposales
+proposal adapter surface in the declared 17-path perimeter: strict create request and
+metadata mapping, production-path outbound parsing, HTTPS create response mapping,
+generation-id recovery search with exact row re-verification, read-back schemas and
+mapping, arithmetic-free Applied Pricing, the AST helper, scrubbed fixtures, and the
+full fake surface. The integration README now describes the three operations, metadata,
+read-back mapping, and retry policy.
+
+The implementation re-emits the selected contracts from the master plan: runtime
+boundaries, feature placement, server errors/idempotency, data contracts, integrations,
+security, testing, anti-patterns, and documentation. No additional contract was needed.
+The lib remains server-only and no feature, transport, persistence, price write, or
+Phase-14 recovery/create decision was added. The read-back quantity schema follows the
+ratified §17A.12 vendor `number` contract, including fractional quantities, despite the
+shorter task sentence saying "required integers". The default Vitest project does not
+collect `test/helpers/**`; the scanner cases are mirrored in the collected pricing test,
+and the dedicated helper test was run with a temporary L1 config without changing the
+out-of-scope Vitest configuration.
+
+Pre-edit baseline was captured after the phase tests were authored and before production
+implementation: the targeted phase command reported 4 files, 14 failing tests, and 24
+passing tests; the helper test was not collected by the default project. Closing targeted
+evidence is 4 files / 67 tests green, plus 1 helper file / 22 tests green under the
+temporary helper-only config. All 33 named mutations were applied at their declared
+sites, observed red on the named assertion, and reverted. Documentation impact review
+found the integration README incomplete after the new operations, so it was updated;
+no other durable documentation became false or incomplete. No architecture graph is
+present.

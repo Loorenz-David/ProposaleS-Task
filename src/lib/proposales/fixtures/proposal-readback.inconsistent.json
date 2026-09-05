@@ -1,0 +1,31 @@
+{
+  "data": {
+    "uuid": "11111111-1111-4111-8111-111111111111",
+    "series_uuid": null,
+    "company_id": 42,
+    "language": "en",
+    "status": null,
+    "data": {},
+    "currency": "EUR",
+    "value_without_tax": 12345,
+    "value_with_tax": 23456,
+    "blocks": [
+      {
+        "content_id": 188485,
+        "quantity": 2,
+        "currency": "SEK",
+        "unit_value_with_discount_without_tax": 10000,
+        "unit_value_with_discount_with_tax": 10000,
+        "unit_value_without_discount_without_tax": 10000,
+        "unit_value_without_discount_with_tax": 10000,
+        "package_split": [
+          {
+            "type": "other",
+            "vat": 0.25
+          }
+        ]
+      }
+    ],
+    "attachments": []
+  }
+}
