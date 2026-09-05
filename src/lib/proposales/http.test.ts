@@ -120,6 +120,38 @@ describe("Proposales HTTP transport", () => {
     expect(fetcher).toHaveBeenCalledTimes(PROPOSALES_READ_MAX_ATTEMPTS);
   });
 
+  it("C1(o) checks a non-2xx status before reading its body", async () => {
+    let bodyReads = 0;
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => {
+      let bodyRead = false;
+      const responseLike = {
+        get ok() {
+          expect(bodyRead).toBe(false);
+          return false;
+        },
+        status: 503,
+        headers: new Headers(),
+        text: async () => {
+          bodyReads += 1;
+          bodyRead = true;
+          return JSON.stringify({ error: { message: "busy" } });
+        },
+      } as unknown as Response;
+      return responseLike;
+    });
+    const error = await rejected(
+      createProposalesHttp({ fetch: fetcher, apiKey: "key", sleep: async () => {} }).get(
+        "/v3/content",
+        {},
+        { operation: "listContent", idempotent: true },
+      ),
+    );
+
+    expect(error.details).toMatchObject({ reason: "server_error", retryable: true, status: 503 });
+    expect(bodyReads).toBe(PROPOSALES_READ_MAX_ATTEMPTS);
+    expect(fetcher).toHaveBeenCalledTimes(PROPOSALES_READ_MAX_ATTEMPTS);
+  });
+
   it("C2(a) forwards a bounded documented upstream message", async () => {
     const error = await rejected(
       createProposalesHttp({
@@ -274,5 +306,62 @@ describe("Proposales HTTP transport", () => {
     expect(error.details).toMatchObject({ reason: "timeout", retryable: true });
     expect(signal?.aborted).toBe(true);
     expect(PROPOSALES_READ_TOTAL_MS).toBeLessThan(PROPOSALES_TIMEOUT_MS);
+  });
+
+  it("C3(g) keeps a successful body inside the timeout envelope", async () => {
+    vi.useFakeTimers();
+    let signal: AbortSignal | undefined;
+    const fetcher = vi.fn<typeof fetch>().mockImplementation((_input, init) => {
+      signal = init?.signal ?? undefined;
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        text: () => new Promise<string>(() => {}),
+      } as Response);
+    });
+    const pending = rejected(
+      createProposalesHttp({ fetch: fetcher, apiKey: "key" }).get(
+        "/v3/content",
+        {},
+        { operation: "listContent", idempotent: true },
+      ),
+    );
+
+    await vi.advanceTimersByTimeAsync(PROPOSALES_READ_TOTAL_MS);
+    const error = await pending;
+    expect(error.details).toMatchObject({ reason: "timeout", retryable: true });
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it("C3(h) keeps a stalled non-2xx body on its status retry path", async () => {
+    vi.useFakeTimers();
+    const signals: AbortSignal[] = [];
+    const fetcher = vi.fn<typeof fetch>().mockImplementation((_input, init) => {
+      const attemptSignal = init?.signal;
+      if (attemptSignal !== undefined && attemptSignal !== null) signals.push(attemptSignal);
+      return Promise.resolve({
+        ok: false,
+        status: 503,
+        headers: new Headers(),
+        text: () => new Promise<string>(() => {}),
+      } as Response);
+    });
+    const pending = rejected(
+      createProposalesHttp({ fetch: fetcher, apiKey: "key", timeoutMs: 50, sleep: async () => {} }).get(
+        "/v3/content",
+        {},
+        { operation: "listContent", idempotent: true },
+      ),
+    );
+
+    for (let attempt = 0; attempt < PROPOSALES_READ_MAX_ATTEMPTS; attempt += 1) {
+      await vi.advanceTimersByTimeAsync(50);
+    }
+    const error = await pending;
+    expect(error.details).toMatchObject({ reason: "server_error", retryable: true, status: 503 });
+    expect(fetcher).toHaveBeenCalledTimes(PROPOSALES_READ_MAX_ATTEMPTS);
+    expect(signals).toHaveLength(PROPOSALES_READ_MAX_ATTEMPTS);
+    expect(signals.every((attemptSignal) => attemptSignal.aborted)).toBe(true);
   });
 });

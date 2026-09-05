@@ -39,7 +39,7 @@ export function createProposalesClient({ http, companyId }: ClientOptions): Pick
     );
     const parsed = contentListResponseSchema.safeParse(body);
     if (!parsed.success) throw ProposalesError.schemaMismatch("getContent", parsed.error);
-    const item = parsed.data.data[0];
+    const item = parsed.data.data.find((entry) => String(entry.variation_id) === parsedVariationId.data);
     return item === undefined ? null : toContentItem(item);
   }
 

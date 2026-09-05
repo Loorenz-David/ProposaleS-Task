@@ -125,6 +125,36 @@ describe("Proposales client", () => {
     expect(fetcher).toHaveBeenCalledTimes(0);
   });
 
+  it("C4(i) re-verifies the requested variation id before mapping", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response({
+      data: [
+        { product_id: 1, variation_id: 111, title: { en: "Wrong" }, created_at: 1757059200000 },
+        { product_id: 2, variation_id: 222, title: { en: "Requested" }, created_at: 1757059200000 },
+      ],
+    }));
+
+    await expect(clientFor(fetcher).getContent("222")).resolves.toMatchObject({
+      variationId: "222",
+      productId: "2",
+      title: { en: "Requested" },
+    });
+  });
+
+  it("C4(j) returns null when the upstream filter does not match", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response({
+      data: [{ product_id: 1, variation_id: 111, title: { en: "Other" }, created_at: 1757059200000 }],
+    }));
+
+    await expect(clientFor(fetcher).getContent("222")).resolves.toBeNull();
+  });
+
+  it("C4(k) rejects comma-separated variation ids before fetching", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response({ data: [] }));
+
+    await expect(clientFor(fetcher).getContent("111,222")).rejects.toBeInstanceOf(ValidationError);
+    expect(fetcher).toHaveBeenCalledTimes(0);
+  });
+
   it("C5(e) rejects the whole read for an out-of-range epoch", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       response({
@@ -134,6 +164,30 @@ describe("Proposales client", () => {
             variation_id: 2,
             title: { en: "Bad" },
             created_at: 8640000000000001,
+          },
+        ],
+      }),
+    );
+
+    await expect(clientFor(fetcher).listContent()).rejects.toMatchObject({
+      details: expect.objectContaining({
+        reason: "schema_mismatch",
+        retryable: false,
+        operation: "listContent",
+        issues: expect.arrayContaining([expect.objectContaining({ path: expect.arrayContaining(["created_at"]) })]),
+      }),
+    });
+  });
+
+  it("C5(f) rejects an extended ISO year before mapping", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      response({
+        data: [
+          {
+            product_id: 1,
+            variation_id: 2,
+            title: { en: "Extended" },
+            created_at: 253402300800000,
           },
         ],
       }),

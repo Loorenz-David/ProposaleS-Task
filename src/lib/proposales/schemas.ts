@@ -32,18 +32,7 @@ export const contentListResponseSchema = z.object({
   data: z.array(contentItemResponseSchema),
 });
 
-export const errorBodySchema = z.object({
-  error: z.object({
-    message: z.unknown(),
-    issues: z.array(z.object({
-      code: z.string().optional(),
-      path: z.array(z.union([z.string(), z.number().int()])),
-      message: z.string(),
-    })).optional(),
-  }),
-});
-
-export const variationIdSchema = z.string().regex(/^[0-9]+(,[0-9]+)*$/);
+export const variationIdSchema = z.string().regex(/^[0-9]+$/);
 
 export const companyListResponseSchema = z.object({
   data: z.array(z.object({
