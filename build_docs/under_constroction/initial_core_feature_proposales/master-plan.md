@@ -463,7 +463,53 @@ Every M1–M18 is served by at least one criterion row (derived by script from t
 
 ## 9. Standing rules
 
-The charter's 17 quality rules apply verbatim. Project-specific rules, each earned from this project's artifacts:
+The charter's 17 quality rules apply verbatim. Project-specific rules, each earned from this project's artifacts.
+
+### 9.0 The owner's scope brief (standing, stated 2026-09-05; binds every review and every fix round)
+
+**Verbatim, because paraphrase is how a scope brief drifts:**
+
+> "my objective here is to present this application as an mvp ( it will probably won't
+> event be used at all on production, so it won't be persistent over time ) it needs to
+> be senior build but not as a full scale app."
+
+**How to apply it.** This calibrates the *quantity* of hardening, never the *correctness*
+of what ships, and it has a sharp edge that is easy to get wrong in both directions:
+
+- **Still in scope, always.** Anything that is wrong rather than merely unguarded. Any
+  path by which a real credential or a vendor error body escapes — the owner works with
+  live Proposales and AI keys during development, so those are present-tense risks, not
+  future ones. Anything a reader evaluating the build would see first: the root README,
+  the shape of the tests, whether a guard can actually fail. **If the objective is to
+  *present* this application, build quality is the deliverable.**
+- **Trim here.** Exhaustive enumeration where a representative subset carries the same
+  proof; regression guards whose only beneficiary is a maintainer this codebase will
+  never have; criteria for surfaces this project does not build. Trim by **reducing an
+  ask, not by dropping a guard** — a guard that cannot fail is not a cheaper guard, it
+  is a decoration with a correct name.
+- **Out of scope.** Production hardening the intention already defers (§18): auth,
+  persistence, monitoring, rate limiting, retry policy beyond §17A.11's bounded read.
+- **Record every exclusion where the excluded work lives**, with the reason, so a later
+  session neither re-derives the argument nor quietly "fixes" it. Precedent: phase 1's
+  F2 exclusion is recorded in the phase plan Notes *and* in phase 15's candidate list.
+
+Applied at the phase-1 gate: of five review findings, three were implemented in full,
+one reduced, one excluded — see `plans/phase-01-topology-and-env.md`.
+
+### 9.0.1 Session capability (standing, owner-agreed 2026-09-05)
+
+**A reviewer session runs on a model at least as capable as the session that implemented
+the phase.** A weaker reviewer produces the ceremony of a gate without the gate — an
+approval is expensive to be wrong about, because it opens the next phase and lets a
+defect cross the boundary that gating exists to contain. Current split: **Codex
+implements, Claude reviews** — different model families fail differently, which is worth
+as much as raw capability. Review is the judgment work: whether a guard could fail,
+whether a fixture has a second sufficient cause, whether a gap is real or belongs to a
+later phase.
+
+### 9.1 Project-specific rules
+
+Each earned from this project's artifacts:
 
 1. **Absence is a value.** `{ known: false }` is written by hand in every fixture that means "no sourced value"; a fixture with a missing key is a *different* fixture (the one that must fail). Never write `quantity: undefined` (§17A.1, §17A.5).
 2. **No `??`, `||`, or default parameters on the omission path** (`toCreateDraftInput`, `toCreateProposalRequest`, the metadata assembly) and **no arithmetic operator, `Math.*`, `toFixed`, or numeric comparison** in `applied-pricing.mapper.ts`. Both are source-scanned with a planted-defect row (phases 4, 14).
