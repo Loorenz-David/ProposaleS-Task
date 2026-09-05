@@ -39,6 +39,20 @@
       "status": "vendor_future_status",
       "data": {},
       "url": "https://proposales.test/proposals/55555555-5555-4555-8555-555555555555"
+    },
+    {
+      "created_at": 1757059200000,
+      "updated_at": 1757059200000,
+      "title": "Case-different generation",
+      "uuid": "77777777-7777-4777-8777-777777777777",
+      "series_uuid": null,
+      "company_id": 42,
+      "version": 1,
+      "status": "draft",
+      "data": {
+        "proposal_copilot_generation_id": "GENERATION-1"
+      },
+      "url": "https://proposales.test/proposals/77777777-7777-4777-8777-777777777777"
     }
   ]
 }

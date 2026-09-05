@@ -6,6 +6,7 @@ import { toErrorDto } from "@/lib/errors/error-dto";
 import { serverEnv } from "@/lib/env/server";
 import { createProposalesClient, getProposalesClient, parseCreateProposalRequest } from "@/lib/proposales/client";
 import { createProposalesHttp } from "@/lib/proposales/http";
+import { toCreateProposalRequest } from "@/lib/proposales/mappers";
 import type { CreateProposalDraftInput } from "@/lib/proposales";
 
 function response(body: unknown, status = 200): Response {
@@ -28,11 +29,18 @@ describe("Proposales client", () => {
     generationId: "generation-1",
   };
 
-  it("C3(i) parses create requests before the post", () => {
-    expect(() => parseCreateProposalRequest({ company_id: 42, language: "en", data: { forbidden: true } })).toThrow(ValidationError);
+  it("P4-C3(i) parses invalid create requests", () => {
+    const request = { ...toCreateProposalRequest(createInput, { companyId: 42, now: () => 0 }), forbidden: true };
+    expect(() => parseCreateProposalRequest(request)).toThrow(ValidationError);
   });
 
-  it("C3(h) creates once, parses the response, and returns its HTTPS URL", async () => {
+  it("P4-C3(j) rejects a mapped invalid request before the POST", async () => {
+    const fetcher = vi.fn<typeof fetch>();
+    await expect(clientFor(fetcher).createProposalDraft({ ...createInput, language: "" })).rejects.toBeInstanceOf(ValidationError);
+    expect(fetcher).toHaveBeenCalledTimes(0);
+  });
+
+  it("P4-C3(k) creates once, parses the response, and returns its HTTPS URL", async () => {
     const fixture = (await import("./fixtures/proposal-create-response.json")).default;
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response(fixture));
     await expect(clientFor(fetcher).createProposalDraft(createInput)).resolves.toEqual({ proposalUuid: fixture.proposal.uuid, url: fixture.proposal.url });
@@ -40,7 +48,7 @@ describe("Proposales client", () => {
     expect(new URL(String(fetcher.mock.calls[0][0])).pathname).toBe("/v3/proposals");
   });
 
-  it("C4(a-d) sends the exact recovery search", async () => {
+  it("P4-C4(a-d) sends the exact recovery search", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response({ data: [] }));
     await clientFor(fetcher).findProposalsByGenerationId("generation-1");
     const url = new URL(String(fetcher.mock.calls[0][0]));
@@ -56,7 +64,7 @@ describe("Proposales client", () => {
     expect(Number(url.searchParams.get("limit"))).toBe(limit);
   });
 
-  it("C5(a-f) keeps only exact generation matches and maps statuses", async () => {
+  it("P4-C5(a-f) keeps only exact generation matches and maps statuses", async () => {
     const fixture = (await import("./fixtures/proposal-search.json")).default;
     const result = await clientFor(vi.fn<typeof fetch>().mockResolvedValue(response(fixture))).findProposalsByGenerationId("generation-1");
     expect(result).toHaveLength(1);
@@ -67,13 +75,13 @@ describe("Proposales client", () => {
     expect(future[0].status).toBe("unknown");
   });
 
-  it("C6(e) rejects a read-back missing a required money field", async () => {
+  it("P4-C6(e) rejects a read-back missing a required money field", async () => {
     const fixture = structuredClone((await import("./fixtures/proposal-readback.consistent.json")).default) as { data: { uuid: string; value_with_tax?: number } };
     delete fixture.data.value_with_tax;
     await expect(clientFor(vi.fn<typeof fetch>().mockResolvedValue(response(fixture))).getProposal(fixture.data.uuid)).rejects.toMatchObject({ details: expect.objectContaining({ reason: "schema_mismatch" }) });
   });
 
-  it("C6(h-i) maps absent and unknown read-back status", async () => {
+  it("P4-C6(h-i) maps absent and unknown read-back status", async () => {
     const fixture = (await import("./fixtures/proposal-readback.consistent.json")).default;
     const absent = structuredClone(fixture);
     (absent.data as { status: string | null }).status = null;

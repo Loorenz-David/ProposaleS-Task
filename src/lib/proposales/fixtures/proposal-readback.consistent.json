@@ -10,7 +10,7 @@
     "value_without_tax": 10000,
     "value_with_tax": 10000,
     "tax_options": {
-      "tax_mode": "standard",
+      "mode": "standard",
       "tax_included": false,
       "tax_label_key": "vat"
     },
@@ -20,10 +20,10 @@
         "quantity": 1,
         "currency": "EUR",
         "optional": true,
-        "unit_value_with_discount_without_tax": 10000,
-        "unit_value_with_discount_with_tax": 10000,
-        "unit_value_without_discount_without_tax": 10000,
-        "unit_value_without_discount_with_tax": 10000,
+        "unit_value_with_discount_without_tax": 10100,
+        "unit_value_with_discount_with_tax": 10200,
+        "unit_value_without_discount_without_tax": 10300,
+        "unit_value_without_discount_with_tax": 10400,
         "package_split": [
           {
             "type": "other",

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { toContentItem, toCreateProposalRequest, PROPOSAL_COPILOT_SOURCE_MARKER, PROPOSAL_METADATA_KEYS } from "@/lib/proposales/mappers";
@@ -51,9 +52,10 @@ describe("Proposales response mappers", () => {
     expect(item.description).toEqual({});
   });
 
-  it("C1(a-d) omits absent fields and preserves known values", () => {
+  it("P4-C1(a-d) omits absent fields and preserves known values", () => {
     const absentRequest = toCreateProposalRequest(baseInput, context);
     expect("quantity" in absentRequest.blocks![0]).toBe(false);
+    expect(createProposalRequestSchema.parse(absentRequest)).toEqual(absentRequest);
     const request = toCreateProposalRequest({
       ...baseInput,
       blocks: [{ contentId: "188485", quantity: { known: true, value: 2 }, optional: { known: true, value: true } }],
@@ -64,7 +66,7 @@ describe("Proposales response mappers", () => {
     expect(createProposalRequestSchema.parse(request)).toEqual(request);
   });
 
-  it("C1(e-h) omits an absent or empty recipient and optional text", () => {
+  it("P4-C1(e-h) omits an absent or empty recipient and optional text", () => {
     const absent = toCreateProposalRequest(baseInput, context);
     expect("recipient" in absent).toBe(false);
     expect("title_md" in absent).toBe(false);
@@ -78,7 +80,7 @@ describe("Proposales response mappers", () => {
     expect("recipient" in empty).toBe(false);
   });
 
-  it("C1(i) emits no undefined values", () => {
+  it("P4-C1(i) emits no undefined values", () => {
     const values: unknown[] = [toCreateProposalRequest(baseInput, context)];
     while (values.length > 0) {
       const value = values.pop();
@@ -91,25 +93,44 @@ describe("Proposales response mappers", () => {
     }
   });
 
-  it("C2(a-i) rejects every prohibited price key and the outbound source names none", () => {
-    const keys = [
+  it("P4-C2(a-h) rejects every prohibited price key at its declared location", () => {
+    const blockKeys = [
       "unit_value_with_discount_without_tax", "unit_value_with_discount_with_tax",
       "unit_value_without_discount_without_tax", "unit_value_without_discount_with_tax",
-      "package_split", "currency", "tax_options",
+      "package_split", "currency",
     ];
-    for (const key of keys) {
-      const request = { ...toCreateProposalRequest(baseInput, context) } as Record<string, unknown>;
-      if (key === "package_split" || key === "currency") request.blocks = [{ ...baseInput.blocks[0], [key]: "EUR" }];
-      else request[key] = "EUR";
+    for (const key of blockKeys) {
+      const mappedRequest = toCreateProposalRequest(baseInput, context);
+      const request = {
+        ...mappedRequest,
+        blocks: [{ ...(mappedRequest.blocks?.[0] as Record<string, unknown>), [key]: key === "package_split" ? [] : "EUR" }],
+      };
       const result = createProposalRequestSchema.safeParse(request);
       expect(result.success, key).toBe(false);
       if (!result.success) expect(result.error.issues.some((issue) => issue.code === "unrecognized_keys" && issue.keys.includes(key))).toBe(true);
     }
-    const source = toCreateProposalRequest.toString();
-    for (const key of keys) expect(source).not.toContain(key);
+    for (const key of ["currency", "tax_options"]) {
+      const request = { ...toCreateProposalRequest(baseInput, context), [key]: key === "tax_options" ? {} : "EUR" };
+      const result = createProposalRequestSchema.safeParse(request);
+      expect(result.success, key).toBe(false);
+      if (!result.success) expect(result.error.issues.some((issue) => issue.code === "unrecognized_keys" && issue.keys.includes(key))).toBe(true);
+    }
   });
 
-  it("C3(a-g) writes the exact metadata and create wire shape", () => {
+  it("P4-C2(i) names no prohibited price field in the mapper helpers", () => {
+    const fullSource = readFileSync(new URL("./mappers.ts", import.meta.url), "utf8");
+    const source = fullSource.slice(fullSource.indexOf("function quantityField"), fullSource.indexOf("export function toContentItem"));
+    expect(source).toContain("toCreateProposalRequest");
+    expect(source).toContain("blockField");
+    expect(source).toContain("recipientField");
+    for (const key of [
+      "unit_value_with_discount_without_tax", "unit_value_with_discount_with_tax",
+      "unit_value_without_discount_without_tax", "unit_value_without_discount_with_tax",
+      "package_split", "currency", "tax_options",
+    ]) expect(source).not.toContain(key);
+  });
+
+  it("P4-C3(a-g) writes the exact metadata and create wire shape", () => {
     const request = toCreateProposalRequest({ ...baseInput, titleMd: "Title", descriptionMd: "Description" }, context);
     expect(Object.keys(request.data ?? {}).sort()).toEqual(Object.values(PROPOSAL_METADATA_KEYS).sort());
     expect(Object.values(request.data ?? {}).every((value) => typeof value === "string")).toBe(true);

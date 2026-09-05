@@ -31,7 +31,7 @@ export function toAppliedPricing(readback: ProposalReadback): AppliedPricing {
     totalWithTax: money(readback.totalWithTax, readback.currency),
     currency: readback.currency,
     taxOptions: {
-      ...(readback.taxOptions.taxMode === undefined ? {} : { mode: readback.taxOptions.taxMode }),
+      ...(readback.taxOptions.mode === undefined ? {} : { mode: readback.taxOptions.mode }),
       ...(readback.taxOptions.taxIncluded === undefined ? {} : { taxIncluded: readback.taxOptions.taxIncluded }),
       ...(readback.taxOptions.taxLabelKey === undefined ? {} : { taxLabelKey: readback.taxOptions.taxLabelKey }),
     },

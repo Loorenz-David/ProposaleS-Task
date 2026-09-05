@@ -106,7 +106,7 @@ export function toProposalReadback(wire: ProposalReadbackResponse["data"]): Prop
     totalWithoutTax: wire.value_without_tax,
     totalWithTax: wire.value_with_tax,
     taxOptions: wire.tax_options === undefined || wire.tax_options === null ? {} : {
-      ...(wire.tax_options.tax_mode === undefined || wire.tax_options.tax_mode === null ? {} : { taxMode: wire.tax_options.tax_mode }),
+      ...(wire.tax_options.mode === undefined || wire.tax_options.mode === null ? {} : { mode: wire.tax_options.mode }),
       ...(wire.tax_options.tax_included === undefined || wire.tax_options.tax_included === null ? {} : { taxIncluded: wire.tax_options.tax_included }),
       ...(wire.tax_options.tax_label_key === undefined || wire.tax_options.tax_label_key === null ? {} : { taxLabelKey: wire.tax_options.tax_label_key }),
     },

@@ -15,8 +15,8 @@ type CreateFakeCall = { op: "createProposalDraft"; input: CreateProposalDraftInp
 type FakeOptions = {
   catalog?: ContentItem[];
   company?: CompanyInfo;
-  companyId?: number;
   proposals?: RecoveredProposalSummary[];
+  proposalReadbacks?: Record<string, ProposalReadback>;
   proposalReadback?: ProposalReadback;
   editorOrigin?: string;
   now?: () => number;
@@ -26,8 +26,8 @@ type FakeOptions = {
 export function createFakeProposalesClient({
   catalog = [],
   company = { companyId: serverEnv.PROPOSALES_COMPANY_ID, currency: "EUR", taxMode: "standard" },
-  companyId = company.companyId,
   proposals = [],
+  proposalReadbacks = {},
   proposalReadback,
   editorOrigin = "https://proposales.test",
   now = Date.now,
@@ -44,7 +44,7 @@ export function createFakeProposalesClient({
 } {
   const calls: Array<FakeCall | CreateFakeCall> = [];
   const stored = [...proposals];
-  const storedReadbacks = new Map<string, ProposalReadback>();
+  const storedReadbacks = new Map<string, ProposalReadback>(Object.entries(proposalReadbacks));
   const failures = new Map<FakeOperation, unknown>();
   const takeFailure = (op: FakeOperation) => {
     const error = failures.get(op);
@@ -81,7 +81,7 @@ export function createFakeProposalesClient({
     },
     async createProposalDraft(input: CreateProposalDraftInput): Promise<CreatedDraft> {
       takeFailure("createProposalDraft");
-      const request = toCreateProposalRequest(input, { companyId, now });
+      const request = toCreateProposalRequest(input, { companyId: company.companyId, now });
       calls.push({ op: "createProposalDraft", input, request });
       fake.writes += 1;
       const proposalUuid = newUuid();

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { createFakeProposalesClient } from "@/lib/proposales/fake";
-import type { CompanyInfo, ContentItem, CreateProposalDraftInput } from "@/lib/proposales/index";
+import { toCreateProposalRequest } from "@/lib/proposales/mappers";
+import type { CompanyInfo, ContentItem, CreateProposalDraftInput, ProposalReadback, RecoveredProposalSummary } from "@/lib/proposales/index";
 
 const catalog: ContentItem[] = [
   {
@@ -15,7 +16,7 @@ const catalog: ContentItem[] = [
 ];
 
 describe("Proposales fake client", () => {
-  it("C3(h) records the mapped create request and stores the injected read-back", async () => {
+  it("P4-C3(h) records the exact mapped create request and stores the injected read-back", async () => {
     const proposalReadback = { available: true } as never;
     const input: CreateProposalDraftInput = {
       language: "en",
@@ -23,21 +24,24 @@ describe("Proposales fake client", () => {
       blocks: [{ contentId: "188485", quantity: { known: false }, optional: { known: false } }],
       generationId: "generation-1",
     };
-    const fake = createFakeProposalesClient({ companyId: 42, now: () => 0, newUuid: () => "11111111-1111-4111-8111-111111111111", proposalReadback });
+    const company = { companyId: 42, currency: "EUR", taxMode: "standard" } as CompanyInfo;
+    const fake = createFakeProposalesClient({ company, now: () => 0, newUuid: () => "11111111-1111-4111-8111-111111111111", proposalReadback });
     await fake.createProposalDraft(input);
-    expect(fake.calls.at(-1)).toMatchObject({ op: "createProposalDraft", input });
+    expect(fake.calls.at(-1)).toEqual({ op: "createProposalDraft", input, request: toCreateProposalRequest(input, { companyId: company.companyId, now: () => 0 }) });
     expect(fake.writes).toBe(1);
     expect(fake.storedReadbacks.get("11111111-1111-4111-8111-111111111111")).toBe(proposalReadback);
     expect(() => fake.assertNoWrites()).toThrow();
   });
 
-  it("C5(a-d) recovers only stored rows with exact metadata", async () => {
-    const fake = createFakeProposalesClient({ proposals: [{ proposalUuid: "22222222-2222-4222-8222-222222222222", generationId: "generation-1", url: "https://proposales.test/draft" }] as never });
+  it("P4-C3(l) seeds recoverable proposals and read-backs", async () => {
+    const summary: RecoveredProposalSummary = { proposalUuid: "22222222-2222-4222-8222-222222222222", generationId: "generation-1", url: "https://proposales.test/draft" };
+    const readback = { available: true } as never as ProposalReadback;
+    const fake = createFakeProposalesClient({ proposals: [summary], proposalReadbacks: { [summary.proposalUuid]: readback } });
     await expect(fake.findProposalsByGenerationId("generation-1")).resolves.toHaveLength(1);
-    await expect(fake.findProposalsByGenerationId("GENERATION-1")).resolves.toHaveLength(0);
+    await expect(fake.getProposal(summary.proposalUuid)).resolves.toBe(readback);
   });
 
-  it("C6(e) can queue a read failure", async () => {
+  it("P4-C3(m) can queue a read failure", async () => {
     const error = new Error("read failed");
     const fake = createFakeProposalesClient();
     fake.failNext("getProposal", error);

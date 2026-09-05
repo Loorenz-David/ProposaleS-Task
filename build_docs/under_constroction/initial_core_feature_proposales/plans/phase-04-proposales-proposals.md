@@ -348,3 +348,50 @@ test is deleted; collected scanner evidence remains in `applied-pricing.mapper.t
 N1–N3 are resolved in this fix (absent-shape parsing, reserved-prefix documentation, and
 the widened C2 source bound); N4 is routed to phase 15's candidate list and existing
 master follow-up 8. Counts re-derived: 8 criteria / 80 rows / 35 named mutations.
+
+**Implementation — fix round 2 (2026-09-05, Codex).** Resolved B1–B3 and S1–S8 within
+the allowed Phase-4 perimeter. The read-back TaxOptions shape now follows the vendor's
+`mode` key and both read-back fixtures use distinct unit values; the create request
+tests inject each prohibited key at its declared block or proposal location; the
+production POST path has a call-site parser test; the fake records mapper-equivalent
+requests and seeds proposal read-backs by UUID; absent tax options and absent block
+currency each have direct assertions; the search fixture contains a case-different
+generation id exercised by the client; the duplicate uncollected helper test was
+deleted; and Phase-4 test titles use `P4-` identifiers where they own Phase-4 rows.
+The integration README now documents the reserved `proposal_copilot_` prefix and
+unknown-key rule. No feature root, transport, persistence, price-write, frontend, or
+Phase-14 decision code was added. The fake options now follow master-plan §6.6, using
+the injected `company` for its mapper context and `proposalReadbacks` as a UUID-keyed
+seed map.
+
+The architecture-context resolution was re-emitted before implementation: contracts
+`02-runtime-boundaries.md`, `03-feature-architecture.md`, `04-server-architecture.md`,
+`06-data-contracts-and-validation.md`, `07-integrations.md`,
+`10-security-and-trust-boundaries.md`, `11-testing-principles.md`,
+`12-anti-patterns.md`, and `14-documentation-principles.md` apply; no additional
+contract was needed. The implementation remains server-only, integration-owned under
+`src/lib/proposales/`, validates all external/request boundaries, keeps POST
+non-retrying, and maps vendor wire shapes to lib-owned shapes.
+
+Pre-edit baseline was captured before this round's source edits: the existing Phase-4
+adapter scope was 6 files / 93 tests green. After the new/strengthened cases were
+authored, targeted evidence was 6 files / 95 tests green. All 35 named mutations were
+then applied at their declared sites, each reddened its named assertion, and each was
+reverted. One initial M04-7 attempt used a regex that skipped the test; it was caught as
+a false measurement and rerun with a plain title selector before the ledger was closed.
+The final targeted evidence is 6 files / 95 tests green. `npx vitest list` confirms the
+deleted `test/helpers/proposales-arithmetic-scan.test.ts` is absent while the collected
+pricing test imports the sole scanner evidence. Required non-L4 checks passed:
+`npm run typecheck`, `npm run lint`, and `git diff --check`. The one authorized closing
+L4 stamp passed: `npm test` → 12 files / 163 tests green. Typecheck rewrote the tracked
+`tsconfig.tsbuildinfo`; it was restored to its pre-run bytes and is outside this cycle.
+
+Judgment calls: the vendor OpenAPI snapshot and evidence §8.1 control read-back govern
+`tax_options.mode`; distinct fixture unit values are synthetic scrubbed values required
+to make each field mapping observable; `language: ""` is the smallest mapped request
+invalid only against the existing `min(1)` request schema for the POST call-site guard;
+and `proposalReadbacks` is a UUID-keyed record because the master surface specifies
+seeded read-backs by proposal UUID. No deviations or owner decisions arose. Documentation
+impact review under contract 14 §8 found the integration README incomplete on the
+reserved prefix/unknown-key rule and patched it; no other durable documentation became
+false, incomplete, or misleading.

@@ -20,33 +20,33 @@ describe("Applied Pricing mapper", () => {
     ["parse_int", "parseInt(x)"],
   ] as const;
 
-  it.each(scannerCases)("C8(b) detects %s", (kind, source) => {
+  it.each(scannerCases)("P4-C8(b) detects %s", (kind, source) => {
     expect(findArithmetic(source).map((record) => record.kind)).toEqual([kind]);
   });
 
-  it("C8(c-d) ignores literal concatenation and text without an AST operator", () => {
+  it("P4-C8(c-d) ignores literal concatenation and text without an AST operator", () => {
     expect(findArithmetic('const one = "a" + "b"; const two = "a + b"; const three = `${a}-${b}`')).toEqual([]);
   });
 
-  it("C6(a) maps consistent read-back values verbatim", () => {
+  it("P4-C6(a) maps consistent read-back values verbatim", () => {
     const result = toAppliedPricing(toProposalReadback(proposalReadbackSchema.parse(consistent).data));
     expect(result.totalWithoutTax.amountMinor).toBe(10000);
     expect(result.totalWithTax.amountMinor).toBe(10000);
     expect(result.blocks[0]).toMatchObject({
-      unitValueWithDiscountWithoutTax: { amountMinor: 10000, currency: "EUR" },
-      unitValueWithDiscountWithTax: { amountMinor: 10000, currency: "EUR" },
-      unitValueWithoutDiscountWithoutTax: { amountMinor: 10000, currency: "EUR" },
-      unitValueWithoutDiscountWithTax: { amountMinor: 10000, currency: "EUR" },
+      unitValueWithDiscountWithoutTax: { amountMinor: 10100, currency: "EUR" },
+      unitValueWithDiscountWithTax: { amountMinor: 10200, currency: "EUR" },
+      unitValueWithoutDiscountWithoutTax: { amountMinor: 10300, currency: "EUR" },
+      unitValueWithoutDiscountWithTax: { amountMinor: 10400, currency: "EUR" },
     });
   });
 
-  it("C6(b) reports inconsistent totals verbatim", () => {
+  it("P4-C6(b) reports inconsistent totals verbatim", () => {
     const result = toAppliedPricing(toProposalReadback(proposalReadbackSchema.parse(inconsistent).data));
     expect(result.totalWithoutTax.amountMinor).toBe(12345);
     expect(result.totalWithTax.amountMinor).toBe(23456);
   });
 
-  it("C6(c-d) carries fractional quantity and vat", () => {
+  it("P4-C6(c-d) carries fractional quantity and vat", () => {
     const raw = structuredClone(inconsistent) as typeof inconsistent;
     raw.data.blocks[0].quantity = 1.5;
     raw.data.blocks[0].package_split![0].vat = 0.25;
@@ -55,7 +55,7 @@ describe("Applied Pricing mapper", () => {
     expect(result.blocks[0].packageSplit?.[0].vat).toBe(0.25);
   });
 
-  it("C6(f-g) preserves absent display-only fields", () => {
+  it("P4-C6(f-g) preserves absent display-only fields", () => {
     const raw = structuredClone(inconsistent) as { data: { blocks: Array<Record<string, unknown>> } };
     delete raw.data.blocks[0].optional;
     delete raw.data.blocks[0].package_split;
@@ -64,19 +64,23 @@ describe("Applied Pricing mapper", () => {
     expect(result.blocks[0]).not.toHaveProperty("packageSplit");
   });
 
-  it("C7(a-b) uses proposal currency and warns on block currency drift", () => {
+  it("P4-C7(a-b) uses proposal currency and warns on block currency drift", () => {
     const result = toAppliedPricing(toProposalReadback(proposalReadbackSchema.parse(inconsistent).data));
     expect(result.totalWithoutTax.currency).toBe("EUR");
     expect(result.blocks[0].blockCurrency).toBe("SEK");
     expect(result.warnings).toContainEqual({ kind: "block_currency_differs", contentId: "188485" });
   });
 
-  it("C7(c) does not warn for equal or absent block currency", () => {
+  it("P4-C7(c-d) does not warn for equal or absent block currency", () => {
     const result = toAppliedPricing(toProposalReadback(proposalReadbackSchema.parse(consistent).data));
     expect(result.warnings).toEqual([]);
+    const absentCurrency = structuredClone(consistent) as { data: { blocks: Array<Record<string, unknown>> } };
+    delete absentCurrency.data.blocks[0].currency;
+    const absentResult = toAppliedPricing(toProposalReadback(proposalReadbackSchema.parse(absentCurrency).data));
+    expect(absentResult.warnings).toEqual([]);
   });
 
-  it("C7(d-f) maps tax options and normalises currencies", () => {
+  it("P4-C7(e-g) maps tax options and normalises currencies", () => {
     const raw = structuredClone(consistent) as typeof consistent;
     raw.data.currency = "eur";
     raw.data.blocks[0].currency = "sek";
@@ -84,9 +88,11 @@ describe("Applied Pricing mapper", () => {
     expect(result.taxOptions).toEqual({ mode: "standard", taxIncluded: false, taxLabelKey: "vat" });
     expect(result.totalWithoutTax.currency).toBe("EUR");
     expect(result.blocks[0].blockCurrency).toBe("SEK");
+    const absentTaxOptions = toAppliedPricing(toProposalReadback(proposalReadbackSchema.parse(inconsistent).data));
+    expect(absentTaxOptions.taxOptions).toEqual({});
   });
 
-  it("C8(a) keeps the mapper arithmetic-free", () => {
+  it("P4-C8(a) keeps the mapper arithmetic-free", () => {
     const source = readFileSync(new URL("./applied-pricing.mapper.ts", import.meta.url), "utf8");
     expect(findArithmetic(source)).toEqual([]);
   });

@@ -56,7 +56,7 @@ export type ProposalReadback = {
   currency: import("zod").infer<typeof currencyCodeSchema>;
   totalWithoutTax: number;
   totalWithTax: number;
-  taxOptions: { taxMode?: string; taxIncluded?: boolean; taxLabelKey?: string };
+  taxOptions: { mode?: string; taxIncluded?: boolean; taxLabelKey?: string };
   blocks: Array<{
     contentId: string;
     quantity: number;

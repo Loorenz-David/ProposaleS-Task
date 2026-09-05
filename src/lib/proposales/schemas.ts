@@ -87,7 +87,7 @@ const packageSplitSchema = z.object({
   value_with_tax: z.number().int().optional().nullable(),
 });
 const taxOptionsSchema = z.object({
-  tax_mode: z.string().optional().nullable(),
+  mode: z.string().optional().nullable(),
   tax_included: z.boolean().optional().nullable(),
   tax_label_key: z.string().optional().nullable(),
 });

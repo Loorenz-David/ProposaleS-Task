@@ -14,10 +14,10 @@
         "content_id": 188485,
         "quantity": 2,
         "currency": "SEK",
-        "unit_value_with_discount_without_tax": 10000,
-        "unit_value_with_discount_with_tax": 10000,
-        "unit_value_without_discount_without_tax": 10000,
-        "unit_value_without_discount_with_tax": 10000,
+        "unit_value_with_discount_without_tax": 10100,
+        "unit_value_with_discount_with_tax": 10200,
+        "unit_value_without_discount_without_tax": 10300,
+        "unit_value_without_discount_with_tax": 10400,
         "package_split": [
           {
             "type": "other",

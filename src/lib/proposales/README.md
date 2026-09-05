@@ -27,8 +27,10 @@ evidence-backed constant in `http.ts`. The browser never receives either configu
   deliberately closed to the fields this application consumes.
 - Proposal creation sends exactly the metadata keys `proposal_copilot_source`,
   `proposal_copilot_generation_id`, and `proposal_copilot_created_at`; all values are
-  strings. Price fields, proposal/block currency, package splits, and tax options are not
-  representable in the create request.
+  strings. The `proposal_copilot_` prefix is reserved for these application-owned keys;
+  the application interprets no metadata key it did not write. Price fields,
+  proposal/block currency, package splits, and tax options are not representable in the
+  create request.
 - Recovery searches `GET /v3/proposal-search` with the configured `company_id`, the
   `filter[proposal_copilot_generation_id]` metadata filter, and the documented maximum
   limit. Every returned row is re-verified with exact metadata equality before mapping.
