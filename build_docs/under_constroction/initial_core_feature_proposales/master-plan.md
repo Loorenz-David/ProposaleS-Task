@@ -58,7 +58,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 | # | Phase | Plan file | State | Date | Actor | Note |
 |---|---|---|---|---|---|---|
 | 1 | Repository topology and environment | `plans/phase-01-topology-and-env.md` | `APPROVED` | 2026-09-05 | coordinator | 5 criteria; 22 rows; 11 mutations; 8 files / 29 tests green at `3c136e7`. Round 1 `CHANGES_REQUESTED` (5 findings), fix round 2 resolved the 6 scoped items; F2, F4's comment half and N2 excluded by owner MVP scoping and recorded. **Approved on a coordinator re-review, not an independent session** — caveat in the phase Review log |
-| 2 | Errors, logger, shared value shapes | `plans/phase-02-errors-logger-values.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
+| 2 | Errors, logger, shared value shapes | `plans/phase-02-errors-logger-values.md` | `IMPLEMENTED` | 2026-09-05 | Codex | 7 criteria; 50 rows; 16 mutations; 12 files. Targeted 44 tests, typecheck, and lint green (one pre-existing warning); checkpoint `CHECKPOINT (not approved): phase 02 errors logger values` |
 | 3 | Proposales adapter: transport, error translation, content read | `plans/phase-03-proposales-transport-and-content.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
 | 4 | Proposales adapter: create, recovery search, read-back, Applied Pricing | `plans/phase-04-proposales-proposals.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
 | 5 | Proposition schema and structural provenance | `plans/phase-05-proposition-and-provenance.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
@@ -73,7 +73,9 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 | 14 | Execution: recovery, create, read-back, result | `plans/phase-14-execution.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
 | 15 | Whole-workflow proof, isolation scans, opt-in live suites, documentation closeout | `plans/phase-15-closeout.md` | `NOT_STARTED` | 2026-09-05 | planner | 5 criteria |
 
-Criteria total: 102; rows: 477; named mutations: 71 — derived by script from the phase files on 2026-09-05 (round 2, after the owner decisions) (a criterion is a distinct `C<n>` in a phase's table). Re-derive after any plan amendment; never edit these numbers by hand.
+Criteria total: 103; rows: 497; named mutations: 89 — derived from the phase acceptance tables on 2026-09-05 after the phase-2 projection fold (a criterion is a distinct `C<n>` in a phase's table; each table line is one row unless its ID explicitly spans letters). Re-derive after any plan amendment; never edit these numbers by hand.
+
+**Coordinator note (projection fold, 2026-09-05):** the prior summary `102 / 477 / 71` was not reproducible from the phase tables even before this fold: the fifteen declared phase headers summed to `102 / 483 / 79`. The current re-derivation reports the actual table rows and named mutation identifiers after phase 2 grew by 12 rows and 8 mutations, phase 15 grew by 2 rows and 2 mutations, and phase 2 gained one criterion. Historical handoffs remain records of the counts their sessions saw and are not rewritten.
 
 **Coordinator note (dispatch lint, 2026-09-05):** the round-2 handoff §2 states 101 criteria / 467 rows / 69 mutations and attributes them to this section. That is the **pre-fold** count: the handoff body was written before the owner answered cards 1 and 2, and its §7 addendum added phase 3 C6, phase 5 C1(e) and the phase 12 rows without re-deriving §2. **The numbers in this table are the current ones**; the handoff §2 line is stale and is not corrected there, because a handoff is a record of what a session saw. Re-derive before any count-bearing gate.
 
@@ -118,6 +120,7 @@ Selection protocol run against `architectural_contracts/01-implementation-contra
 | R13 | 08 §9 (turns return a serializable state), 09 §1 (transient work lives in browser/application state), 12 anti-patterns ("storing every LLM conversation … by default" prohibited), 06 §7 (our representation, never the provider's message shape) | **Multi-turn conversational continuity is a second caller-held object, `ConversationContext`**, owned by the feature (`schemas/conversation.ts`), held by the caller for the page's lifetime, round-tripped like the state, parsed strictly and bounded on every turn, never persisted, never logged in body. It carries human instructions and application-rendered assistant summaries — no tool-call history, no raw model messages. The AI SDK's message types never leave `src/lib/ai`; every run's messages are rebuilt from the context by `buildPreparationMessages`, so the provider is never the session layer. Phase 9's runtime is unchanged: it receives `initialMessages` and knows nothing about turns. Details §6.9; owner decision recorded in §12 (FB-2). |
 | R14 | §17A.4 (`proposales_content` = "taken from a content item returned by a read tool") and §17A.8 (retrieval per run) applied to revision | The run's **retrieval record is seeded from the current proposition** (every block's `contentId` and every alternative) and extended by this run's tool results. Without the seed a revision that keeps the current blocks would have to re-search each of them before the validator accepted its own output. The seed is the same rule with an honest starting set: everything in it was returned by a read tool in this workflow. A reference to anything else still requires a `get_content`/`search_content` read in this run (phase 12 C7(c)). |
 | R15 | naming: §17A.3 "the caller-held workflow state" (a shape; names are this file's) | The type and schema are named **`ProposalWorkflowState` / `proposalWorkflowStateSchema`** (`parseProposalWorkflowState`), not `WorkflowState`. Reason, not aesthetics: from round 2 the caller holds two typed objects side by side, and the forward principle (§6.9) adds more; an unqualified `WorkflowState` would be the one name that cannot say which workflow. The file stays `schemas/workflow-state.ts` (already inside the feature folder), and `MAX_WORKFLOW_STATE_BYTES` / `workflow_state_too_large` stay (a reason code is wire-stable). |
+| R16 | 06 §6 identifier branding | v1 UUID schemas and domain types remain unbranded strings. Reason: this MVP has one UUID kind in its first two phases, while the concrete proposal, generation, and turn identifiers are not yet separate domains; introducing brands now would add casts at seams without preventing a demonstrated mix-up. A second concurrent UUID kind triggers a recorded reconsideration before its schema is added. |
 
 **Conflicts found:** none between contracts, or between the intention and a contract MUST. One contract inaccuracy (R6) is already on the follow-up register. **Round 2:** no contract contradicts a caller-held conversation context (08 §9, 09 §1, 05 §74 and the 12 anti-pattern row all describe exactly this: transient, minimized, never stored by default). The intention is **silent** on natural-language continuity — a gap, not a contradiction — routed as FB-2 (§12). One latent gap in the ratified provenance rule was exposed by the same work and is owner card 2 (§12).
 
@@ -132,7 +135,7 @@ src/lib/env/server.ts                       import "server-only"; serverEnv (§6
 src/lib/errors/app-error.ts                 AppError + the nine subclasses of 04 §6; ErrorCode
 src/lib/errors/error-dto.ts                 errorDtoSchema / ErrorDto; toErrorDto(error)
 src/lib/logger.ts                           logger (structured, redacting); createLogger(sink) for tests
-src/lib/values/path.ts                      pathSchema / Path = string[]; formatPath for messages only
+src/lib/values/path.ts                      pathSchema / Path = string[]
 src/lib/values/absence.ts                   knownOrAbsentSchema(inner) / KnownOrAbsent<T>
 src/lib/values/money.ts                     moneySchema / Money; currencyCodeSchema
 src/lib/values/timestamp.ts                 isoTimestampSchema; formatIsoTimestamp(date)
@@ -182,14 +185,14 @@ Every file under `src/lib/env`, `src/lib/proposales`, `src/lib/ai`, `src/lib/age
 
 **`details.reason` registries** (closed string unions; §17A.13):
 
-| Registry | Members |
-|---|---|
-| `ProposalesFailureReason` | `transport`, `timeout`, `bad_request`, `unauthenticated_upstream`, `forbidden_upstream`, `not_found_upstream`, `conflict_upstream`, `rate_limited_upstream`, `server_error`, `invalid_body`, `schema_mismatch` (11 members; `details.system = "proposales"`, `details.status` when an HTTP status exists, `details.retryable` per the §17A.13 table, `details.operation` = the client method name) |
-| `AiProviderFailureReason` | `unauthenticated_upstream`, `timeout`, `rate_limited_upstream`, `server_error`, `transport`, `content_filtered`, `not_configured` (7 members; `details.system = "ai_provider"`, message always generic) |
-| `ValidationReason` (optional `details.reason` on `ValidationError`) | `model_output_invalid`, `workflow_state_too_large`, `unknown_question_id`, `pricing_acknowledgment_missing`, `required_to_create_unresolved`, `consequential_provenance_invalid`, `domain_rule` |
-| `ConflictReason` | `draft_already_exists` (terminal state), `multiple_recovery_matches` |
-| `AppliedPricingUnavailableReason` | `read_failed_upstream`, `read_failed_timeout`, `read_failed_schema_mismatch`, `read_budget_exhausted` |
-| `RunFailureReason` | `budget_exhausted` (with `budget: "wall_time" \| "tool_calls" \| "tokens"`), `model_output_invalid` (with `issues: Array<{ path: Path }>`), `tool_output_invalid` (a tool's `execute` returned a value failing its own `output` schema; 08 §3), `script_exhausted` (fake only, test aid) |
+| Registry | Members | Defining module / phase |
+|---|---|---|
+| `ProposalesFailureReason` | `transport`, `timeout`, `bad_request`, `unauthenticated_upstream`, `forbidden_upstream`, `not_found_upstream`, `conflict_upstream`, `rate_limited_upstream`, `server_error`, `invalid_body`, `schema_mismatch` (11 members; `details.system = "proposales"`, `details.status` when an HTTP status exists, `details.retryable` per the §17A.13 table, `details.operation` = the client method name) | `src/lib/proposales/errors.ts` / phase 3 |
+| `AiProviderFailureReason` | `unauthenticated_upstream`, `timeout`, `rate_limited_upstream`, `server_error`, `transport`, `content_filtered`, `not_configured` (7 members; `details.system = "ai_provider"`, message always generic) | `src/lib/ai/errors.ts` / phase 8 |
+| `ValidationReason` (optional `details.reason` on `ValidationError`) | `model_output_invalid`, `workflow_state_too_large`, `unknown_question_id`, `pricing_acknowledgment_missing`, `required_to_create_unresolved`, `consequential_provenance_invalid`, `domain_rule` | `src/lib/errors/app-error.ts` / phase 2 |
+| `ConflictReason` | `draft_already_exists` (terminal state), `multiple_recovery_matches` | `src/lib/errors/app-error.ts` / phase 2 |
+| `AppliedPricingUnavailableReason` | `read_failed_upstream`, `read_failed_timeout`, `read_failed_schema_mismatch`, `read_budget_exhausted` | `src/features/proposal-preparation/schemas/draft-result.ts` / phase 14 |
+| `RunFailureReason` | `budget_exhausted` (with `budget: "wall_time" \| "tool_calls" \| "tokens"`), `model_output_invalid` (with `issues: Array<{ path: Path }>`), `tool_output_invalid` (a tool's `execute` returned a value failing its own `output` schema; 08 §3), `script_exhausted` (fake only, test aid) | `src/lib/agent/types.ts` / phase 9 |
 
 **Domain result states** (`TurnResult.result.status`): `clarification`, `proposition`, `failed`, `created`, `recovered` — five (§17A.13). `failed` carries `failure: { reason: RunFailureReason, code: "validation_error" | "internal_error", … }` (R9).
 
@@ -205,7 +208,7 @@ Type names are the inferred pair of each schema (`xSchema` / `X`). Sources: `Pro
 | `catalogVerbatimSchema(inner)` | `proposales_content` only | `ref.variationId` required |
 | `presentationalSchema(inner)` | `brief \| proposales_content \| human \| inferred` | `refSchema` |
 
-`refSchema = { variationId?: string, questionId?: string, editTurn?: number, turnId?: uuidV4, quote?: string(max MAX_QUOTE_CHARS) }`; `turnId` requires `quote` (card 2 → A: a `human` leaf sourced from the current revision instruction); `variationId` required when `source = proposales_content` (refinement inside the leaf). `sourcedOrAbsent(leafSchema)` wraps a leaf as `{ known: true, …leaf } | { known: false }` — built on `knownOrAbsentSchema` from `src/lib/values/absence.ts`; the `known` key is required in both variants.
+`refSchema = { variationId?: string, questionId?: string, editTurn?: number, turnId?: uuidV4, quote?: string(max MAX_QUOTE_CHARS) }`; `turnId` requires `quote` (card 2 → A: a `human` leaf sourced from the current revision instruction); `variationId` required when `source = proposales_content` (refinement inside the leaf). `sourcedOrAbsent(leafSchema)` wraps a leaf as `{ known: true, …leaf } | { known: false }`. It is an independent discriminated union that shares `knownOrAbsentSchema`'s required discriminator convention but does **not** wrap it: `knownOrAbsentSchema(leafSchema)` would introduce an unwanted nested `value`. The `known` key is required in both variants.
 
 | Schema (file) | Shape (fields that matter; every free-text field trimmed and capped by §6.5) |
 |---|---|
@@ -598,7 +601,7 @@ rename, never a bare `mv` of several files into one directory.
 
 **Folder tables** (charter layout instantiated): master plan at this root (this file) · `plans/` phases · `prompts/{implementer,reviewer,coordinator,maintenance}/` live directives · `handoffs/<role>/` unconsumed reports · `archive/pre_plan/` gate rows before phase 1, `archive/plan_<n>/` created at each closeout · `planing/` the intention and evidence doc (owner-authored, not renamed) · `context/` owner-supplied context. Mechanism inventory and planning ran under the coordinator role tables. State is positional; a transition is a file move.
 
-**Gate log:** intention `RATIFIED` round 5 (2026-09-05, §21.1); ledger extension M8–M18 ratified round 7; **FB-2 ratified round 8 (2026-09-05): §17A.17, M19, §5.2, §7, §8.3, §17A.4, §12.1 — folded, no longer proposed** · mechanism inventory `PASSED` round 1 (17 mechanisms, 17 contracts) · ledger extension `RATIFIED` round 7 (M8–M18, none cut) · planning round 1: this plan set (2026-09-05) · planning round 2 (2026-09-05): multi-turn continuity refactor — phase 10 inserted, 10–14 → 11–15; FB-2 raised · owner decisions (2026-09-05): card 1 → A, card 2 → A, folded into phases 3, 5, 10, 11, 12.
+**Gate log:** intention `RATIFIED` round 5 (2026-09-05, §21.1); ledger extension M8–M18 ratified round 7; **FB-2 ratified round 8 (2026-09-05): §17A.17, M19, §5.2, §7, §8.3, §17A.4, §12.1 — folded, no longer proposed** · **logging/redaction M20 ratified round 10 (2026-09-05): §17A.18, §21.3 — phase 2 projection card 1 → A** · mechanism inventory `PASSED` round 1 (17 mechanisms, 17 contracts) · ledger extension `RATIFIED` round 7 (M8–M18, none cut) · planning round 1: this plan set (2026-09-05) · planning round 2 (2026-09-05): multi-turn continuity refactor — phase 10 inserted, 10–14 → 11–15; FB-2 raised · owner decisions (2026-09-05): card 1 → A, card 2 → A, folded into phases 3, 5, 10, 11, 12.
 
 **Follow-up register** — none blocks any phase:
 
@@ -610,6 +613,7 @@ rename, never a bare `mv` of several files into one directory.
 | 5 | ~~intention amendment FB-2~~ — **CLOSED 2026-09-05.** Ratified by the owner and folded into the intention: §5.2 bullet, §7 concept row, §8.3 `human` row, §12.1 operation list, §17A.4 `ref` paragraph, new §17A.17, ledger M19, §23 round 8. Cards 1 and 2 folded with it. `(proposed)` markers cleared from §7.2 and phases 10–15. | coordinator — **done** | — | intention §23 round 8 |
 | 4 | **New (planning):** intention §17A.15 phrase "the SDK's language-model type, which a `string` does not satisfy" is inaccurate against `ai@7.0.92` (`LanguageModel` includes the string id). Mechanism unchanged; the accurate phrasing is `Exclude<LanguageModel, string>` (§6.4). Editorial fold-back to the intention via the coordinator; no gate re-opens. | coordinator | — | this plan §6.4, handoff finding F1 |
 | 6 | **AI model id unresolved.** `.env.example` reads `AI_MODEL=gpt-5.6-luna`; the owner stated `gpt-6.6-luna` when confirming it (2026-09-05). One is a typo; **the coordinator did not guess.** Nothing depends on it yet — phase 1 empties `.env.example`, the schema has no defaults, and the test placeholder is `test-placeholder-model`. Load-bearing from **phase 8** (provider boundary). | owner — one line | — | this section; §6.2 |
+| 7 | Contract `06` §8 says Zod's `error.issues` maps directly to `string[]` paths, but Zod 4 emits numeric array indices. Patch the contract to require `issue.path.map(String)` at a DTO boundary. | dispatchable agent session | *(raise a prompt row when dispatched)* | phase-2 projection D2 |
 
 ## 12. Open items handed to the coordinator
 
