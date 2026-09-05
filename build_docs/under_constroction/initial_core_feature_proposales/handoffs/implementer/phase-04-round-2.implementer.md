@@ -225,5 +225,4 @@ durable document became false or incomplete. No architecture graph delta was nee
 
 Checkpoint subject: `CHECKPOINT (not approved): phase 04 Proposales proposals fix round 2`
 
-Checkpoint SHA: to be filled after the immediate commit and docs-only provenance update,
-if required by the repository's checkpoint convention.
+Checkpoint SHA: `d937fe8` (`CHECKPOINT (not approved): phase 04 Proposales proposals fix round 2`).
