@@ -102,3 +102,34 @@ construction sites, concrete warning payloads, content-id form, exact fixtures a
 projection guards, Zod-safe schema construction, names, and intentional deferred/sampled
 coverage. Counts re-derived at 8 criteria / 61 rows / 21 mutations (`C1 0 · C2 15 · C3 2
 · C4 0 · C5 2 · C6 0 · C7 0 · C8 2`); phase 5 remains ready for an implement prompt.
+
+**Implementation — round 1 (2026-09-06, Codex).** Implemented the eight-file phase perimeter:
+runtime-neutral shared source-policy builders and bounds, the deferred content-candidate
+contract, strict proposition schemas with 15 independently constructed consequential leaves,
+the reusable valid proposition/descriptor fixtures, and the server-only structural provenance
+projection. Warning text is projected while bare `before`/`after` values are not; projection
+ordering compares decimal path-index segments numerically. No integration, UI, agent runtime,
+workflow state, persistence, pricing write, or content-candidate behavioral tests were added;
+the latter remains intentionally delegated to phase 7 C7(d).
+
+Architecture resolution re-emitted before implementation: `02-runtime-boundaries.md`,
+`03-feature-architecture.md`, `04-server-architecture.md`,
+`06-data-contracts-and-validation.md`, `07-integrations.md`, `08-agent-architecture.md`,
+`09-database-and-persistence.md` (absence confirmation), `10-security-and-trust-boundaries.md`,
+`11-testing-principles.md`, `12-anti-patterns.md`, `13-decision-checklist.md`, and
+`14-documentation-principles.md`; no additional contract was needed. The schema modules remain
+runtime-neutral and the projector alone begins with `import "server-only"`.
+
+Judgment calls: the standalone `sourcedOrAbsent` helper falls back to the existing
+`knownOrAbsentSchema` shape when called with a non-source schema, while all phase proposition
+leaves use the required member-extension construction; warning payload values are recursive
+bare JSON values that reject an own `source` key; and projection ordering is the presentation
+decision recorded in Notes. These choices do not alter the ratified proposition semantics.
+
+Pre-edit baseline, captured after all phase tests were authored and before production files were
+created: 3 phase files / 61 tests, all 61 failing because the eight production modules were
+absent. Targeted implementation evidence: 3 files / 61 tests green. Closing evidence: `npm
+test` → 15 files / 224 tests green; `npm run typecheck`, `npm run lint`, and `git diff --check`
+passed. The tracked `tsconfig.tsbuildinfo` rewrite from typecheck was restored and is outside
+the phase perimeter. Documentation-impact review found no durable current-state documentation
+that became false or incomplete. No architecture graph is present.
