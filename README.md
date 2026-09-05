@@ -4,7 +4,7 @@ An AI-assisted workflow for turning incomplete commercial intent (briefs, meetin
 
 ## Status
 
-**Foundation established, product workflow not yet implemented.** The repository has a working Next.js scaffold with typecheck, lint, unit, end-to-end, and build steps running locally and in CI, a complete set of normative architecture contracts, agent bootstrap for Claude Code and Codex, and a vendored Proposales API reference. The application itself is a product-neutral shell: a root layout with a header and content container, a small styling foundation (design tokens, typography, focus treatment), and three shared primitives (`Button`, `Input`, `Textarea`), demonstrated on a single foundation page. No proposal generation, agent, Proposales integration, schema, or business flow exists yet.
+**Foundation established, product workflow not yet implemented.** The repository has a working Next.js scaffold with typecheck, lint, unit, end-to-end, and build steps running locally and in CI, a complete set of normative architecture contracts, agent bootstrap for Claude Code and Codex, and a vendored Proposales API reference. The application currently provides a product-neutral root layout with a header and content container, a small styling foundation (design tokens, typography, focus treatment), and three shared primitives (`Button`, `Input`, `Textarea`). The `/` route is intentionally neutral until the product UI is ported. No proposal generation, agent, Proposales integration, schema, or business flow exists yet.
 
 ## Intended workflow
 
@@ -126,7 +126,7 @@ A refresh detects possible contract drift; a dependency-aware review of the diff
 
 ```
 .
-├── src/app/                     # Next.js routes: root layout (application shell) and the foundation page
+├── src/app/                     # Next.js routes: root layout (application shell) and neutral root route
 ├── src/components/ui/           # Shared presentational primitives with no domain knowledge
 ├── src/styles/                  # Design tokens and global base styles
 ├── e2e/                         # Playwright specs
@@ -162,9 +162,9 @@ Decided and deliberately absent:
 - No client-side persistence: a session lives for the browser page lifetime ([05-client-architecture.md](architectural_contracts/05-client-architecture.md) §5.2).
 - No client data-fetching library and no component library; neither is forbidden, neither is earned yet ([05-client-architecture.md](architectural_contracts/05-client-architecture.md) §4, [15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md) §5).
 
-Decided for the frontend, not yet installed (the shell currently uses CSS Modules; see the contracts README "Known conflicts"):
+Decided for the frontend:
 
-- Tailwind CSS as the styling mechanism, with `src/styles/tokens.css` as the single definition of visual values ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md)).
+- Tailwind CSS as the default production styling mechanism, with `src/styles/tokens.css` as the single definition of visual values. The existing CSS Modules are converted only when their components are touched by production UI work ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md)).
 - Zustand for feature-scoped client stores only, above `useState` and `useReducer` ([05-client-architecture.md](architectural_contracts/05-client-architecture.md) §5.1).
 
 Future product implementation (not started): brief intake, agent reasoning and tools, prepared-proposal review and approval, the Proposales adapter, and the editor handoff.

@@ -73,8 +73,8 @@ These are fixed by this contract. Rows the scaffold has already established are 
 | Node.js version | Pinned by the repository at initialization in `package.json` `engines` and matched to the Vercel project setting. The value is the concrete version the runtime establishes when the app is created, not a number chosen in advance. |
 | Application database | None. Deliberate. See "Resolved decisions" and [09-database-and-persistence.md](09-database-and-persistence.md). |
 | Authentication system | None. Deliberate. See "Resolved decisions". |
-| Styling | Tailwind CSS for production UI, with `src/styles/tokens.css` as the single definition of visual values. Not yet installed; the first frontend phase installs and configures it. See [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md). |
-| Client state library | Zustand, for feature-scoped stores only, under the conditions in [05-client-architecture.md](05-client-architecture.md) §5.1. Not yet installed. No global store. |
+| Styling | Tailwind CSS for production UI, with `src/styles/tokens.css` as the single definition of visual values. Existing CSS Modules are converted as their components are touched. See [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md). |
+| Client state library | Zustand is available for feature-scoped stores only, under the conditions in [05-client-architecture.md](05-client-architecture.md) §5.1. No global store. |
 | Remote-state library | None. Server Components, Server Actions, and `router.refresh()` are the mechanisms. TanStack Query only on a named requirement; TanStack Router/Start never. See [05-client-architecture.md](05-client-architecture.md) §4. |
 | Component library | None decided. Project-owned components on native elements. See [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §5. |
 | Client-side persistence | None. The session is browser-page-lifetime. See [05-client-architecture.md](05-client-architecture.md) §5.2. |
@@ -149,5 +149,5 @@ Recorded, not yet resolved. Each entry names the conflict, the contract rule, an
 
 | Conflict | Contract rule | Intended resolution |
 |---|---|---|
-| The scaffold styles the shell and the three `src/components/ui/` primitives with CSS Modules; Tailwind is the ratified mechanism and is not installed | [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §1 | The first frontend phase installs and configures Tailwind and wires `tokens.css` into its theme. Existing CSS-Modules components are converted when the UI work touches them (§6), not in a separate sweep. `tokens.css` and `globals.css` keep their role. |
+| The scaffold styles the shell and the three `src/components/ui/` primitives with CSS Modules, while Tailwind is the ratified production mechanism | [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §1 | Existing CSS-Modules components are converted when the UI work touches them (§6), not in a separate sweep. `tokens.css` and `globals.css` keep their role. |
 | No frontend implementation plan exists yet; the current master plan is backend-only and excludes contract 05 | [01-implementation-contract-guide.md](01-implementation-contract-guide.md) §8 | Correct while there is no UI work. The frontend project plans its own phases and lists 05, 15, 16, 02, 03, 06, 11 among its applicable contracts. |

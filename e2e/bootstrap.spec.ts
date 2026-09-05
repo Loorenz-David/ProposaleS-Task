@@ -5,9 +5,7 @@ test("renders the application shell", async ({ page }) => {
 
   await expect(page).toHaveTitle("Proposal Copilot");
   await expect(page.getByRole("banner")).toContainText("Proposal Copilot");
-  await expect(
-    page.getByRole("main").getByRole("heading", { level: 1 }),
-  ).toBeVisible();
+  await expect(page.getByRole("main")).toBeVisible();
 });
 
 test("skip link moves focus to the main content", async ({ page }) => {

@@ -12,7 +12,7 @@ This contract owns *how UI looks in code*. It owns nothing about *what the UI do
 
 **Tailwind CSS is the styling mechanism for production UI.** Utility classes in the markup are the default and the norm; a component's visual definition is readable in the component file.
 
-Recorded in [README.md](README.md) "Scaffold decisions record". Tailwind is not yet installed; the first frontend implementation phase installs and configures it. Until it does, this rule governs new UI written from that phase onward, not a retroactive rewrite (see §6).
+Recorded in [README.md](README.md) "Decided for the frontend". Tailwind is configured for production UI; this rule does not require a retroactive rewrite of the existing CSS-Modules foundation (see §6).
 
 Rules:
 
