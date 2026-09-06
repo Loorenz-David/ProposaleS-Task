@@ -2,7 +2,7 @@
 
 |                               |                                                                                                                                                                                                                                                                                                     |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Status**                    | `RATIFIED` (2026-09-05, by the owner, David, on the surface in §15.1 together with the four owner decisions recorded in §15; recorded in §16 round 2). Amended 2026-09-06 by owner decisions 5 and 6 (frontend dependency foundation, §4.1, §15), recorded in §16 round 3; status unchanged                                                                                                                                               |
+| **Status**                    | `RATIFIED` (2026-09-05, by the owner, David, on the surface in §15.1 together with the four owner decisions recorded in §15; recorded in §16 round 2). Amended 2026-09-06 by owner decisions 5 and 6 (frontend dependency foundation, §4.1, §15), recorded in §16 round 3; status unchanged. Deepened 2026-09-06 by the round-1 mechanism inventory (§12A, ledger F8–F27), recorded in §16 round 4. Owner decisions 7–10 ratified that inventory's four recommendations in §16 round 5; status unchanged. Amended 2026-09-06 by owner decision 11 (persistent agent shell + session-controlled Main Application Surface; §1, §5.1, §5.3, §8.6, §15), recorded in §16 round 6; status unchanged. Deepened 2026-09-06 by the round-2 mechanism inventory (§12A.21–§12A.23, ledger F28–F30, in-place amendments to §12A.1, §12A.6, §12A.7, §12A.8 and §12A.17), recorded in §16 round 7. Owner decision 12 ratified its sole recommendation in §16 round 8; status unchanged and no owner decision is open.                                                                                                                                               |
 | **Product**                   | Proposal Copilot                                                                                                                                                                                                                                                                                    |
 | **Feature working name**      | Frontend Core (the production proposal workspace)                                                                                                                                                                                                                                                   |
 | **Owner**                     | David (repository owner)                                                                                                                                                                                                                                                                            |
@@ -22,8 +22,9 @@ Establish the **one production workspace** in which a human collaborates with th
 
 ```
 ┌────────────────────────────┬──────────────────────────────────────┐
-│ Agent surface              │ Proposal surface                     │
-│                            │                                      │
+│ Agent Surface              │ Main Application Surface             │
+│ (structurally persistent)  │ (session-controlled; in V1 it shows  │
+│                            │  Proposal Preparation only)          │
 │ session tabs               │ proposal review (fields, line items) │
 │ conversation thread        │ provenance / unresolved information  │
 │ agent interaction pills    │ client preview (approximate)         │
@@ -32,7 +33,7 @@ Establish the **one production workspace** in which a human collaborates with th
 └────────────────────────────┴──────────────────────────────────────┘
 ```
 
-The left surface is not a generic chat widget and not a separate application: it is *the* interaction surface of the product. The right surface is where the structured proposal becomes visible and reviewable. They are one feature and one screen, permanently split (design 02 §1).
+**The shell model (owner decision 11, §15).** The persistent shell is **Agent Surface + Main Application Surface**. The Agent Surface on the left is structurally fixed: it is not a generic chat widget and not a separate application, it is *the* interaction surface of the product, and it never leaves. The right side is the **Main Application Surface**: the active session controls the page-lifetime workflow and the meaningful UI context rendered there. **Proposal Preparation is the only Main Application Surface implemented in frontend-core V1**; everything the right side shows in V1 (review, preview, creating, created or recovered, failed) belongs to that one experience. That V1 fact does not make the shell itself proposal-specific, and it adds no other surface, page, list, dashboard, or route to V1 (§6). "Permanently split" (design 02 §1) means a persistent Agent Surface beside a Main Application Surface, not a persistent Agent Surface beside a permanently proposal-only pane. Component names and hierarchy for the shell are planning decisions (§14.3).
 
 The human lifecycle the workspace serves, in the words of the ratified backend intention (§5), is: brief → the agent understands intent → clarification when necessary → a proposition is prepared → the human reviews → the human edits, replaces, or asks for revision → the human approves the exact proposition → deterministic server execution → a Proposales **draft** exists → the human opens it, performs the final monetary review, and sends from Proposales.
 
@@ -92,7 +93,8 @@ The design specifications use presentation words. This table fixes what each one
 
 | UI concept (design spec)                                  | Domain meaning                                                                                                                                                                                                                            | Owner of the real shape                                                               |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Session (tab)                                             | one in-memory proposal workflow for the page's lifetime: a page-lifetime session identity, the caller-held `ProposalWorkflowState` once a first turn has run, the caller-held `ConversationContext`, and the presentation runtime of §8.3 | session identity: frontend (UI mechanics); state and context: backend phases 6 and 10 |
+| Session (tab)                                             | one in-memory proposal workflow for the page's lifetime, not merely a conversation tab: a page-lifetime session identity, the caller-held `ProposalWorkflowState` once a first turn has run, the caller-held `ConversationContext`, and the presentation runtime of §8.3 including the meaningful Main Application Surface working context needed to resume the session (§8.6) | session identity and meaningful presentation context: frontend (UI); state and context: backend phases 6 and 10 |
+| Main Application Surface (the right side) | the session-controlled application surface of the persistent shell (§1); in V1 it renders only the Proposal Preparation experience: review, preview, creating, created or recovered, failed | shell: frontend presentation; content: the ratified backend results it renders |
 | Thread                                                    | the human's instructions and the application-rendered results of each turn, in order; not the model's messages                                                                                                                            | `ConversationContext` turns (backend §17A.17) plus per-turn results                   |
 | Assistant turn / pills                                    | the presentation of one turn's `DomainResult` (`clarification`, `proposition`, `failed`, `created`, `recovered`) and its parts: rationale, assumptions, warnings, unresolved items, questions, the draft result                           | backend §15.1, §17A.13                                                                |
 | Pill kinds `thought` / `ask` / `diff` / `link` / `action` | presentation vocabulary only (design 05 §1); each is a rendering chosen at the view boundary for a part of a result                                                                                                                       | frontend presentation; never a response schema                                        |
@@ -121,7 +123,7 @@ When this intention is complete, a person opening the deployed application at `/
 3. see the prepared proposition on the right: its fields, its line items, where each value came from, what is unresolved, and what the agent assumed or warns about;
 4. correct values inline, replace a selected content item, or send a revision instruction, and see the proposition update as a new version that keeps their edits;
 5. switch to an approximate client-facing preview and back;
-6. run several such sessions in parallel tabs, switch between them, reorder and close them, and see at a glance which one needs attention, without any session losing its in-memory work;
+6. run several such sessions in parallel tabs, switch between them, reorder and close them, and see at a glance which one needs attention, without any session losing its in-memory work, and find each session's workflow and its meaningful right-side working context as they left it when they return to it;
 7. approve the exact proposition and watch a Proposales draft be created; then see the draft's identity, the editor link, the amounts Proposales actually applied, and the plain statement that it is a draft and nothing was sent;
 8. when creation fails, return to the intact proposition with the reason shown, and retry when retrying is meaningful;
 9. do all of the above with a keyboard and a screen reader, with visible focus and honoured reduced-motion.
@@ -169,10 +171,10 @@ This section states behaviour at the intention level. Measurements, colours, rad
 
 ### 5.1 The workspace shell (design 02)
 
-- One screen, permanently split: agent surface left, proposal surface right. The agent surface is never a drawer, modal, or route.
+- One screen, permanently split: the structurally persistent Agent Surface left, the session-controlled Main Application Surface right (§1, owner decision 11). The Agent Surface is never a drawer, modal, or route. The Main Application Surface renders the active session's meaningful working context; in V1 that context is always a state of the Proposal Preparation experience (§5.6–§5.8), and the shell is not architected as if it could only ever be that.
 - The divider is user-controlled within a clamped range, resettable, keyboard-operable as a real separator, and its width is page-lifetime UI state only (design 02 §3, §5; not persisted — §7 and ratified boundary 3 settle design 02's open question 1).
 - Desktop-first: the designed environment is the wide desktop split (design 02 §3.3). At narrower widths the workspace must remain usable and must not visually corrupt: basic narrow-width resilience is required, a full mobile redesign is outside V1 (ratified boundary 15). The exact narrow-layout mechanism (reflow thresholds, whether and how the agent surface yields) belongs to design and planning; design 02 §3.3 records the designer's current suggestion, and this intention does not promote it to product truth.
-- The two surfaces are distinct landmarks (complementary region for the agent, `main` for the proposal).
+- The two surfaces are distinct landmarks (complementary region for the Agent Surface, `main` for the Main Application Surface).
 - The prototype's hover navigation rail, edge hot-zones, and pin toggle are not part of the product (design 02 "Prototype-only"; ratified boundary 5).
 
 ### 5.2 The agent surface (design 03)
@@ -189,7 +191,8 @@ This section states behaviour at the intention level. Measurements, colours, rad
 ### 5.3 Parallel sessions (design 04)
 
 - The user may have several sessions open during the page's lifetime: create, switch, reorder (pointer and keyboard), close, active session, unread badge on inactive tabs, status dot with a text equivalent in the accessible name (ratified boundary 2; design 04 §4–§5). The strip's tablist mechanics (roving focus, arrow-key movement, selection semantics) rest on the adopted primitive foundation where its tabs semantics match (§4.1); reorder, close, unread, and the derived status remain Proposal Copilot behaviour composed on top of it.
-- **Switching a session may reset disposable UI mechanics but never destroys that session's page-lifetime workflow**: thread, proposition, clarification state, in-flight turn, and created result all survive until the tab is closed or the page reloads (design 04 §1, ratified boundary 2).
+- **Activating a session activates that session's whole page-lifetime workspace context**: the Agent Surface's content and context (thread, clarification, composer) **and** the meaningful Main Application Surface context (owner decision 11). The Agent Surface itself stays structurally fixed; only the session it presents changes. Session tabs never control the conversation pane alone.
+- **Switching a session must restore both the session's workflow and its meaningful Main Application Surface working context.** Disposable UI mechanics may reset; the page-lifetime workflow (thread, proposition, clarification state, in-flight turn, created result) survives until the tab is closed or the page reloads (design 04 §1, ratified boundary 2), and so does the meaningful right-side context needed to resume the user's work (§8.6). Illustration only, not a prescription: session A is reviewing a proposition with a particular line item in hand, session B is looking at the client preview; A → B → A brings A back to what the user left, while hover, pressed state, or an incidental popover need not survive.
 - **An in-flight turn belongs to the session that started it.** Its result lands in that session whether or not it is active; the origin tab reflects the new state and, if inactive, gains attention. This is a real pending request, not simulated background progress (design 09 §3.2; ratified boundary 7).
 - **Closing a session that contains meaningful page-lifetime work requires explicit confirmation; an empty session closes immediately; no undo or archive mechanism exists** (owner decision 2, §15). The confirmation exists because nothing survives the close: V1 has no persistence, history, or reload recovery. Whether a session holds meaningful work is derived from its real session and workflow state at planning time, not from a presentation heuristic. Closing the last tab opens a fresh empty session; the strip is never empty. After a close, focus moves to the newly active tab.
 - Tab status is **derived** from the session's latest result and in-flight state (§8.3), never stored as an independent truth; unread is presentation state cleared on activation (ratified boundary 8).
@@ -216,7 +219,7 @@ This section states behaviour at the intention level. Measurements, colours, rad
 
 ### 5.6 Proposal review (design 07)
 
-- The right pane shows the current proposition's fields and line items, a readiness line that restates that nothing has been sent, and the approval action. The field set and item set are **the proposition's**, not the prototype's nine demo labels (design 07 "Prototype-only").
+- In V1 the Main Application Surface, in its review state, shows the current proposition's fields and line items, a readiness line that restates that nothing has been sent, and the approval action. The field set and item set are **the proposition's**, not the prototype's nine demo labels (design 07 "Prototype-only").
 - **Provenance and unresolved information are presented, never derived.** Amber marks "the agent is not sure or nothing is here": unresolved and deferred items, absent consequential values (rendered as "default, Proposales applies …" where the backend's absence semantics say so, backend §17A.5), assumptions, and warnings. Green marks "resolved by a human": leaves whose source is `human`. Because the ratified domain carries `human` as the only mark of a human-set value (backend §17A.9), the presentation **distinguishes a human edit from an agent revision**; the flag copy is a design delta to the specs (design 07 Q2, resolved by the domain).
 - **Inline edit is a human action.** Entering edit mode is keyboard-reachable; Enter commits, Escape cancels, focus returns to the trigger; a commit submits an explicit edit operation and renders the server's result, including a validation error at the field's path (contract 05 §6, §8; 06 §8). Save-in-flight and save-failed states exist. One field edits at a time. Edits are not applied locally as truth; the new proposition version is the server's answer.
 - **Line items are editable through validated operations** — quantity and optional flag as leaves, removal, and replacement of the selected content — rather than ask-only (design 07 Q8, resolved by the backend's edit operations). **Direct human replacement in V1 is limited to the block's retained alternatives** (owner decision 3, §15): the human selects an alternative the agent already found and retained. When the alternatives are insufficient, the human asks the agent to search or revise again, and the updated proposition returns new candidates. A dedicated free-text human content-search UI is not part of this initiative; the backend's human-search capability (phase 12), if established, is unaffected by that and simply has no V1 surface.
@@ -256,7 +259,7 @@ This section states behaviour at the intention level. Measurements, colours, rad
 
 ### Must ship (frontend-core V1)
 
-Production visual foundation (coherent reusable values, global focus and reduced-motion treatment; §5.9) · workspace shell with resizable, accessible divider and basic narrow-width resilience · agent header, status line, thread with autoscroll guard, empty state, working presentation, composer · page-lifetime parallel session tabs with switch, reorder, confirmation-guarded close of sessions holding meaningful work, unread, derived status · interaction pills for the result parts the application returns · structured clarification panel for the ratified question shape · proposal review with provenance and unresolved-information presentation, inline human edits as explicit operations, line-item presentation with replacement from retained alternatives · client preview with disclosure · approval action, creating, created/recovered with Applied Pricing, failed with taxonomy-driven recovery · accessibility for every interaction above · the presentation boundary of §9 with named temporary fixtures and adapters · the thin, validated browser-to-server boundary, owned by this integration stream and added as the real backend services land (§10.3) · the verification outcomes of §11 · a feature README at closeout.
+Production visual foundation (coherent reusable values, global focus and reduced-motion treatment; §5.9) · the persistent split workspace shell (structurally fixed Agent Surface, session-controlled Main Application Surface; §1, §5.1) with resizable, accessible divider and basic narrow-width resilience · session-controlled restoration of meaningful Main Application Surface context on switch (§5.3, §8.6) · agent header, status line, thread with autoscroll guard, empty state, working presentation, composer · page-lifetime parallel session tabs with switch, reorder, confirmation-guarded close of sessions holding meaningful work, unread, derived status · interaction pills for the result parts the application returns · structured clarification panel for the ratified question shape · proposal review with provenance and unresolved-information presentation, inline human edits as explicit operations, line-item presentation with replacement from retained alternatives · client preview with disclosure · approval action, creating, created/recovered with Applied Pricing, failed with taxonomy-driven recovery · accessibility for every interaction above · the presentation boundary of §9 with named temporary fixtures and adapters · the thin, validated browser-to-server boundary, owned by this integration stream and added as the real backend services land (§10.3) · the verification outcomes of §11 · a feature README at closeout.
 
 ### Only if cheap
 
@@ -264,11 +267,11 @@ Keyboard session-switch shortcut (`Cmd/Ctrl+1..9`) · strip-overflow indication 
 
 ### Explicitly deferred (not in frontend-core V1)
 
-Durable frontend or session persistence of any kind · an application database for frontend state · `localStorage`/`sessionStorage`/IndexedDB · cross-device sessions · session history, archive, reopen · analytics surface and dashboard statistics · Product Library page · Settings page · the hover navigation rail · a proposal list surface (the created state links out; there is no in-app list) · automatic sending · undocumented Proposales editor embedding · WebSockets, SSE, or polling to simulate inactive-session progress · streaming of agent progress or tokens (a later backend contract) · live reasoning step traces · a full mobile redesign · reproducing the prototype's fake agent, pricing, follow-up-question, or progress logic · the slash palette and any prototype slash-command set (owner decision 1; reconsidered only when the product has enough meaningful commands to justify a command surface) · a dedicated free-text human content-search UI (owner decision 3; agent re-search remains the V1 path to broader content discovery) · an undo or archive mechanism for closed sessions (owner decision 2) · application authentication (not a V1 prerequisite; an optional later scope expansion handled as a deliberate repository/product decision, never assumed by this intention; owner decision 4) · price overrides, discounts, tax editing (backend §18) · editing a created draft from Copilot (backend §18) · a typed-question clarification UI (a backend amendment first, §14.1) · turn-level change summaries computed by the client (§14.1) · per-user pane-width persistence (design 02 Q1; requires the persistence decision) · a pre-styled component library, shadcn-class copy-in generators, TanStack Query, React Hook Form, an animation library, a resizable-pane library, or any icon or primitive library other than the adopted foundation of §4.1 (each requires a demonstrated need and a recorded decision).
+Durable frontend or session persistence of any kind · an application database for frontend state · `localStorage`/`sessionStorage`/IndexedDB · cross-device sessions · session history, archive, reopen · analytics surface and dashboard statistics · Product Library page · Settings page · Customers or any other application surface in the Main Application Surface beyond Proposal Preparation, and any internal application routing added merely to demonstrate the shell's extensibility (owner decision 11: the shell is not proposal-specific, and that is not V1 scope) · the hover navigation rail · a proposal list surface (the created state links out; there is no in-app list) · automatic sending · undocumented Proposales editor embedding · WebSockets, SSE, or polling to simulate inactive-session progress · streaming of agent progress or tokens (a later backend contract) · live reasoning step traces · a full mobile redesign · reproducing the prototype's fake agent, pricing, follow-up-question, or progress logic · the slash palette and any prototype slash-command set (owner decision 1; reconsidered only when the product has enough meaningful commands to justify a command surface) · a dedicated free-text human content-search UI (owner decision 3; agent re-search remains the V1 path to broader content discovery) · an undo or archive mechanism for closed sessions (owner decision 2) · application authentication (not a V1 prerequisite; an optional later scope expansion handled as a deliberate repository/product decision, never assumed by this intention; owner decision 4) · price overrides, discounts, tax editing (backend §18) · editing a created draft from Copilot (backend §18) · a typed-question clarification UI (a backend amendment first, §14.1) · turn-level change summaries computed by the client (§14.1) · per-user pane-width persistence (design 02 Q1; requires the persistence decision) · a pre-styled component library, shadcn-class copy-in generators, TanStack Query, React Hook Form, an animation library, a resizable-pane library, or any icon or primitive library other than the adopted foundation of §4.1 (each requires a demonstrated need and a recorded decision).
 
 ## 7. Persistence and session model
 
-Inherited unchanged and confirmed: no application database (contracts README, backend §4); the session lives for the browser page lifetime; no client persistence; a reload destroys every open session and the workspace states so plainly (contract 05 §5.2). Nothing in this intention requires, stages, or shapes itself around persistence that does not exist: no rehydration path, no serialisable session snapshot, no store shape justified by future storage (contract 05 §5.2 last bullet). Expanding this is a repository-level decision recorded in the contracts README, not a frontend change.
+Inherited unchanged and confirmed: no application database (contracts README, backend §4); the session lives for the browser page lifetime; no client persistence; a completed reload or browser-level navigation destroys every open session and the workspace states so plainly (contract 05 §5.2). While any session is creating a Proposales draft, the page requests the browser's standard departure confirmation before that destruction (owner decision 12, §12A.6). That request creates neither persistence nor a recovery guarantee: the browser owns its wording and availability, and a departure the user confirms still destroys the workspace. Nothing in this intention requires, stages, or shapes itself around persistence that does not exist: no rehydration path, no serialisable session snapshot, no store shape justified by future storage (contract 05 §5.2 last bullet). Expanding this is a repository-level decision recorded in the contracts README, not a frontend change.
 
 ## 8. State and truth boundaries
 
@@ -276,7 +279,7 @@ Four kinds of state coexist in the browser during this initiative. They are sepa
 
 ### 8.1 Disposable UI mechanics
 
-Opened pill, open popover or dialog, current inline-edit target and its draft text, drag state, focus, pane width, composer draft text, clarification panel step and unsent typed values, view toggle, scroll position, hover. Owner: the component, hook, or surface that needs it. Interaction mechanics a headless primitive manages (open/closed, selected tab, roving focus) belong here too (§4.1): they are mechanics, never truth. May be lost on session switch (design 04 §1). Never sent to the server as fact.
+Opened pill, drag state, transient focus, pane width, clarification panel step and unsent typed values, scroll position, hover, tooltip visibility, animation and pointer/pressed state, and incidental popover mechanics. Owner: the component, hook, or surface that needs it. Interaction mechanics a headless primitive manages (open/closed, selected tab, roving focus) belong here too (§4.1): they are mechanics, never truth. They reset naturally on session switch (design 04 §1) and are never snapshotted, **except a non-empty composer draft: it remains associated with its session until sent, explicitly cleared, that session is closed, or the page reloads, so the close guard can protect it (decision 7).** Whether the active V1 work surface (fields or preview) or a meaningful selected review item counts instead as meaningful resumable context is decided by the planning pass under §8.6; neither is assumed disposable here. The typed text of an in-progress inline edit stays disposable per §12A.14. Never sent to the server as fact.
 
 ### 8.2 Shared page-lifetime workspace UI state
 
@@ -284,9 +287,9 @@ Active session id, the ordered list of open session tabs, tab order, per-session
 
 ### 8.3 Temporary page-lifetime session runtime (parallel-development seam)
 
-Only what is needed so that switching tabs does not destroy an in-memory session before the authoritative domain contracts exist. Per session: a page-lifetime session identity (client-generated, distinct from the server-generated generation id, which exists only after a first turn; one meaning per name, contract 13 §8) · the current thread presentation · the latest result presentation (proposition, clarification, created, failed) · the in-flight turn, if any, so its result can be attributed to this session · the derived status.
+Only what is needed so that switching tabs does not destroy an in-memory session before the authoritative domain contracts exist. Per session: a page-lifetime session identity (client-generated, distinct from the server-generated generation id, which exists only after a first turn; one meaning per name, contract 13 §8) · the current thread presentation · the latest result presentation (proposition, clarification, created, failed) · the in-flight turn, if any, so its result can be attributed to this session · the derived status · the **meaningful Main Application Surface working context** needed to resume that in-memory session, presentation-only (§8.6, owner decision 11).
 
-Rules: it is intentionally small; it holds **view models** (§9), never a copy of a domain object it re-shapes; it is replaced, not extended, when the real caller-held objects arrive (§10.4); it is not a snapshot engine and does not serialise UI mechanics (design 04 "Prototype-only"). When the real domain state exists, "session runtime" becomes: the caller-held `ProposalWorkflowState` and `ConversationContext` as the server returned them (typed copies, one owner), plus the in-flight status and the presentation derived from them.
+Rules: it is intentionally small; it holds **view models** (§9), never a copy of a domain object it re-shapes; it is replaced, not extended, when the real caller-held objects arrive (§10.4); it is not a snapshot engine, retains only explicitly meaningful workspace context, and does not serialise UI mechanics or arbitrary component state (design 04 "Prototype-only"; §8.6). It remains page-lifetime only, non-authoritative, non-persistent, and adapter-era where applicable: no `localStorage`, `sessionStorage`, IndexedDB, database, server session, URL-addressable session, or reload restoration (§7). When the real domain state exists, "session runtime" becomes: the caller-held `ProposalWorkflowState` and `ConversationContext` as the server returned them (typed copies, one owner), plus the in-flight status and the presentation derived from them.
 
 ### 8.4 Authoritative domain state (arrives from `main`)
 
@@ -295,6 +298,25 @@ Rules: it is intentionally small; it holds **view models** (§9), never a copy o
 ### 8.5 One owner per value
 
 A value exists as a server response held once, or as a view model derived from it, never as both plus a component copy. Derived presentation (formatted money, "N open", tab status) is computed from its source, never stored beside it without a written synchronisation rule (contract 05 §5, 12 "Components and client").
+
+The Main Application Surface may render authoritative workflow values, but never duplicates or reconstructs them as presentation truth. Allowed: a session remembers that the user was viewing the client preview, or which review item they had selected. Not allowed: a session stores a second, independently maintained copy of the proposal's approval state because the preview needs it, or computes or stores price, provenance, or readiness from UI state.
+
+### 8.6 Meaningful workspace context, disposable mechanics, authoritative truth
+
+Session continuity on the Main Application Surface (§5.3) is bounded by three categories, and the distinction is the semantic boundary the planning pass implements (owner decision 11):
+
+| Category | Survives a session switch? | Examples (illustrative, never an exhaustive schema) | Owner |
+|---|---|---|---|
+| **A. Meaningful page-lifetime workspace context** | yes, when required to resume the user's work | the active V1 work surface (review or preview); a meaningful selection or context; a meaningful open workflow location | the session's presentation runtime (§8.3); presentation-only |
+| **B. Disposable UI mechanics** | no; they reset naturally | hover; tooltip visibility; transient focus; animation state; pointer or pressed state; incidental popover mechanics, unless the interaction itself is meaningful resumable work | the component or surface (§8.1) |
+| **C. Authoritative domain and workflow truth** | it is never client-owned at all; it is rendered, held as returned, and sent back unchanged | proposition values; provenance; unresolved and deferred items; approval state; execution state; created proposal identity; commercial values | the backend and domain contracts (§8.4) |
+
+Rules that follow:
+
+- **Each session retains only the meaningful page-lifetime workspace context required to resume the user's work. Disposable interaction mechanics reset naturally and are not snapshotted.**
+- **Session continuity must not be implemented by snapshotting arbitrary DOM or component state or every transient control. Only explicitly meaningful workspace context may be retained** (design 04 "Prototype-only" snapshot architecture; §12A.1's forbidden list).
+- A value in category C never becomes category A because it is displayed on the Main Application Surface; the surface renders it from its one server-returned copy (§8.5).
+- Which concrete interactions count as category A, and how that context is represented (component state, a reducer, a feature store, or a combination under contract 05 §5.1), are planning decisions (§14.3). This intention fixes the semantic invariant and the ownership only; it defines no object, slice, key, or field.
 
 ## 9. Parallel backend integration model
 
@@ -370,7 +392,7 @@ For each surface: the fixture is removed or kept only as an explicitly named ver
 What must be provable by automated verification when this intention ships. Which layer proves each item, with which doubles and which tools, is decided by the planning pass under contract 11; this section names outcomes only.
 
 - Every surface renders each of its states intentionally: idle, working, clarification, proposition, created, recovered, and each failure by taxonomy code; an error DTO's message is shown rather than replaced.
-- Session switching preserves each session's page-lifetime work; an in-flight turn's result lands in its originating session while another is active; closing or discarding a session with meaningful work asks for confirmation and an empty session closes immediately (§5.3); unread clears on activation.
+- Session switching preserves each session's page-lifetime work and restores its meaningful Main Application Surface context: establish context in A, switch to B and establish different context there, return to A, and A's meaningful workspace context is what the user left, while disposable mechanics may have reset and no authoritative domain value was reconstructed from presentation or session context (§5.3, §8.6); an in-flight turn's result lands in its originating session while another is active; closing or discarding a session with meaningful work asks for confirmation and an empty session closes immediately (§5.3); unread clears on activation.
 - Replacing a line item offers the block's retained alternatives and nothing else; a re-search request reaches the agent as a revision instruction.
 - Every interactive element of §5 is keyboard-operable, and focus lands where §5 says after each transition. Composites built on the adopted primitive foundation are verified to the same standard for labels, accessible names, focus transitions, keyboard flows, announcements, contrast, and reduced motion; a primitive's presence is never taken as proof (§4.1).
 - No presentation dependency of §4.1 appears in a backend or domain contract, a server service interface, a view DTO definition, or an integration schema.
@@ -390,13 +412,750 @@ Observable outcomes that, measured true, mean this intention shipped. Every down
 
 | ID     | Objective (observable)                                                                                                                                                                                                                                                                                                                                                                                              | Defect family guarded                                                         |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| **F1** | Several sessions can be created, switched, reordered, and closed within one page lifetime; no non-active session loses its thread, proposition, clarification state, or created result on a switch; a turn started in session A lands in A while B is active and A shows attention; a session holding meaningful work cannot be closed or discarded without explicit confirmation, and an empty one closes at once. | session cross-talk; lost in-memory work; silent destruction                   |
+| **F1** | Several sessions can be created, switched, reordered, and closed within one page lifetime; no non-active session loses its thread, proposition, clarification state, or created result on a switch; a turn started in session A lands in A while B is active and A shows attention; a session holding meaningful work cannot be closed or discarded without explicit confirmation, and an empty one closes at once; after establishing meaningful Main Application Surface context in A, switching to B and establishing different context there, and returning to A, A's meaningful workspace context is restored, disposable mechanics are allowed to have reset, and no authoritative domain value is reconstructed from presentation or session context. | session cross-talk; lost in-memory work; silent destruction; lost right-side working context; presentation state promoted to truth |
 | **F2** | Every domain result kind the backend can return (`clarification`, `proposition`, `failed`, `created`, `recovered`) and every `ErrorDto` code has an intentional rendering in the thread and on the proposal surface; no DTO message is replaced by a generic one; retry is offered only when `retryable`.                                                                                                           | unrendered or swallowed states                                                |
 | **F3** | A clarification is answerable and skippable per question in single and batch mode; the submitted payload equals the user's explicit answers and skips bound by question id, with no client-side normalisation or coercion; an unanswered question is neither answered nor skipped.                                                                                                                                  | omission recorded as a decision; coerced values                               |
 | **F4** | The review and preview surfaces render only values carried by the proposition or its view model: no money arithmetic, no parsing of formatted strings, no client-derived provenance, completeness, or approvability; a human edit is submitted as an explicit operation and a `human`-sourced leaf is presented as human-set, distinct from agent-revised.                                                          | frontend-fabricated commercial or workflow truth                              |
 | **F5** | "Create in Proposales" submits the exact proposition being reviewed with the acknowledgment as data, blocks re-submission while pending, and the outcome shows the editor link, "draft, not sent", newly-created versus recovered, and Applied Pricing exactly as returned or marked unavailable; a failed creation returns the intact proposition to review with the DTO message.                                  | double submit; implied send; lost work on failure; reinterpreted money        |
 | **F6** | Every workspace interaction is keyboard-operable with visible focus and correct semantics (tablist, separator, log, dialog, description list, table, radio group where options exist); no state is colour-only; reduced motion is honoured; composites built on the adopted primitive foundation meet the same bar and are never assumed accessible; demonstrable by automated interaction checks, not only by visual review.                                                                                                | accessibility deferred                                                        |
 | **F7** | No client-graph module imports server authority; every domain-shaped value crosses one explicit adapter into a view model; fixtures and adapters are named and temporary; replacing a temporary adapter with the production adapter changes no presentation component and invalidates no existing verification of that surface.                                                                                     | prototype contamination; fixture promoted to contract; backend bent to the UI |
+
+Mechanism-contract invariants added by the mechanism inventory (§12A, rounds 1 and 2). F1–F7 are unchanged in text and identity; these deepen them and are the trace targets a phase criterion may cite instead of an objective. F1's restoration clause is served by **F28**, **F29** and **F30**, which is what makes "A's meaningful workspace context is restored" a measurable claim rather than an adjective; F1 itself needed no amendment.
+
+| ID | Invariant (observable, on the production path) | Defect family guarded | Contract |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- | --------- |
+| **F8** | For a session whose first turn has returned, the generation id the client submits is character-identical to the one the server returned, and no client-generated identifier appears in any submitted payload. | client identity smuggled into workflow identity | §12A.1 |
+| **F9** | A turn's result is applied to the session that dispatched it, matched by captured origin session id and turn id; a superseded or orphaned result is discarded and never applied to the active session. | results applied by active-tab coincidence; cross-session contamination | §12A.2 |
+| **F10** | Tab status is the first matching row of a six-row total precedence over in-flight, draft reference, latest result kind, current proposition, and turn history, with all seven overlaps resolved and the status text in the accessible name. | ambiguous or stored status; colour-only state | §12A.3 |
+| **F11** | Unread increments exactly once per result applied to a non-active session, never while active, and clears to zero on activation; attention is `unread > 0` on a non-active tab and is stored nowhere. | miscounted or never-clearing attention; a third stored axis | §12A.4 |
+| **F12** | Every reorder and close case resolves to its stated list, active session, and focus destination, with pointer and keyboard equivalent and the strip never empty. | lost sessions; focus dropped to the body; drag-only reorder | §12A.5 |
+| **F13** | A session satisfying any of six named real session/workflow inputs cannot be closed or discarded without explicit confirmation; a session satisfying none closes at once; an unavailable input evaluates to "confirm". A close during draft creation is refused until its turn resolves. | silent destruction of in-memory work; orphaned draft | §12A.6 |
+| **F14** | Every derived presentation value is one of the register's rows, computed at render from its single named source and stored nowhere; unread is the only stored presentation counter. | drifting duplicates; a second source of truth | §12A.7 |
+| **F15** | Replacing a surface's temporary adapter with its production adapter leaves every presentation component byte-identical and every existing presentation test passing unedited; a post-merge fixture is the parse result of its owning schema. | fixture promoted to contract; boundary drawn in the wrong place | §12A.8 |
+| **F16** | Each of the five domain result states renders its stated thread turn and proposal-surface outcome, and each pill kind renders from its stated result part; `diff` is unreachable in V1. | unrendered or swallowed states; invented pill payloads | §12A.9 |
+| **F17** | A leaf's provenance class is a total function of that leaf alone, every colour-carried class carries text, `{known:false}` never renders as a value, unresolved and deferred are never collapsed, and no policy field is read. | client-fabricated provenance, completeness, or approvability | §12A.10 |
+| **F18** | The review surface renders only proposition-backed rows; the client preview renders only its closed field set; no amount appears on either before creation except a commercial note's stated amount. | work-surface data leaking into a client-facing rendering; invented prices | §12A.11 |
+| **F19** | Every displayed amount is a rendering of one server-supplied `Money`, scaled by the currency's own minor-unit exponent, with no operation from the closed forbidden list on any money path. | hundred-fold rendering errors; money arithmetic in the browser | §12A.12 |
+| **F20** | The clarification payload equals the user's explicit answers and skips bound by question id; an unanswered question produces no entry; no value is altered between input and payload. | omission recorded as a deliberate deferral; coerced values | §12A.13 |
+| **F21** | An inline edit is one operation from the closed set with an array path, applied only when the server answers, with validation errors matched element-wise at their path; alternatives are offered exactly as returned. | locally applied edits; mis-anchored validation; re-ranked candidates | §12A.14 |
+| **F22** | The approval envelope carries the proposition the review surface rendered; two activations produce one dispatch; failure returns the intact proposition; terminality is read from the server's draft reference. | double creation; reconstructed payloads; lost work on failure | §12A.15 |
+| **F23** | Each of the ten `ErrorDto` rows and four `failed` rows renders its stated treatment; a known code's message is never replaced; retry appears exactly when `details.retryable === true`. | swallowed failures; retry offered on a non-retryable path | §12A.16 |
+| **F24** | Every focus transition lands where the table says, and a result applied to a non-active session moves no focus and fires no announcement in the active one. | focus dropped to the body; background sessions disturbing the reader | §12A.17 |
+| **F25** | The thread's follow state obeys its total transition table; appending content while detached moves nothing; expanding a pill never scrolls. | readers yanked away from what they are reading | §12A.18 |
+| **F26** | At every width in the named test set the five layout conditions hold simultaneously, verified by rendering. | narrow-width corruption discovered after ship | §12A.19 |
+| **F27** | No rendered value passes through a markup or rich-content path, and the editor link's href is character-identical to the server-returned URL with the new-context relationship attributes. | markup injection; a constructed or rewritten external URL | §12A.20 |
+| **F28** | Every retained Main Application Surface entry is a member of the project's fixed enumeration, holds only a closed-presentation-enumeration member or a domain identity and never a category-C value, is written only by its own deliberate user act, is read only at render, and yields its stated default when its identity does not resolve; no derivation-register row reads one and no result application writes one. | the prohibited snapshot engine; a category-C value promoted into presentation state; a second source of truth for a derived value | §12A.21 |
+| **F29** | Every row of the presented-state precedence and each of its overlaps presents its stated Main Application Surface state, every retained entry resolves to its target or to its stated default without being cleared, no category-C value is reconstructed, and no notice or announcement is produced about the restoration. | a session returning to the wrong state; stale context rendered as truth; restoration reported as a condition | §12A.22 |
+| **F30** | Across any sequence of session activations, creations, closes and reorders the shell renders exactly one complementary region and exactly one `main`, both the same elements throughout; no URL, route, or history entry changes; and no module declares a second Main Application Surface or a surface-kind discriminant. | the shell rebuilt per session; speculative surface infrastructure; V1 scope widened through the shell abstraction | §12A.23 |
+
+## 12A. Frontend mechanism contracts (mechanism-inventory rounds 1–2)
+
+### 12A.0 What this section is, and how it binds
+
+This section is the frontend mechanism inventory's delta and now spans **two inventory rounds**: §12A.1–§12A.20 were written by round 1 against the intention as it stood on 2026-09-06; §12A.21–§12A.23 were written by round 2 against the §16 round-5 ratifications (decisions 7–10) and the round-6 shell amendment (decision 11), and round 2 amended §12A.1, §12A.6, §12A.7, §12A.8 and §12A.17 in place where that delta falsified a clause. It deepens the sections it cites; it moves nothing on the ratification surface (§15.1), adds no scope, and edits no design specification. Decisions 7–10 ratify the four round-1 inventory conclusions that required owner judgment; decision 11 is the owner's shell amendment; no rule here reinterprets decisions 1–6. Where §12A and an earlier section appear to disagree, the earlier section's *behaviour* wins and the disagreement is a defect in this section.
+
+Four reading rules:
+
+1. **Backend-owned mechanisms are cited, never restated.** Every shape this section consumes — `Sourced`, `SourcedOrAbsent`, `Money`, `Path`, the workflow state, the clarification answer, the edit operation, the approval envelope, `DraftResult`, Applied Pricing, `ErrorDto` and its `details` registries, the five domain result states — is defined by the ratified backend intention §17A and the backend master plan §6.3–§6.4. This section defines only the **presentation-side** mechanism that consumes them. Where a rule here appears to widen, narrow, or correct a backend rule, the backend rule wins and the rule here is a defect.
+2. **No files, components, hooks, stores, adapter APIs, or transport signatures.** Every rule is stated as an outcome over inputs, states, and forbidden behaviour. The frontend planning pass (§14.3) chooses the mechanism that satisfies it.
+3. **Every rule is written so a test can make it fail.** Where a rule is a construction requirement rather than a check, it names the mutation that must turn its test red, because a guard that cannot fail is decoration (charter rule 15).
+4. **No adjectives.** Where an earlier section says "derived", "meaningful", "exact", "resilient", "in place", or "attributed", this section replaces the adjective with a decidable rule. If a mechanism below still reads as an adjective, it is unfinished.
+
+Threshold, timing, and count constants named below are contract-level: a criterion asserts the contract (the half-open interval, the adjacent-pair rows, the ordering), never the literal value (charter rule 13). Visual values remain the design specifications'.
+
+### 12A.1 Session identity and the session runtime record
+
+Deepens §2.4, §8.2, §8.3. Ledger: **F8**.
+
+**Two identifiers, one meaning per name** (contract 13 §8):
+
+| Name | Created by | Lifetime | May be |
+|---|---|---|---|
+| **page-lifetime session id** | the client, once per session, at session creation | until the tab is closed or the page reloads | a key of the session runtime record, a value of the active-session id, the target of a result application (§12A.2), part of a DOM id |
+| **Generation ID** | the server, on the turn that receives no inbound workflow state (backend §17A.2) | inside the server-returned workflow state | held as returned and sent back unchanged |
+
+**Total separation.** The page-lifetime session id is **never** submitted to the server in any position, never compared to a Generation ID, never derived from one, and never displayed as the session's identity. The Generation ID is never generated, reformatted, parsed, or defaulted by the client; it exists in exactly one place — inside the workflow state the server returned — and the client's only operation on it is to return that state unchanged.
+
+**The session runtime record** is keyed by the page-lifetime session id and holds, per session: the thread presentation; the latest domain result presentation; the in-flight turn with its turn id, if any (§12A.2); the unread counter (§12A.4); the retained Main Application Surface context needed to resume the session — presentation-only, limited to category A of §8.6, and qualified, bounded and resolved by §12A.21 (owner decision 11); and, once a turn has run, the server-returned `ProposalWorkflowState` and `ConversationContext` **as returned** (§8.4). Records are separate per session; there is no shared record and no serialisation of one session's record into another's. Activating a session presents that record on both surfaces of the shell (§5.3).
+
+**Forbidden.** A module-level mutable counter as the id source; an id derived from the tab's array index; any key derived from a thread position; one state object holding several sessions' work; a snapshot of a session's record taken on switch and rehydrated on return (design 04 "Prototype-only"); a snapshot of arbitrary DOM or component state or of every transient control as the means of continuity (§8.6); any category-C value stored in the record other than as the server returned it.
+
+**Invariant (F8).** For a session whose first turn has returned, the value the client submits in the workflow state's generation-id position is character-identical to the value the server returned there, and no client-generated identifier appears anywhere in a submitted payload. *Named mutation: submit the page-lifetime session id in the generation-id position; the identity test must redden.* The test asserts equality with the server-returned value, not merely that the submitted value is a well-formed UUID — a client id that happens to be a UUID would pass a format check.
+
+### 12A.2 Turn origin attribution and in-flight ownership
+
+Deepens §5.3, §8.3, C-6; consumes backend §17A.3 (a turn is one request that returns the whole state). Ledger: **F9**. Serves **F1**.
+
+A turn is any submission that returns a `TurnResult`: brief submission, clarification answers, an edit operation, a revision instruction, and the approval/execution turn.
+
+**Attribution is captured at dispatch, by value.**
+
+1. At the moment of dispatch, before any await, the submission captures two values: the **origin session id** and a fresh **turn id** unique within the page.
+2. The origin session's record is marked as having that turn in flight, storing the turn id.
+3. When the submission resolves — success or failure — the result is applied to the session found **by the captured origin session id**, and only if that session's in-flight turn id equals the captured turn id.
+4. The active session id is **never read on the resolution path**. Reading it there, or applying a result to "the current session", is the defect this contract exists to prevent.
+
+**Total over the four reachable resolution cases:**
+
+| At resolution | Outcome |
+|---|---|
+| the origin session exists and its in-flight turn id matches | the result is applied to that session; its status re-derives (§12A.3); if the session is not active, its unread increments by exactly 1 (§12A.4) |
+| the origin session exists but its in-flight turn id differs (a superseded turn) | the result is discarded; no session's state changes; no unread increments |
+| the origin session no longer exists (it was closed) | the result is discarded; it is **never** applied to the active session, to a neighbouring session, or to a newly created session; no unread increments anywhere |
+| the origin session exists and has no in-flight turn | the result is discarded (the same superseded case, with an empty slot) |
+
+**Exactly one result per turn.** A session accepts at most one application per turn id; a second application for the same turn id is discarded.
+
+**In-flight presentation is per session** (§5.3, design 03 §3.5): the thread's working indicator renders only for the active session's own in-flight turn; a non-active session with a turn in flight shows the tab signal (§12A.3 row 1) and nothing else. Nothing polls, and nothing simulates progress for a session with no in-flight turn (C-6, ratified boundary 7).
+
+**Invariant (F9).** Dispatch a turn in session A, activate session B, then resolve the turn: A's runtime record carries the result and `unread = 1`, B's record is unchanged in every field, and the active session id is still B. *Named mutation: at resolution, look the session up by the active session id instead of the captured origin id; this test must redden.* A second named mutation covers the closed-origin row: *apply a result whose origin session is absent to the active session; the discard test must redden.*
+
+### 12A.3 Derived tab status: the total precedence order
+
+Deepens §5.3, §5.8, §8.3, §8.5; design 03 §3.2, design 04 §3.3. Ledger: **F10**. Serves **F1**, **F6**.
+
+Status is a **pure function of the session runtime record**, computed at render, stored nowhere (§12A.7).
+
+Inputs, and nothing else: whether a turn for this session is in flight; whether the session's workflow state carries a draft reference; the kind of the session's latest domain result; whether the session's workflow state carries a current proposition; whether any turn has ever been started for this session.
+
+**The order is total and first-match-wins. Every session matches exactly one row.**
+
+| # | Condition | Status | Status text (design 04 §3.3) |
+|---|---|---|---|
+| 1 | a turn for this session is in flight | `working` | "Working" |
+| 2 | the workflow state carries a draft reference | `created` | "Created" |
+| 3 | the latest domain result kind is `clarification` | `questions` | "Needs you" |
+| 4 | the workflow state carries a current proposition | `ready` | "Ready" |
+| 5 | at least one turn has completed for this session | `idle` | "Open" |
+| 6 | no turn has ever been started for this session | `empty` | "Empty" |
+
+Rows 5 and 6 partition everything rows 1–4 do not match, so the function is total.
+
+**The overlaps, enumerated, because each is a row a planner must write** (charter rule 2):
+
+| Overlap | Resolution |
+|---|---|
+| in flight **and** a draft reference exists (a refused re-approval) | `working` (row 1) |
+| in flight **and** the latest result is `clarification` (answers submitted) | `working` (row 1) |
+| a draft reference exists **and** a current proposition exists (always true after creation) | `created` (row 2) |
+| a draft reference exists **and** the latest result kind is `clarification` | `created` (row 2) |
+| the latest result kind is `clarification` **and** a current proposition exists (a clarification after a proposition) | `questions` (row 3) |
+| the latest result kind is `failed` **and** a current proposition exists (a failed creation, §5.8) | `ready` (row 4) — this is the ratified "the session status returns to ready" |
+| the latest result kind is `failed` **and** no proposition exists (a failed first run) | `idle` (row 5) |
+
+**`failed` is not a status.** The five domain result states are the backend's (master plan §6.3); the six statuses are the design's presentation vocabulary. A `failed` result changes the status only through rows 4–5, which is why row ordering, not a seventh status, resolves it.
+
+**One projection, two presentations.** The tab dot and the agent surface's status line and phase label are two renderings of this same function applied to the same record (design 03 §3.2, §5.2). They cannot disagree, because neither stores a value; this settles design 03's open question 6 structurally rather than by a synchronisation rule.
+
+**Accessible representation.** The tab's accessible name carries, as text: the session title, the status text of the row above, the status note, and the unread count in words when non-zero (design 04 §5). Status is never carried by dot colour alone, and `ready` and `created` are distinguished in the accessible name whether or not the specs later give them distinct dots (§5.3; design 04 open question 1 stays a design delta). The animated dot is hidden from assistive technology and does not animate under reduced motion.
+
+**Forbidden.** A stored `{status, note, unread}` record written by result handlers (design 04 "Prototype-only" `tabState`); a status set by whichever handler fired; a status derived from thread content, from a string test, or from elapsed time.
+
+**Invariant (F10).** For each of the six rows and each of the seven overlaps above, a session runtime record in that condition renders exactly the stated status and its status text appears in the tab's accessible name. *Named mutation: swap rows 2 and 3 in the precedence chain; the "created beats questions" row must redden.*
+
+### 12A.4 Unread and attention
+
+Deepens §5.3, §8.2, §2.4; design 04 §3.4. Ledger: **F11**. Serves **F1**.
+
+**Unread is one integer per session, and the only stored presentation counter in the workspace.**
+
+| Event | Effect on that session's unread |
+|---|---|
+| a turn result is applied to the session (§12A.2) while the session is **not** active | `+1`, exactly once per applied result, regardless of how many parts that result renders |
+| a turn result is applied while the session **is** active | no change |
+| the session becomes active | set to exactly `0` |
+| a turn is dispatched (started) | no change |
+| a result is discarded (§12A.2 rows 2–4) | no change |
+| the tab is reordered, renamed, or scrolled into view | no change |
+| any other event | no change |
+
+The table is total over the events the workspace produces; there is no decrement path other than clearing on activation.
+
+**Attention is `unread > 0` on a non-active tab, and nothing else.** It is not a third stored value and not a second status axis: the dot carries session state (§12A.3) and the badge carries unseen output (design 04 §3.4), and both are legible simultaneously at the strip's minimum tab width. There is no combined "needs attention" value anywhere in the workspace; a component that wants one computes the conjunction at render.
+
+**Accessible representation.** The badge is exposed as text ("3 unread"), never as a bare number, and forms part of the tab's accessible name (§12A.3). Background status changes are announced under §12A.17's debounce rule.
+
+**Invariant (F11).** A session that is not active accumulates exactly one unread per applied result and returns to zero on the first activation; an active session never accumulates one. *Named mutation: increment unread at dispatch instead of at application; the "no unread while working" row must redden.*
+
+### 12A.5 Tab order, reorder, close, and focus
+
+Deepens §5.3; design 04 §4.2–§4.5. Ledger: **F12**. Serves **F1**, **F6**.
+
+**Order.** The strip is an ordered list of page-lifetime session ids. A new session is appended at the end and becomes active. Order is presentation state (§8.2); it is never submitted to the server and never influences which session receives a result (§12A.2).
+
+**Reorder is a single move, total over its cases.**
+
+| Case | Result |
+|---|---|
+| move from index `i` to index `j`, `i ≠ j` | the moved id occupies `j`; every other id keeps its relative order; the **active session id is unchanged**, including when the moved tab is the active one |
+| `i = j` | no-op: no state write, no announcement, no focus change |
+| a move that would land before index 0 or past the last index | no-op, by the same rule |
+| a session is closed or created during a drag | the drag's remaining moves apply to the list as it then is; no move targets a removed id |
+
+**Pointer and keyboard are equivalent.** For the same `(i, j)` the two input paths produce the same list. The keyboard move-by-one is exactly the pointer drop at `i ± 1`, keeps focus on the moved tab, and announces the new position (design 04 §4.5). Reorder must be reachable without a pointer; drag-only reordering is a defect.
+
+**Live reorder during a drag** follows the specification's current behaviour: each drag-over commits its move immediately, and a drag that ends without a drop leaves the order at its last committed move (design 04 §4.2). Whether an abandoned drag should restore the order recorded at drag start is a design delta, reported and not resolved here (design 10 §4).
+
+**Close, total over the four cases**, each after the §12A.6 guard has passed:
+
+| Case | Newly active session | Focus destination |
+|---|---|---|
+| close a non-active tab | unchanged | unchanged, unless focus was inside the removed tab; then the tab now at the removed index, clamped to the last index |
+| close the active tab, not the last index | the session now at the same index | that tab |
+| close the active tab at the last index | the session now at the last index | that tab |
+| close the only remaining tab | a fresh empty session | that tab |
+
+The last row's ordering is part of the contract: **the replacement session is created before the closed session is removed**, so no rendered frame shows an empty strip (design 04 §4.3, "the strip is never empty").
+
+**A closed session's id is never reused**, and results whose origin is a closed session are discarded (§12A.2).
+
+**Active tab kept in view.** After any change that can move it — switch, reorder, close, create, strip resize — the active tab is fully inside the strip's visible region with a margin. *Forbidden*: `scrollIntoView`; locating the tab by document query or selector (design 04 "Prototype-only"); reading the window width during render.
+
+**Invariant (F12).** Every row of the reorder table and every row of the close table holds, with focus landing on the stated element and never on the document body. *Named mutation: on closing the active tab, activate index 0 instead of the same index; the neighbour-selection row must redden.*
+
+### 12A.6 Meaningful work and the close/discard confirmation guard
+
+Deepens §5.3, §5.6, §8.1, owner decisions 2, 7 and 8 (§15). Ledger: **F13**. Serves **F1**.
+
+Owner decision 2 places the derivation of "meaningful work" with the planning/integration pass, over **real session and workflow state**, and forbids a presentation heuristic. This section fixes the shape of that predicate, its admissible inputs, and its failure direction; it does not resolve it differently.
+
+**Admissible inputs — the closed set.** The predicate reads only the session runtime record's workflow-bearing parts (§8.3, §8.4) and the target session's own composer draft (§8.1):
+
+1. a turn has ever been started for this session, including one currently in flight;
+2. the session's thread holds at least one turn;
+3. the workflow state carries a current proposition;
+4. the workflow state carries a clarification round;
+5. the workflow state carries a draft reference.
+6. the target session's composer draft has at least one character (`length > 0`), including whitespace; it is retained per session by §8.1 and is never normalised to decide this predicate.
+
+`meaningfulWork = (1) ∨ (2) ∨ (3) ∨ (4) ∨ (5) ∨ (6)`. A session for which it evaluates false closes immediately with no confirmation.
+
+**This predicate is not the `empty` tab status, and since decision 7 the two differ.** §12A.3 row 6 assigns status `empty` when no turn has ever been started — the negation of input (1) alone — while §5.3's "an empty session closes immediately" names this predicate. A session holding a pasted, unsent brief therefore renders status `empty` **and** is meaningful work: exactly the case decision 7 was ratified to protect. **The close guard never reads the tab status, and the tab status never reads this predicate.** *Named mutation: gate the confirmation on the session's status being other than `empty`; the non-empty-composer row must redden.*
+
+**Excluded from this predicate** (they are never by themselves work worth a confirmation, whether they reset as disposable mechanics under §8.1 or are retained as meaningful resumable context under §8.6): unsent clarification answers and the panel's step position, pill expansion, the view toggle, a selected review item, scroll position, pane width, hover, and open popovers. Composer draft text is the deliberate exception: it remains UI mechanics and never becomes server truth, but a non-empty per-session draft is meaningful work because closing destroys it with no recovery (decision 7).
+
+**Input (6)'s lifetime, stated so the predicate is total over the composer's own states** (§8.1, decision 7). The draft belongs to its session and is cleared by exactly four events: it is sent, the user explicitly clears it, the session closes, or the page reloads. Nothing else clears it. In particular the clarification panel replacing the composer (§5.2, §5.5) neither clears nor submits it: while the panel is open the composer is not rendered, the draft stays with its session, input (6) evaluates over the retained characters exactly as it would with the composer visible, and dismissing the panel returns the composer with the draft as it was. The predicate reads the **target** session's own draft; a draft typed in session A is never read when evaluating session B. The draft is never trimmed, normalised, or tested against a pattern to decide this predicate — it is `length > 0` over the retained characters, whitespace included. It is Agent Surface UI mechanics governed by §8.1 and is **not** a §8.6 category-A entry (§12A.21).
+
+**Failure direction is asymmetric and fixed.** If any input is unavailable at the current integration stage — before the owning backend phase has merged, a session may not yet carry a workflow state — the predicate evaluates to **true** and the confirmation is shown. A false "no meaningful work" destroys a session's work with no undo, no archive, and no reload recovery (§7); a false "meaningful" costs one keystroke.
+
+**Evaluation site.** The predicate is evaluated at the moment the close or discard intent is raised, from the session runtime record, never from a rendered view model and never from a value cached at render.
+
+**The guard is one explicit confirmation step** naming what will be lost, with no undo, no archive, and no timed toast (owner decision 2). Discard on the review surface follows the same predicate and the same guard (§5.6). Confirmation is required for the session being closed, not for the active session, when the two differ.
+
+**A turn in flight is meaningful work by input (1)**, so a close during an in-flight turn ordinarily confirms. **The approval/execution turn is the sole exception: a close intent while it is in flight is refused until that turn resolves; it shows neither confirmation nor a destructive action and removes no session state (decision 8).** The review surface's discard control is structurally absent during creation (§5.8); if another path raises discard while that turn is in flight, it is refused by the same rule. Once the turn resolves, the normal close/discard predicate applies to the returned state.
+
+**The refusal is total over every path that can remove a session or abandon its workflow, and it is evaluated on the target session before any list mutation.** The paths are: the active tab's close control; a keyboard close on a focused tab (design 04 §4.5); the review surface's discard; closing a non-active session by any path §12A.5's close table admits; and closing the **last** session — §12A.5's replacement session is created only after this guard has passed, so a refused close creates no replacement, removes nothing, and leaves the strip exactly as it was. A path that can end a session without running this guard is a defect, not a new case. Because it is a refusal and not a confirmation, it must be **visible**: the control states that the session cannot be closed while its draft is being created, announced politely (§12A.17), and never renders as a silent no-op (contract 05 §7's predictability rule).
+
+**Browser-level departure is a separate, total warning rule** (owner decision 12). On an attempted reload, browser-tab/window close, or navigation away, the page requests the browser's standard departure confirmation **if and only if at least one open session is in the approval/execution creating state**. The rule reads every open session's creation state, not the active session and not the close-guard predicate. It does not request a departure warning for a composer draft, any other meaningful work, a non-approval in-flight turn, or a terminal session. The browser, rather than the page, owns the confirmation's wording and whether its platform permits it; therefore the rule requests the protection but never promises that an accepted departure can be cancelled or recovered. The in-flight server request is neither cancelled nor reconstructed; if the user confirms departure, §7's page-lifetime destruction rule applies. This is not an internal session close/discard path and does not replace the refusal above.
+
+**Invariant (F13).** A session satisfying any one of the six inputs cannot be closed or discarded without an explicit confirmation, a session satisfying none closes on the first activation of the control, and a close during the approval/execution turn is refused until that turn resolves. An attempted browser-level departure requests the platform confirmation exactly when at least one open session is creating a draft, including when that session is not active. *Named mutation: remove input (6) from the disjunction; the non-empty-composer row must redden. Second named mutation: replace the creation-close refusal with confirmation; the creation-in-flight row must redden. Third named mutation: test only the active session for creation; the inactive-creating-session departure row must redden.*
+
+### 12A.7 One owner per derived presentation value: the derivation register
+
+Deepens §8.5, §2.4; contract 05 §5, 12 "Components and client". Ledger: **F14**. Serves **F4**, **F7**.
+
+**The register is closed.** These are the only values the presentation derives. Each names one source, and each is computed at render and stored nowhere.
+
+| Derived value | Its one source | Defined in |
+|---|---|---|
+| tab status, status note, phase label | the session runtime record | §12A.3 |
+| attention (the unread badge's visibility) | the session's unread counter and the active session id | §12A.4 |
+| readiness count and its per-resolution breakdown | `proposition.unresolvedItems` | §12A.10 |
+| a rendered money string | the `Money` value it formats | §12A.12 |
+| a leaf's provenance class and flag text | that leaf alone | §12A.10 |
+| a pill's kind, label, and meta | the result part it presents | §12A.9 |
+| the session count in the header | the length of the tab list | §12A.5 |
+| whether the composer's send is enabled | the composer's own draft text and the session's in-flight state | §5.2 |
+| whether the clarification panel's send is enabled | the panel's own per-question drafts | §12A.11 |
+
+**Unread is the single stored presentation counter** (§12A.4). Every other row above is a function, not a field. It remains the only stored *counter*; since decision 11 the retained Main Application Surface context (§12A.21) is the only other stored presentation state, and it holds no count and no derived value.
+
+**Rules.**
+
+- A derived value is never written into state beside its source. Two presentations of one derived value read the same source and are therefore incapable of disagreeing; no synchronisation rule exists because none is needed.
+- A value not in this register is **either** returned by the server, **or** it is one of the workspace's exactly two stored presentation values — the unread counter (§12A.4) and the retained Main Application Surface context (§12A.21) — **or** it does not exist. Those two are stored rather than derived and are therefore not rows here; the register stays the closed set of *derived* values. **No row's source may be a retained entry, and no retained entry may read a row.** That pairing is what stops retained context becoming a second source of truth for a derived value. Adding a row is an amendment to this section, not a component's local decision.
+- No presentation derives commercial truth, completeness, provenance, change, or approvability. Specifically: the client computes no total, no subtotal, no per-block amount, no "changed since" flag, and no approvable verdict (§12A.10, §12A.12).
+
+**Forbidden.** A `{status, note, unread}` record set by handlers; a client-held change map driving a flag; a count of open questions computed from a client-held answer map; a stored formatted-money string; a stored provenance class.
+
+**Invariant (F14).** For every row of the register, mutating the source changes the rendered value with no intervening write, and no module writes the derived value into state. *Named mutation: store the formatted money string on the view model and render that field; the single-owner test for money must redden.*
+
+### 12A.8 The presentation boundary: view models, adapters, fixtures, seam replacement
+
+Deepens §9.1–§9.4, §10.4; contract 16 §2–§3. Ledger: **F15**. Serves **F7**.
+
+**One crossing per surface.** For each surface, every domain-shaped value enters presentation through exactly one adapter into exactly one view model. A surface with two entry paths for the same value has no boundary; a value that reaches a presentation component without crossing an adapter is a defect regardless of how well typed it is.
+
+**What identifies a view model, decidably.** A presentation component's prop types are hand-written UI types (contract 05 §8's allowance for view-state and prop shapes). A presentation component whose prop type is the inferred type of a backend feature schema has no boundary at that point; the boundary is drawn at the wrong place and is fixed there, not in the component (design 10 §3 step 4).
+
+**What an adapter may do:** select fields, rename them for the view, choose a presentation class from a domain value by a rule stated in this section (§12A.9, §12A.10), format a `Money` value (§12A.12), and compute the derived values of §12A.7's register. **What an adapter may not do:** compute a domain fact, sum or compare money, diff two propositions, evaluate approvability, invent a field the domain does not carry, or reorder a list the domain ordered.
+
+**Fixtures, in two eras.**
+
+| Era | A fixture is | Named |
+|---|---|---|
+| before the owning backend schema phase has merged | a literal that populates a view model directly | with an explicit temporary marker, per §9.3 |
+| after the owning backend schema phase has merged | the **parse result of a literal through the owning schema**, which then flows through the production adapter | as a verification fixture of that schema |
+
+The post-merge rule is what makes drift impossible: because the fixture is the schema's output rather than a hand-shaped object, a schema change that the fixture does not satisfy fails at test time rather than surviving as a shape the contract no longer has. *Named mutation: remove a required field from the fixture's literal; the fixture's own construction test must redden.* A fixture that is exported as the literal rather than as the parse result does not satisfy this contract.
+
+No fixture contains real personal or customer data (contract 11 §5). A fixture that survives into a production path is an explicitly named placeholder, never an unmarked literal (contract 16 §2 step 6).
+
+**Seam replacement, stated as a checkable outcome** (§10.4). When the owning backend phase merges and a surface is rebound, the change touches the adapter and the fixture only: **no presentation component file changes, and no existing presentation test of that surface is edited or deleted.** A merge that forces a presentation component to change is a finding against the boundary, never a reason to change a backend shape (§9.4). A session's retained Main Application Surface context is part of this claim: because every entry holds either a member of a closed presentation enumeration or a domain identity (§12A.21), the replacement changes no entry's name, value domain, or default. An entry keyed by an adapter output field, a view-model field name, or an index into a view model breaks the claim, and is a defect in the boundary rather than a keying choice.
+
+**Never promoted upward.** No view model, adapter shape, fixture shape, or session runtime field is copied into, referenced by, or used to justify a backend schema, domain shape, service interface, view DTO, or integration schema (§9.4). A field the frontend needs and the domain does not carry is a deliberate change to the backend intention.
+
+**Invariant (F15).** Replacing a surface's temporary adapter with its production adapter leaves every presentation component of that surface byte-identical and every existing presentation test of that surface passing unedited. *Named mutation: give the presentation component a prop typed as the backend proposition; the boundary test must redden.*
+
+### 12A.9 Domain-result rendering and the pill-kind mapping
+
+Deepens §5.4, §2.4, §14.1; backend master plan §6.3. Ledger: **F16**. Serves **F2**.
+
+**Total over the five domain result states × the two surfaces.** Every state renders something intentional on both; "unchanged" is an intentional outcome and is stated as one.
+
+| `result.status` | Thread | Proposal surface |
+|---|---|---|
+| `clarification` | a turn carrying an `ask` pill holding the question set and each question's answered / skipped / open record | unchanged: the previous proposition stays rendered, or the empty state if there is none |
+| `proposition` | a turn carrying the result's rationale, assumptions and warnings | the review surface renders the new proposition |
+| `failed` | a failure turn naming the run's failure reason (§12A.16) | unchanged: the previous proposition stays intact and rendered |
+| `created` | a turn carrying a `link` pill with the `editorUrl` the server returned | the created presentation, `newlyCreated: true` |
+| `recovered` | the same turn shape | the created presentation, marked recovered, `newlyCreated: false` |
+
+**Pill kinds are a presentation mapping computed at the view boundary** (§2.4, design 05 §1). They are never a field of any schema, never submitted, never stored on a result, and never inferred from a backend enum.
+
+| Result part | Kind | Bound by |
+|---|---|---|
+| `agentRationale`, `assumptions[]`, `warnings[]` | `thought` | it presents the application-returned explanation only; never model reasoning, never an invented step sequence (§5.4) |
+| the clarification question set and its per-question record | `ask` | it is the record and the bridge to the panel; it never holds the act of answering |
+| `draftResult.editorUrl` | `link` | rendered verbatim (§12A.20) |
+| a workspace intent (re-open the questions, return to review) | `action` | it carries no domain effect of its own |
+| a server-supplied difference record | `diff` | **not reachable in V1**: no V1 result carries one (§14.1 item 3). A rendered `diff` pill in V1 is a defect |
+
+**Every part of a result is rendered by exactly one kind, and every kind above has a source part.** A result field with no row is an unrendered part and a gap to route, not a silent omission — which is what makes a new backend field visible at this boundary rather than invisible.
+
+**Live progress steps are out of scope** (§5.4, §14.1 item 4): the `thought` pill's step-list presentation renders only steps a result carries, and no V1 result carries any, so V1 renders none. Fabricating steps to fill time is the prototype behaviour this excludes.
+
+**Forbidden.** Pill construction from ad-hoc fields on a message object; keys derived from a thread index (design 05 "Prototype-only"); a demo toggle gating whether a kind renders; a client-computed count in a pill's meta slot that is not one of §12A.7's register rows.
+
+**Invariant (F16).** Each of the five result states renders its stated thread turn and its stated proposal-surface outcome, and each pill-kind row renders from its stated part. *Named mutation: route the `failed` state through the created presentation; the "the proposition stays intact on failure" row must redden.*
+
+### 12A.10 Provenance, absence, unresolved information, and approvability
+
+Deepens §5.6, §2.4, §8.4; consumes backend §17A.4, §17A.5, §17A.6, §17A.9. Ledger: **F17**. Serves **F4**.
+
+**The provenance class of a leaf is a total function of that leaf alone.**
+
+| Leaf condition | Class | Carries text |
+|---|---|---|
+| `{ known: false }` | absent | an absence statement; where the backend's absence semantics name a Proposales default (§17A.5), the statement says the default is Proposales', not a value the application holds |
+| `source = "human"` | human-set | a human-set flag, distinct from the agent-revised class (§5.6) |
+| `source = "inferred"` | agent-inferred | an assumption flag |
+| `source = "brief"` | sourced | no flag |
+| `source = "proposales_content"` | sourced | no flag |
+
+The five rows are total over the shapes §17A.1 admits: a leaf is `{known:false}` or carries exactly one of the four sources. A leaf whose key is **missing** rather than `{known:false}` never reaches presentation — it fails the schema parse upstream (§17A.5) — so the presentation has no branch for it and must not grow one.
+
+**Every colour-carried class also carries text** (design 07 §5, F6). A value rendered in the absent or agent-inferred treatment without its flag text is a defect, and the flag text is part of the value's accessible name.
+
+**Absence is never rendered as a value.** `{known:false}` never renders as `0`, `1`, `false`, an empty string, or a dash that reads as zero. This is the presentation half of §17A.5's most load-bearing shape.
+
+**"Changed since" is not rendered in V1.** The only client-computable change signal would be a diff of the workflow state's two propositions, which §14.1 item 3 forbids the client to compute, and no V1 result carries a per-leaf change record. The human-versus-agent distinction §5.6 requires is therefore carried entirely by `source = "human"` versus every other source — which is what §17A.9 makes it ("human-set is exactly `source === human`; there is no second flag"). Design 07's "Updated" flag has no V1 source; decision 10 confirms origin, rather than client-computed change, as the review pane's fact.
+
+**Unresolved information.** `unresolvedItems` entries are presented per entry with their `resolution` visible, and `unresolved` and `deferred_by_user` are **never collapsed into one count or one label**: an omission and a deliberate deferral are different human facts, which is exactly what the backend's skip contract protects (§17A.7). A single readiness number may be shown only alongside the per-resolution breakdown.
+
+**Approvability is never computed.** No presentation reads `items[k].createPolicy` or `items[k].askPolicy`; no presentation evaluates "can this be approved"; the approval refusal is rendered from the server's `validation_error` and its paths (§12A.16). Whether the approval control is enabled, disabled, or shown in a warning treatment while unresolved information remains stays a design/planning decision (C-3, §14.2) and is treatment-neutral in this contract: whichever treatment is chosen, it is not derived from a client-side verdict.
+
+**Forbidden.** Deriving a class from the value's emptiness; deriving a flag from a string test (`/not priced/i` and its family, design 07 "Prototype-only"); a client-held change map; a completeness count computed from anything but `unresolvedItems`.
+
+**Invariant (F17).** Each of the five leaf conditions renders its stated class with its stated text present in the accessible name, `{known:false}` never renders a numeric or boolean placeholder, and no module reads a create or ask policy. *Named mutation: render `{known:false}` for a quantity as `1` because Proposales' default is 1; the absence row must redden.*
+
+### 12A.11 Closed field sets: the review surface and the client preview
+
+Deepens §5.6, §5.7, C-1; design 07, design 08. Ledger: **F18**. Serves **F4**.
+
+**The review surface's field set is the proposition's, and only the proposition's.** Every row, label, and item on it is backed by a leaf, block, note, assumption, warning, or unresolved item that the current proposition actually carries. There is no fixed label list; design 07's nine observed labels are demo content (design 07 "Prototype-only"). A rendered row with no backing leaf is a defect, and a leaf the proposition carries with no rendering is an unrendered part to route (§12A.9's rule, applied to the proposition).
+
+**The client preview's field set is closed and is a strict subset**, because it is a client-facing rendering (§5.7, design 08):
+
+| Rendered | Not rendered, in any form |
+|---|---|
+| the proposition's title | provenance flags and their colours |
+| the proposition's narrative, omitted entirely when absent | unresolved and deferred markers, readiness, counts |
+| per block, the catalog-verbatim title and description | quantity, the optional flag, reviewer comments |
+| the statement that pricing comes from the content library | commercial notes, commercial assumptions, warnings, agent rationale, alternatives |
+| the approximation disclosure, visible and programmatic (ratified boundary 9) | any amount, any total, any per-line price (C-1) |
+| | any work-surface string, including absence statements such as "Not priced" |
+
+**No money appears on either surface before creation** (C-1, backend §3.1, §9.1, criterion 20): the proposition carries no price and no total, so a rendered amount on the review or preview surface is a defect by construction rather than a value to check. The one exception is a `commercialNotes[i].amount` — a **stated price expectation** carried as `SourcedOrAbsent<Money>` with its own provenance (§17A.16) — which appears on the review surface as a note with its provenance class, never in a total row, never in the preview, and never summed with anything (§12A.12). The first sight of applied money is the created state (§5.8).
+
+An empty proposition renders an honest empty document rather than a skeleton of absent fields (§5.7).
+
+**Invariant (F18).** No amount is rendered anywhere on the review or preview surface for any proposition, except a commercial note's stated amount on the review surface with its provenance class; and the preview renders no field outside its closed set. *Named mutation: render a block's quantity in the preview; the closed-set row must redden.*
+
+### 12A.12 Money rendering
+
+Deepens §4, §5.8, §11; consumes backend §17A.1 (`Money`) and §17A.12 (Applied Pricing). Ledger: **F19**. Serves **F5**, invariant 17.
+
+**The frontend receives money in exactly two positions**: `commercialNotes[i].amount` on the proposition (a stated expectation, §12A.11) and the Applied Pricing block of a `created` or `recovered` result. Both are `{ amountMinor: integer, currency: ISO-4217 }`. The frontend never receives, constructs, or infers money anywhere else.
+
+**Rendering is one function**, `Money → string`, total over the shape, applied at the view boundary and stored nowhere (§12A.7).
+
+**The minor-unit exponent is derived from the currency, never assumed.** The scaling from `amountMinor` to the displayed figure uses the exponent the runtime's currency data reports for that currency code. A literal `100`, a literal `/ 100`, a hard-coded two-decimal format, or a `toFixed(2)` anywhere on a money path is prohibited: currencies with a zero-exponent minor unit would silently render a hundred-fold error that no type check and no schema can see. *Named mutation: replace the derived exponent with the literal 2; the zero-exponent-currency row must redden.* Criteria enumerate at least one zero-exponent and one two-exponent currency (charter rule 2), and assert the contract rather than a locale's literal output (charter rule 13).
+
+**The closed forbidden list, on any money value:** addition; subtraction; multiplication; division other than the single derived-exponent scaling inside the rendering function; modulo; rounding, flooring, ceiling, `toFixed`; comparing two amounts numerically; summing blocks into a total; recomputing a total from unit values and quantity; checking a total against its parts; `parseFloat`, `Number`, or any pattern applied to a formatted or free-text string to obtain an amount; defaulting an absent money to `0`; inferring or converting a currency.
+
+**The closed permitted list:** reading `amountMinor` and `currency`; the derived-exponent scaling inside the rendering function; string equality on a currency code (only to render the block-currency warning the backend already attached, §17A.12).
+
+**Absence and unavailability.** `{ known: false }` on a stated amount renders per §12A.10 and never as a figure. `appliedPricing.available === false` renders its closed-enum reason and the draft as created; it declares no money fields, so there is nothing that could be rendered as `0` (§17A.12). A rendered zero in an unavailable-pricing presentation is a defect.
+
+**Applied Pricing is labelled as what Proposales applied**, to be reviewed in the editor, never as what was approved (§5.8, backend §15.1); every figure is a rendering of a value the read-back returned, and no figure is assembled from two of them.
+
+**Invariant (F19).** Every displayed amount is a rendering of one `Money` value the server supplied; no formatted string is ever read back into a number; no arithmetic on the forbidden list occurs on any money path. *Named mutation: render the Applied Pricing total as the sum of the block unit values; the "totals are displayed, never computed" row must redden.*
+
+### 12A.13 Clarification submission
+
+Deepens §5.5, C-2; consumes backend §17A.7 and the master plan's `clarificationAnswersInputSchema`. Ledger: **F20**. Serves **F3**.
+
+**The submitted payload is a set of entries bound by `questionId`.** Per question, the mapping from the panel's local state to the submitted payload is total and has exactly three rows:
+
+| Panel state for a question at send | Submitted |
+|---|---|
+| the user typed an answer | one entry: `{ kind: "answer", text: <the characters the user typed> }` |
+| the user explicitly skipped it | one entry: `{ kind: "skip" }` |
+| the user neither answered nor skipped it | **no entry at all** |
+
+**An omission is never converted into a skip, and a skip is never inferred.** A question with an empty draft is row 3, not row 2. A question the user never visited is row 3. This is the presentation half of §17A.7: only a skip moves an item to `deferred_by_user`, and an omission leaves it `unresolved` — so a client that submits a skip for an untouched question records a human decision that no human made.
+
+**"Skip all" submits `{ kind: "skip" }` for every question that has no explicit answer, and leaves explicitly answered questions as answers.** Design 06 §4.4's "clears the whole batch" is ambiguous between skipping the unanswered and discarding typed answers; discarding typed answers silently would destroy work, so the preserving reading is taken. Recorded as a resolved ambiguity and a design delta.
+
+**No coercion touches the submitted value.** Forbidden on the submission path: appending a unit; inserting or removing separators; reformatting a date; locale conversion; numeric parsing; substituting a display-formatted value for the typed one. Display formatting, where the specification calls for it, is a separate value that never reaches the payload (§5.5, design 06 §4.2). Trimming and length bounds are the server's schema's (§17A.16); the client alters nothing. *Named mutation: feed the display-formatted value into the submitted entry; the identity test must redden.*
+
+**No entry is ever constructed for a `questionId` outside the received question set**, and no question set is ever extended, reordered, filtered, or supplemented by the client: conditional follow-up questions are a server decision (§17A.7, design 06 "Prototype-only").
+
+**V1 renders the ratified question shape only** (C-2): a text question with a free-text answer or an explicit skip. The panel's option lists, amount suggestions, date inputs, units, per-question notes, and per-question skip labels remain presentation vocabulary that only a backend amendment activates (§14.1 item 1). A V1 panel that renders an option list has invented a question type.
+
+**Dismiss is not an answer.** Dismissing the panel returns the composer and discards nothing: the questions stay open and the `ask` pill re-opens the panel (§5.5). Submission is the only path that produces entries.
+
+**Invariant (F20).** The submitted payload equals the user's explicit answers and skips bound by question id, with unanswered questions absent and no value altered between the input and the payload. *Named mutation: submit `{ kind: "skip" }` for every question with an empty draft; the omission row must redden.*
+
+### 12A.14 Inline edit, replacement, and validation paths
+
+Deepens §5.6, §2.4; consumes backend §17A.1 (Path), §17A.9, and the master plan's `editOperationSchema`. Ledger: **F21**. Serves **F4**.
+
+**One edit at a time per session.** While an edit turn is in flight for a session, no other leaf of that session enters edit mode, and the in-flight leaf is not re-editable. The composer's send and the approval control follow the same session-level in-flight rule (§5.2, §12A.15).
+
+**A commit dispatches exactly one edit operation** from the backend's closed set — `set_leaf`, `remove_block`, `add_block`, `unset_recipient`, `confirm_empty_draft` — carrying a `path` as an **array of segments**, with array indices as decimal strings (§17A.1). A dotted string, a display label, or a component-local key in the path position is a defect.
+
+**The edit is never applied locally as truth.** The rendered value changes only when the server's new proposition version arrives; the typed text is a disposable draft until then (§8.1). *Named mutation: write the typed value into the view model on commit; the "no local truth" test must redden.* Save-in-flight and save-failed states exist (§5.6, design 07 §6).
+
+**Keyboard and focus.** Entering edit mode is keyboard-reachable; Enter commits; Escape cancels and discards the draft; focus returns to the trigger on both commit and cancel (§12A.17).
+
+**A validation error is rendered at its path.** Paths are compared **element-wise as arrays**. Forbidden: joining paths into strings to compare them; prefix or substring matching; rendering a path-bearing error only at surface level. An error whose path names no rendered leaf is rendered at the surface level with its message intact rather than dropped.
+
+**Replacement offers exactly the block's retained alternatives** — `blocks[i].alternatives` as returned, in the order returned (§5.6, owner decision 3). The client does not filter, re-rank, re-score, deduplicate, or supplement that list, and offers no other content source; broader discovery is an agent revision or re-search instruction, which is a free-text revision turn (§2.4). *Named mutation: sort the alternatives by score in the presentation; the order-identity row must redden.*
+
+**"Ask the agent about &lt;field&gt;"** submits a free-text revision instruction whose wording names the field; the field scope is presentation memory rendered as the reply turn's scope badge, and is not a structured parameter of the turn until §14.1 item 2 is decided.
+
+**Invariant (F21).** An inline edit is submitted as exactly one operation from the closed set with an array path; the rendered value changes only on the server's answer; a `validation_error` renders at the leaf whose path equals the error's path element-wise. *Named mutation: compare paths after joining them with a dot; the row whose leaf key contains a dot must redden.*
+
+### 12A.15 Approval submission, the pending guard, and terminality
+
+Deepens §5.6, §5.8, §4; consumes backend §17A.10, §17A.13, §11.3; contract 05 §7, 04 §8, 08 §6. Ledger: **F22**. Serves **F5**.
+
+**What is submitted.** The approval envelope carries the session's workflow state, the proposition **being reviewed**, and the pricing acknowledgment (backend `approvalEnvelopeSchema`, strict). The proposition submitted is the value the session runtime holds, not a value reconstructed from a view model: the view model is an output of the adapter and is never an input to a submission. *Named mutation: build the submitted proposition from the review view model; the identity test must redden — it asserts structural equality with the value the adapter read.*
+
+**The acknowledgment's statement id and the wording shown to the human come from one source.** The frontend renders the wording bound to the statement id it submits; a component that renders one wording and submits a different id has broken the thing the literal id exists to guarantee (§17A.10). *Named mutation: change the submitted statement id without changing the rendered wording; the pairing test must redden.*
+
+**Submit-once, by two independent mechanisms**, because either alone is insufficient:
+
+1. **Structural.** On entering the creating state the approval control is removed from the tree along with the review header, the view toggle, and discard (§5.8, design 09 §3.2); re-entry has no control to activate.
+2. **At the dispatch boundary.** A second approval dispatch for a session that already has an approval turn in flight is a no-op. This exists because removing the control is a rendering fact, and a double activation, a held key, or a rapid pointer sequence can fire the handler before the next render.
+
+*Named mutation: remove the dispatch-boundary guard and rely on the control's removal; the double-activation test must redden.* The invariant: two activations within one frame produce exactly one dispatch.
+
+**There is no cancel** (§5.8): the server performs one non-retryable create, and a client-side cancel could not undo it. The creating presentation shows one honest label, not an invented step sequence, because no V1 result reports steps (§14.1 item 4).
+
+**Creation cannot be closed away.** While the approval/execution turn is in flight, a close intent is refused under §12A.6 (decision 8). It is not a confirmation variant: the session remains open until the server result is attributed to it, so a created draft cannot be orphaned from its only editor handoff.
+
+**Terminality is the server's, read from the state.** A session is terminal exactly when its workflow state carries a draft reference (§17A.2). A terminal session offers no approval control, no inline edit, and no edit-operation dispatch; the proposition stays visible for reference (§5.8). A terminal session that renders an approval control is a defect. The browser never decides terminality on its own — it never marks a session terminal on dispatch, on optimistic success, or on a timeout.
+
+**Failure returns the intact proposition to review**, structurally equal to what was submitted, with the failure rendered per §12A.16 and the status re-derived to `ready` by §12A.3 row 4. Nothing is lost, and no partial created state is entered — the backend cannot produce one (§17A.12, answering design 09's open question 8).
+
+**A refused re-approval is a `conflict`** carrying the existing draft's uuid and editor URL, rendered as the conflict it is and pointing at the existing draft (§5.8, §17A.13 check 2).
+
+**Invariant (F22).** The submitted envelope carries the proposition the review surface rendered; two activations produce one dispatch; a close during creation is refused; a failed creation returns the same proposition to review; a terminal session offers no approval or edit affordance. *Named mutation: on a failed creation, clear the session's proposition; the "work survives failure" row must redden.*
+
+### 12A.16 Failure treatment: the `ErrorDto` map and the `failed` result
+
+Deepens §5.8, §11; consumes contract 04 §6, backend master plan §6.3, §17A.13; contract 05 §6. Ledger: **F23**. Serves **F2**, **F5**.
+
+**Two channels, never merged.** A `failed` **domain result** is an outcome of a run; an **`ErrorDto`** is a failure of a call. Routing a `failed` result through the error presentation, or an `ErrorDto` through the thread's failure turn as though it were a run outcome, misreports both.
+
+**`failed` domain results**, total over the run failure reasons the backend defines (master plan §6.3):
+
+| `failure.reason` | Presentation |
+|---|---|
+| `budget_exhausted` | a failure turn naming that the run reached its limit and which limit; the composer stays available so the human can send another instruction; no dedicated retry affordance is introduced |
+| `model_output_invalid` | a failure turn stating that the result could not be produced; the issue **paths** may be shown; no model text exists to show and none is invented |
+| `tool_output_invalid` | as above |
+| `script_exhausted` | **not reachable in production** — a test aid only. Reaching a production rendering path with it is a defect, not a state to render |
+
+In every row the session's proposition, if it has one, stays intact and rendered (§12A.9).
+
+**`ErrorDto` treatment, total over the taxonomy's nine codes plus unknown** (contract 04 §6):
+
+| `code` | Message | `details` read | Retry offered | Where it renders |
+|---|---|---|---|---|
+| `validation_error` | the DTO's `message` | `{ path, message }[]`, each rendered at its path (§12A.14) | never | at each named leaf; a path naming no rendered leaf renders at surface level |
+| `unauthenticated` | the DTO's `message` | — | never | the surface that issued the call |
+| `forbidden` | the DTO's `message` | — | never | the surface that issued the call |
+| `not_found` | the DTO's `message` | — | never | the surface that issued the call |
+| `conflict` | the DTO's `message` | the existing draft's uuid and editor URL, when present | never | the created/terminal presentation, pointing at the existing draft |
+| `approval_required` | the DTO's `message` | — | never | the approval surface, with "Back to review" first in tab order |
+| `integration_error` | the DTO's `message` | `system` and `status` as diagnostic detail | iff `details.retryable === true` | the surface that issued the call |
+| `rate_limited` | the DTO's `message` | — | iff `details.retryable === true` | the surface that issued the call |
+| `internal_error` | the DTO's `message` | — | never | the surface that issued the call |
+| any **unknown** code | the DTO's `message` when present and non-empty, otherwise one named generic fallback | — | never | the surface that issued the call |
+
+**Rules that make the table bite.**
+
+- The DTO's `message` is rendered as given. A UI-authored string never replaces a message a known code carried (contract 05 §6); the generic fallback exists only for the unknown-code row and only when no message is present.
+- **Retry is offered iff `details.retryable === true`**, for every code without exception. An absent `retryable` is `false`, never `true`. This is one rule rather than a per-code judgement, so a backend that later marks a code retryable needs no presentation change, and a presentation that offers retry on a validation failure is a defect (a validation error is corrected, never retried — contract 05 §6).
+- Retry re-issues the same intent with the same input; it is not a new turn with a new payload.
+- `details` is read only through the keys named above. The client never string-parses a message, never infers retryability from wording, and never inspects a key this table does not name.
+- The creation-failure presentation keeps "Back to review" always available and first in tab order, offers "Try again" only under the retry rule above, restates that nothing was sent, and moves focus to the error heading with alert semantics (§5.8, §12A.17).
+
+**Invariant (F23).** Each of the ten `ErrorDto` rows and each of the four `failed` rows renders its stated treatment; no known code's message is replaced; retry appears exactly when `details.retryable === true`. *Named mutation: offer retry whenever `details` is present; the validation-error and the non-retryable integration rows must redden.*
+
+### 12A.17 Focus and announcement transitions
+
+Deepens §5.1–§5.8; contract 05 §7, design 02 §5, 03 §5, 04 §5, 06 §5, 07 §5, 08 §5, 09 §5. Ledger: **F24**. Serves **F6**.
+
+**Focus destinations, total over the workspace's transitions.**
+
+| Transition | Focus lands on |
+|---|---|
+| a session is activated from the strip | the activated tab (roving tabindex; activation follows focus) |
+| a session is activated and its Main Application Surface context is restored (§12A.22) | the activated tab — **restoration moves no focus**, whichever state or entry it resolves to |
+| a session is activated because another was closed | the newly active tab (§12A.5) |
+| the last tab is closed and a session replaces it | the replacement tab |
+| a tab is moved by keyboard | stays on the moved tab, with its new position announced |
+| the clarification panel opens | the first unanswered question's first interactive element — never the dismiss control |
+| the clarification panel is dismissed or submitted | the composer |
+| inline edit is entered | the edit input |
+| inline edit is committed or cancelled | the trigger that opened it |
+| an anchored ask-agent surface opens | its input |
+| that surface closes, by any path | the trigger that opened it |
+| the creating presentation is entered | its status heading |
+| the created or recovered presentation is entered | its headline, made focusable for this purpose only and not left in the tab order |
+| the failure presentation is entered | the error heading, with alert semantics; "Back to review" is the first tab stop |
+| a divider reset is performed | stays on the divider |
+| **a turn result is applied to the active session** | **unchanged — an arriving result never moves focus** |
+| **a turn result is applied to a non-active session** | **unchanged — nothing in the active session moves, and nothing is announced there** |
+
+The last two rows are the ones a background session makes easy to get wrong: a result arriving in session A must not disturb a human typing in session B.
+
+**Announcements.**
+
+- **Restoration announces nothing of its own.** Activating a session already announces through the activated tab's accessible name (§12A.3), which carries the session's title, status text, note and unread count. The restored Main Application Surface content fires no second announcement, and neither does a retained entry that resolved to its stated default (§12A.22): one deliberate act produces one announcement. Operating the work-surface toggle announces the view it selected (design 08 §5); activating a session does **not** re-announce the view it restored. *Named mutation: announce the restored work surface on activation; the one-announcement-per-switch row must redden.*
+- The thread is a log region announcing **completed turns only**, once each. Never the in-flight indicator, never a token stream, never on a loop; the animated indicator is hidden from assistive technology (design 03 §5).
+- A session's status change is announced politely and **debounced to the settled state**: a session moving through `working` to `ready` produces at most one announcement (design 04 §5). The debounce window is a named constant; criteria assert the contract, not the literal.
+- The creating and created presentations announce their outcome once each, politely; the failure presentation announces through its alert semantics.
+- Reduced motion is honoured for every animation named in the specifications: the pulsing dot, the thinking dots, the spinner, and any entry animation.
+
+**Forbidden.** A `title` attribute as an accessible name; a state carried by colour alone; focus left on the document body after any transition above; an announcement fired per update rather than per settled state.
+
+**Invariant (F24).** Every row of the focus table holds, verified by interaction rather than by inspection, and a result applied to a non-active session moves no focus and fires no announcement in the active one. *Named mutation: move focus to the thread when a result is applied; the two "unchanged" rows must redden.*
+
+### 12A.18 Thread autoscroll and the follow state
+
+Deepens §5.2; design 03 §3.3, §5, design 05 §4.1. Ledger: **F25**. Serves **F6**.
+
+**Two states per session, and no third.** The thread's follow state is `following` or `detached`. It is disposable UI mechanics (§8.1), initialised to `following` when a session's thread is first rendered and reset to `following` on entering a session.
+
+**The transitions are total:**
+
+| From | Event | To |
+|---|---|---|
+| `following` | a user-initiated scroll that leaves the bottom threshold | `detached` |
+| `following` | new content appended | `following`; the viewport stays pinned to the bottom |
+| `following` | a programmatic scroll | `following` — a programmatic scroll never detaches |
+| `detached` | a user-initiated scroll back within the bottom threshold | `following` |
+| `detached` | the jump-to-latest affordance is activated | `following`, and the viewport moves to the bottom |
+| `detached` | new content appended | `detached`; the viewport does not move; the jump-to-latest affordance is shown |
+| either | the session is switched away and back | `following` |
+
+**While detached, nothing moves the reader.** No arriving result, no completed turn, and no announcement scrolls the thread. This is the "never yanks a reader upward" requirement stated as a state machine.
+
+**Pill expansion never scrolls the thread**, in either state: the payload grows downward in place (design 03 §3.3, design 05 §4.1). Autoscroll is additionally suppressed while focus is inside an expanded pill or the clarification panel (design 03 §5), in both states.
+
+**The bottom threshold is a named constant.** Criteria assert the contract with adjacent-pair rows — exactly at the threshold is `following`, one unit beyond is `detached` — never the literal (charter rule 13). Design 03's open question 3 records that the specification's suggested distance is not measured; it stays a design delta.
+
+**Forbidden.** `scrollIntoView` for new content; locating the scroll container by document query (design 03, 04 "Prototype-only"); a follow state shared across sessions; scrolling on a result applied to a non-active session.
+
+**Invariant (F25).** Every row of the transition table holds, and appending content while `detached` leaves the scroll position unchanged. *Named mutation: treat a programmatic scroll as a user scroll; the "programmatic scroll never detaches" row must redden.*
+
+### 12A.19 Narrow-width resilience
+
+Deepens §5.1, ratified boundary 15; design 02 §3.2–§3.3. Ledger: **F26**. Serves **F6**.
+
+The narrow-layout **mechanism** — reflow thresholds, whether and how the agent surface yields, any collapse or overlay — is a design and planning decision (§5.1, §14.2, design 02 §3.3). This section fixes the **invariant that any mechanism must satisfy**, so that "must remain usable and must not visually corrupt" is decidable.
+
+**At every width in a named test set — the designed wide width, the specification's two stated thresholds, and the V1 floor — all of the following hold simultaneously:**
+
+1. the document itself does not scroll horizontally;
+2. no pane's content overflows its own pane horizontally, except inside a container that declares its own horizontal scroll (the tab strip is such a container by design);
+3. every interactive element named in §5 is reachable and operable by keyboard;
+4. no text node is clipped to zero rendered width; text that does not fit ellipsizes or wraps, and its full value remains in the element's accessible name;
+5. the agent pane is never rendered below its stated minimum width.
+
+**Divider width.** The divider's clamp is design 02 §3.2's arithmetic over layout values — permitted, and unrelated to the money rule (§12A.12). The width is page-lifetime UI state, re-clamped on viewport change, never persisted (§7, ratified boundary 3, design 02 open question 1). The divider is a real separator with the keyboard model design 02 §5 requires.
+
+**Forbidden.** A fixed pixel width on a content column; reading the window width during render (design 02 "Prototype-only"); a layout that satisfies the invariant only at the designed width.
+
+**Invariant (F26).** All five conditions hold at every width in the named test set, verified by rendering rather than by visual review. *Named mutation: give a content column a fixed width instead of a maximum; condition 1 or 2 must redden at the narrowest width.*
+
+### 12A.20 Free text rendering and external links
+
+Deepens §4, §5.7, §5.8; contract 10 §4, §6, §10; consumes backend §17A.16, §17A.3 (editor-origin validation). Ledger: **F27**. Serves **F4**, **F5**.
+
+**Every string that originates from the model, the human, or the catalog is rendered as text.** No HTML, no markup interpretation, no template interpolation, no automatic link detection, no rich-content renderer. This covers the title, the narrative, reviewer comments, commercial notes, assumptions, warnings, agent rationale, clarification question text, catalog-verbatim titles and descriptions, the human's own thread messages, and every `ErrorDto` message.
+
+**Whitespace is preserved** where a value can carry deliberate line breaks — a pasted brief and the narrative most of all (design 03 §3.4) — so preserving line structure is a rendering treatment, not an interpretation of markup.
+
+**Stated consequence.** The proposition's title and narrative are Markdown in the vendor's subset (§17A.16), and Proposales renders them. Under the rule above, V1 displays their characters literally, including any Markdown syntax, on both the review surface and the client preview. Rendering them as rich content would require a sanitizer and a recorded decision (contract 10 §4) that this intention does not take. Decision 9 ratifies this as-written V1 treatment.
+
+**External links.** The editor URL is rendered **exactly as the server returned it**: never constructed from a proposal uuid and a base, never rewritten, appended to, normalised, or re-encoded. Its origin was already validated against the configured editor origin inside the server's state schema (§17A.3); the presentation adds no second validation and no fallback. It opens in a new browsing context so the page-lifetime workspace survives, with `rel="noopener noreferrer"` (§5.8, contract 10 §10), and the fact that it leaves the application is part of its accessible name. *Named mutation: build the href from the uuid and a base constant; the URL-identity row must redden.*
+
+**Nothing privileged and nothing secret enters the client graph or client state** (§4, contract 02 §5, 10 §2): no integration configuration, no key, no company identifier, no server module import.
+
+**Invariant (F27).** No rendered value passes through a markup or rich-content path; the editor link's href is character-identical to the server-returned URL and carries the new-context relationship attributes. *Named mutation: render the narrative through a Markdown-to-HTML path; the text-rendering row must redden.*
+
+### 12A.21 Retained Main Application Surface context: qualification, reference-only content, and the seam
+
+Deepens §5.3, §8.1, §8.3, §8.6, §12A.1, §12A.7, §12A.8; owner decision 11. Ledger: **F28**. Serves **F1**, **F7**.
+
+§8.6 fixes the semantic boundary and hands the representation and the qualifying-interaction list to planning (§14.3 item 5a). "Meaningful" is an adjective, and F1 now asserts an observable over it. This section fixes the **test that planning's enumeration must satisfy** — what an entry is, what it may hold, what may never qualify, who writes it, when it is read, and what an undecided candidate does. It enumerates nothing and names no object, slice, key, field, or component.
+
+**The retained context is a closed, named set — not an open map.** Per session it is a set of **entries**, each with a name, one admissible value domain, and one stated default. Its membership is enumerated by the planning pass and fixed in the master plan's naming registry before the first phase that implements restoration; a phase does not add an entry. A `Record<string, unknown>`, a key space produced at runtime, a serialisation of a component subtree, or an entry a component creates on first use is not this mechanism — it is the snapshot architecture §8.6 and design 04 ("Prototype-only") prohibit and contract 16 §5 names as a generic session engine.
+
+**The set is non-empty.** §6 lists session-controlled restoration of Main Application Surface context among must-ship, so an empty enumeration satisfies F1 vacuously and ships nothing.
+
+**Qualification — four conditions, all of which must hold.** A candidate is category A only if:
+
+1. **Presentation-owned.** Its authority is the client alone. Every category-C value fails here and is never promoted by being displayed (§8.6).
+2. **Reference, not value** — it satisfies the value-domain table below.
+3. **The product of a deliberate user act on the Main Application Surface** — an act the user performed in order to be where they are (choosing which work surface is shown, opening or selecting something, moving to a location within the surface) — and not a state that happened to them: hover, pointer or pressed state, transient focus, animation, scroll offset or momentum, viewport, layout, or a control's own open/closed mechanics (§8.6 category B).
+4. **Not derivable.** No entry may be a value §12A.7's register computes, nor a value computable from another entry together with the session's server-returned objects. A derivable candidate is derived, never retained.
+
+A candidate failing any condition is not retained. **Where a candidate's classification is genuinely undecided, it is not retained.** §8.6 admits only what is *explicitly* meaningful, and the asymmetry is the reverse of §12A.6's: over-retention rebuilds a prohibited architecture and can promote a category-C value into presentation state, while under-retention costs the user one deliberate act they can repeat. Conditions 1–4 are decidable per candidate, so this direction governs residual cases only and is never a licence to leave the enumeration thin.
+
+**Reference, not value — the decidable line.** An entry's value domain is exactly one of two classes, and nothing else:
+
+| Admissible class | What it is |
+|---|---|
+| a member of a **closed presentation enumeration** named in the project's registry | a presentation-owned choice with a fixed, small domain — for example which of the surface's own work surfaces is shown |
+| an **identity the current server-returned objects carry**: a `Path` (§17A.1), a content id, a question id, or a block index as the domain ordered it | a name for a thing, resolved against what is rendered |
+
+**Never admissible.** Any value read out of a category-C object: a leaf value, a `Money`, a provenance class or flag text, an item resolution, a warning, an assumption, agent rationale, a result status, a proposition or any part of one, the acknowledgment, a draft reference, an editor URL, an `ErrorDto` or its message. Also never: a client-computed fact; any row of §12A.7's register; a DOM id, a React key, a view-model field name, an adapter output field, or an index into a view model.
+
+*The line, stated as a test:* rendering a session's Main Application Surface from its retained context **with the session's server-returned objects removed** produces no category-C value on screen. *Named mutation: store the selected block's rendered quantity in the retained context and render it from there; the reference-not-value row must redden.*
+
+**Writing and reading.**
+
+- An entry is written **only** by the deliberate user act condition 3 names, in the session that act was performed in. Nothing else writes it: not a result application, not an adapter, not a render, not a session switch, not an activation, not a close.
+- **A turn result applied to a session neither reads nor writes that session's retained context**, for every session, active or not. §12A.2's resolution path is unchanged and the active session id is still never read there (§12A.2 rule 4). This is what makes the rule total without a per-session branch and without a second place that can be wrong.
+- An entry is **resolved at render**, against whatever the surface then renders (§12A.22). It is never resolved at write, never cached against a resolved target, and resolution never writes back.
+- An entry whose identity does not resolve against the current render input yields that entry's **stated default**. It is never substituted, reconstructed, remembered, or rendered from a captured copy, and a failure to resolve is not itself an error, a notice, or a state (§12A.22).
+
+**The seam.** Because every entry holds a presentation-enumeration member or a domain identity, the adapter-era → production-adapter replacement (§12A.8, §10.4) changes no entry's name, value domain, or default, and F15's claim survives unchanged. An identity that a re-fetch can invalidate is admissible **because** an unresolvable identity yields the default rather than a stale render; an entry keyed by anything the adapter invented is not.
+
+**The register.** Retained context is not a row of §12A.7 and is not derived. With the unread counter it is one of exactly two stored presentation values in the workspace. No register row may read an entry; no entry may be a register row's source (§12A.7).
+
+**The Agent Surface is not governed here.** §8.6's three categories are stated about the Main Application Surface. The Agent Surface's per-session composer draft survives a session switch by §8.1 and owner decision 7 — it is not a §8.6 category-A entry, not part of this set, and §12A.6 reads it directly as input (6). The clarification panel's step position and unsent typed values remain category B (§8.1), and the typed text of an in-progress inline edit remains disposable (§12A.14).
+
+**No persistence is introduced.** This is page-lifetime memory inside one browser page, not a rehydration path: no `localStorage`, `sessionStorage`, IndexedDB, URL parameter, or server round-trip carries an entry, no entry survives a reload, and contract 05 §5.2's prohibition on restore-after-reload affordances and on store shapes justified by future serialisation is unaffected (§7).
+
+**Forbidden.** An entry whose value is a category-C value; an open or runtime-derived key space; an entry created outside the fixed enumeration; a snapshot of a component subtree, of arbitrary DOM, or of every transient control; retention of category-B mechanics; an entry written on the result-application path; an entry read anywhere but at render; an entry serialised, persisted, or shared between sessions.
+
+**Invariant (F28).** Every retained entry is a member of the project's fixed enumeration; holds only a closed-presentation-enumeration member or a domain identity, never a category-C value; is written only by its deliberate user act in its own session; is read only at render; and yields its stated default when its identity does not resolve. No §12A.7 register row reads an entry, and no result application writes one. *Named mutation: write a session's retained context from the turn-result application path; the "results never write retained context" row must redden. Second named mutation: hold the selected item's rendered value instead of its identity and render from it; the reference-not-value row must redden.*
+
+### 12A.22 Restoration on activation: the total case table
+
+Deepens §5.3, §5.8, §11, §12A.3, §12A.9, §12A.15, §12A.17, §12A.21; owner decision 11. Ledger: **F29**. Serves **F1**, **F6**.
+
+Activation presents the activated session's record on both surfaces (§12A.1, §5.3). What the Main Application Surface presents is a function of **that session's record alone**: its in-flight turn, its workflow state, its latest domain result, and its retained entries resolved against them. The session that was active before activation is not an input, and no case reads another session's record.
+
+Restoration is two total functions, not one table, because the state and the place inside it are decided separately.
+
+**(A) Which Main Application Surface state is presented — total, first-match-wins.**
+
+| # | Condition | Presented |
+|---|---|---|
+| 1 | this session's approval/execution turn is in flight | the creating presentation (§5.8): one centred working state; no header, view toggle, discard, or approval control |
+| 2 | the workflow state carries a draft reference | the created presentation, newly created or recovered (§12A.9 rows 4–5; §12A.15's terminality) |
+| 3 | the workflow state carries a current proposition | the Proposal Preparation work surface the session's retained work-surface entry names, or that entry's default; a `failed` latest result renders on it per §12A.9 row 3 and §12A.16 with the proposition intact |
+| 4 | none of the above | the Proposal Preparation **idle** state — the surface's own state for having nothing yet (§11 names `idle` as a state every surface renders intentionally) |
+
+Rows 1–4 partition every record: a session either has an approval turn in flight, or a draft reference, or a current proposition, or none of these.
+
+**The overlaps, enumerated** (charter rule 2):
+
+| Overlap | Resolution |
+|---|---|
+| an approval turn in flight **and** a draft reference exists (a re-approval the server will refuse) | row 1 |
+| a draft reference **and** a current proposition (always true after creation) | row 2 |
+| a current proposition **and** the latest result is `clarification` | row 3 — the proposition stays rendered (§12A.9 row 1); the questions are the Agent Surface's |
+| a current proposition **and** the latest result is `failed` | row 3 — the proposition stays intact and rendered (§12A.9 row 3) |
+| no proposition **and** the latest result is `clarification` or `failed` | row 4, the idle state; a failure with nothing to return to is reported on the Agent Surface (§12A.9) |
+| a **non-approval** turn in flight (brief, clarification answers, an edit, a revision) | does not match row 1; rows 2–4 decide. An in-flight turn shows on the Agent Surface and in the derived status (§12A.3 row 1); it never replaces the Main Application Surface |
+
+**What the idle state is, and is not.** It is the Proposal Preparation experience's own no-proposition state. It is **not** a proposal list, a dashboard, a statistics strip, a session history, a route, or a second surface (§6, design 10 §7, §12A.23). No design specification defines it — the prototype filled that space with the excluded list view — so its visual treatment is a **design gap reported to the design specifications** (§14.2, design 10 §4) and V1 renders an honest empty state until the specs answer it.
+
+**(B) How each retained entry resolves — total, three rows.**
+
+| Entry condition at render | Resolves to |
+|---|---|
+| the state (A) presents has the place the entry names, and the entry's identity is present in what is rendered | the entry's value |
+| the state has that place, but the entry's identity is not present in what is rendered (a block a later proposition version removed; an item a clarification round replaced) | the entry's stated default |
+| the state has no such place at all (rows 1, 2 and 4 of (A), for a work-surface or location entry) | the entry's stated default |
+
+In rows 2 and 3 the entry is **not cleared, not rewritten, and not deleted**: it resolves again, to its value, as soon as a later state carries its place and its identity. Every entry resolves independently; one entry resolving to its default never changes another's resolution.
+
+**An entry never overrides the state.** The session's own record decides which state is presented; an entry decides only where inside it the user lands, and only where that state has such a place. An entry can neither suppress, delay, substitute, nor re-enter a state.
+
+**Stale context is never surfaced as a condition.** No case produces a notice, a warning, a restoration-failed state, an error, or an announcement that the user's place moved (§12A.17). The unread badge (§12A.4) is the workspace's existing and only signal that something arrived in a session while the user was away; a second signal about presentation state would report a fact the product does not own.
+
+**Nothing is reconstructed.** No case derives a proposition, provenance, a resolution, a status, an amount, a draft identity, or any other category-C value from a retained entry or from what the surface previously showed (§8.6, F1). "The idle state" is the surface's state for having nothing, never a rendering assembled from what the session used to show.
+
+**Restoration is not navigation.** No case changes the URL, pushes or replaces a history entry, mounts a route, or replaces either landmark (§12A.23).
+
+**Focus and announcement.** Activation moves focus to the activated tab and restoration moves it no further; restoration fires no announcement of its own (§12A.17).
+
+**Invariant (F29).** For every row of (A), including each enumerated overlap, activating a session in that condition presents exactly the stated Main Application Surface state; for every row of (B) each retained entry resolves to its target or to its stated default without being cleared; no category-C value is reconstructed; and no notice, error state, or announcement is produced about the restoration. *Named mutation: clear a session's retained context when a result is applied to it while it is not active; (B) row 2's re-resolution must redden. Second named mutation: render (B) row 2 from the value captured when the entry was written; the "nothing is reconstructed" row must redden. Third named mutation: swap rows 1 and 2 of (A); the "creating beats created" overlap must redden.*
+
+### 12A.23 Shell structural persistence and V1 surface containment
+
+Deepens §1, §5.1, §6, §8.6; owner decision 11; contract 05 §7, 12 "Structure and abstraction", 16 §5. Ledger: **F30**. Serves **F1**, **F6**.
+
+**Two landmarks, one identity each, for the page's lifetime.** The shell renders exactly one complementary region — the Agent Surface — and exactly one `main` — the Main Application Surface (§5.1). Activating, creating, closing or reordering a session changes **what the Main Application Surface presents** and **which session the Agent Surface presents**. It changes neither landmark's existence, role, accessible name, or identity, and it unmounts and remounts neither.
+
+Stated so it is decidable: across any sequence of activations, creations, closes and reorders, at every rendered frame the count of complementary regions is 1 and the count of `main` elements is 1; both are the same elements throughout rather than replacements; and the Agent Surface's structure is not a function of the active session's result kind, status, or presented Main Application Surface state.
+
+**Session-controlled content, never session-controlled structure.** A session controls which state its Main Application Surface presents (§12A.22 (A)) and nothing about the shell. A session does not own, choose, register, declare, or supply a surface — in V1 there is nothing for it to choose between.
+
+**V1 has exactly one Main Application Surface** (§6, owner decision 11). "The shell is not architected as if it could only ever be Proposal Preparation" is a constraint on how the boundary is drawn and named — the Main Application Surface does not take proposal-shaped props at the shell boundary, and it is not named the proposal pane — and it is **not** a licence to build for a second one. The name is the abstraction decision 11 took; structure is not.
+
+**Forbidden, and closed for V1.**
+
+- A router, route, URL segment, query parameter, history entry, or navigation event for a workspace surface or a session. A session is not addressable, and restoration is not navigation (§12A.22).
+- A surface registry, surface map, surface factory, provider that resolves a surface, plugin point, or extension point.
+- A discriminant over surface kinds — a union, enum, constant map, or `switch` whose domain is "which application surface" — carrying one member in V1. One surface needs no discriminant; adding one is the generic session engine contract 16 §5 forbids and the premature abstraction contract 12 prohibits.
+- A second Main Application Surface, a dashboard, an analytics or statistics surface, a Product Library, a Customers or Settings surface, a proposal list, a session-history or archive surface, or any internal application route added to show that the shell could carry one (§6, design 10 §7).
+- A shell-level abstraction introduced because decision 11 named the surface generically.
+
+**Invariant (F30).** Across a sequence of session activations, creations, closes and reorders, the shell renders exactly one complementary region and exactly one `main`, both the same elements throughout; no URL, route, or history entry changes; and no module declares a second Main Application Surface or a surface-kind discriminant. *Named mutation: push a history entry on session activation; the "restoration is not navigation" row must redden. Second named mutation: unmount and remount the Agent Surface when the active session's result kind changes; the landmark-identity row must redden.* The absence half of this invariant is a source-level check, and under charter rule 15 it ships with a probe that **plants** the forbidden construct — a second surface-kind member — and observes the check fail; measuring the absence is not evidence that the check could ever observe the presence.
+
 
 ## 13. Conflicts discovered (surfaced, not silently resolved)
 
@@ -431,11 +1190,12 @@ Tab-strip tone, border-ramp collapse, hover easing, the positive token, half-pix
 3. Where the client subtree begins so that server-rendered structure composes around the interactive surfaces (contract 02 §1); the store-ladder position of §8.2 and §8.3 (contract 05 §5.1); which specific Radix primitives each composite interaction uses, whether a native element serves a given interaction better, and which primitive packages each milestone adds (the library itself is decided, §4.1 and §15 decision 6; the per-interaction mapping and package set are not).
 4. How component and hook verification is collected by the existing test runner configuration, which today claims only specific paths (§2.1).
 5. The concrete form, location, signatures, and sequencing of the browser-to-server boundary (§10.3), within what the applicable ratified contracts already fix.
+5a. The shell's component hierarchy and names; how the meaningful Main Application Surface context of §8.6 is represented (component state, a reducer, a feature store, or a combination under contract 05 §5.1); its exact keys and fields; and which interactions count as meaningful resumable context versus disposable mechanics (owner decision 11).
 6. Phase sizing so that every surface is buildable on fixtures first and each phase closes green on its own (charter, ≤ 8 criteria per phase).
 
 ## 15. Ratified owner decisions (0 open)
 
-No owner decision is open. The four cards presented in rounds 0–1 were decided by the owner on 2026-09-05 (§16 round 2). Each record below is the authority for its matter; the sections it names carry the propagated wording.
+No owner decision is open. The four cards presented in rounds 0–1 were decided by the owner on 2026-09-05 (§16 round 2); decisions 5–6 were amended on 2026-09-06 (§16 round 3); decisions 7–10 ratified the mechanism inventory's four recommendations on 2026-09-06 (§16 round 5); decision 11 amended the shell model on 2026-09-06 (§16 round 6). Each record below is the authority for its matter; the sections it names carry the propagated wording.
 
 ### Decision 1 — Slash palette: deferred from frontend-core V1
 
@@ -478,6 +1238,48 @@ No owner decision is open. The four cards presented in rounds 0–1 were decided
 - **Rationale.** The ratified experience contains several composites whose correct behaviour needs non-trivial mechanics (session tabs, focus-managed dialogs, anchored popovers, radio groups for typed choices if the backend supplies them, tooltips where justified, Escape behaviour, ARIA relationships, controlled and uncontrolled state). Building those mechanics independently throughout the application is where accessibility is usually lost (contract 15 §5); a headless foundation is the contract's own preferred answer.
 - **Consequences.** §4.1 fixes the layering (Radix mechanics, Tailwind styling, Lucide icons, Proposal Copilot composition, adapters and view models as the presentation boundary, backend contracts as truth) and the seven boundaries: no pre-emptive installation of the ecosystem, headless only, no premature local wrappers beyond the promotion rule, product semantics win with native elements preferred when simpler, state ownership unchanged (§8), accessibility never assumed (F6, §11), presentation-layer confinement. §5.3, §5.5, and §5.6 name the interactions that rest on it; §14.3 item 3 keeps the per-interaction mapping and the package set as planning decisions. Likely mappings, as guidance and not as an installation list: session tabs → Tabs; ask-agent and other true dialogs → Dialog; anchored surfaces → Popover; typed clarification choices, if ever supplied → Radio Group; supplemental information → Tooltip where justified. Contract 15 §5's requirement that the adoption be recorded in the contracts README, naming the widget that justified it, is satisfied on the product side by this record; the README rows still reading "none decided" are patched in a separate documentation change (§2.2).
 - **Still deferred.** Which primitives and packages each milestone actually adds; whether a given interaction uses a primitive or a native element.
+
+### Decision 7 — Unsent composer text is meaningful work (amendment, 2026-09-06)
+
+- **Decision.** A non-empty composer draft belongs to its session and requires explicit confirmation before that session is closed or discarded, including a draft made solely of whitespace. It remains page-lifetime UI mechanics, not server or workflow truth.
+- **Rationale.** A pasted but unsent brief can be the most costly work in the workspace to reproduce. V1 has no undo, archive, history, or reload recovery, so closing it silently would destroy real human work.
+- **Consequences.** §8.1 retains a non-empty draft with its session; §12A.6 adds it as the sixth meaningful-work input and preserves the false-positive-safe failure direction; F13 covers it. No client persistence is introduced.
+- **Still deferred.** Durable drafts, recovery after reload, undo, and archive.
+
+### Decision 8 — Refuse close during draft creation (amendment, 2026-09-06)
+
+- **Decision.** A session whose approval/execution turn is creating a Proposales draft cannot be closed or discarded until that turn resolves. This is refusal, not a confirm-with-warning variant.
+- **Rationale.** The request cannot be cancelled, and closing its only session could leave a real draft behind with no Copilot path to its editor URL.
+- **Consequences.** §12A.6 and §12A.15 refuse the destructive intent and retain the session until the result is attributed; F13 and F22 cover the rule. All other meaningful-work closes retain decision 2's confirmation guard.
+- **Still deferred.** Cancellation, durable recovery, and a proposal-history surface.
+
+### Decision 9 — Render title and narrative as written in V1 (amendment, 2026-09-06)
+
+- **Decision.** The review surface and client preview display title and narrative text exactly as supplied, including Markdown characters; V1 does not render rich text.
+- **Rationale.** The preview is explicitly an approximation, while rich rendering would add a sanitizer and a security-sensitive rendering surface for limited fidelity gain.
+- **Consequences.** §12A.20 renders all model, human, and catalog strings as text; F27 verifies the absence of a markup path. Proposales remains responsible for its own Markdown rendering.
+- **Still deferred.** Rich-text rendering, its sanitizer, and a future decision justifying both.
+
+### Decision 10 — Mark provenance, not client-computed change (amendment, 2026-09-06)
+
+- **Decision.** The review pane marks who stands behind a value from structural provenance and does not render a client-computed “changed since” flag.
+- **Rationale.** Origin is returned by the domain and supports approval; no V1 result supplies a per-leaf change record, so a browser diff would invent workflow truth.
+- **Consequences.** §12A.10 renders `source = "human"` as human-set and keeps agent/brief/content provenance distinct; F17 guards the total map. The wording of the visual flag remains a design delta.
+- **Still deferred.** A server-supplied turn-level or per-leaf change record and any presentation that consumes it.
+
+### Decision 11 — Persistent agent shell + session-controlled main application surface (amendment, 2026-09-06)
+
+- **Decision.** Frontend-core uses one persistent split workspace shell. The left Agent Surface remains structurally fixed. The right side is the Main Application Surface. Each page-lifetime session owns the meaningful presentation context needed to resume its current Main Application Surface state in addition to its workflow/conversation context. Switching sessions restores that meaningful context. Disposable mechanics are not preserved. Proposal Preparation is the only Main Application Surface implemented in V1, and this decision does not add any future app surface to V1 scope.
+- **Rationale.** The shell had been described as "Agent Surface + Proposal Surface", which architected the right side as inherently and permanently proposal-specific and implied that session continuity covered only the conversation and workflow side. A session is not merely a conversation tab: a user who leaves session A reviewing a line item and returns from session B's preview expects A as they left it. Fixing the shell abstraction now avoids re-architecting it later, without adding scope.
+- **Consequences.** §1 (shell model and diagram), §5.1 (split and landmarks), §5.3 (activation restores both surfaces' context; the restoration invariant), §2.4 (session and Main Application Surface rows), §3 item 6, §5.6 (the V1 review state), §6 (must-ship wording; deferred list names other surfaces and demonstrative routing as out of scope), §8.1, §8.3, §8.5, new §8.6 (meaningful context, disposable mechanics, authoritative truth; the no-snapshot prohibition), §11 and F1 (A → B → A restoration with no reconstructed truth), §12A.1 (the runtime record carries category-A context; forbidden list extended), §12A.6 (exclusion wording), §14.3 item 5a. No backend or domain ownership changed: category-C values stay server-returned and are never reconstructed from presentation or session context. No persistence was added: the context is page-lifetime, non-authoritative, non-persistent, and adapter-era where applicable; a reload still destroys the workspace (§7). V1 scope did not expand: no dashboard, Product Library, Customers, Settings, analytics, proposal list, history, other surface, or internal routing.
+- **Still deferred.** Any Main Application Surface other than Proposal Preparation; the concrete representation of meaningful context and the list of interactions that qualify (§14.3 item 5a).
+
+### Decision 12 — Warn before browser departure during draft creation (amendment, 2026-09-06)
+
+- **Decision.** While any open session is creating a Proposales draft, the page requests the browser's standard departure confirmation before a reload, browser-tab/window close, or navigation away. It does not request that warning for other unsent or meaningful work.
+- **Rationale.** A closing-session refusal already protects the one workspace link to a real draft while creation is pending. A reflex reload or navigation can otherwise destroy that link through a different exit, leaving the draft created in Proposales but inaccessible from this page-lifetime workspace.
+- **Consequences.** §7 and §12A.6 define the all-sessions creation predicate, browser-owned warning limitation, and no-cancellation/no-recovery boundary; F13 covers the inactive-creating-session case. No client persistence, recovery surface, cancellation, transport change, or backend-owned contract is added.
+- **Still deferred.** Durable recovery, cancellation, proposal history, and departure warnings for unsent work outside draft creation.
 
 ### 15.1 Ratification surface (presented after rounds 0–1; ratified in §16 round 2)
 
@@ -535,3 +1337,50 @@ This section is left as the record of what was presented; it is not a running su
 - **Superseded statements:** §5.9's "controls use a real icon set only if a recorded decision adopts one" and §14.3's "whether any composite widget justifies the recorded adoption of an accessible-primitive library". The library choices are decided; the per-interaction use is not.
 - **Repository-level follow-up identified, not performed here:** the contracts README "Scaffold decisions record" and "Resolved decisions" rows reading "Component library: none decided" and contract 15 §5's "intentionally undecided" status need a documentation patch recording Radix UI Primitives (headless, per-widget packages) and Lucide, per contract 15 §5 and 13 §5. The root README "Tech stack" table gains the two entries when the first package lands.
 - **Backend/domain boundary:** unchanged. No backend contract, service interface, view DTO, or integration schema references either library (§4.1, §11).
+
+**Round 4 (2026-09-06, mechanism inventory round 1).** Status stays `RATIFIED`; four owner cards are open and are relayed in the round's handoff. No product semantics, scope-ladder surface, ledger objective (F1–F7), state boundary, owner decision, or backend/domain contract changed, so the gate does not re-open. Four owner cards are pending ratification; each names the section it would change if the owner rules against the contract as written.
+
+- **New §12A** (`Frontend mechanism contracts`), twenty subsections plus a binding note, placed beside §12 and renumbering nothing. It defines the presentation-side mechanism for: session identity and the runtime record; turn origin attribution; the tab-status precedence order; unread and attention; tab order, reorder, close and focus; the meaningful-work guard's shape and failure direction; the closed derivation register; the presentation boundary with its fixture and seam-replacement rules; domain-result and pill-kind rendering; provenance, absence and approvability; the review and preview field sets; money rendering; clarification submission; inline edit and validation paths; approval submission, the pending guard and terminality; the `ErrorDto` and `failed` treatment maps; focus and announcement transitions; thread autoscroll; narrow-width resilience; and free-text and external-link rendering.
+- **Ledger extended with F8–F27** in §12, appended below F1–F7. Existing IDs never moved; each new entry names its contract section and the defect family it guards, and is a trace target a phase criterion may cite.
+- **Backend-owned mechanisms cited, never redefined:** §17A.1 (Path, `Sourced`, `SourcedOrAbsent`, `Money`), §17A.2 (Generation ID, terminality), §17A.3 (the caller-held state), §17A.4 (structural provenance and the source policies), §17A.5 (absence, omission, defaults), §17A.6 (item policies and approvability), §17A.7 (questions, answers, the skip), §17A.9 (human-set is exactly `source = human`), §17A.10 (the acknowledgment literal), §17A.12 (Applied Pricing and the money rule), §17A.13 (the error taxonomy and check order), §17A.16 (text bounds and Markdown), §17A.17 (conversation context). §12A defines only what consumes them.
+- **Ambiguities resolved unilaterally and recorded** (each is an owner card or a technical resolution in the round handoff): the "Updated" flag has no V1 source and is not rendered (card 4); "Skip all" preserves explicitly typed answers and skips only the unanswered; the readiness count never collapses `unresolved` and `deferred_by_user`; `failed` is not a seventh tab status and is resolved by precedence rows 4–5; retry is a single `details.retryable` rule rather than a per-code judgement; a drag that ends without a drop keeps its last committed order, per the specification's current behaviour, and the alternative is reported as a design delta.
+- **Design deltas reported, not implemented:** the "Updated"/human-flag vocabulary; `ready` versus `created` dot distinction; the autoscroll threshold; the abandoned-drag order; the narrow-width mechanism; "Skip all" semantics. Each stays owned by the design specifications (§14.2, design 10 §4); no specification was edited.
+- **Not decided here, deliberately:** the approval control's enabled/disabled/warning treatment (C-3, §14.2); the per-interaction primitive mapping and package set (§14.3 item 3); the concrete form of the browser-to-server boundary (§14.3 item 5); phase sizing; every file, component, hook, store, adapter API, and transport signature.
+- **Exit gate:** every mechanism ranked at silent-failure risk now carries a contract-grade definition with a testable invariant and, where the rule is a construction requirement, a named mutation. The implementation planner may begin on every mechanism whose contract is final; cards 1 and 2 gate the phase that implements the close/discard guard and the creation lifecycle.
+
+**Round 5 (2026-09-06, owner resolution of mechanism-inventory cards).** Status stays `RATIFIED`: David confirmed all four recommendations from the round-1 inventory handoff, so no decision remains open and the inventory exit gate is passed without a scoped hold.
+
+- **Decision 7:** a non-empty per-session composer draft, including whitespace-only text, is meaningful work; closing or discarding it requires confirmation. §8.1 and §12A.6 changed; F13 now names six inputs.
+- **Decision 8:** close and discard are refused, not confirmed, while the approval/execution turn is creating a draft. §12A.6 and §12A.15 changed; F13 and F22 now name the refusal.
+- **Decision 9:** title and narrative render as written in V1, with Markdown characters literal. §12A.20 already carried that resolution; it is now ratified as decision 9.
+- **Decision 10:** the review pane marks structural provenance and never computes a "changed since" flag. §12A.10 already carried that resolution; it is now ratified as decision 10.
+- **Inventory exit gate:** all twenty frontend presentation mechanisms are contract-grade, all owner cards are resolved, and `implementation-planner` may begin. The inventory handoff remains the historical record; it is not rewritten.
+
+**Round 6 (2026-09-06, owner amendment: persistent agent shell + session-controlled Main Application Surface).** Status stays `RATIFIED`; this is an architectural shell clarification, not a scope expansion or a semantic change to any ratified product decision, so the gate does not re-open.
+
+- **Owner:** David (repository owner). **Decision:** 11, recorded in §15.
+- **Shell model clarified:** the persistent shell is Agent Surface + Main Application Surface (§1, §5.1). The Agent Surface remains structurally persistent; the right side is now explicitly the Main Application Surface, session-controlled, and Proposal Preparation is the only Main Application Surface implemented in V1. "Permanently split" is restated as persistent Agent Surface + Main Application Surface, not a permanently proposal-only pane.
+- **Session-controlled context recorded:** a session owns its workflow/conversation context and the meaningful Main Application Surface working context needed to resume it; activating a session activates both (§2.4, §5.3, §8.3, §12A.1); switching restores both (§5.3, §11, F1).
+- **Three categories fixed (new §8.6):** meaningful page-lifetime workspace context (may survive a switch), disposable UI mechanics (reset naturally, never snapshotted), authoritative domain/workflow truth (never client-owned). The prohibition on snapshotting arbitrary DOM/component state or every transient control is recorded in §8.6 and §12A.1. §8.1 no longer lists the active work surface or a selected review item as unconditionally disposable; whether they qualify as category A is planning's (§14.3 item 5a); the typed text of an in-progress inline edit stays disposable per §12A.14, unchanged. §8.5 gains the allowed/not-allowed distinction.
+- **§12A consistency:** §12A.1's runtime record carries category-A context and its forbidden list is extended; §12A.6's exclusion wording no longer rests on §8.1's classification; §12A.2, §12A.5, §12A.7, and §12A.8 are unchanged, because origin attribution, tab order, the derivation register, and the presentation boundary already apply to the whole runtime record. No parallel state system is introduced.
+- **Stale assumptions removed:** the §1 diagram's "Proposal surface" header, §5.1's "proposal surface right" and "`main` for the proposal", and the reading that session switching preserves only conversation/workflow data. Proposal-specific wording inside §5.6–§5.8 and F2 stays, because those sections describe the Proposal Preparation surface V1 renders.
+- **No backend/domain ownership changed; no persistence added (§7, §8.3); V1 scope not expanded (§6).** The intention remains `RATIFIED` and ready for frontend implementation planning.
+
+**Round 7 (2026-09-06, mechanism inventory round 2 — the shell amendment and the round-5 ratifications).** Status stays `RATIFIED`; **one owner card is open** and is relayed in the round's handoff. No product semantics, scope-ladder surface, ledger objective (F1–F7), state boundary, owner decision, or backend/domain contract changed, so the gate does not re-open. The card is an addition to owner decision 8's reach, not a defect in it; on silence the contract stands as written and planning proceeds.
+
+- **Why the round existed.** Rounds 5 and 6 both landed after the round-1 inventory. Round 6 made F1 assert an observable — A → B → A restores A's meaningful Main Application Surface context with no reconstructed truth — that no mechanism contract defined, and §8.6 deliberately left the representation and the qualifying-interaction list to planning (§14.3 item 5a). "Meaningful" is an adjective, which charter rule 5 forbids shipping a mechanism on.
+- **New §12A.21** (retained Main Application Surface context): the closed named entry set fixed in the naming registry before restoration is implemented; the four conjunctive qualification conditions; the exclude-on-doubt direction for residual undecided candidates, derived from §8.6's own word *explicitly*; the two admissible value classes (a closed presentation enumeration member, or a domain identity) and the closed never-admissible list; the write rule (only the deliberate user act), the read rule (only at render), the non-interaction with the turn-result path, and the default-on-unresolved rule; the seam-survival and keying rules; and the reconciliation that the Agent Surface's composer draft is governed by §8.1 and decision 7, not by §8.6.
+- **New §12A.22** (restoration on activation): a first-match-wins four-row precedence over the session record deciding which Main Application Surface state is presented, with its six overlaps enumerated; a total three-row function for how each retained entry resolves; the rules that an entry never overrides a state, that stale context is never surfaced as a condition, that nothing is reconstructed, and that restoration is not navigation. It also names the Proposal Preparation **idle** state as the presented state for a session that has run no turn, and reports that no design specification defines it.
+- **New §12A.23** (shell structural persistence and V1 surface containment): the single-complementary-region / single-`main` identity invariant across every session operation, stated so it cannot be satisfied by routing or a second surface; the session-controls-content-never-structure rule; and a closed forbidden list keeping decision 11's abstraction from becoming speculative infrastructure — no router or route, no surface registry or factory, no one-member surface-kind discriminant, no second surface, dashboard, list, history, or internal route.
+- **Ledger extended with F28–F30**, appended below F27. Existing IDs never moved and no existing invariant's text changed. **F1 was not amended**: its restoration clause is now served by F28, F29 and F30, which is what makes it measurable.
+- **Amended in place, each because the delta falsified a clause.** §12A.1 (the record's context clause now cites §12A.21 for qualification and resolution). §12A.6 (the close-guard predicate is separated from the `empty` tab status, which decision 7 made a different condition; input (6)'s lifetime and its behaviour while the clarification panel replaces the composer; the refusal's totality over every close and discard path, its evaluation before any list mutation, its required visibility, and the explicit statement that reload is outside it). §12A.7 (the register's closure sentence now admits the two stored presentation values and forbids either from reading the other; the counter sentence is scoped to counters). §12A.8 (retained context is inside the seam-replacement claim, with the keying rule that keeps it true). §12A.17 (a focus row for restoration, and the rule that restoration announces nothing of its own).
+- **Totality re-checked and still total, unchanged:** §12A.2 (results never touch retained context, so its four resolution rows are unaffected and the active session id is still never read there), §12A.5 (every close row already runs after the §12A.6 guard, so a refusal short-circuits them all including the last-tab replacement), §12A.10, §12A.15, §12A.20.
+- **Ambiguities resolved unilaterally and recorded:** the intention's category-A illustration wins over design 07 §4.3's "toggle state is disposable UI — losing it on session switch is acceptable", because state ownership is not the design specifications' authority (design 10 §1) and decision 11's own rationale names that scenario — reported as a design delta, no specification edited; stale retained context resolves silently to its default with no notice, the unread badge being the workspace's existing signal; restoration produces no announcement of its own; the Proposal Preparation idle state is the presented state for a session with no turn, and its visual treatment is a design gap.
+- **Not decided here, deliberately:** which interactions qualify as category A and how the context is represented (§8.6, §14.3 item 5a); the shell's component hierarchy and names; the idle state's visual treatment (design); the approval control's treatment (C-3); the per-interaction primitive mapping (§14.3 item 3); the browser-to-server boundary's form (§14.3 item 5); phase sizing; every file, component, hook, store, adapter API, and transport signature.
+- **Exit gate:** every mechanism the rounds-5/6 delta introduced or left as an adjective now carries a contract-grade definition with a testable invariant and named mutations. `implementation-planner` may proceed. The open card gates no phase; it would add one criterion to whichever phase implements the creation lifecycle.
+
+**Round 8 (2026-09-06, owner resolution of the mechanism-inventory round-2 card).** Status stays `RATIFIED`: David confirmed the round-2 recommendation, so no owner decision remains open and the inventory exit gate is fully passed.
+
+- **Decision 12:** while any session is creating a Proposales draft, browser-level departure requests the platform's standard confirmation; other unsent or meaningful work does not trigger it. §7 and §12A.6 now define the total all-sessions condition, browser limitation, and no-cancellation/no-recovery boundary; F13 gains the inactive-creating-session invariant and its named mutation.
+- **Scope and ownership unchanged:** the warning is a presentation-side request, not persistence, a recovery path, a cancellation protocol, a transport mechanism, or a backend/schema contract. The browser owns its wording and availability; confirmation of departure still destroys the page-lifetime workspace.
+- **Inventory exit gate:** all round-2 mechanisms are contract-grade, the only owner card is resolved, and `implementation-planner` may begin.
