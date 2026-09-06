@@ -218,15 +218,28 @@ describe("proposition schema", () => {
     if (leaf[0] === "title") value.title = { known: true, ...sourced("x".repeat(cap + 1)) };
     else if (leaf[0] === "descriptionNarrative") value.descriptionNarrative = { known: true, ...sourced("x".repeat(cap + 1)) };
     else if (leaf[0] === "blocks" && leaf[2] === "reviewerComment") value.blocks[0].reviewerComment = { known: true, ...sourced("x".repeat(cap + 1)) };
-    else if (leaf[0] === "commercialNotes") value.commercialNotes[0].text = "x".repeat(cap + 1);
+    else if (leaf[0] === "commercialNotes") value.commercialNotes[0].text.value = "x".repeat(cap + 1);
     else if (leaf[0] === "agentRationale") value.agentRationale = { known: true, ...sourced("x".repeat(cap + 1)) };
     else if (leaf[0] === "warnings") value.warnings[0].text = { value: "x".repeat(cap + 1), source: "inferred" };
     else if (leaf[0] === "assumptions") value.assumptions[0].note = { value: "x".repeat(cap + 1), source: "inferred" };
     else value.blocks[0].alternatives[0].reason = { value: "x".repeat(cap + 1), source: "inferred" };
-    expect(proposition.propositionSchema.safeParse(value).success, leaf.join(".")).toBe(false);
+    const result = proposition.propositionSchema.safeParse(value);
+    expect(result.success, leaf.join(".")).toBe(false);
+    if (!result.success && leaf[0] === "commercialNotes") {
+      expect(result.error.issues.some((issue) => issue.code === "too_big" && issue.path.map(String).join(".") === "commercialNotes.0.text.value")).toBe(true);
+    }
 
     const trimmed = clone(fixtures.validProposition());
-    trimmed.title = { known: true, value: "  x  ", source: "inferred" };
-    expect((proposition.propositionSchema.parse(trimmed) as AnyRecord).title.value).toBe("x");
+    if (leaf[0] === "title") trimmed.title = { known: true, value: "  x  ", source: "inferred" };
+    else if (leaf[0] === "descriptionNarrative") trimmed.descriptionNarrative = { known: true, value: "  x  ", source: "inferred" };
+    else if (leaf[0] === "blocks" && leaf[2] === "reviewerComment") trimmed.blocks[0].reviewerComment = { known: true, value: "  x  ", source: "inferred" };
+    else if (leaf[0] === "commercialNotes") trimmed.commercialNotes[0].text.value = "  x  ";
+    else if (leaf[0] === "agentRationale") trimmed.agentRationale = { known: true, value: "  x  ", source: "inferred" };
+    else if (leaf[0] === "warnings") trimmed.warnings[0].text = { value: "  x  ", source: "inferred" };
+    else if (leaf[0] === "assumptions") trimmed.assumptions[0].note = { value: "  x  ", source: "inferred" };
+    else trimmed.blocks[0].alternatives[0].reason = { value: "  x  ", source: "inferred" };
+    let parsed: AnyRecord = proposition.propositionSchema.parse(trimmed) as AnyRecord;
+    for (const segment of leaf) parsed = parsed[segment];
+    expect(parsed.value).toBe("x");
   });
 });

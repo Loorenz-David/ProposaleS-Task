@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { knownOrAbsentSchema } from "@/lib/values/absence";
 import { currencyCodeSchema, moneySchema } from "@/lib/values/money";
 import { uuidV4Schema } from "@/lib/values/uuid";
 
@@ -39,7 +38,17 @@ type Sourced<T, S extends PropositionSource = PropositionSource> = {
   ref?: Ref;
 };
 
-function sourcedSchema<T, const S extends readonly PropositionSource[]>(inner: z.ZodType<T>, sources: S) {
+const sourcedUnionBrand = Symbol("sourcedUnion");
+type SourcedUnionSchema<T> = z.ZodType<T> & {
+  readonly [sourcedUnionBrand]: true;
+  readonly options: readonly z.ZodObject<z.ZodRawShape>[];
+};
+const sourcedUnionSchemas = new WeakSet<object>();
+
+function sourcedSchema<T, const S extends readonly PropositionSource[]>(
+  inner: z.ZodType<T>,
+  sources: S,
+): SourcedUnionSchema<Sourced<T, S[number]>> {
   const options = sources.map((source) => {
     const ref = source === "proposales_content"
       ? refSchema.extend({ variationId: z.string().min(1) })
@@ -62,7 +71,9 @@ function sourcedSchema<T, const S extends readonly PropositionSource[]>(inner: z
     });
   });
 
-  return z.discriminatedUnion("source", options as any) as z.ZodType<Sourced<T, S[number]>>;
+  const union = z.discriminatedUnion("source", options as any) as unknown as SourcedUnionSchema<Sourced<T, S[number]>>;
+  sourcedUnionSchemas.add(union);
+  return union;
 }
 
 export function consequentialSchema<T, const S extends readonly ConsequentialSource[]>(
@@ -80,17 +91,19 @@ export function presentationalSchema<T>(inner: z.ZodType<T>) {
   return sourcedSchema(inner, ["brief", "proposales_content", "human", "inferred"] as const);
 }
 
-export function sourcedOrAbsent<T>(leafSchema: z.ZodType<T>) {
-  const options = (leafSchema as any).options;
-  if (!options) return knownOrAbsentSchema(leafSchema) as z.ZodTypeAny;
-  const knownOptions = options.map((option: z.ZodObject<any>) =>
-    option.extend({ known: z.literal(true) }),
-  );
-  const knownSchema = z.discriminatedUnion("source", knownOptions as any);
+export function sourcedOrAbsent<T>(options: SourcedUnionSchema<T>) {
+  if (!sourcedUnionSchemas.has(options)) {
+    throw new TypeError("sourcedOrAbsent requires a sourced source-union schema");
+  }
+  const knownOptions = options.options.map((option) => option.extend({ known: z.literal(true) }));
+  const knownSchema = z.discriminatedUnion("source", knownOptions as [
+    (typeof knownOptions)[number],
+    ...(typeof knownOptions)[number][],
+  ]);
   return z.discriminatedUnion("known", [
     knownSchema,
     z.strictObject({ known: z.literal(false) }),
-  ] as any) as z.ZodTypeAny;
+  ] as [typeof knownSchema, z.ZodObject<{ known: z.ZodLiteral<false> }>]) as z.ZodTypeAny;
 }
 
 export const positiveFiniteNumberSchema = z.number().positive();

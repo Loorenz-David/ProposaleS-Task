@@ -6,7 +6,6 @@ export type Proposition = z.infer<typeof propositionSchema>;
 
 export type ConsequentialLeafDescriptor = {
   path: string[];
-  seed: unknown;
   value: unknown;
   wrapper: "sourcedOrAbsent" | "bare";
   kind?: "deadline" | "term" | "scope_commitment";
@@ -20,21 +19,21 @@ const absent = () => ({ known: false as const });
 const known = <T>(value: T, source: "brief" | "human" | "inferred", ref?: Record<string, unknown>) => ({ known: true as const, value, source, ...(ref ? { ref } : {}) });
 
 export const CONSEQUENTIAL_LEAF_DESCRIPTORS: ConsequentialLeafDescriptor[] = [
-  { path: ["recipient", "value", "firstName"], seed: "Ada", value: "Ada", wrapper: "sourcedOrAbsent" },
-  { path: ["recipient", "value", "lastName"], seed: "Lovelace", value: "Lovelace", wrapper: "sourcedOrAbsent" },
-  { path: ["recipient", "value", "email"], seed: "ada@example.com", value: "ada@example.com", wrapper: "sourcedOrAbsent" },
-  { path: ["recipient", "value", "phone"], seed: "+46123456789", value: "+46123456789", wrapper: "sourcedOrAbsent" },
-  { path: ["recipient", "value", "companyName"], seed: "Analytical Engines", value: "Analytical Engines", wrapper: "sourcedOrAbsent" },
-  { path: ["blocks", "0", "contentId"], seed: "188485", value: "188485", wrapper: "bare" },
-  { path: ["blocks", "0", "quantity"], seed: 2, value: 2, wrapper: "sourcedOrAbsent" },
-  { path: ["blocks", "0", "optional"], seed: false, value: false, wrapper: "sourcedOrAbsent" },
-  { path: ["commercialNotes", "0", "amount"], seed: { amountMinor: 1200000, currency: "EUR" }, value: { amountMinor: 1200000, currency: "EUR" }, wrapper: "sourcedOrAbsent" },
-  { path: ["commercialNotes", "0", "currency"], seed: "EUR", value: "EUR", wrapper: "sourcedOrAbsent" },
-  { path: ["commercialNotes", "0", "taxBasis"], seed: "including_tax", value: "including_tax", wrapper: "bare" },
-  { path: ["commercialAssumptions", "0", "statedValue"], seed: "2026-12-31", value: "2026-12-31", wrapper: "bare", kind: "deadline" },
-  { path: ["commercialAssumptions", "1", "statedValue"], seed: "12 months", value: "12 months", wrapper: "bare", kind: "term" },
-  { path: ["commercialAssumptions", "2", "statedValue"], seed: "Onboarding and support", value: "Onboarding and support", wrapper: "bare", kind: "scope_commitment" },
-  { path: ["emptyDraftConfirmation"], seed: true, value: true, wrapper: "sourcedOrAbsent" },
+  { path: ["recipient", "value", "firstName"], value: "Ada", wrapper: "sourcedOrAbsent" },
+  { path: ["recipient", "value", "lastName"], value: "Lovelace", wrapper: "sourcedOrAbsent" },
+  { path: ["recipient", "value", "email"], value: "ada@example.com", wrapper: "sourcedOrAbsent" },
+  { path: ["recipient", "value", "phone"], value: "+46123456789", wrapper: "sourcedOrAbsent" },
+  { path: ["recipient", "value", "companyName"], value: "Analytical Engines", wrapper: "sourcedOrAbsent" },
+  { path: ["blocks", "0", "contentId"], value: "188485", wrapper: "bare" },
+  { path: ["blocks", "0", "quantity"], value: 2, wrapper: "sourcedOrAbsent" },
+  { path: ["blocks", "0", "optional"], value: false, wrapper: "sourcedOrAbsent" },
+  { path: ["commercialNotes", "0", "amount"], value: { amountMinor: 1200000, currency: "EUR" }, wrapper: "sourcedOrAbsent" },
+  { path: ["commercialNotes", "0", "currency"], value: "EUR", wrapper: "sourcedOrAbsent" },
+  { path: ["commercialNotes", "0", "taxBasis"], value: "including_tax", wrapper: "bare" },
+  { path: ["commercialAssumptions", "0", "statedValue"], value: "2026-12-31", wrapper: "bare", kind: "deadline" },
+  { path: ["commercialAssumptions", "1", "statedValue"], value: "12 months", wrapper: "bare", kind: "term" },
+  { path: ["commercialAssumptions", "2", "statedValue"], value: "Onboarding and support", wrapper: "bare", kind: "scope_commitment" },
+  { path: ["emptyDraftConfirmation"], value: true, wrapper: "sourcedOrAbsent" },
 ];
 
 function baseProposition(): Proposition {
@@ -116,8 +115,6 @@ export function leafInferred(descriptor: ConsequentialLeafDescriptor): Propositi
   const leaf = descriptor.wrapper === "sourcedOrAbsent"
     ? { known: true, value: descriptor.value, source: "inferred" }
     : { value: descriptor.value, source: "inferred" };
-  if (descriptor.path[0] === "commercialAssumptions") {
-    setAtPath(proposition, descriptor.path, { value: descriptor.value, source: "inferred" });
-  } else setAtPath(proposition, descriptor.path, leaf);
+  setAtPath(proposition, descriptor.path, leaf);
   return proposition as Proposition;
 }

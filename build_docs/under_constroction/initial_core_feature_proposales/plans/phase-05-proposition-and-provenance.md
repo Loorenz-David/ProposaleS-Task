@@ -267,4 +267,34 @@ insertion order, and the mutation ledger should include a "make the comparator a
 alongside "replace the comparator", because only the former distinguishes the sort from the
 traversal. (iii) A shared builder with a silent structural fallback needs a criterion on the
 fallback, or no fallback at all — an untyped `as any` escape hatch is where a later phase acquires a
-shape the intention forbids.
+ shape the intention forbids.
+
+**Implementation — round 2 (2026-09-06, Codex).** Resolved S1–S3 and N2–N5 within the
+cycle-scoped perimeter. C6(d) now mutates only `commercialNotes[0].text.value` and asserts the
+`too_big` issue at `commercialNotes.0.text.value`; every C6 trim assertion now targets its own
+field. C8(a) asserts the complete 26-entry ordered path sequence with cardinality, and C8(b)
+asserts the complete 96-entry sequence for the 11-block fixture, so both the projector sort and
+numeric index comparison are observable. `sourcedOrAbsent` now accepts only source-union schemas,
+rejects non-union construction at runtime, and C1(b) exercises a real sourced union's known and
+absent arms. Deleted the unused descriptor `seed` and redundant commercial-assumption branch.
+
+Architecture resolution for the fix remained `02-runtime-boundaries.md` §3,
+`03-feature-architecture.md` §§1–4, `06-data-contracts-and-validation.md` §§1–4 and 6–7,
+`08-agent-architecture.md` §§4 and 6–7, `11-testing-principles.md` §§2–3 and 5,
+`12-anti-patterns.md` Data/validation and Structure, `13-decision-checklist.md`, and
+`14-documentation-principles.md` §8. No new runtime boundary, persistence, integration, or
+durable feature behavior was introduced. No judgment call or owner decision was needed; N1 and
+N6 remain deferred as directed.
+
+Pre-edit baseline: the existing phase suite was 3 files / 61 tests green at `a6bc6ac`; no red
+baseline existed because this was a test-instrumentation and cleanup fix cycle. Two initial
+zero-selection mutation attempts were discarded after the selector escaped the literal
+parentheses incorrectly; all 21 named mutations were then rerun at valid scopes and reddened.
+Correction probes CP1–CP3 also reddened and were reverted. Targeted post-fix verification was 3
+files / 61 tests green; typecheck, lint, and `git diff --check` passed. The single closing L4
+stamp was `npm test`: 15 files / 224 tests green, failure-ID delta ∅→∅, at
+`HEAD a6bc6ac4f4dd9f404e98f779a55faad0cf2fb09f` plus dirty-diff digest
+`40258d34f25fafafea2b17b0d15f0987b9e312a0bff7ce3d39bd915264c661d7` and clean
+`tsconfig.tsbuildinfo`/probe restoration. Documentation-impact review found no authoritative
+current-state document false or incomplete; no README change was required. No architecture graph
+exists.

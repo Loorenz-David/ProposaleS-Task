@@ -12,12 +12,16 @@ describe("proposal shared schemas", () => {
   });
 
   it("C1(b) requires an explicit absent value", async () => {
-    const { sourcedOrAbsent } = await import("./shared");
-    const schema = z.strictObject({ q: sourcedOrAbsent(z.string()) });
+    const { consequentialSchema, sourcedOrAbsent } = await import("./shared");
+    const schema = z.strictObject({ q: sourcedOrAbsent(consequentialSchema(z.string(), ["brief", "human"])) });
     const missing = schema.safeParse({});
     expect(missing.success).toBe(false);
     if (!missing.success) expect(missing.error.issues[0].path).toEqual(["q"]);
+    expect(schema.parse({ q: { known: true, value: "x", source: "brief" } })).toEqual({
+      q: { known: true, value: "x", source: "brief" },
+    });
     expect(schema.parse({ q: { known: false } })).toEqual({ q: { known: false } });
+    expect(() => sourcedOrAbsent(z.string() as never)).toThrow(TypeError);
   });
 
   it("C1(c) requires a content reference", async () => {
