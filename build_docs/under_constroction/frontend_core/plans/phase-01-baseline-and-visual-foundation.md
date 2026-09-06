@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **State** | `IMPLEMENTED` |
+| **State** | `APPROVED` |
 | **Criteria** | 8 |
 | **Projection** | not waived; round 0 returned `AMENDMENTS_REQUIRED` (21 rows), all routed 2026-09-06 |
 | **Serves** | F6 · `15 §2` · `15 §4` · `11 §1` · `11 §3` · intention §14.3 items 1 and 4 · conflict C-4 |
@@ -979,3 +979,45 @@ scope document was changed.
 The browser mutation runs initially hit a sandbox watcher/Chromium permission failure; those
 attempts are not counted as evidence. The valid targeted browser mutations were rerun with the
 approved elevated local Chromium path, and the final stamp is the only full-suite L4+ run.
+
+**2026-09-06 — coordinator, consuming fix round 2 and closing the phase (`APPROVED`).**
+
+*Verification, independent of the handoff's claims.* The checkpoint's nine files are all inside
+the fix prompt's declared perimeter; `package.json`, the lockfile, the design specifications and
+every other tracker row are untouched. Both blocking findings were re-checked at source: **B1**'s
+deleted bullet is restored **verbatim**, character for character, as its own bullet beside the new
+per-milestone one; **B2**'s nine-fragment denylist is gone and `DESIGN_01_RAMP_NAMES` is asserted
+as a superset of the declared names.
+
+*The central guard was exercised with inputs nobody in the cycle used.* B2's whole defect was a
+guard that reddened only on the examples it was handed, so the coordinator tested the replacement
+against **seven** component-level names — the five the reviewer planted (`--color-tab-active-bg`,
+`--color-card-header-bg`, `--color-pill-bg`, `--color-thread-bg`, `--color-fg-ask-glyph`), plus
+two of the coordinator's own invention (`--color-clarification-panel-bg`,
+`--color-approve-btn-ring`) — and **all seven are caught**, while two legitimate ramp names
+(`--color-fg-quiet`, `--color-bg-card`) pass. The allowlist is exactly the declared set: 81 names,
+zero declared-but-unlisted, zero dead entries. That is the shape B2's correction clause specified
+— any new name is an offender until the enumeration is amended alongside master plan §6.5A.
+
+*The other repairs, verified structurally.* S5 took the rename branch and the ramp is now
+monotonic — `--color-fg-quiet` carries the corrected `#84868c` and `--color-fg-quietest` the
+darker `#7c7e84`, so "quietest" is again the dimmest. S2's correction 6 is genuinely two-sided,
+with `reducedMotion: "reduce"` and `"no-preference"` contexts and an
+`expect(animation.name).not.toBe("none")` subject guard, which is what makes the no-collapse side
+mean anything. S3's C1(e) now asserts an exact list of violation **kinds** rather than a count.
+S1's two documents are patched; S6's C4(d) is discharged by `runVitestList()`.
+
+*Arithmetic.* 15 declared, 15 executed, summands re-derived and correct; plus the three
+coordinator-required unnamed probes (U1–U3), each red and reverted. Closing stamp on the handed-over
+tree: `npm test` 137/137, `npm run test:e2e` 27/27 (26 → 27 is correction 6's second side),
+typecheck, lint and build clean; failure-ID delta zero. The round honestly disclosed two invalid
+Playwright attempts that it discarded rather than counted.
+
+*How this phase was approved, and what that does not include.* **`APPROVED` without a re-review
+session, on the owner's explicit decision.** The coordinator's verification above is not a review:
+it confirmed the corrections landed, re-derived the arithmetic, checked the perimeter, and
+independently mutated the one guard whose failure mode had already been demonstrated. It did not
+adversarially re-derive the six should-fix repairs against the criteria, and no independent session
+saw the changed seam. The residual risk sits there and is recorded rather than glossed. It is
+partly offset by fix round 2 having run on **Codex**, which restored the cross-family property the
+§3 substitution had spent for rounds 0 and 1.
