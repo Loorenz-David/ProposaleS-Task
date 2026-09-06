@@ -4,12 +4,33 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { createAiClient } from "@/lib/ai/client";
+import { AI_CALL_TIMEOUT_MS, DEFAULT_RUN_BUDGETS } from "@/lib/ai/config";
 import { AiProviderError, GENERIC_AI_ERROR_MESSAGE } from "@/lib/ai/errors";
 import { DEFAULT_FACTORIES, resolveModel, type ModelFactory } from "@/lib/ai/registry";
 import type { LanguageModelInstance } from "@/lib/ai/types";
 import { parseServerEnv, serverEnvSchema } from "@/lib/env/server";
 
 const fakeModel = {} as LanguageModelInstance;
+const PRODUCTION_MODULES = [
+  "client.ts",
+  "config.ts",
+  "errors.ts",
+  "index.ts",
+  "registry.ts",
+  "scripted.ts",
+  "types.ts",
+] as const;
+
+function productionModules() {
+  const directory = join(process.cwd(), "src/lib/ai");
+  const files = readdirSync(directory).filter((file) => file.endsWith(".ts") && !file.endsWith(".test.ts"));
+  expect(files.sort()).toEqual([...PRODUCTION_MODULES].sort());
+  return { directory, files };
+}
+
+function hasForbiddenGatewayForm(source: string): boolean {
+  return /AI_SDK_DEFAULT_PROVIDER|@ai-sdk\/gateway|\bgateway\s*\(/.test(source);
+}
 
 function factoryMap(overrides: Partial<Record<"anthropic" | "openai", ModelFactory>> = {}) {
   return {
@@ -77,19 +98,15 @@ describe("AI provider registry", () => {
   });
 
   it("C2(b): finds no gateway or global-provider form in production modules", () => {
-    const directory = join(process.cwd(), "src/lib/ai");
-    const files = readdirSync(directory).filter((file) => file.endsWith(".ts") && !file.endsWith(".test.ts"));
-    const forbidden = (source: string) =>
-      /AI_SDK_DEFAULT_PROVIDER|@ai-sdk\/gateway|\bgateway\s*\(/.test(source);
+    const { directory, files } = productionModules();
 
     for (const file of files) {
-      expect(forbidden(readFileSync(join(directory, file), "utf8")), file).toBe(false);
+      expect(hasForbiddenGatewayForm(readFileSync(join(directory, file), "utf8")), file).toBe(false);
     }
   });
 
   it("C2(c): its scanner recognizes static, type-only, dynamic, and global forms", () => {
-    const forbidden = (source: string) =>
-      /AI_SDK_DEFAULT_PROVIDER|@ai-sdk\/gateway|\bgateway\s*\(/.test(source);
+    productionModules();
     const samples = [
       'import gateway from "@ai-sdk/gateway";',
       'import type { Gateway } from "@ai-sdk/gateway";',
@@ -97,13 +114,12 @@ describe("AI provider registry", () => {
       "globalThis.AI_SDK_DEFAULT_PROVIDER",
     ];
 
-    for (const sample of samples) expect(forbidden(sample)).toBe(true);
-    expect(forbidden("const model = provider(modelId);")).toBe(false);
+    for (const sample of samples) expect(hasForbiddenGatewayForm(sample)).toBe(true);
+    expect(hasForbiddenGatewayForm("const model = provider(modelId);")).toBe(false);
   });
 
   it("C2(d): every production module is server-only, including types.ts", () => {
-    const directory = join(process.cwd(), "src/lib/ai");
-    const files = readdirSync(directory).filter((file) => file.endsWith(".ts") && !file.endsWith(".test.ts"));
+    const { directory, files } = productionModules();
 
     for (const file of files) {
       expect(readFileSync(join(directory, file), "utf8").split("\n")[0], file).toBe('import "server-only";');
@@ -152,5 +168,13 @@ describe("AI provider registry", () => {
       const model = resolveModel({ provider, model: "m", apiKey: "k" });
       expect(typeof model).toBe("object");
     }
+  });
+
+  it("C7(a): run constants are positive integers and the call timeout fits the wall-time budget", () => {
+    for (const value of Object.values(DEFAULT_RUN_BUDGETS)) {
+      expect(Number.isInteger(value)).toBe(true);
+      expect(value).toBeGreaterThan(0);
+    }
+    expect(AI_CALL_TIMEOUT_MS).toBeLessThanOrEqual(DEFAULT_RUN_BUDGETS.wallTimeMs);
   });
 });

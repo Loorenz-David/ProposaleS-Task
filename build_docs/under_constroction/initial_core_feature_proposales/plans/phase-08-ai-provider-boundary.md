@@ -1,7 +1,7 @@
 ---
 plan: 8
 phase: AI provider boundary (`@/lib/ai`)
-state: CHANGES_REQUESTED
+state: IMPLEMENTED
 date: 2026-09-06
 author: implementation-planner round 1; amended by the coordinator at the projection round-0 fold
 ---
@@ -659,3 +659,30 @@ interpreted here. Nothing in phase 8 turns on it.
 Phase state → `CHANGES_REQUESTED`, fix round 2 dispatched at
 `prompts/implementer/phase-08-fix-round-2.implementer.md`. Under master §9.0.2 **no independent
 re-review follows**; the coordinator validates against the five preconditions and closes.
+
+### Implementer fix round 2 — 2026-09-06 (Codex)
+
+State **IMPLEMENTED**. The saved prescription was applied: `errors.ts` recognizes the SDK's
+status-less network `APICallError` as `transport`, recognizes decode causes on absent/2xx
+`APICallError` values including `TypeValidationError`, and orders decode → abort/timeout → status
+→ content-filter → no-output → network → generic. Decode is limited to absent/2xx status so a
+non-2xx reply with an unreadable body remains status-classified. Judgment: `invalid_response`
+does not retain the 2xx status because that status is not evidence of a usable response once
+decoding failed, and the acceptance row does not require it.
+
+The test repair extracts and shares `productionModules()` and `hasForbiddenGatewayForm()` for
+C2(b–d), adds SDK-shaped C4(h/i/r/s) fixtures, adds C4(t), the C4(m) non-Error name impostor,
+C4(n)'s exact nine-member set assertion, the assistant-text case in C6(g), and C7(a). The
+orphan generic-message assertion is folded into C4(m). The full coverage map and 22-mutation
+ledger are in the implementer handoff.
+
+All 22 distinct named mutations were applied individually, observed red, and reverted; the
+25 criterion-site occurrences reconcile as C1=1, C2=4, C3=1, C4=7, C5=3, C6=5, C7=1.
+The closing L4 stamp is green: `npm test` 28 files / 383 tests, `npm run typecheck`, and
+`npm run lint`. No build, network, provider call, `.env` read, or install was run. The tracked
+`tsconfig.tsbuildinfo` rewrite from typecheck was restored. Documentation impact was reviewed
+under contract 14 §8; `src/lib/ai/README.md` remains accurate, so no README changed.
+
+Mutation-site note: MUT-08-3's wording says `fromSdkError` passes a message, but D11's narrowed
+constructor has no caller message field. The equivalent fixed-message super-call mutation
+reddened C4(o); it was reverted. No other plan or saved prescription defect was found.

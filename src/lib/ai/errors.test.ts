@@ -4,6 +4,7 @@ import {
   InvalidResponseDataError,
   JSONParseError,
   NoObjectGeneratedError,
+  TypeValidationError,
 } from "ai";
 
 import {
@@ -60,14 +61,26 @@ describe("AI provider errors", () => {
     expect(fromSdkError(error, operation).details).toMatchObject({ reason: "timeout", retryable: true });
   });
 
-  it("C4(h): maps an SDK network TypeError to retryable transport", () => {
+  it("C4(h): maps SDK network failures to retryable transport", () => {
+    const networkCause = Object.assign(new TypeError("connect failed"), { code: "ECONNREFUSED" });
+    expect(fromSdkError(apiError(undefined, networkCause), operation).details).toMatchObject({ reason: "transport", retryable: true });
     expect(fromSdkError(new TypeError("fetch failed"), operation).details).toMatchObject({ reason: "transport", retryable: true });
   });
 
   it("C4(i): maps provider protocol decode failures to nonretryable invalid_response", () => {
     expect(fromSdkError(new InvalidResponseDataError({ data: "bad" }), operation).details).toMatchObject({ reason: "invalid_response", retryable: false });
     const parseError = new JSONParseError({ text: "bad", cause: new Error("decode") });
-    expect(fromSdkError(apiError(undefined, parseError), operation).details).toMatchObject({ reason: "invalid_response", retryable: false });
+    expect(fromSdkError(apiError(200, parseError), operation).details).toEqual({ system: "ai_provider", retryable: false, operation, reason: "invalid_response" });
+  });
+
+  it("C4(r): maps a 2xx provider schema failure to invalid_response", () => {
+    const validationError = new TypeValidationError({ value: { bad: true }, cause: new Error("schema mismatch") });
+    expect(fromSdkError(apiError(200, validationError), operation).details).toEqual({ system: "ai_provider", retryable: false, operation, reason: "invalid_response" });
+  });
+
+  it("C4(s): a decode failure on a non-2xx reply stays classified by status", () => {
+    const parseError = new JSONParseError({ text: "bad", cause: new Error("decode") });
+    expect(fromSdkError(apiError(403, parseError), operation).details).toMatchObject({ reason: "request_rejected", retryable: false, status: 403 });
   });
 
   it("C4(k): content-filtered invalid output outranks candidate mapping", () => {
@@ -84,14 +97,31 @@ describe("AI provider errors", () => {
     const value = { nope: true };
     const mappedValue = fromSdkError(value, operation);
     const mappedMessage = fromSdkError(new Error("timeout in an unrelated message"), operation);
+    const impostor = { name: "TimeoutError" };
+    const mappedImpostor = fromSdkError(impostor, operation);
 
     expect(mappedValue.details).toEqual({ system: "ai_provider", retryable: false, operation });
     expect(mappedValue.cause).toBe(value);
     expect(mappedMessage.details).toEqual({ system: "ai_provider", retryable: false, operation });
     expect(mappedMessage.details).not.toHaveProperty("reason");
+    expect(mappedImpostor.details).toEqual({ system: "ai_provider", retryable: false, operation });
+    expect(mappedImpostor.details).not.toHaveProperty("reason");
+    expect(mappedImpostor.cause).toBe(impostor);
+    expect(mappedMessage.message).toBe(GENERIC_AI_ERROR_MESSAGE);
   });
 
   it("C4(n): every registered provider reason carries the safe AI taxonomy details", () => {
+    expect([...AI_PROVIDER_FAILURE_REASONS].sort()).toEqual([
+      "content_filtered",
+      "invalid_response",
+      "not_configured",
+      "rate_limited_upstream",
+      "request_rejected",
+      "server_error",
+      "timeout",
+      "transport",
+      "unauthenticated_upstream",
+    ]);
     for (const reason of AI_PROVIDER_FAILURE_REASONS) {
       const mapped = new AiProviderError({ reason, operation, retryable: false });
       expect(mapped.details).toMatchObject({ system: "ai_provider", operation, retryable: false, reason });
@@ -121,7 +151,4 @@ describe("AI provider errors", () => {
     expect(Object.keys(details ?? {}).sort()).toEqual(["operation", "reason", "retryable", "status", "system"]);
   });
 
-  it("keeps the fixed message on a generic mapped integration error", () => {
-    expect(fromSdkError(new Error("secret provider text"), operation).message).toBe(GENERIC_AI_ERROR_MESSAGE);
-  });
 });

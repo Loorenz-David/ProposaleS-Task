@@ -111,6 +111,21 @@ describe("AI client", () => {
     });
   });
 
+  it("C4(t): generateStep rejects a content-filtered invalid output", async () => {
+    const filtered = new NoObjectGeneratedError({
+      text: "blocked",
+      response: { id: "response", timestamp: new Date(0), modelId: "model" },
+      usage: usage(),
+      finishReason: "content-filter",
+    });
+    const { client } = makeClient(async () => { throw filtered; });
+
+    await expect(client.generateStep(basicInput, { timeoutMs: 100 })).rejects.toMatchObject({
+      constructor: AiProviderError,
+      details: { reason: "content_filtered", retryable: false, operation: "generateStep" },
+    });
+  });
+
   it("C4(j), C6(j): content filtering outranks tool calls", async () => {
     const { client } = makeClient(result({
       finishReason: "content-filter",
@@ -247,9 +262,19 @@ describe("AI client", () => {
   it("C6(g): passes system and text messages unchanged", async () => {
     const { client, calls } = makeClient(result());
 
-    await client.generateStep({ ...basicInput, system: "SYSTEM", messages: [{ role: "user", content: "hello" }] }, { timeoutMs: 100 });
+    await client.generateStep({
+      ...basicInput,
+      system: "SYSTEM",
+      messages: [
+        { role: "user", content: "hello" },
+        { role: "assistant", content: "world" },
+      ],
+    }, { timeoutMs: 100 });
     expect(calls[0]?.system).toBe("SYSTEM");
-    expect(calls[0]?.messages).toEqual([{ role: "user", content: "hello" }]);
+    expect(calls[0]?.messages).toEqual([
+      { role: "user", content: "hello" },
+      { role: "assistant", content: "world" },
+    ]);
   });
 
   it("C6(h): maps assistant tool-call messages with correlation fields", async () => {

@@ -6,6 +6,7 @@ import {
   JSONParseError,
   NoObjectGeneratedError,
   NoOutputGeneratedError,
+  TypeValidationError,
 } from "ai";
 
 import { IntegrationError } from "@/lib/errors/app-error";
@@ -55,13 +56,31 @@ function isProviderDecodeError(error: unknown): boolean {
   return (
     InvalidResponseDataError.isInstance(error) ||
     JSONParseError.isInstance(error) ||
+    TypeValidationError.isInstance(error) ||
+    // The vendor providers surface an undecodable successful reply as an
+    // APICallError carrying its 2xx status and the decode failure as `cause`.
+    // A non-2xx reply remains classified by status instead.
     (APICallError.isInstance(error) &&
-      error.statusCode === undefined &&
-      JSONParseError.isInstance(error.cause))
+      (error.statusCode === undefined || (error.statusCode >= 200 && error.statusCode <= 299)) &&
+      (JSONParseError.isInstance(error.cause) || TypeValidationError.isInstance(error.cause)))
   );
 }
 
+function isSdkNetworkError(error: unknown): boolean {
+  // The SDK wraps fetch-level failures in a status-less APICallError. A bare
+  // TypeError is the other invocation-level shape that can escape directly.
+  return error instanceof TypeError || (APICallError.isInstance(error) && error.statusCode === undefined);
+}
+
 export function fromSdkError(error: unknown, operation: string): IntegrationError {
+  if (isProviderDecodeError(error)) {
+    return new AiProviderError({ reason: "invalid_response", operation, retryable: false, cause: error });
+  }
+
+  if (isNamedError(error, "AbortError") || isNamedError(error, "TimeoutError")) {
+    return new AiProviderError({ reason: "timeout", operation, retryable: true, cause: error });
+  }
+
   if (APICallError.isInstance(error) && error.statusCode !== undefined) {
     return new AiProviderError({
       ...statusReason(error.statusCode),
@@ -70,6 +89,7 @@ export function fromSdkError(error: unknown, operation: string): IntegrationErro
       cause: error,
     });
   }
+
 
   if (NoObjectGeneratedError.isInstance(error) && error.finishReason === "content-filter") {
     return new AiProviderError({
@@ -84,15 +104,7 @@ export function fromSdkError(error: unknown, operation: string): IntegrationErro
     return new AiProviderError({ reason: "invalid_response", operation, retryable: false, cause: error });
   }
 
-  if (isProviderDecodeError(error)) {
-    return new AiProviderError({ reason: "invalid_response", operation, retryable: false, cause: error });
-  }
-
-  if (isNamedError(error, "AbortError") || isNamedError(error, "TimeoutError")) {
-    return new AiProviderError({ reason: "timeout", operation, retryable: true, cause: error });
-  }
-
-  if (error instanceof TypeError) {
+  if (isSdkNetworkError(error)) {
     return new AiProviderError({ reason: "transport", operation, retryable: true, cause: error });
   }
 
