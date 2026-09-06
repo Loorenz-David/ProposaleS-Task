@@ -84,6 +84,8 @@ Criteria: 8 (C1–C8), 28 rows (a table line is one row; a lettered span counts 
 
 ## Notes
 
+- **Carried from phase 7 (review round 1, N1).** A candidate's `reason` is computed over the item's **full** description while the `description` it returns is truncated to `MAX_CANDIDATE_DESCRIPTION_CHARS`, so a reason can cite a matched term the reader cannot find in the text shown (verified reachable: `reason: "venue, sauna"` with a 280-character description containing no "sauna"). Phase 7 decided to keep it — the score uses the same full text and `truncated: true` discloses the cut — and routed the presentation question here, because this phase is where `reason` reaches a human.
+
 - `briefs.sekExpectation` and the script `proposeWithSekNote` are new fixture entries (card 1 → A).
 - Script fixtures return `GenerateStepResult`s; the strong/possible distinction comes from `rankCandidates` over `FIXTURE_CATALOG` for the query the script's tool call issues — pin the query strings in `fixtures/scripts.ts` next to the expected strengths and assert them in the test setup.
 - The synthesized clarification (C6(a), C5(b)) uses fixed per-item question text constants; ids from `deps.newQuestionId`.

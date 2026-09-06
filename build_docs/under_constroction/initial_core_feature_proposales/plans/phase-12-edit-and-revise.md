@@ -81,6 +81,8 @@ Criteria: 8 (C1–C8), 33 rows (a table line is one row; a lettered span counts 
 
 ## Notes
 
+- **Carried from phase 7 (review round 1, N2) — an accepted MVP limit, with its reachability argument, so it is not re-derived.** `compareVariationIds` compares `Number(a) - Number(b)` whenever both parse finite, so `"1"`, `"01"`, `"1.0"` and `"1e0"` compare equal and the sort falls back to arrival order — the §17A.8 vendor-list-order leak inside the tie-break written to prevent it. Unreachable on the shipped path: `src/lib/proposales/mappers.ts:65` emits `String(wire.variation_id)` over a `z.number().int()`. Nothing structural holds it — `contentCandidateSchema.variationId` is only `z.string().min(1)` — so this phase's cross-turn `variationId` references should not widen that surface without revisiting the limit.
+
 - The path → schema resolver for `set_leaf` is small: walk `propositionSchema.shape` by segments, unwrapping `sourcedOrAbsent` and array element schemas. Test it through C1(e), not separately (rule 4).
 - **Scripts for C7 are data** (rule 5): `selectSecondAlternative` and `selectPrevious` return fixed final outputs; the test asserts the *validator and retrieval record* accept or refuse them. Whether a live model actually reads "the second one" as `C` is a live-eval question (phase 15 C3 adds the scenario).
 - Projection gate: mandatory (rank 9).

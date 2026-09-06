@@ -73,6 +73,7 @@ Criteria: 6 (C1–C6), 22 rows (a table line is one row; a lettered span counts 
 - The loop is ours (not the SDK's `stopWhen`): budgets must be checked between calls and tool execution counted per `execute` invocation.
 - `tool_output_invalid` ends the run `failed` with that reason (added to `RunFailureReason` in master plan §6.3).
 - Projection gate: mandatory (rank 12).
+- **Inherited from the phase-7 review (2026-09-06, S2 / master §9.1 rule 16).** This phase's tool boundary wants the same purity guard `rank-candidates.ts` carries, and it inherits the **complete form list**: static import, `import type`, dynamic `import(`, and global access are four shapes, and a mutation exercising one certifies only that one. Phase 7's guard shipped blind to `await import("node:fs")`.
 - **Inherited from the phase-7 projection fold (2026-09-06, owner card 1).** The human search box and this tool share one query bound, `MAX_SEARCH_QUERY_CHARS` (master §6.5), owned by `schemas/content-candidate.ts` and created in phase 7. This phase's projection must add a criterion row asserting that the tool's input bound **is that constant** — a second literal `200` here would let the two search paths drift apart silently, which is exactly the defect the owner's decision exists to prevent.
 
 ## Review log

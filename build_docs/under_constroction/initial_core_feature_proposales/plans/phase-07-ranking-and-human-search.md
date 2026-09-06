@@ -116,7 +116,7 @@ Phase 6 `APPROVED`.
 |---|---|---|---|---|---|
 | C1(a) | deterministic | same `(query, catalog, language)` twice | deep-equal outputs | — | M12 |
 | C1(b) | independent of catalog order | two literal permutations of a **copy** of `FIXTURE_CATALOG` (full reversal, plus one hand-written interleave); never `FIXTURE_CATALOG.reverse()`, which mutates the shared fixture | each deep-equals the original order's output | MUT-07-1 `rank-candidates.ts` · comparator, definition · remove the `variationId` tie-break → C1(b) red (the fixture's two identical-text items guarantee a tie) | M12, §17A.8 |
-| C1(c) | pure | source read of `rank-candidates.ts`, with `import type` lines stripped first | (i) no **value** import from `@/lib/proposales`, `@/lib/ai`, `@/lib/agent`, or any `node:*`; (ii) no `fetch`, `Date`, `Math.random`, or `process` reference; (iii) `rankCandidates.length === 3`. `import "server-only"` and `import type { ContentItem } from "@/lib/proposales"` are the two permitted exceptions and the row asserts they are present | MUT-07-2 `rank-candidates.ts` · `rankCandidates`, definition · add `import { getProposalesClient } from "@/lib/proposales"` and reference it in the body → C1(c) red | §17A.8 |
+| C1(c) | pure | source read of `rank-candidates.ts`, with `import type` lines stripped first | (i) no **value** import from `@/lib/proposales`, `@/lib/ai`, `@/lib/agent`, or any `node:*`; (ii) no `fetch`, `Date`, `Math.random`, or `process` reference, **and no dynamic `import(` in any form** (added by review round 1, S2: MUT-07-2 exercised only the static shape, and `await import("node:fs")` sailed through); (iii) `rankCandidates.length === 3`. `import "server-only"` and `import type { ContentItem } from "@/lib/proposales"` are the two permitted exceptions and the row asserts they are present | MUT-07-2 `rank-candidates.ts` · `rankCandidates`, definition · add `import { getProposalesClient } from "@/lib/proposales"` and reference it in the body → C1(c) red · **MUT-07-19** same file and site · add `await import("node:fs")` inside `rankCandidates` → C1(c) red | §17A.8 |
 | C1(d) | input never mutated | `structuredClone(FIXTURE_CATALOG)` taken before the call | after `rankCandidates` returns, `FIXTURE_CATALOG` deep-equals the clone | MUT-07-3 `rank-candidates.ts` · `rankCandidates`, definition · sort the argument in place (`catalog.sort` for `[...catalog].sort`) → C1(d) red | §17A.8 |
 | C1(e) | empty query token set | `rankCandidates("a", FIXTURE_CATALOG, "en")` — `"a"` is one code unit, below the minimum token length, so `\|Q\| = 0` | `[]` | MUT-07-4 `rank-candidates.ts` · `scoreItem`, definition · remove the `Q.size === 0` guard → C1(e) red (division by zero → `NaN` → `strengthForScore` throws) | §17A.8 (`rank` is a pure **total** function) |
 | C2(a) | `T_STRONG` → strong | | `"strong"` | MUT-07-5 `strength.ts` · `strengthForScore`, definition · `>=` to `>` on the strong bound → C2(a) red | M12 |
@@ -138,19 +138,20 @@ Phase 6 `APPROVED`.
 | C4(b) | no truncation | the short item | description verbatim, `truncated === false` | — | §17A.8 |
 | C4(c) | exactly at the cap | the exactly-`MAX_CANDIDATE_DESCRIPTION_CHARS` item | description verbatim, `truncated === false` (half-open: only `> cap` truncates) | MUT-07-9 `rank-candidates.ts` · `rankCandidates`, definition · `>` to `>=` on the truncation test → C4(c) red | §17A.8 |
 | C4(d) | absent description | the item with no `en` `description` key, matched on its title | `description === ""`, `truncated === false`, and the item **is** a candidate | — | §17A.8 |
-| C5(a) | missing language excluded | `language: "sv"`, the item with no `sv` title key, query matching its `en` text | not in candidates | — | §17A.8, crit 13 |
+| C5(a) | missing language excluded | `language: "sv"`, item `"7"` (its `title` has no `sv` key), query `"ledningsnivå"` — a term from **item 7's own `sv` description**. **Corrected by review round 1 (B3):** the row previously used a query matching the item's `en` text, which the score floor excluded under every mutant, so the row could not fail — the same defect already repaired in C5(b), which no mutation forced anyone to check here | the row first asserts its control — `rankCandidates("suite", FIXTURE_CATALOG, "en")` returns exactly one candidate, `variationId "7"`, so the item is matchable — then `rankCandidates("ledningsnivå", FIXTURE_CATALOG, "sv")` deep-equals `[]` | **MUT-07-17** `rank-candidates.ts` · `rankCandidates`, definition · replace `if (title === undefined || title.trim().length === 0) continue;` with `if (title !== undefined && title.trim().length === 0) continue;` → C5(a) red. **The mutant is written out in full on purpose.** Deleting the `title === undefined ||` clause outright instead throws `TypeError: Cannot read properties of undefined (reading 'trim')` and reddens C5(a), C5(b) and C5(c) — a crash, not the defect under test; a ledger row recorded from that would certify a guard that does not exist (charter rule 11) | §17A.8, crit 13 |
 | C5(b) | empty title excluded | `language: "sv"`, the item whose `sv` title is whitespace only, and a query term drawn from **that item's own `sv` description**. **Corrected 2026-09-06:** the row previously specified a query matching the item's `en` text, which gave the exclusion a second sufficient cause — with the title filter removed the item still scored 0 against its `sv` text and stayed excluded through the floor, so MUT-07-10 left the row green. A query the item's own `sv` description answers clears the floor under the mutation and only under it | not in candidates | MUT-07-10 `rank-candidates.ts` · `rankCandidates`, definition · weaken the filter to a presence check (drop "non-empty after trim") → C5(b) red | §17A.8 |
 | C5(c) | matching in the proposal language | the term present only in one item's `sv` description | that item is a candidate for `sv`; for `en` the same query returns `[]` | — | §17A.8 |
 | C5(d) | catalog languages | | `catalogLanguages(FIXTURE_CATALOG)` deep-equals `["en", "sv"]` — `"no"` is absent because no item carries a non-empty `no` title | MUT-07-11 `rank-candidates.ts` · `catalogLanguages`, definition · drop the non-empty-after-trim filter → C5(d) red (yields `["en", "no", "sv"]`) | §17A.8, crit 13 |
-| C6(a) | strong before possible | the 3-token query of the Notes table | the `778` item precedes the `667` item | — | M12 |
-| C6(b) | possible before weak | same query | the `444` item precedes the `333` item | — | M12 |
-| C6(c) | equal strength, higher score first | same query; both items are `possible` | the `667` item precedes the `444` item | — | M12 |
+| C6(a) | strong before possible | `rankCandidates("consulting service track", FIXTURE_CATALOG, "en")` | `["2", 1000, "strong"]` precedes `["1", 667, "possible"]` — asserted as `(variationId, score, matchStrength)` tuples. **The strong item carries the higher id**, so ascending `variationId` cannot produce this order | **MUT-07-15** `rank-candidates.ts` · comparator, definition · delete the score term (`if (a.score !== b.score) return b.score - a.score;`) → C6(a) red | M12 |
+| C6(b) | possible before weak | `rankCandidates("consulting service bundle", FIXTURE_CATALOG, "en")` | `["5", 444, "possible"]` precedes `["3", 333, "weak"]` — tuples, and id 5 > id 3 | — | M12 |
+| C6(c) | equal strength, higher score first | the same `"consulting service bundle"` ranking; both items are `possible` | `["8", 667, "possible"]` precedes `["5", 444, "possible"]` — tuples, and id 8 > id 5 | — | M12 |
 | C6(d) | equal score, lower `variationId` first | the identical-text pair, ids `"9"` and `"10"` | `"9"` precedes `"10"` (a lexical comparator would order `"10"` first) | — | M12 |
 | C6(e) | non-numeric ids do not fall back to arrival order | a locally built two-item catalog with identical text and ids `"b"` and `"a"` | `"a"` precedes `"b"`, and the same holds when the two items are passed in the opposite order | MUT-07-12 `rank-candidates.ts` · comparator, definition · replace the both-finite guard with a bare `Number(a) - Number(b)` → C6(e) red | §17A.8 (vendor list order is never relied upon) |
+| C6(f) | the ranking is exactly this | `rankCandidates("consulting service track", FIXTURE_CATALOG, "en")` | the full returned sequence deep-equals the ten `(variationId, score, matchStrength)` tuples `["2",1000,"strong"] · ["1",667,"possible"] · ["5",444,"possible"] · ["3",333,"weak"] · ["4",333,"weak"] · ["6",333,"weak"] · ["7",333,"weak"] · ["8",333,"weak"] · ["9",333,"weak"] · ["10",333,"weak"]`, written literally in the test. **Added by review round 1 (B2):** no row observed `score` or `matchStrength` on any returned candidate, so the whole scoring formula was unguarded — the plan's worked table was reproduced by the code and asserted nowhere | **MUT-07-16** `rank-candidates.ts` · `scoreItem`, definition · title weight `3` → `2` → C6(f) red. Note the order is **unchanged** under this mutant (`2·1·5·3·4·6·7·8·9·10` either way); only the tuples move, which is precisely why an ordinal-only assertion could not catch it | M12, §17A.8 |
 | C7(a) | one catalog read | fake seeded with `FIXTURE_CATALOG` | `fake.calls` deep-equals `[{ op: "listContent" }]` | — | §17A.8 (full catalog per run) |
 | C7(b) | the returned order is the expected one | same call | the returned `variationId` sequence deep-equals a literal array written in the test and read from the fixture | — | M4 (crit 4, human search) |
 | C7(c) | no post-processing | same call | `candidates` deep-equals `rankCandidates(query, FIXTURE_CATALOG, language)` | — | M4 (crit 4, human search) |
-| C7(d) | no model | `expectTypeOf` on the `deps` parameter | the `deps` type has no `ai` key | — | §10.2, §5.1 |
+| C7(d) | no model | source read of `search-content-for-human.ts`, mirroring C1(c) | no import of `@/lib/ai` or `@/lib/agent` in any form — static, `import type`, or dynamic `import(`. **Corrected by review round 1 (S1):** the row was an `expectTypeOf(...).not.toHaveProperty("ai")`, and adding `ai?: unknown` to the `deps` type passes both `npm run typecheck` and the suite — the optional shape is the realistic one for an added model dependency and the assertion never fired. (This does not contradict the projection's note that `expectTypeOf` is typecheck-enforced: that holds for the `app-error.test.ts:60–74` shapes, not for `.not.toHaveProperty` on an optional key) | **MUT-07-18** `search-content-for-human.ts` · module header, definition · add `import { createAiClient } from "@/lib/ai";` → C7(d) red. `@/lib/ai` does not exist until phase 8, so apply the probe as a source-text edit and expect the row red on the text, not on module resolution | §10.2, §5.1 |
 | C7(e) | output validated | same call | every returned candidate parses `contentCandidateSchema` | — | §17A.8 |
 | C7(f) | empty query rejected | `{ query: "", language: "en" }` | `ValidationError`; **exactly one** issue, path `["query"]` | — | 06 §3, §17A.16 |
 | C7(g) | missing language rejected | `{ query: "conference" }` | `ValidationError`; **exactly one** issue, path `["language"]` | — | 06 §3 |
@@ -171,7 +172,7 @@ Phase 6 `APPROVED`.
 | C8(k) | `reason` invalid | `reason: "   "` | `success === false`; exactly one issue, path `["reason"]` | — | 11 §3 (phase-5 N6) |
 | C8(l) | unknown key rejected | valid fixture plus `extra: 1` | `success === false`; exactly one issue, `code === "unrecognized_keys"`, `path` `[]`, `keys` `["extra"]`. **Corrected 2026-09-06:** the row previously said path `["extra"]`, which is the *flattened* shape `zodIssues` produces, not what raw Zod 4 emits — a strict object reports an unrecognized key once, at the object's own path, with the offending names in a separate `keys` array. `content-candidate.ts` has no flattening wrapper and is not asked for one, so this row asserts raw Zod. C7(j) asserts the flattened `["extra"]` because the service *does* flatten | — | 06 §3 (strict objects) |
 
-Criteria: 8 (C1–C8), 56 rows (a table line is one row; a lettered span counts its letters). Named mutations: 14 (MUT-07-1 … MUT-07-14). Per-criterion mutation counts: C1 4 · C2 3 · C3 1 · C4 1 · C5 2 · C6 1 · C7 1 · C8 1 = 14.
+Criteria: 8 (C1–C8), 57 rows (a table line is one row; a lettered span counts its letters). Named mutations: 19 (MUT-07-1 … MUT-07-19). Per-criterion mutation counts: C1 5 · C2 3 · C3 1 · C4 1 · C5 3 · C6 3 · C7 2 · C8 1 = 19. Re-derived after the review round-1 fold; counted, not carried.
 
 ## Explicitly delegated to the implementer
 
@@ -202,6 +203,14 @@ These are decisions the projection identified and deliberately leaves open. Choo
 - **Accepted MVP limit (D24, recorded so it is not re-derived).** Truncation slices UTF-16 code units, so a cut at exactly the cap can split a surrogate pair and emit a lone surrogate; `z.string()` accepts it and nothing fails. The fixture is Latin-script and the real catalog is very small (§20), so this is accepted for the MVP rather than guarded.
 
 - **No criterion asserts the lazy `defaultDeps` getter.** `test/setup/node.ts` applies the environment placeholders unconditionally before any `@/lib/env/server` import, so a module that reads `serverEnv` eagerly at import would still load inside the suite — a row asserting laziness could not fail here and would be decoration with a correct name. The requirement is stated in task 5 and in master §6.6, and phase 15's isolation scans are the right instrument if it is ever worth measuring.
+
+- **The strength term in the comparator is provably redundant — and it stays** (review round 1, B1 second half). `strengthForScore` is monotone in `score`, so `(strength desc, score desc)` is equivalent to `(score desc)` for every input, and no ordering row can ever discriminate the strength term. It is kept because §17A.8 states the sort key in exactly that form and the code should read like the contract it implements; **C6(f) is its guard**, because that row asserts the `matchStrength` label of every returned candidate directly rather than through the order. Recorded so no later session deletes it as dead code, and so it does not ship as an unmarked clause no mutation can redden.
+
+- **`reason` is computed over the full description, while `description` is truncated** (review round 1, N1; decided here). This is intentional and stays: the score is computed over the same full text, and `truncated: true` is §17A.8's disclosure that the shown text is not all of it. It is reachable — a candidate can return `reason: "venue, sauna"` with a 280-character description containing no "sauna" — but the shipped fixture does not exhibit it. **Carried to phase 11**, which renders `reason` to a human and is where the question of showing a reason the reader cannot verify actually lands.
+
+- **Accepted MVP limit (review round 1, N2): `compareVariationIds` treats numerically equal ids as tied.** `"1"`, `"01"`, `"1.0"` and `"1e0"` all compare equal, and the sort then falls back to arrival order — the §17A.8 vendor-list-order leak, inside the function written to prevent it. **Unreachable on the shipped path:** `src/lib/proposales/mappers.ts:65` emits `String(wire.variation_id)` over a `z.number().int()`, which is always canonical decimal. Nothing structural holds it, though — `contentCandidateSchema.variationId` is only `z.string().min(1)`. Recorded with the reachability argument so **phase 12** (cross-turn `variationId` references) need not re-derive it.
+
+- **`strengthForScore` throws a bare `RangeError`, and that is the right instrument** (review round 1, N3; no change). The throw is unreachable from `rankCandidates` — the numerator is at most `3 × |Q|` by construction — so it guards a programmer error, not a domain condition. Contract `04` §6 ("unknown errors are wrapped as `InternalError` at the transport layer only; services let them propagate") sanctions it propagating. C2(j)–(l) assert `.toThrow()` with no class, so the choice is recorded here rather than pinned in a row.
 
 - Projection gate: mandatory (rank 7) — **satisfied**, round 0, 2026-09-06.
 
@@ -261,3 +270,150 @@ tracker row 7 → `REVIEWING`. The checkpoint is `f2399ac`.
   handoff, because the coordinator owns the criteria table. **C5(a) has the identical shape and
   no named mutation forced the same check** — it is a named probe in the review prompt rather
   than a repair made here, so the judgment is the reviewer's.
+
+**Independent review round 1 (2026-09-06, Claude Opus 5) — `CHANGES_REQUESTED`.**
+Handoff: `handoffs/reviewer/phase-07-review-round-1.reviewer.md`. First review, full checklist.
+All six gate items pass. Counts re-derived by command: 8 criteria, 56 rows, 14 mutations. The
+trace chain is bijective in both directions — 56 `it` cases against the 56 declared row ids, no
+duplicate, no uncovered row, no orphan test. `src/` at `e621226` is byte-identical to the
+implementer's stamp tree (`git diff f2399ac HEAD -- src/` empty), so that stamp is cited and no
+L4 was taken; every probe below ran at L1/L2.
+
+- **B1 (blocking) — the sort order has no falsifiable test.** Deleting *both* the strength and
+  the score terms from the comparator, reducing it to `variationId ascending`, leaves the whole
+  feature suite green (L2, 171/171). C6(a), C6(b) and C6(c) all pass because the fixture's
+  `QUERY_3` ranking (`1/778 2/667 3/444 4/333 5/222`) puts descending relevance in exactly
+  ascending `variationId` order — two independent sufficient causes for every asserted
+  precedence (§9.1 rule 2 companion; rule 15). The three rows for §17A.8's "Ordering is total,
+  ties decidable" observe nothing. **Correction, verified on the shipped fixture and needing no
+  fixture change:** re-site C6(a)–(c) onto `rankCandidates("standard facilitation consulting",
+  FIXTURE_CATALOG, "en")`, which returns `9/444/possible · 10/444/possible · 1/333/weak ·
+  2/333/weak` under correct code and `1 · 2 · 9 · 10` under the reduced comparator. Name
+  MUT-07-15 (`rank-candidates.ts` · comparator, definition · delete the score term → C6(c) red).
+  The **strength term is provably redundant** and no row can discriminate it: `strengthForScore`
+  is monotone in `score`, so `(strength desc, score desc)` ≡ `(score desc)` for every input.
+  Either delete it with the reason recorded, or keep it and record that its guard is B2's
+  assertion of the labels, not an ordering row — it must not ship as an unmarked clause that no
+  mutation can redden.
+- **B2 (blocking) — no row observes `score` or `matchStrength` on any returned candidate.**
+  Changing the title weight from 3 to 2, or the normalisation denominator from `3 * |Q|` to
+  `4 * |Q|`, leaves 171/171 green. The plan's worked table *is* reproduced by the code (verified:
+  778 / 667 / 444 / 333 / 222 / 111) but is asserted nowhere; C6(a)–(c) name their items by score
+  and then identify them by `variationId` without ever checking the score. §17A.8 makes
+  `matchStrength` the gate for auto-selection and for the `no_acceptable_match` / `weak_match` /
+  `non_strong_selection` warnings (master §6.3), all consumed by phase 11. **Correction:** assert
+  the full `(variationId, score, matchStrength)` tuple sequence on B1's query; name MUT-07-16
+  (`rank-candidates.ts` · `scoreItem`, definition · title weight 3 → 2 → red).
+- **B3 (blocking) — the missing-key half of the language filter is unguarded; C5(a) cannot
+  fail.** Deleting `title === undefined ||` while keeping the whitespace check leaves 171/171
+  green. Deleting the *entire* filter reddens only C5(b). C5(a) exists to prove §17A.8's "A
+  content item without `title[language]` is excluded from candidates" (criterion 13) and observes
+  nothing, because its `sv` query `"suite"` is an en-only term that the score floor excludes under
+  every mutant — the identical shape the coordinator repaired in C5(b) and explicitly left to this
+  review. **Correction, verified both directions:** change C5(a)'s `sv` query to `"ledningsnivå"`,
+  a term from item 7's own `sv` description; the row stays green on correct code and reddens under
+  the mutant. Name MUT-07-17 (`rank-candidates.ts` · `rankCandidates`, definition · drop
+  `title === undefined ||` → C5(a) red).
+- **S1 (should-fix) — C7(d)'s instrument never fires.** Adding `ai?: unknown` to the `deps`
+  parameter type passes both `npm run typecheck` and the suite. Adding a required `ai: unknown`
+  fails at ten *call-site* lines (24, 31, 40, 52, 61, 70, 80, 92, 101, 111) and never at line 46,
+  the `expectTypeOf` itself. The optional shape is the realistic one for an added model
+  dependency, and it is invisible. Authority: §5.1 (content search on human request — "May call
+  the model: **no**"), §10.2; §9.1 rule 11. This refines rather than contradicts the projection's
+  note that `expectTypeOf` is typecheck-enforced — that holds for the `app-error.test.ts` shapes,
+  not for `.not.toHaveProperty` on an optional key. **Correction:** replace with a source-text
+  guard mirroring C1(c) — `search-content-for-human.ts` carries no import from `@/lib/ai` or
+  `@/lib/agent` — and name the mutation that adds one.
+- **S2 (should-fix) — C1(c) is blind to dynamic `import()`.** Variations run: mixed inline-type
+  import (`import { type ContentItem, getProposalesClient } from "@/lib/proposales"`) → caught;
+  `new globalThis.Date()` → caught; `await import("node:fs")` → **not caught**;
+  `await import("@/lib/proposales")` → **not caught**; computed `globalThis["Da"+"te"]` → not
+  caught (contrived, accepted). Dynamic import is how I/O actually enters a module, and it is this
+  repo's own test idiom. **Correction:** add `expect(stripped).not.toMatch(/\bimport\s*\(/)` to
+  C1(c) and name it as a mutation.
+- **N1 (note) — `reason` is computed over the full description, `description` is truncated.**
+  Verified reachable: a candidate returns `reason: "venue, sauna"`, `score: 667`,
+  `matchStrength: "possible"` with a 280-character description containing no "sauna". The shipped
+  fixture does not exhibit it (no token lives only past the cap), so nothing observes it. The
+  behavior is defensible — the score is computed over the same full text and `truncated: true` is
+  §17A.8's disclosure — but the plan did not decide it and phase 11 shows `reason` to a human.
+  Record the decision here; carry to phase 11.
+- **N2 (note) — `compareVariationIds`'s numeric path is wider than C6(e) tests.** `"1"`, `"01"`,
+  `"1.0"` and `"1e0"` all compare equal and the sort falls back to arrival order (verified:
+  `["01","1"]` forward, `["1","01"]` backward) — the §17A.8 vendor-list-order leak inside the
+  function written to prevent it. **Unreachable on the shipped path:** `mappers.ts:65` emits
+  `String(wire.variation_id)` over a `z.number().int()`, which is canonical decimal. But
+  `contentCandidateSchema.variationId` is only `z.string().min(1)`, so nothing structural holds
+  the invariant. Accepted MVP limit; record the reachability argument so phase 12 need not
+  rediscover it.
+- **N3 (note) — `strengthForScore` throws a bare `RangeError`, not an `AppError`.** Unreachable
+  from `rankCandidates`: the numerator is at most `3 × |Q|` by construction, so the score is
+  always an integer in `[0, SCORE_MAX]` (MUT-07-4 is the only path that reaches the throw).
+  Contract `04` §6 — "Unknown errors are wrapped as `InternalError` at the transport layer only.
+  Services let them propagate" — sanctions a programmer-error guard propagating. C2(j)–(l) assert
+  `.toThrow()` with no class, so either choice passes. No change required; record the choice.
+- **N4 (note) — `tokenize` and `scoreItem` are exported per master §6.6 but exercised only through
+  `rankCandidates`.** Not dead scaffolding (production caller, registered public names), but the
+  absence of any direct test is the surface B2 travels on; a direct `scoreItem` table would
+  discharge B2 as well.
+- **Verified correct and settled, so the fix round need not revisit:** all six gate items; the
+  fixture roster against every property task 3 requires, checked numerically in the file
+  (over-cap 301 chars with a non-whitespace `"c"` at index 279; exact-cap exactly 280; item 4
+  carries no `en` description; item 8 carries whitespace-only `sv` **and** `no`; the `"9"`/`"10"`
+  identical-text pair; `"service"` in all fourteen `en` titles; `"premium"` in exactly two and in
+  no `en` description); the worked score table reproduced exactly; `TOKEN_PATTERN`'s `/g`
+  statelessness (`.match()` is its only use, no `.test()`/`.exec()` anywhere); C5(b)'s correction
+  sound and necessary (MUT-07-10 reddens it, and the "regional" query did not); MUT-07-1 genuinely
+  reddens C1(b); C6(d) genuinely discriminates numeric from lexical; C6(e) genuinely discriminates
+  via MUT-07-12; `toMatchObject` on arrays does enforce length, so C7(f)–(k)'s "exactly one issue"
+  is really asserted; every C8 row is preceded by `expect(result.success).toBe(false)` so none is
+  vacuous; C1(b) copies before reversing as the plan required; the service shape matches master
+  §6.6 exactly (`unknown` input, getter `defaultDeps`, one `listContent()`); D15/D22/D24/D28 all
+  declared and all implemented as declared; C8(l)'s correction is right against raw Zod 4; the
+  perimeter is exactly the 11 declared files.
+- **Evidence.** L4 budget: **zero spent, correctly** — `src/` byte-identical to the implementer's
+  stamp (24 files / 334 tests green, typecheck and lint clean), cited under the charter's reuse
+  rule. Twelve probes at L1/L2, each applied and reverted; the five production files' SHA-256
+  digests verified byte-identical afterwards and `git status --porcelain` empty. Tree at review:
+  HEAD `e621226`, clean.
+
+**Coordinator fold of review round 1 (2026-09-06).** All five blocking and should-fix findings
+accepted; four notes decided in the Notes section above. The criteria table is amended and the
+fix round works against it. **Two of the reviewer's stated corrections were wrong or incomplete
+and were verified before being quoted into the fix prompt** — the review's findings stand in
+both cases; only the prescriptions needed repair.
+
+- **B1's proposed query cannot carry two of the three rows it was proposed for.** Verified by
+  running it: `rankCandidates("standard facilitation consulting", FIXTURE_CATALOG, "en")` returns
+  `9/444/possible · 10/444/possible · 1/333/weak · 2/333/weak`, exactly as the review states — but
+  its top band is `possible`, so **C6(a) has no `strong` item to precede anything**, and both
+  bands hold equal scores, so **C6(c) has no two distinct scores inside one band**. Re-siting all
+  three rows onto it would have made two of them unwritable and cost a round. Replacements found
+  by enumerating 85,320 two- and three-token queries over the fixture's own `en` tokens and
+  selecting those whose returned id order is **not** ascending: `"consulting service track"`
+  (`2/1000/strong · 1/667/possible · 5/444/possible · …`) carries C6(a) and C6(f);
+  `"consulting service bundle"` (`1/1000/strong · 2/667/possible · 8/667/possible · 5/444/possible
+  · 3/333/weak · …`) carries C6(b) and C6(c). Each asserted pair has the **higher** id first, so
+  the tie-break cannot produce the asserted order. Both verified against the shipped code; no
+  fixture change is needed, as the review said.
+- **MUT-07-17, read literally, tests a crash instead of the defect.** "Drop `title === undefined ||`"
+  leaves `title.trim()` on `undefined`: verified, it throws `TypeError` and reddens C5(a), C5(b)
+  **and** C5(c). A ledger row recorded from that red would certify a guard that does not exist. The
+  mutant the review actually ran is the non-throwing one — verified: with
+  `if (title !== undefined && title.trim().length === 0) continue;` the file's 21 tests stay green,
+  which is the finding. The row now writes the mutant out in full (charter rule 11: a named mutation
+  names where it is applied, because "delete the guard" is ambiguous).
+- **B1's second half decided rather than delegated.** The strength term is provably redundant
+  (`strengthForScore` is monotone in `score`); it stays, because §17A.8 states the sort key that
+  way, and C6(f) is its guard. Recorded in Notes so the fix round does not relitigate it and no
+  later session deletes it as dead code.
+- **Counts re-derived, not carried:** 8 criteria, **57** rows (C6 gains `(f)`), **19** named
+  mutations (MUT-07-15 … MUT-07-19 added). The per-criterion mutation summands were typed wrong on
+  the first attempt (`C6 2 · C7 3`) and corrected from the derivation to `C6 3 · C7 2`.
+- **Lessons routed upward:** master §9.1 rule 15 extended to ordering rows and value-naming rows
+  with the planner corollary about monotone sort keys; new §9.1 rule 16 on proving a guard's
+  instrument and enumerating a source guard's forms. Phase 9 inherits the complete form list;
+  phase 11 inherits N1; phase 12 inherits N2.
+- **No independent re-review will follow this fix round** (owner direction, 2026-09-06). The fix
+  round's own evidence is therefore the last evidence produced before the approval gate, and the
+  coordinator validates against it.
