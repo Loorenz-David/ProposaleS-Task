@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **State** | `IMPLEMENTED` — round 1, 2026-09-06, Codex; unit 154/154, E2E 49/49, 11/11 named mutations executed and reverted |
+| **State** | `APPROVED` — 2026-09-07, without a re-review session on the owner's decision; see the closing Review log entry for what the coordinator's verification did and did not cover |
 | **Criteria** | 6 |
 | **Projection** | **not waived** — mandatory: C5 makes open-universe absence claims, a charter rule 6 silent-failure mechanism. Master plan §7.2, which moved 02 to its mandatory list on 2026-09-06 |
 | **Serves** | F30 · F26 · F29 (A row 4) · F24 · F6 |
@@ -614,3 +614,55 @@ text; it is not reported as a green proof. The required extra C4 condition-2 pro
 4000px child in the agent pane and main pane independently at 1440, 1100 and 780; all six runs
 reddened the authored-declaration instrument. Mutation sites and observed IDs are in the fix
 handoff.
+
+**2026-09-07 — coordinator, consuming fix round 2 and closing the phase `APPROVED`.** The owner
+decided that this round would not go to a second review: *"i don't think we need a second review
+round as this is small fixes that can be directly verify by you and we can continue to the next
+phase."* Recorded as the owner's call, with what the verification covered and what it did not.
+
+**Perimeter.** Checkpoint `42e2aca` touches nine paths, exactly the ones declared; the mutation-only
+files are listed separately; the tree is clean and carries no probe residue. `package.json`,
+`package-lock.json`, `theme.css`, all four config files and `src/components/ui/` are untouched.
+`overflow-x-hidden` is kept with a stated reason, which is what standing rule 7 asks for.
+
+**Arithmetic.** 6 criteria, 60 rows, 17 named mutations — re-derived from the criteria table, not
+carried forward. Sixteen mutations reddened. The seventeenth, C4(g), was executed and **remained
+unmeasured**, which is the outcome the amended criterion permits and the honest one: no text in this
+shell elides, and the round did not manufacture a subject to turn the row green. That restraint is
+worth more than the row would have been.
+
+**Stamp.** Taken by the coordinator on the handed-over tree, declared because this gate has no
+independent review round: `npm test` **154/154**, `npm run test:e2e` **66/66**, typecheck, lint and
+build all green. `npm run lint` passes with `test-results/` absent, which also closes round 1's
+false diagnosis — the fix round recorded the original failure as undiagnosed rather than repeating
+a claim it could not reproduce.
+
+**Independent verification — six mutations, none of a shape this cycle used.** Reproducing the fix
+round's own probes would have proved only that its probes still run.
+
+| Planted | Result |
+|---|---|
+| A progressbar, a textbox and an article in the idle subtree | **red** — C6(a)'s allowlist bites constructs no denylist would have listed. B1 is genuinely closed |
+| An `export const` surface-kind constant map (the round used an `enum`) | **red** — C5(c) is a set equality over exports, not a regex over one form |
+| A `Customers` surface module rendering no `main` | **red** — C5(d)'s noun denylist exists and works |
+| `resolveSurface` added to an existing feature file | **red** — C5(b) reads source, not file names. B2 is closed |
+| A 3000px block nested three levels inside the idle column | **red at all three widths** — condition 2 measures descendants, not just panes, and no longer exempts a vertically scrolling pane. B3 and S5 are closed |
+| The reset silenced entirely (the round probed "too many"; this is "too few") | **red on C2(d), C2(f) and C2(g)** — the counting instrument bites in both directions |
+| The `main` renamed from the idle heading again (S4 regression) | **red on C1(a)** — the coupling is pinned out |
+| `window.location.href = "/x"` planted in `src/app/page.tsx` | **green — a residual.** §11.3 follow-up 16 |
+
+**Two residuals, shipped knowingly.** Follow-up 16: C5(a)'s navigation denylist does not match
+`location.href` assignment, although the row's own text forbids "assignment to `window.location`".
+Follow-up 17: review S6 asked for six restorations and five landed; the explicit
+`reducedMotion: "no-preference"` context option was not restored and the omission was not declared,
+which charter rule 14 requires. Neither changes what the product does; both are recorded rather
+than absorbed.
+
+**What this approval does not cover.** No independent session re-read the changed measurement
+layer. The coordinator's six mutations reached C1(a), C1(f), C2(d)/(f)/(g), C4 condition 2, C5(a)
+through (d) and C6(a). They did **not** reach C2(c)'s eight keyboard rows, C2(b)'s settled-maximum
+logic, C4 conditions 1, 3, 4 and 5, or C3's clamp rows — those rest on review round 1's examination
+and the fix round's own ledger. That is where the residual risk sits, and it is smaller than round
+1's because the cross-family split held for both the implementation and the review that preceded
+this fix.
+
