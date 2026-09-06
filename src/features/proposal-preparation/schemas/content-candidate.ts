@@ -15,3 +15,10 @@ export const contentCandidateSchema = z.strictObject({
 
 export type MatchStrength = z.infer<typeof matchStrengthSchema>;
 export type ContentCandidate = z.infer<typeof contentCandidateSchema>;
+
+export const MAX_SEARCH_QUERY_CHARS = 200;
+export const searchContentInputSchema = z.strictObject({
+  query: z.string().trim().min(1).max(MAX_SEARCH_QUERY_CHARS),
+  language: z.string().trim().min(1),
+});
+export type SearchContentInput = z.infer<typeof searchContentInputSchema>;
