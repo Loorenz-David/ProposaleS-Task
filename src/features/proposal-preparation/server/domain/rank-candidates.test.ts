@@ -12,8 +12,28 @@ async function modules() {
 }
 
 const QUERY_3 = "consulting training workshop";
+// Ordering fixtures (review round 1, B1): in every asserted pair the higher variationId
+// ranks first, so the tie-break alone can never produce the expected order.
+const QUERY_TRACK = "consulting service track";
+const QUERY_BUNDLE = "consulting service bundle";
 const QUERY_SERVICE = "service";
 const QUERY_PREMIUM = "premium";
+
+type CandidateTuple = [variationId: string, score: number, matchStrength: string];
+
+function tuples(candidates: Array<{ variationId: string; score: number; matchStrength: string }>): CandidateTuple[] {
+  return candidates.map((c) => [c.variationId, c.score, c.matchStrength]);
+}
+
+// Asserts both tuples are present (score and matchStrength observed, not just the id) and that
+// `first` ranks ahead of `second`.
+function expectPrecedes(sequence: CandidateTuple[], first: CandidateTuple, second: CandidateTuple) {
+  expect(sequence).toContainEqual(first);
+  expect(sequence).toContainEqual(second);
+  const indexOf = (t: CandidateTuple) =>
+    sequence.findIndex(([id, score, strength]) => id === t[0] && score === t[1] && strength === t[2]);
+  expect(indexOf(first)).toBeLessThan(indexOf(second));
+}
 
 describe("rankCandidates", () => {
   it("C1(a) is deterministic for the same inputs", async () => {
@@ -40,7 +60,6 @@ describe("rankCandidates", () => {
   });
 
   it("C1(c) is pure, with only its two permitted exceptions, and has arity 3", async () => {
-    const { rank } = await modules();
     const source = readFileSync(fileURLToPath(new URL("./rank-candidates.ts", import.meta.url)), "utf8");
 
     expect(source).toContain('import "server-only";');
@@ -53,11 +72,15 @@ describe("rankCandidates", () => {
 
     expect(stripped).not.toMatch(/from\s+["']@\/lib\/(proposales|ai|agent)["']/);
     expect(stripped).not.toMatch(/from\s+["']node:/);
+    // Dynamic import() is how I/O actually enters a module; the static-form checks above do not
+    // see it (review round 1, S2; master §9.1 rule 16).
+    expect(stripped).not.toMatch(/\bimport\s*\(/);
     expect(stripped).not.toMatch(/\bfetch\s*\(/);
     expect(stripped).not.toMatch(/\bDate\s*[.(]/);
     expect(stripped).not.toMatch(/Math\.random/);
     expect(stripped).not.toMatch(/\bprocess\b/);
 
+    const { rank } = await modules();
     expect(rank.rankCandidates.length).toBe(3);
   });
 
@@ -126,8 +149,12 @@ describe("rankCandidates", () => {
 
   it("C5(a) an item missing the target language's title is excluded", async () => {
     const { rank } = await modules();
-    expect(rank.rankCandidates("suite", FIXTURE_CATALOG, "en")).toHaveLength(1);
-    expect(rank.rankCandidates("suite", FIXTURE_CATALOG, "sv")).toHaveLength(0);
+    // Control first: item 7 is matchable in en, so the sv exclusion below is the title filter's
+    // doing and not the score floor's (review round 1, B3; master §9.1 rule 15).
+    expect(rank.rankCandidates("suite", FIXTURE_CATALOG, "en").map((c) => c.variationId)).toEqual(["7"]);
+    // "ledningsnivå" is a term from item 7's own sv description: with the missing-key half of the
+    // title filter removed, the item would clear the floor in sv and appear here.
+    expect(rank.rankCandidates("ledningsnivå", FIXTURE_CATALOG, "sv")).toEqual([]);
   });
 
   it("C5(b) an item whose target-language title is whitespace-only is excluded", async () => {
@@ -154,29 +181,20 @@ describe("rankCandidates", () => {
 
   it("C6(a) a strong match precedes a possible match", async () => {
     const { rank } = await modules();
-    const candidates = rank.rankCandidates(QUERY_3, FIXTURE_CATALOG, "en");
-    const index = (id: string) => candidates.findIndex((c) => c.variationId === id);
-    expect(index("1")).toBeGreaterThanOrEqual(0);
-    expect(index("2")).toBeGreaterThanOrEqual(0);
-    expect(index("1")).toBeLessThan(index("2"));
+    const sequence = tuples(rank.rankCandidates(QUERY_TRACK, FIXTURE_CATALOG, "en"));
+    expectPrecedes(sequence, ["2", 1000, "strong"], ["1", 667, "possible"]);
   });
 
   it("C6(b) a possible match precedes a weak match", async () => {
     const { rank } = await modules();
-    const candidates = rank.rankCandidates(QUERY_3, FIXTURE_CATALOG, "en");
-    const index = (id: string) => candidates.findIndex((c) => c.variationId === id);
-    expect(index("3")).toBeGreaterThanOrEqual(0);
-    expect(index("4")).toBeGreaterThanOrEqual(0);
-    expect(index("3")).toBeLessThan(index("4"));
+    const sequence = tuples(rank.rankCandidates(QUERY_BUNDLE, FIXTURE_CATALOG, "en"));
+    expectPrecedes(sequence, ["5", 444, "possible"], ["3", 333, "weak"]);
   });
 
   it("C6(c) equal strength orders by higher score first", async () => {
     const { rank } = await modules();
-    const candidates = rank.rankCandidates(QUERY_3, FIXTURE_CATALOG, "en");
-    const index = (id: string) => candidates.findIndex((c) => c.variationId === id);
-    expect(index("2")).toBeGreaterThanOrEqual(0);
-    expect(index("3")).toBeGreaterThanOrEqual(0);
-    expect(index("2")).toBeLessThan(index("3"));
+    const sequence = tuples(rank.rankCandidates(QUERY_BUNDLE, FIXTURE_CATALOG, "en"));
+    expectPrecedes(sequence, ["8", 667, "possible"], ["5", 444, "possible"]);
   });
 
   it("C6(d) equal score orders by ascending variationId, not lexically", async () => {
@@ -201,5 +219,21 @@ describe("rankCandidates", () => {
     const backward = rank.rankCandidates("identical", [item("a"), item("b")], "en");
     expect(forward.map((c) => c.variationId)).toEqual(["a", "b"]);
     expect(backward.map((c) => c.variationId)).toEqual(["a", "b"]);
+  });
+
+  it("C6(f) the ranking is exactly the worked table's (variationId, score, matchStrength) tuples", async () => {
+    const { rank } = await modules();
+    expect(tuples(rank.rankCandidates(QUERY_TRACK, FIXTURE_CATALOG, "en"))).toEqual([
+      ["2", 1000, "strong"],
+      ["1", 667, "possible"],
+      ["5", 444, "possible"],
+      ["3", 333, "weak"],
+      ["4", 333, "weak"],
+      ["6", 333, "weak"],
+      ["7", 333, "weak"],
+      ["8", 333, "weak"],
+      ["9", 333, "weak"],
+      ["10", 333, "weak"],
+    ]);
   });
 });

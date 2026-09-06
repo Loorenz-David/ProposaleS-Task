@@ -417,3 +417,90 @@ both cases; only the prescriptions needed repair.
 - **No independent re-review will follow this fix round** (owner direction, 2026-09-06). The fix
   round's own evidence is therefore the last evidence produced before the approval gate, and the
   coordinator validates against it.
+
+**Fix round 2 (2026-09-06, Claude Fable 5.1) — `IMPLEMENTED`.**
+Handoff: `handoffs/implementer/phase-07-fix-round-2.implementer.md`. B1, B2, B3, S1 and S2 resolved
+**test-side only**: `rank-candidates.test.ts` and `search-content-for-human.test.ts` changed; no
+production file and no fixture changed (`git status --porcelain` shows exactly the two test files plus
+this Review log and tracker row 7). Gate check: all six items passed, item 3 re-derived by command as
+8 criteria / 57 rows / 19 named mutations.
+
+- **B1 → C6(a)–(c).** Re-sited onto `"consulting service track"` (C6(a)) and `"consulting service
+  bundle"` (C6(b), C6(c)) and asserted as `(variationId, score, matchStrength)` tuples through two
+  test-local helpers: `tuples()` projects the returned candidates, `expectPrecedes()` first asserts
+  both tuples are **present** (`toContainEqual`, so score and strength are observed, not just the
+  id) and then their relative order. The old `QUERY_3`-based assertions and their per-test `index`
+  closures are deleted. `QUERY_3` itself stays: C1(a) is its live caller.
+- **B2 → C6(f) added.** The ten tuples written literally, deep-equal on the full sequence.
+- **B3 → C5(a).** Control first — `rankCandidates("suite", FIXTURE_CATALOG, "en")` maps to
+  `["7"]` — then `rankCandidates("ledningsnivå", FIXTURE_CATALOG, "sv")` deep-equals `[]`.
+- **S1 → C7(d).** The `expectTypeOf` block and its import are deleted. The row reads
+  `search-content-for-human.ts` and asserts `not.toMatch(/["']@\/lib\/(ai|agent)["']/)` over the
+  **unstripped** source — static, `import type` and dynamic `import()` all name the specifier, so
+  one match covers every form. Judgment call: a `toContain("export async function
+  searchContentForHuman(")` anchor precedes the absence check so an empty or mis-addressed file
+  cannot satisfy it (rule 15's "absence measured true" shape).
+- **S2 → C1(c).** `expect(stripped).not.toMatch(/\bimport\s*\(/)` added. Judgment call: the
+  source-text assertions now run **before** `await modules()`, with the arity check last — reason
+  under MUT-07-19 below.
+
+**Mutation ledger.** All at L1 (`npx vitest run --project node <named test file>`), on tree
+`b841457` + the two-file diff (digest `3d2818c3e4f2…`); each applied, landing confirmed with
+`git diff` on the production file, reverted with `git checkout --`, `git diff --quiet` confirmed.
+Executed = declared = **19**: five new below, MUT-07-2 and MUT-07-10 re-run because this round edits
+their rows, the other twelve cited from round 1 (their tests and production code are unchanged).
+Per-criterion summands from the table: C1 2 · C2 4 · C3 1 · C4 1 · C5 2 · C6 3 · C7 2 · C8 4.
+
+| # | Site | Change | Observed |
+|---|---|---|---|
+| MUT-07-15 | `rank-candidates.ts` · comparator, definition | delete `if (a.score !== b.score) return b.score - a.score;` | **C6(c) red** — `expected 3 to be less than 2`; C6(a), C6(b), C6(f) green; 1 failed / 21 passed. **Not the red the cell names** — see divergence 1 |
+| MUT-07-16 | `scoreItem`, definition | title weight `3` → `2` | **C6(f) red** (`[["2",667,"possible"], …]` vs the literal table — id order unchanged, tuples moved, as the cell predicted); C6(a), C6(b), C6(c) also red on `toContainEqual`; 4 failed / 18 passed |
+| MUT-07-17 | `rankCandidates`, definition | `if (title !== undefined && title.trim().length === 0) continue;` | **C5(a) red** — `TypeError: Cannot read properties of undefined (reading 'normalize')` thrown inside the row's `sv` call; C5(b), C5(c) green; 1 failed / 21 passed — see divergence 2 |
+| MUT-07-18 | `search-content-for-human.ts` · module header | add `import { createAiClient } from "@/lib/ai";` | **C7(d) red on the text** (`not to match /["']@\/lib\/(ai|agent)["']/`); 1 failed / 10 passed — the module still loads because esbuild elides an unused TypeScript import, so no other row moved |
+| MUT-07-19 | `rankCandidates`, definition | `await import("node:fs");` as the first statement | **C1(c) red on `not.toMatch(/\bimport\s*\(/)`**; but the literal form is `await` inside a non-async function → esbuild `Transform failed`, module unloadable, 22 failed / 0 passed — see divergence 3 |
+| MUT-07-2 (re-run) | header + `rankCandidates` body | `import { getProposalesClient } from "@/lib/proposales";` + `void getProposalesClient;` | C1(c) red on the static-import assertion; 1 / 21 |
+| MUT-07-10 (re-run) | `rankCandidates`, definition | `if (title === undefined) continue;` | C5(b) red (`variationId '8'` returned); C5(a) green; 1 / 21 |
+| P1 (self-chosen = review probe 8) | comparator | delete **both** strength and score terms | C6(a) (`1 < 0`), C6(b) (`4 < 2`), C6(c) (`7 < 4`), C6(f) red; 4 / 18 — **B1 closed**: the mutant the finding was raised on now reddens every ordering row |
+| P2 (self-chosen) | comparator | delete the strength term only | 22 / 22 green — consistent with the Notes: the term is redundant and C6(f) guards the labels, not the comparator clause |
+| P3 (self-chosen, two-site) | MUT-07-17 **plus** projection `item.title[language] ?? ""` | admit the missing-title item and let projection tolerate it | C5(a) red on its own assertion: `expected [ { variationId: '7', … } ] to deeply equal []`; 1 / 21 |
+| P4 (self-chosen) | `rankCandidates`, definition | `void import("node:fs");` (parses, module loads) | C1(c) red on the dynamic-import assertion only; 1 / 21 |
+
+**Corrections quoted in the prompt that did not play out as stated (charter rule 14).** Every
+mutation was run exactly as named; what differs is the observed red, and the coordinator's
+validation should not read these from the plan cells.
+
+1. **MUT-07-15 reddens C6(c), not C6(a).** C6(a) compares a `strong` item with a `possible` item;
+   with the strength term intact that pair is ordered before the score term is ever consulted, so
+   deleting the score term cannot reorder it — no strong-vs-possible row can discriminate the score
+   term, the mirror image of the Notes' redundancy argument. Only a same-band pair (C6(c)) does, and
+   the review's original cell ("→ C6(c) red") was right. C6(a)'s falsifiability is proven by P1, the
+   both-terms mutant B1 was raised on (`expected 1 to be less than 0`). **Suggested amendment:** the
+   C6(a) cell records MUT-07-15 → C6(c) red, and P1 is named as the mutation for C6(a) and C6(b)
+   (comparator reduced to `variationId ascending`).
+2. **MUT-07-17's red is a `TypeError`, not the `[]` assertion.** Under the plan's mutant, item 7
+   clears the floor in `sv`, enters `scored`, and projection's `tokenize(item.title[language]!)`
+   throws before the function returns, so `toEqual([])` is unreachable. This is **not** the
+   crash-shape the cell warns about: the throw is caused by the admitted item (the exact defect),
+   only C5(a) reddens (C5(b), C5(c) stay green), and P3 shows that once projection tolerates the
+   missing title the row fails on its own assertion with `variationId "7"` returned. Recorded so a
+   `TypeError` in the ledger is not mistaken for certifying a guard that does not exist.
+3. **MUT-07-19's literal form does not parse.** `await` inside the synchronous `rankCandidates` is an
+   esbuild transform error; with C1(c)'s original order (`await modules()` first) the row would have
+   reddened at module load — a crash, not the guard. C1(c) was reordered so its source assertions run
+   first: the literal mutant now reddens on the dynamic-import assertion, and P4 (`void import(...)`,
+   which parses and loads) reddens only C1(c). **Suggested amendment:** name the parsing form in the
+   cell, or keep the literal with this note.
+
+**Superseded and deleted, nothing left behind:** the three `index` closures and `QUERY_3` usages
+in C6(a)–(c); the `expectTypeOf` import and block in C7(d). Both new helpers have callers in the same
+file (rule 4). Reverse trace: the two edited files carry 22 + 11 = 33 `it` cases whose ids are
+exactly C1(a–e) C3(a–c) C4(a–d) C5(a–d) C6(a–f) C7(a–k), no duplicate, no orphan. Candidate
+criterion: none.
+
+**Evidence.** Closing L4 stamp, one run, on the tree handed over: `npm test` **24 files / 335
+tests** green (was 334; +1 = C6(f)); the phase's four files carry 12 + 12 + 22 + 11 = **57** `it`
+cases = 57 rows. `npm run typecheck` exit 0; `npm run lint` exit 0. Tree: HEAD `b841457`, dirty with
+exactly the two test files, `git diff | shasum -a 256` = `3d2818c3e4f2bcd6f08261c250c28764d367f3b461b17c482d559b27abab48aa`;
+`tsconfig.tsbuildinfo` was touched by `tsc` and restored with `git checkout --`. No additional L4
+run. Architecture context: test-only change, contract `11` §§2–3, 5 applied; no boundary, schema, or
+persistence concern touched; no durable documentation made false.

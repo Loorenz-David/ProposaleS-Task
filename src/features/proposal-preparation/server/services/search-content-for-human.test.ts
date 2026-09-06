@@ -1,4 +1,7 @@
-import { describe, expect, expectTypeOf, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+import { describe, expect, it } from "vitest";
 
 import { createFakeProposalesClient } from "@/lib/proposales";
 
@@ -41,9 +44,13 @@ describe("searchContentForHuman", () => {
     expect(candidates).toEqual(rank.rankCandidates("service", FIXTURE_CATALOG, "en"));
   });
 
-  it("C7(d) the deps type carries no model dependency", async () => {
-    const { service } = await modules();
-    expectTypeOf<Parameters<typeof service.searchContentForHuman>[1]>().not.toHaveProperty("ai");
+  it("C7(d) the service imports no model dependency in any form", () => {
+    const source = readFileSync(fileURLToPath(new URL("./search-content-for-human.ts", import.meta.url)), "utf8");
+    expect(source).toContain("export async function searchContentForHuman(");
+    // Static, `import type`, and dynamic import() all name the specifier, so one match over the
+    // unstripped source covers every form. Replaces a type-level not.toHaveProperty("ai") assertion
+    // that an optional `ai?: unknown` dependency passed (review round 1, S1; master §9.1 rule 16).
+    expect(source).not.toMatch(/["']@\/lib\/(ai|agent)["']/);
   });
 
   it("C7(e) every returned candidate validates", async () => {
