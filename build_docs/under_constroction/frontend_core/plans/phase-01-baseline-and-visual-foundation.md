@@ -937,3 +937,45 @@ every one of them. **When a criterion asserts an absence over an open universe, 
 whether the instrument is an allowlist or a denylist, and a denylist row records its limit inside
 the criterion.** C5(d) was the only row that already did this, which is why it was the probe that
 dismissed cleanly.
+
+**2026-09-06 — Codex, fix round 2 (`IMPLEMENTED`).**
+
+Resolved B1, B2, S1, S2, S3, S5, S6 and N1 within the prompt's perimeter. Contract 15 §5 now
+retains its prospective README recording rule as a separate bullet beside the per-milestone
+package rule. C7(b) now uses the complete in-file design-01 ramp allowlist; C7(a) correction 2
+derives every declared `--color-fg-*` name from `theme.css`. C1(e) now asserts one violation kind
+per planted scanner class across TypeScript and CSS fixtures, and its lexical blind spots record
+the missing-semicolon and `//`-inside-string limitations. C4(d) measures every discovered
+`src/lib/**/*.test.ts` entry and requires the `node` project. C3's caveat properties are asserted
+by name. Correction 6 is a two-sided browser measurement with a non-`none` animation under both
+motion preferences. README and checklist item 32 were corrected for current truth.
+
+The S5 rename branch was taken: `#84868c` is now `--color-fg-quiet` and `#7c7e84` is now
+`--color-fg-quietest`. No consumer exists yet, so this resolves the misleading order before a
+later phase can depend on either name; C7(a) correction 1 follows the renamed token. The
+underlying design inconsistency remains recorded in master plan §11.2 delta 13. No quoted
+correction was omitted or deliberately diverged from.
+
+Named mutation arithmetic was re-derived as C1 **5** (four value classes plus outline) + C2 **1**
++ C3 **1** + C4 **2** + C5 **4** + C6 **0** + C7 **1** + C8 **1** = **15**; all 15 were executed
+and reverted in this round. Three additional probes were also executed and reverted for C1(e),
+C7(b), and C7(a) correction 2. The full evidence records and the bidirectional coverage map are
+in the fix handoff.
+
+**Documentation impact review (contract 14 §8.3, verbatim instruction applied).**
+
+> Before closing implementation, evaluate documentation impact according to
+> `architectural_contracts/14-documentation-principles.md`. Update any authoritative
+> documentation made false, incomplete, or misleading by the verified implementation. Do not
+> modify documentation merely because files changed.
+
+Evaluated the phase plan, master plan, README, and affected architecture contracts after the
+verified implementation. Patched only current-state documents made false or incomplete by this
+round: root README's Playwright description, checklist item 32's component-library status, and
+contract 15 §5's prospective recording rule. The phase plan and master tracker were updated as
+pipeline records. No design specification, unrelated tracker row, package manifest, or out-of-
+scope document was changed.
+
+The browser mutation runs initially hit a sandbox watcher/Chromium permission failure; those
+attempts are not counted as evidence. The valid targeted browser mutations were rerun with the
+approved elevated local Chromium path, and the final stamp is the only full-suite L4+ run.

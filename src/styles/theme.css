@@ -50,8 +50,8 @@
   --color-fg-secondary: #a1a3a9;
   --color-fg-muted: #8b8d93;
   --color-fg-muted-panel: #9a9ca2;
-  --color-fg-quiet: #7c7e84;
-  --color-fg-quietest: #84868c; /* corrected from #6b6d73 (design 01 §5 correction 1) */
+  --color-fg-quiet: #84868c; /* corrected from #6b6d73 (design 01 §5 correction 1) */
+  --color-fg-quietest: #7c7e84;
 
   /* ---- Semantics (design 01 §1.4): accent / positive / attention, each with an ink and a
      wash. "Accent hover (link/text)" and "Accent ink on dark" are the same value in design 01

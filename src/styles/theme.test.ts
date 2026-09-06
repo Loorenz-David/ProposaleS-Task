@@ -76,7 +76,10 @@ function stylingConsumerFiles(): string[] {
 //   numeric literal with no unit and no colour/utility context (z-index, array length,
 //   `flex: 1`); a non-Tailwind arbitrary-value bracket for a property this rule does not name
 //   (`w-[240px]`, `top-[12px]` — layout/position values are outside C1's scope, which names
-//   only colour, type size, radius and shadow); anything inside a comment; anything inside a
+//   only colour, type size, radius and shadow); a bare CSS declaration that is the last one in
+//   its block and omits the trailing semicolon (the patterns are intentionally declaration-
+//   lexical, not block-aware); a `//` sequence inside a string literal (the lightweight comment
+//   stripper treats it as a line comment); anything inside a comment; anything inside a
 //   `.test.ts(x)` file.
 // - This is a lexical scan, not a full CSS/AST parse — sufficiently robust for this
 //   repository's actual code style at its current, MVP scope.
@@ -161,20 +164,32 @@ describe("C1: visual values are defined once; focus is never silently removed", 
 
   it("C1(e): the scanner's own scope — reads a synthetic fixture it must catch, ignores a file it must not", () => {
     const dir = mkdtempSync(path.join(tmpdir(), "theme-c1e-"));
-    const fixture = path.join(dir, "synthetic-consumer.ts");
+    const tsFixture = path.join(dir, "synthetic-consumer.ts");
+    const cssFixture = path.join(dir, "synthetic-consumer.css");
     try {
       // Synthetic: no file under src/** carries a raw styling value today (this phase
       // creates none outside the theme layer), so the positive half of this assertion has
       // no real-repository subject without a manufactured one.
       writeFileSync(
-        fixture,
-        'export const styles = "text-[#1f5eff] rounded-[9px] p-[13px]";\n',
+        tsFixture,
+        'export const styles = "text-[#1f5eff] text-[13px] rounded-[9px] shadow-[0_1px_2px_rgba(0,0,0,.2)]";\n',
+        "utf-8",
+      );
+      writeFileSync(
+        cssFixture,
+        ".probe { font-size: 13px; border-radius: 9px; }\n",
         "utf-8",
       );
 
-      const positive = scanForRawStylingValues([fixture]);
-      expect(positive.length).toBeGreaterThan(0);
-      expect(positive.some((v) => v.kind === "raw-hex-colour")).toBe(true);
+      const positive = scanForRawStylingValues([tsFixture, cssFixture]);
+      expect(positive.map((violation) => violation.kind)).toEqual([
+        "raw-hex-colour",
+        "raw-px-type-size",
+        "raw-radius-arbitrary",
+        "raw-shadow-arbitrary",
+        "raw-css-radius-or-shadow",
+        "raw-css-font-size",
+      ]);
 
       // Negative control: theme.css is the definition site and legitimately carries raw
       // values throughout. The scanner must not be pointed at it in the real check (it is
@@ -239,6 +254,15 @@ describe("C4: test collection partitions the tree", () => {
 
     // Self-counting: this file's own discovery is part of the set just asserted over.
     expect(onDisk.has(path.join(SRC_DIR, "styles/theme.test.ts"))).toBe(true);
+
+    const libraryTestFiles = walk(
+      path.join(SRC_DIR, "lib"),
+      (name) => name.endsWith(".test.ts"),
+    );
+    const libraryEntries = listed.filter((entry) => libraryTestFiles.includes(entry.file));
+    expect(libraryTestFiles).not.toEqual([]);
+    expect(new Set(libraryEntries.map((entry) => entry.file))).toEqual(new Set(libraryTestFiles));
+    expect(libraryEntries.every((entry) => entry.projectName === "node")).toBe(true);
   });
 
   it("C4(f): src/styles/theme.test.ts (this file) is collected in the node project", () => {
@@ -303,23 +327,94 @@ describe("C5: nothing deliberately deleted is restored, and no second styling me
 // multi-theme scale
 // ---------------------------------------------------------------------------------------
 
-// Component/widget nouns that are not already part of design 01's own ramp-table vocabulary.
-// "tab", "panel", "dot", "button" and "badge" are excluded from this list on purpose: design
-// 01's own tables use them as usage-context descriptors for base-ramp rows ("Accent hover
-// (button)", "Positive wash (badge)", "Active tab" shadow, the pulse-dot keyframe) — carrying
-// those rows under those names is representing the ramp as given, not inventing a
-// component-level alias on top of it. The fragments below name no row in any design 01 table.
-const FORBIDDEN_COMPONENT_NAME_FRAGMENTS = [
-  "dialog",
-  "modal",
-  "tooltip",
-  "chip",
-  "checkbox",
-  "avatar",
-  "toast",
-  "composer",
-  "-variant",
-];
+// Allowlist instrument (master plan §6.5A, amended after review round 1 B2): every declared
+// name must be one of design 01's enumerated base-ramp names. The name set is closed by §6.5A:
+// a later phase uses one of these entries or amends that section alongside its new value. Any
+// declared name absent here is therefore an offender, including a component-level name whose
+// noun has never been anticipated by a denylist.
+const DESIGN_01_RAMP_NAMES = [
+  "color-bg",
+  "color-bg-agent-pane",
+  "color-bg-tab-strip",
+  "color-bg-card",
+  "color-bg-control",
+  "color-bg-control-hover",
+  "color-bg-control-strong",
+  "color-bg-resize-active",
+  "color-border-hairline",
+  "color-border-divider",
+  "color-border-card",
+  "color-border-control",
+  "color-border-control-raised",
+  "color-border-dashed",
+  "color-border-elevated",
+  "color-border-focus",
+  "color-fg",
+  "color-fg-bubble",
+  "color-fg-body",
+  "color-fg-control",
+  "color-fg-secondary-strong",
+  "color-fg-secondary",
+  "color-fg-muted",
+  "color-fg-muted-panel",
+  "color-fg-quiet",
+  "color-fg-quietest",
+  "color-accent",
+  "color-accent-hover-button",
+  "color-accent-ink-on-dark",
+  "color-accent-wash",
+  "color-accent-wash-alt",
+  "color-positive",
+  "color-positive-bright",
+  "color-positive-wash-badge",
+  "color-positive-wash-medallion",
+  "color-positive-medallion-border",
+  "color-attention",
+  "color-attention-wash",
+  "color-focus",
+  "color-diff-old-value",
+  "radius-xs",
+  "radius-sm",
+  "radius-md",
+  "radius-lg",
+  "radius-xl",
+  "radius-2xl",
+  "radius-3xl",
+  "radius-4xl",
+  "radius-pill",
+  "shadow-popover",
+  "shadow-palette",
+  "shadow-panel",
+  "shadow-active-tab",
+  "space-4",
+  "space-8",
+  "font-sans",
+  "font-mono",
+  "text-9-5",
+  "text-10",
+  "text-10-5",
+  "text-11",
+  "text-11-5",
+  "text-12",
+  "text-12-5",
+  "text-13",
+  "text-13-5",
+  "text-14",
+  "text-14-5",
+  "text-15",
+  "text-15-5",
+  "text-19",
+  "text-26",
+  "leading-snug",
+  "leading-relaxed",
+  "leading-loose",
+  "leading-loosest",
+  "tracking-tight",
+  "tracking-label",
+  "animate-pulse-dot",
+  "animate-pulse-dot-slow",
+  "animate-spin-fast",
+] as const;
 
 function themeCustomPropertyNames(): string[] {
   const source = readFileSync(THEME_FILE, "utf-8");
@@ -331,9 +426,7 @@ function themeCustomPropertyNames(): string[] {
 describe("C7(b): no semantic-layer name, component-level value, or multi-theme scale", () => {
   it("declares no custom property named after a component/widget outside design 01's own ramp vocabulary", () => {
     const names = themeCustomPropertyNames();
-    const offenders = names.filter((name) =>
-      FORBIDDEN_COMPONENT_NAME_FRAGMENTS.some((fragment) => name.includes(fragment)),
-    );
+    const offenders = names.filter((name) => !DESIGN_01_RAMP_NAMES.includes(name as (typeof DESIGN_01_RAMP_NAMES)[number]));
     expect(offenders).toEqual([]);
   });
 });

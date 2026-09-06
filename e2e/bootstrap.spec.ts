@@ -15,6 +15,7 @@ import { expect, test } from "@playwright/test";
 
 const REPO_ROOT = path.resolve(__dirname, "..");
 const GLOBALS_CSS = readFileSync(path.join(REPO_ROOT, "src/styles/globals.css"), "utf-8");
+const THEME_CSS = readFileSync(path.join(REPO_ROOT, "src/styles/theme.css"), "utf-8");
 
 test("renders the document title with no client or server error", async ({ page }) => {
   const pageErrors: Error[] = [];
@@ -102,9 +103,18 @@ test.describe("C2: global accessibility treatment, reachable by the shipped defa
 
 test.describe("C3: every custom property globals.css references resolves", () => {
   const referenced = [...new Set([...GLOBALS_CSS.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]))];
+  const caveatPropertiesStillReferenced = [
+    "--color-bg",
+    "--color-fg",
+    "--color-fg-muted",
+    "--color-focus",
+    "--space-4",
+    "--space-8",
+  ];
 
   test("the file references at least one custom property (the scan has a subject)", () => {
     expect(referenced.length).toBeGreaterThan(0);
+    expect(referenced).toEqual(expect.arrayContaining(caveatPropertiesStillReferenced));
   });
 
   // Enumerated, not sampled: one test per property this file actually references, derived
@@ -122,10 +132,10 @@ test.describe("C3: every custom property globals.css references resolves", () =>
 });
 
 test.describe("C7(a): design 01 §5's required corrections are the values that landed", () => {
-  test("correction 1: the muted ink ramp is lightened (--color-fg-quietest)", async ({ page }) => {
+  test("correction 1: the muted ink ramp is lightened (--color-fg-quiet)", async ({ page }) => {
     await page.goto("/");
     const value = await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue("--color-fg-quietest").trim(),
+      getComputedStyle(document.documentElement).getPropertyValue("--color-fg-quiet").trim(),
     );
     expect(value.toLowerCase()).toBe("#84868c");
   });
@@ -134,13 +144,14 @@ test.describe("C7(a): design 01 §5's required corrections are the values that l
     page,
   }) => {
     await page.goto("/");
-    const inkValues = await page.evaluate(() => {
+    const inkPropertyNames = [...THEME_CSS.matchAll(/(--color-fg-[\w-]+)\s*:/g)].map(
+      (match) => match[1],
+    );
+    expect(inkPropertyNames.length).toBeGreaterThan(0);
+    const inkValues = await page.evaluate((propertyNames) => {
       const style = getComputedStyle(document.documentElement);
-      return ["fg", "fg-bubble", "fg-body", "fg-control", "fg-secondary-strong", "fg-secondary",
-        "fg-muted", "fg-muted-panel", "fg-quiet", "fg-quietest"].map((name) =>
-        style.getPropertyValue(`--color-${name}`).trim().toLowerCase(),
-      );
-    });
+      return propertyNames.map((name) => style.getPropertyValue(name).trim().toLowerCase());
+    }, inkPropertyNames);
     expect(inkValues).not.toContain("#3a3c41");
   });
 
@@ -185,11 +196,51 @@ test.describe("C7(a): design 01 §5's required corrections are the values that l
     await page.evaluate(() => document.getElementById("__c7a-focus-probe")?.remove());
   });
 
-  test("correction 6: reduced motion (measured directly; shares its subject with C2(b))", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    const declaresFloor = GLOBALS_CSS.includes("prefers-reduced-motion: reduce");
-    expect(declaresFloor).toBe(true);
+  test.describe("correction 6: per-animation reduced motion treatment", () => {
+    test.describe("under prefers-reduced-motion: reduce", () => {
+      test.use({ contextOptions: { reducedMotion: "reduce" } });
+
+      test("collapses a non-none animation on the running document", async ({ page }) => {
+        await page.goto("/");
+        await page.evaluate(() => {
+          const probe = document.createElement("div");
+          probe.id = "__c7a-motion-probe";
+          probe.style.animationName = "spin";
+          probe.style.animationDuration = "300ms";
+          document.body.appendChild(probe);
+        });
+
+        const animation = await page.locator("#__c7a-motion-probe").evaluate((el) => {
+          const style = getComputedStyle(el);
+          return { name: style.animationName, duration: style.animationDuration };
+        });
+        expect(animation.name).not.toBe("none");
+        expect(Number.parseFloat(animation.duration)).toBeLessThan(0.001);
+        await page.evaluate(() => document.getElementById("__c7a-motion-probe")?.remove());
+      });
+    });
+
+    test.describe("under no-preference", () => {
+      test.use({ contextOptions: { reducedMotion: "no-preference" } });
+
+      test("does not collapse a non-none animation on the running document", async ({ page }) => {
+        await page.goto("/");
+        await page.evaluate(() => {
+          const probe = document.createElement("div");
+          probe.id = "__c7a-motion-probe";
+          probe.style.animationName = "spin";
+          probe.style.animationDuration = "300ms";
+          document.body.appendChild(probe);
+        });
+
+        const animation = await page.locator("#__c7a-motion-probe").evaluate((el) => {
+          const style = getComputedStyle(el);
+          return { name: style.animationName, duration: style.animationDuration };
+        });
+        expect(animation.name).not.toBe("none");
+        expect(Number.parseFloat(animation.duration)).toBeGreaterThan(0.001);
+        await page.evaluate(() => document.getElementById("__c7a-motion-probe")?.remove());
+      });
+    });
   });
 });
