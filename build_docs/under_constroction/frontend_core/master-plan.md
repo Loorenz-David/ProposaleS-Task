@@ -257,7 +257,7 @@ derived from the tables, never typed forward: re-derive before any count-bearing
 | # | Phase | Plan file | Criteria | State | Date | Actor | Note |
 |---|---|---|---|---|---|---|---|
 | 01 | Repository baseline, visual foundation, test collection | `plans/phase-01-baseline-and-visual-foundation.md` | 8 | `APPROVED` | 2026-09-06 | coordinator | fix round 2 verified and approved **without a re-review round, by owner decision**. 31/31 rows, 15/15 named mutations plus 3 unnamed probes red and reverted; closing stamp `npm test` 137/137, `npm run test:e2e` 27/27, typecheck/lint/build clean. Approval basis and its limits recorded in §11.1 and the plan's Review log |
-| 02 | Persistent shell: landmarks, divider, narrow width, containment | `plans/phase-02-workspace-shell.md` | 6 | `IMPLEMENTED` | 2026-09-06 | Codex | unit 154/154, E2E 49/49, typecheck/lint/build green; 58 rows and 11/11 named mutations executed and reverted |
+| 02 | Persistent shell: landmarks, divider, narrow width, containment | `plans/phase-02-workspace-shell.md` | 6 | `CHANGES_REQUESTED` | 2026-09-06 | reviewer (Claude Opus 5) | round 1: 8 blocking, 8 should-fix, 5 notes; 10/10 probes adjudicated (8 confirmed, 2 dismissed); 11 reviewer mutation probes, all reverted; 0 L4 runs (tree identical to checkpoint). Shell and scope fences hold; C5(a)/(b) scan file names not source, C4 conditions 3/4 never set their viewport, and four guards pass with their own defect planted |
 | 03 | Session runtime and the tab strip | `plans/phase-03-session-runtime-and-tabs.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (ordering) |
 | 04 | Derived presentation: status, unread, the derivation register | `plans/phase-04-derived-presentation.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (derivations) |
 | 05 | Turn dispatch, origin attribution, close/discard guard | `plans/phase-05-turn-dispatch-and-close-guard.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (attribution, destructive guard) |
@@ -517,7 +517,9 @@ phase adding a slightly different grey to the theme layer itself. Growing increm
 would observe the second.
 
 **The instrument for "no component-level value" is an allowlist, never a denylist** (added
-2026-09-06, phase-01 review round 1 B2). This section closes the name set by construction — "a
+2026-09-06, phase-01 review round 1 B2; **promoted to standing rule 17 on 2026-09-06** after
+phase 02 re-derived a denylist four times — this subsection keeps the theme-layer instance, and
+§9 rule 17 governs the project). This section closes the name set by construction — "a
 later phase does not invent a value; it uses a ramp entry, or it amends this section" — so the
 only enforceable form is *the declared name set is a subset of design 01's enumerated ramp
 names*. A denylist cannot measure this prohibition at all: the name universe is open, so a
@@ -793,6 +795,22 @@ The charter's quality rules apply verbatim. These are this project's own, each e
     than it contains.
 16. **`npm run test:e2e` and `npm run build` are part of the definition of green**, because
     CI runs both on every push. A phase must not leave either red.
+17. **Every open-universe absence row is instrumented as an allowlist, and its probe plants a
+    construct no denylist would contain.** Promoted from §6.5A on 2026-09-06, where it was scoped
+    to the theme layer's name set, because phase 02 re-derived a denylist **four** times — C5(a),
+    C5(b), C5(c), C6(a) — in a phase whose own plan quoted the rule inside a criterion cell. Two
+    consequences, both earned: the instruction belongs in the **task** that builds instruments, not
+    only in the criterion that asserts against them, because an implementer reads tasks to decide
+    what to write; and a probe drawn from the instrument's own list proves nothing, which is how
+    C6(a) survived a planted `<ul>` and C5(c) survived a planted `export type`. Cost so far:
+    phase-01 review round 1 (four findings of this shape) and phase-02 review round 1 (one
+    blocking, two should-fix).
+18. **A source-scanning instrument asserts that its scan had a subject.** Phase 01 carried this
+    guard in two places (`referenced.length > 0`, `inkPropertyNames.length > 0`); phase 02 dropped
+    both in a relocation and independently shipped two scanners that matched their denylists
+    against a newline-joined list of **file paths** rather than file contents, so a complete
+    navigation stack and a complete surface registry both passed. A one-line subject assertion
+    catches this at authoring time; nothing else in the pipeline did.
 
 ---
 
@@ -945,6 +963,14 @@ permanent rather than phase-01-local:
   `@import "tailwindcss"`, which requires PostCSS; Vitest does not process CSS imports into the
   jsdom document and `vitest.config.mts` sets no `css` option.
 
+**A Playwright criterion parameterised by viewport width sets that viewport in every
+parameterised test** (added 2026-09-06, phase-02 review B4). `playwright.config.ts` selects
+`devices["Desktop Chrome"]`, which pins **1280×720**. A test generated inside a
+`for (const width of …)` loop that never calls `page.setViewportSize` measures 1280 whatever its
+title says — the loop variable reaches only the title. Phase 02 shipped six of fifteen
+narrow-width rows that way, three identical measurements at a width that is not in the named set,
+and had no evidence at all at its own V1 floor until the review found it.
+
 **Consequence, binding on every phase.** A criterion that asserts *what the browser computes* —
 a resolved custom property, a focus indicator, a media-query-conditional treatment, a real
 cascade — is measured in **Playwright**, against the running application, and says so. A
@@ -1015,6 +1041,8 @@ This section absorbs the project README, which is now a one-screen pointer to th
 | **Fable window 01 withdrawn (unexecuted)** | 2026-09-06 — the owner withdrew the window on cost grounds before any phase ran under it: *"i won't be continuing with the astra prompt plan batch implementation approach ( it consume a lot of credit ). i will continue with my agentic flow."* Phases 02–05 run the normal per-phase route; neither §3 withdrawal ever took effect. Surviving from the window: the phase-02 pre-dispatch lint and the compiled phase-02 projection prompt, re-attributed to the normal route. Consequence 1 was re-derived on its own reason and folded into §7.2, which now lists **02 as mandatory** because its C5 makes absence claims. Recorded in §3A |
 | Phase 02 projection gate | **not waived**, 2026-09-06 — mandatory by §7.2 as corrected that day; see the tracker note |
 | Phase 02 projection round 0 | `AMENDMENTS_REQUIRED`, 2026-09-06 — 27 ledger rows (16 plan gaps, 1 intention gap, 10 proposed delegations), 1 owner card, zero L4 evidence spent as budgeted. Consumed by the coordinator the same day: write perimeter verified against the tree (one file, the handoff), and its load-bearing environment findings re-verified independently at source before routing — jsdom 30.0.1's `getBoundingClientRect()` and `client*`/`scroll*` literals, the absence of `ResizeObserver` and `setPointerCapture` from `node_modules/jsdom/lib/`, the exact block task 8 retires, and the three README statements. All 27 routed; none dismissed |
+| Phase 02 implementer round 1 | `IMPLEMENTED`, 2026-09-06, actor **Codex** — the standing split's cross-family property was available for this phase. 58 rows mapped, 11/11 named mutations executed and reverted, checkpoint `7bfa79e`. Consumed by the coordinator the same day: perimeter reconciled (exactly the nineteen declared paths), arithmetic re-derived, closing stamp **not** re-run under tree identity. Three coordinator findings, one blocking |
+| Phase 02 review round 1 | `CHANGES_REQUESTED`, 2026-09-06, actor **Claude Opus 5** — 8 blocking, 8 should-fix, 5 notes, 0 owner decisions; 10/10 coordinator probes adjudicated (8 confirmed, 2 dismissed, one of them by disproving the coordinator's own premise); 11 reviewer mutation probes, none of a shape the implementer's ledger used; **zero L4 runs** — the source tree was byte-identical to the checkpoint, verified, so the implementer's stamp was cited and the whole budget went to variation. Consumed by the coordinator the same day; perimeter verified (tracker row and Review log only, source untouched, no probe residue) and the three largest findings re-verified independently at source before routing |
 | Owner decision 14 (narrow-width floor) | 2026-09-06 — **780px**, the projection's recommendation, confirmed by the owner. Folded upstream into intention §12A.19 and §15 (never patched downstream), then into §6.4 and phase 02's C4. Its declared limit — below-floor non-corruption is unmeasured in V1 — is §11.3 follow-up 13 |
 | Backend phases merged from `main` | 1 (topology and environment), 2 (errors, logger, shared value shapes), 3 (Proposales adapter: transport, error translation, content read) — all `APPROVED`. Backend phases 4–15 `NOT_STARTED` |
 
@@ -1041,6 +1069,7 @@ specification behaviour where it does not conflict with §13, leaves a marker, a
 | 11 | the five design 01 open questions (tab-strip tone, border-ramp collapse, hover easing, the positive token, half-pixel type snapping) | design 10 §4 |
 | 12 | **The type ramp is `px`-locked** for 15 of its 19 steps — design 01's own values, correctly carried under §6.5A. Browser font-size scaling does not reach those steps. Design 01 §5 names no correction, so nothing was deviated from; the accessibility consequence is recorded rather than silently inherited | phase-01 review round 1 N3 |
 | 13 | **Design 01 §5 correction 1 inverts one pair of ink names.** Lightening `#6b6d73 → #84868c` while leaving `#7c7e84` alone makes `--color-fg-quietest` *lighter* than `--color-fg-quiet`. The specification is internally inconsistent on that pair; phase 01 carried it faithfully. Whichever way the phase-01 fix round resolves the naming, the design inconsistency is the design owner's | phase-01 review round 1 S5 |
+| 14 | **Three design 02 deviations in the shell, undeclared by the round that made them.** No grip bar (§4 specifies a centred 2px × 26px bar with a 2px radius; the shipped element is the 6px seam); no hover treatment, although §6 lists Hover as a divider state (only the resizing state is implemented); and `overflow-x-hidden` added to the main pane, which §4 does not specify and which clips a real overflow invisibly. The hit area **is** correct at 12px, and the omitted `title` attribute was a declared delegation. Recorded here rather than fixed: none is a criterion, and design deltas are recorded, never implemented as design decisions (standing rule 7) | phase-02 review round 1 N3 |
 
 ### 11.3 Follow-up register
 
@@ -1059,6 +1088,7 @@ specification behaviour where it does not conflict with §13, leaves a marker, a
 | 12 | **Design 01 §5 correction 3, the surviving half.** The correction asks the primary action to be darkened to ~`#2f6fe0` **or** to carry `#0b0b0c` ink on `#3b82f6`. Phase 01 discharged it by taking the alternative — a composition rule for a control that does not exist yet — so `--color-accent` remains `#3b82f6` and nothing yet measures the ink pairing. The phase that builds the primary/approval action composes `#0b0b0c` ink on `--color-accent`, **never white**, and asserts the computed pair in the browser | phase 12 | at introduction |
 | 13 | **Below-floor non-corruption is unmeasured in V1**, by owner decision 14's own construction: the narrow-width test set's floor is 780px, so design 02 §3.3's "below 780 — out of scope for V1, but must not corrupt" is an intent no criterion measures. Recorded rather than left implied; a later initiative that wants it measured names a below-floor width in intention §12A.19 and adds the row | this project | a later initiative, at the owner's choice |
 | 14 | **A third stale README statement**, found by the phase-02 projection (R3) and outside every phase-01 finding: `README.md` says the application's use of the Proposales API "will be documented in `src/lib/proposales/README.md` **once the adapter exists**", while that README and `src/lib/proposales/client.ts` both exist today (backend phase 3, merged). Routed to phase 02 task 9 under follow-up 10's own rule — the next phase that patches the document — and recorded here so it is not lost if that task is descoped | this project | phase 02 |
+| 15 | **A seam wired one phase ahead of its behaviour.** `MainApplicationSurface` accepts a `state: MainSurfaceState` prop, never branches on it, and writes it out as `data-surface-state` — an attribute no test in the repository asserts. It exists so `MainSurfaceState` has a production consumer rather than dead scaffolding (charter rule 4), which is a defensible reading and was a declared delegation. The phase that makes the surface a function of the session record either gives the attribute a criterion row or removes it, and `MainSurfaceState`'s consumer arrives with the session record | phase 14 | at introduction |
 | 9 | **Per-animation reduced-motion treatment.** Phase 01's `globals.css` collapses every transition and animation duration to `0.01ms`, which is correct as a floor and is what phase 01 C2(c) measures. Design 01 §5 correction 6 asks for more than a floor on three named animations: the attention **pulse holds at full opacity** (a `0.01ms` pulse settles on its keyframe at `opacity:.25` — dimmed, which is the opposite of held), the **spinner becomes a static ring plus text**, and **`fadeUp` is dropped**. Nothing animates in phase 01, so nothing bites there; the phase that introduces each animation implements its correction and **may not rely on the blanket collapse**. Standing rule 6: the correction wins | phases 04, 06, 12 (whichever introduces each animation) | at introduction |
 
 ### 11.4 Live pipeline tables
