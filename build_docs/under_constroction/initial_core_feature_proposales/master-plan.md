@@ -51,6 +51,37 @@ Roles, prompts, handoffs, the phase state machine, review protocol, and evidence
 - **State machine per phase:** `NOT_STARTED → PROJECTED → PROMPT_READY → IMPLEMENTING → IMPLEMENTED → REVIEWING → CHANGES_REQUESTED (→ IMPLEMENTING) → APPROVED`. A phase starts implementation only when the previous phase is `APPROVED`. The coordinator recommends compaction at each `APPROVED`; the owner decides.
 - **Commits.** Every implementation and fix cycle is checkpoint-committed the moment it reaches `IMPLEMENTED`; the phase is committed again at `APPROVED`. Checkpoints are never squashed.
 
+### 3A. Astra window 01 (owner authorization, 2026-09-06)
+
+David authorizes an autonomous coordinator window for backend phases 08–10, as recorded in
+`prompts/astra_prompts/astra-window-01-phases-08-10.prompt.coordinator.md`. The coordinator
+launches fresh isolated Codex Astra sub-contexts for projection, implementation, review,
+bounded correction and focused re-review. For this window only, this withdraws the
+coordinator-orchestrates-only arrangement in which the owner opens each session, and the
+§9.0.1 staffing split, **Codex implements, Claude reviews**. Reviewer capability remains
+at least that of the implementer; the cross-family property is explicitly spent.
+
+Four consequences bind:
+
+1. Projection is mandatory and never waived for phases 08–10: it is the independent read
+   before code exists when one model fills every role. The existing phase-08 projection
+   prompt runs unchanged apart from its required filename correction.
+2. A reviewer finding that relies on “the implementer and I read this the same way” records
+   that dependence in the Review log; shared interpretation is not independent agreement.
+3. Each implementer prompt enumerates its scope fences and each named mutation explicitly.
+4. Every fix round is followed by a fresh re-review sub-context. Coordinator validation
+   alone never closes a fix in this window.
+
+This authorization does not supersede the intention, architecture contracts, phase scopes,
+acceptance criteria, naming registry, source-of-truth and fold-back rules, checkpoints,
+review quality, dependency gates, named-mutation requirement, documentation requirements,
+git provenance, phase ordering, positional artifact trail, or evidence budget. Every tracker
+note and Review-log entry in this window records: “Astra window 01: coordinated, projected,
+implemented and reviewed by Codex Astra sub-contexts”. This phrase identifies the authorized
+workflow; each entry's state and evidence identify which roles have actually completed.
+The standing arrangement and §9.0.1 staffing split resume unchanged at phase 11 without a
+further decision. This window stops before phase 11.
+
 ## 4. Progress tracker
 
 One row per phase. Agents update only their own row; findings go to the phase plan's Review log.
@@ -667,6 +698,10 @@ rename, never a bare `mv` of several files into one directory.
 **Folder tables** (charter layout instantiated): master plan at this root (this file) · `plans/` phases · `prompts/{implementer,reviewer,coordinator,maintenance}/` live directives · `handoffs/<role>/` unconsumed reports · `archive/pre_plan/` gate rows before phase 1, `archive/plan_<n>/` created at each closeout · `planing/` the intention and evidence doc (owner-authored, not renamed) · `context/` owner-supplied context. Mechanism inventory and planning ran under the coordinator role tables. State is positional; a transition is a file move.
 
 **Gate log:** intention `RATIFIED` round 5 (2026-09-05, §21.1); ledger extension M8–M18 ratified round 7; **FB-2 ratified round 8 (2026-09-05): §17A.17, M19, §5.2, §7, §8.3, §17A.4, §12.1 — folded, no longer proposed** · **logging/redaction M20 ratified round 10 (2026-09-05): §17A.18, §21.3 — phase 2 projection card 1 → A** · **phase-3 transport precedence and timestamp validation ratified round 12 (2026-09-05): §17A.13, §17A.16, §21.4 — projection cards 1 and 2 → A** · **phase-7 content-search query bound folded round 15 (2026-09-06): §17A.16 first bullet plus the shared-bound paragraph — projection card 1 → add the cap; status stays `RATIFIED`, the numeric value owned by §6.5** · **§17A.15 phrasing corrected round 16 (2026-09-06): follow-up 4 closed, editorial, gate stays closed** · mechanism inventory `PASSED` round 1 (17 mechanisms, 17 contracts) · ledger extension `RATIFIED` round 7 (M8–M18, none cut) · planning round 1: this plan set (2026-09-05) · planning round 2 (2026-09-05): multi-turn continuity refactor — phase 10 inserted, 10–14 → 11–15; FB-2 raised · owner decisions (2026-09-05): card 1 → A, card 2 → A, folded into phases 3, 5, 10, 11, 12.
+
+**Gate log — Astra window 01 authorization (2026-09-06):** David's explicit window prompt
+authorizes the §3A exception for phases 08–10. Recorded before phase-08 work; all other gates
+remain binding and the standing staffing arrangement resumes at phase 11.
 
 **Follow-up register** — none blocks any phase:
 
