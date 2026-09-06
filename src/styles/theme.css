@@ -1,0 +1,173 @@
+/*
+ * The Tailwind theme layer — the single definition of Proposal Copilot's visual values.
+ *
+ * Scope (master plan §6.5A, owner decision 13, "the flat base set"): design 01's base ramps
+ * once — surface, border, ink, semantic, radius, shadow, type, motion — with design 01 §5's
+ * required corrections applied where the corrected value differs from the prototype value.
+ * No semantic-layer name, no component-level value, no multi-theme scale (contract 15 §2's
+ * taxonomy prohibition). A later phase uses a ramp entry, or amends master plan §6.5A.
+ *
+ * `@theme static` (not the default `@theme`): Tailwind 4.3.3 prunes theme values no generated
+ * utility consumes. `--space-4` / `--space-8` (read only via `var()` in globals.css, never
+ * through a generated utility) and most of this ramp have no consumer yet — under the default
+ * `@theme` they would never reach `:root`, which is exactly the failure C3(a) exists to catch.
+ * `static` forces every declaration below to always emit.
+ */
+@theme static {
+  /* ---- Surfaces (design 01 §1.1) — lighter as they get more interactive; the tab strip is
+     the one deliberate exception. ---- */
+  --color-bg: #0b0b0c; /* app background */
+  --color-bg-agent-pane: #0e0f10;
+  --color-bg-tab-strip: #08090a;
+  --color-bg-card: #141517;
+  --color-bg-control: #17181a;
+  --color-bg-control-hover: #1a1b1e;
+  --color-bg-control-strong: #1f2023;
+  --color-bg-resize-active: #1f2b40;
+
+  /* ---- Borders (design 01 §1.2). Six-step ramp plus the two content-adjacent roles.
+     Design 01's own "collapse to four" text is an open design question (register #11);
+     V1 implements the specified ramp as given (task 3). ---- */
+  --color-border-hairline: #1c1d20;
+  --color-border-divider: #1e1f22;
+  --color-border-card: #232427;
+  --color-border-control: #26282c;
+  --color-border-control-raised: #2f3135;
+  --color-border-dashed: #2a2b2f;
+  --color-border-elevated: #3a3c41;
+  --color-border-focus: #3b82f6; /* focused-input border; a border/fill use, not text (§5's own exception) */
+
+  /* ---- Ink (design 01 §1.3), design 01 §5 correction 1 applied: the muted ramp is
+     lightened. The "nearly invisible" step is not carried forward as a distinct ink value:
+     its composer-hint use (#5b5d63) is corrected onto --color-fg-quiet, and its ask-glyph use
+     (#3a3c41) is not exposed as a readable-text ink at all (correction 2) — no future consumer
+     can reach for it by name. ---- */
+  --color-fg: #f5f5f6; /* primary / heading */
+  --color-fg-bubble: #f0f0f2;
+  --color-fg-body: #e4e4e7; /* assistant prose */
+  --color-fg-control: #dcdde0; /* pill labels, chips, option labels */
+  --color-fg-secondary-strong: #c9cbd1;
+  --color-fg-secondary: #a1a3a9;
+  --color-fg-muted: #8b8d93;
+  --color-fg-muted-panel: #9a9ca2;
+  --color-fg-quiet: #7c7e84;
+  --color-fg-quietest: #84868c; /* corrected from #6b6d73 (design 01 §5 correction 1) */
+
+  /* ---- Semantics (design 01 §1.4): accent / positive / attention, each with an ink and a
+     wash. "Accent hover (link/text)" and "Accent ink on dark" are the same value in design 01
+     (#7aa9ff) and are carried as one token, not two, per contract 15 §2's "defined once". ---- */
+  --color-accent: #3b82f6; /* border/fill only — never as text on a dark surface (correction 4) */
+  --color-accent-hover-button: #5596ff;
+  --color-accent-ink-on-dark: #7aa9ff; /* safe as text; also the hover ink for links */
+  --color-accent-wash: #1b2740;
+  --color-accent-wash-alt: #16202e;
+  --color-positive: #7ddba0; /* the positive token (open question #4; design 01's own recommendation adopted, reported) */
+  --color-positive-bright: #4ade80; /* one-off: the success checkmark glyph only */
+  --color-positive-wash-badge: #12261a;
+  --color-positive-wash-medallion: #12291b;
+  --color-positive-medallion-border: #235133;
+  --color-attention: #e0a94a;
+  --color-attention-wash: #241d10;
+
+  /* ---- Focus ring (design 01 §5 correction 5): #7aa9ff, distinct from --color-border-focus
+     above (#3b82f6, an accepted border/fill use). ---- */
+  --color-focus: #7aa9ff;
+
+  /* ---- Diff colors (design 01 §1.5). Field name and arrow reuse --color-fg-quiet (post
+     correction 1, the arrow's source value #5b5d63 no longer exists as a distinct ink); the
+     new value reuses --color-positive. The old value is the one diff-specific value: a
+     desaturated red-brown, not one of §5's flagged failing pairs. ---- */
+  --color-diff-old-value: #7f6060;
+
+  /* ---- Radius (design 01 §1.7). Overrides Tailwind's default rem-based scale with design
+     01's own px scale; nothing in this codebase depends on the previous defaults yet. `50%`
+     circles use Tailwind's built-in `rounded-full` utility directly — no token needed. The
+     compound top-only-corner tab radius (`9px 9px 0 0`) is applied at the consuming component
+     with a directional utility (`rounded-t-lg`) against the plain `lg` step below, not a
+     separate token. ---- */
+  --radius-xs: 5px;
+  --radius-sm: 7px;
+  --radius-md: 8px;
+  --radius-lg: 9px;
+  --radius-xl: 10px;
+  --radius-2xl: 11px;
+  --radius-3xl: 12px;
+  --radius-4xl: 14px;
+  --radius-pill: 99px;
+
+  /* ---- Shadow (design 01 §1.8). The nav-rail shadow is prototype-only and is not carried
+     (design 01 "Prototype-only — do not port"). The active-tab treatment is an inset
+     three-sided border, not a drop shadow, and reuses --color-border-control rather than
+     repeating its literal. ---- */
+  --shadow-popover: 0 18px 40px rgba(0, 0, 0, 0.55);
+  --shadow-palette: 0 -10px 30px rgba(0, 0, 0, 0.4);
+  --shadow-panel: 0 -12px 34px rgba(0, 0, 0, 0.45);
+  --shadow-active-tab:
+    0 -1px 0 var(--color-border-control) inset,
+    1px 0 0 var(--color-border-control) inset,
+    -1px 0 0 var(--color-border-control) inset;
+
+  /* ---- Spacing rhythm (design 01 §1.9). The prototype's own values are odd (7, 9, 11, 13,
+     17...); design 01's own production recommendation is a 4px scale, which is what
+     globals.css's base-layer vertical rhythm (`*+p`, `*+h2`, `*+h3`) already needs. Named to
+     match Tailwind's own `spacing-*` scale at the same steps (4 = 1rem, 8 = 2rem) so the
+     values agree with Tailwind's convention rather than inventing a second one. ---- */
+  --space-4: 1rem;
+  --space-8: 2rem;
+
+  /* ---- Type (design 01 §1.6). Font files are not loaded in this phase (no product surface
+     renders); these families render through their stated fallback stack until a later phase
+     adds the loader. Sizes reuse Tailwind's default scale where it already matches design 01
+     exactly (base=16, xl=20, 2xl=24, 4xl=36); the rest are added as their own steps. Half-step
+     names use a hyphen (`-5`), not a literal decimal point, which is not a valid unescaped CSS
+     custom-property character. Line-heights are not paired per size: design 01's own line-height
+     table (below) is contextual, not a fixed per-size mapping, so pairing one to each size would
+     invent a coupling the source design does not state. ---- */
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --text-9-5: 9.5px;
+  --text-10: 10px;
+  --text-10-5: 10.5px;
+  --text-11: 11px;
+  --text-11-5: 11.5px;
+  --text-12: 12px;
+  --text-12-5: 12.5px;
+  --text-13: 13px;
+  --text-13-5: 13.5px;
+  --text-14: 14px;
+  --text-14-5: 14.5px;
+  --text-15: 15px;
+  --text-15-5: 15.5px;
+  --text-19: 19px;
+  --text-26: 26px;
+  /* 16, 20, 24 and 36 reuse Tailwind's default --text-base / --text-xl / --text-2xl / --text-4xl. */
+
+  --leading-snug: 1.45;
+  --leading-relaxed: 1.55; /* overrides Tailwind's default (1.625) to design 01's own value */
+  --leading-loose: 1.6; /* overrides Tailwind's default (2) to design 01's own value */
+  --leading-loosest: 1.65;
+  /* 1.5 reuses Tailwind's default --leading-normal, already exact. */
+
+  --tracking-tight: -0.02em; /* overrides Tailwind's default (-0.025em); 24px+ display type */
+  --tracking-label: 0.045em; /* design 01 states a .04em-.05em range for uppercase mono/eyebrow labels; midpoint until a second, distinguishable consumer justifies splitting it (contract 15 §2) */
+
+  /* ---- Motion (design 01 §1.10). `fadeUp` is not carried: master plan §11.3 follow-up 9
+     records design 01 §5 correction 6 as dropping it, not merely deferring it. Nothing
+     animates in this phase; the reduced-motion floor in globals.css governs whichever of
+     these a later phase first applies (master plan §11.3 follow-up 9). ---- */
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 0.25;
+      transform: translateY(0);
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(-2px);
+    }
+  }
+  --animate-pulse-dot: pulse-dot 1s infinite; /* thread thinking indicator */
+  --animate-pulse-dot-slow: pulse-dot 1.1s infinite; /* background working tab dot */
+  --animate-spin-fast: spin 0.8s linear infinite; /* creating spinner; reuses Tailwind's built-in `spin` keyframe */
+}

@@ -22,12 +22,17 @@ export default defineConfig({
           name: "node",
           environment: "node",
           setupFiles: ["./test/setup/node.ts"],
-          include: [
-            "src/lib/**/*.test.ts",
-            "src/features/**/*.test.ts",
-            "test/setup/node.test.ts",
+          // Partition rule (master plan §10.3): every *.test.ts(x) under src/ or test/ is
+          // claimed by exactly one project. The two axes are extension (.tsx renders, so
+          // DOM) and one named directory (feature hooks/, which needs a DOM even though it
+          // renders no markup). Everything else falls here by construction.
+          include: ["src/**/*.test.ts", "test/**/*.test.ts"],
+          exclude: [
+            ...configDefaults.exclude,
+            "e2e/**",
+            "**/*.live.test.ts",
+            "src/features/**/hooks/**/*.test.ts",
           ],
-          exclude: [...configDefaults.exclude, "e2e/**", "**/*.live.test.ts"],
         },
       },
       {
@@ -36,7 +41,7 @@ export default defineConfig({
           name: "jsdom",
           environment: "jsdom",
           setupFiles: ["./vitest.setup.ts"],
-          include: ["src/app/**/*.test.tsx", "src/components/**/*.test.ts", "src/components/**/*.test.tsx"],
+          include: ["src/**/*.test.tsx", "test/**/*.test.tsx", "src/features/**/hooks/**/*.test.ts"],
           exclude: [...configDefaults.exclude, "e2e/**", "**/*.live.test.ts"],
         },
       },

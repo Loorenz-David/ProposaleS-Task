@@ -4,7 +4,7 @@ An AI-assisted workflow for turning incomplete commercial intent (briefs, meetin
 
 ## Status
 
-**Foundation established, product workflow not yet implemented.** The repository has a working Next.js scaffold with typecheck, lint, unit, end-to-end, and build steps running locally and in CI, a complete set of normative architecture contracts, agent bootstrap for Claude Code and Codex, and a vendored Proposales API reference. The application currently provides a product-neutral root layout with a header and content container, a small styling foundation (design tokens, typography, focus treatment), and three shared primitives (`Button`, `Input`, `Textarea`). The `/` route is intentionally neutral until the product UI is ported. No proposal generation, agent, Proposales integration, schema, or business flow exists yet.
+**Foundation established, product workflow not yet implemented.** The repository has a working Next.js scaffold with typecheck, lint, unit, end-to-end, and build steps running locally and in CI, a complete set of normative architecture contracts, agent bootstrap for Claude Code and Codex, and a vendored Proposales API reference. The application currently provides a bare root layout, a neutral `/` route, and the production visual foundation established ahead of any component: a Tailwind theme layer defining every visual value once, base element typography, and a global focus and reduced-motion treatment. No shared UI primitive exists yet; one is created only when a second feature genuinely needs it ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md) §4). The `/` route is intentionally neutral until the product UI is ported. No proposal generation, agent, Proposales integration, schema, or business flow exists yet.
 
 ## Intended workflow
 
@@ -95,7 +95,7 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs typecheck, lint, 
 
 ## Testing strategy
 
-- **Vitest and React Testing Library** cover everything below the browser: pure functions, schemas, domain rules, services, adapters with mocked HTTP, and component tests. The node project collects `src/lib/**`, `src/features/**`, and `test/setup/node.test.ts`; the jsdom project collects `src/app/**` and `src/components/**`. Vitest excludes `e2e/` and `*.live.test.ts` so the default projects never overlap with end-to-end or opt-in live tests.
+- **Vitest and React Testing Library** cover everything below the browser: pure functions, schemas, domain rules, services, adapters with mocked HTTP, and component tests. Every `*.test.ts(x)` under `src/` or `test/` is claimed by exactly one project: the `jsdom` project claims every `.tsx` test and every `.ts` test under a feature's `hooks/`; the `node` project claims everything else (`src/lib/**`, `src/styles/**`, `src/app/**`, `src/features/**` outside `hooks/`, `test/**`). Vitest excludes `e2e/` and `*.live.test.ts` so the default projects never overlap with end-to-end or opt-in live tests.
 - **Playwright** covers critical browser-level flows from `e2e/`. It starts `npm run dev` itself and runs against Chromium. Today it has one spec that checks the application shell renders and the skip link works.
 - Layers, what each must prove, and the rules for agent evals: [11-testing-principles.md](architectural_contracts/11-testing-principles.md).
 
@@ -126,9 +126,8 @@ A refresh detects possible contract drift; a dependency-aware review of the diff
 
 ```
 .
-├── src/app/                     # Next.js routes: root layout (application shell) and neutral root route
-├── src/components/ui/           # Shared presentational primitives with no domain knowledge
-├── src/styles/                  # Design tokens and global base styles
+├── src/app/                     # Next.js routes: root layout and neutral root route
+├── src/styles/                  # Tailwind theme layer (visual values, defined once) and global base styles
 ├── e2e/                         # Playwright specs
 ├── architectural_contracts/     # Normative engineering contracts (numbered in read order)
 ├── agent-skills/                # Shared agent policies
@@ -139,7 +138,7 @@ A refresh detects possible contract drift; a dependency-aware review of the diff
 └── .env.example                 # Configuration inventory
 ```
 
-Feature code will live under `src/features/<feature>/` and integrations under `src/lib/<system>/` per [03-feature-architecture.md](architectural_contracts/03-feature-architecture.md); neither exists yet.
+Feature code lives under `src/features/<feature>/` and integrations under `src/lib/<system>/` per [03-feature-architecture.md](architectural_contracts/03-feature-architecture.md); `src/features/proposal-preparation` exists today only as phase 01's test-collection sentinels (no component, hook, or product surface yet).
 
 ## Deployment
 
@@ -150,7 +149,7 @@ The baseline deploys to Vercel. Environment variables are configured in the Verc
 Established:
 
 - Next.js scaffold, TypeScript, lint, unit and end-to-end test harnesses, CI.
-- Application shell, styling foundation, and shared UI primitives.
+- A bare root layout, a neutral root route, and the production visual foundation (Tailwind theme layer, base typography, focus and reduced-motion treatment). No shared UI primitive exists yet.
 - Architecture contracts and agent bootstrap.
 - Vendored Proposales reference and refresh workflow.
 
@@ -164,7 +163,7 @@ Decided and deliberately absent:
 
 Decided for the frontend:
 
-- Tailwind CSS as the default production styling mechanism, with `src/styles/tokens.css` as the single definition of visual values. The existing CSS Modules are converted only when their components are touched by production UI work ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md)).
+- Tailwind CSS as the production styling mechanism. Visual values are defined once, in the Tailwind theme layer at `src/styles/theme.css` ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md)).
 - Zustand for feature-scoped client stores only, above `useState` and `useReducer` ([05-client-architecture.md](architectural_contracts/05-client-architecture.md) §5.1).
 
 Future product implementation (not started): brief intake, agent reasoning and tools, prepared-proposal review and approval, the Proposales adapter, and the editor handoff.

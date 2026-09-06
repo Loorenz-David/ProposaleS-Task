@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **State** | `PROJECTED` |
+| **State** | `IMPLEMENTED` |
 | **Criteria** | 8 |
 | **Projection** | not waived; round 0 returned `AMENDMENTS_REQUIRED` (21 rows), all routed 2026-09-06 |
 | **Serves** | F6 · `15 §2` · `15 §4` · `11 §1` · `11 §3` · intention §14.3 items 1 and 4 · conflict C-4 |
@@ -240,3 +240,251 @@ and absent `matchMedia`/`MediaQueryList` confirmed at source; C1's vacuity confi
 widened (zero hex, zero `rgb()`/`hsl()`, zero `px` literals in `src/**/*.ts(x)`, zero hex in
 `src/**/*.css`); the four unnamed stale README lines and both stale contract statements
 confirmed verbatim; contract 15 §3's three-item scope confirmed.
+
+---
+
+**2026-09-06 — implementer (Claude Sonnet 5), round 1, `IMPLEMENTED`.**
+
+**Baseline re-enumeration (task 1), on the tree at `7b741aa`.** All three §10.2 predictions
+confirmed, none corrected: `npm run typecheck` clean; `npm run lint` clean; `npm test` 11
+files / 118 tests, all passed (matches intention §2.1 exactly); `npm run build` clean;
+`npm run test:e2e` red on both tests (`banner` not found, "Skip to content" link not found) —
+confirmed by reading `node_modules/tailwindcss/theme.css`: the five `--color-*` and two
+`--space-*` globals.css reads have no definition anywhere; the other nine (`--font-*`,
+`--text-*`, `--leading-*`) are Tailwind defaults. No correction to master plan §10.2 was
+needed.
+
+**What was built.**
+- `src/styles/theme.css` — the Tailwind theme layer, one `@theme static` block expressing
+  design 01's surface, border, ink, semantic, radius, shadow, type and motion base ramps,
+  with design 01 §5's six required corrections applied.
+- `src/styles/globals.css` — repaired (all sixteen `var()` references it now makes resolve;
+  the set changed slightly, see judgment call below); `@import "./theme.css"` added;
+  `color-scheme: dark` added; the `a` rule's ink corrected; a design-delta marker comment
+  added for task 3's open questions.
+- `src/styles/theme.test.ts` (new, node project) — C1(a,b,e), C4(a,e,f), C5(a–d), C7(b),
+  C8(a,b), plus the C6(a)/(c) source-presence checks. 17 tests.
+- `vitest.config.mts` — repaired to master plan §10.3's total-by-construction partition rule.
+- `e2e/bootstrap.spec.ts` — reduced to what the tree renders (title + no client/server error),
+  plus C2(a,b), C3(a) (one test per property globals.css actually references, derived at
+  file-load time, not hardcoded), and C7(a)'s six correction rows. 26 tests, all against an
+  injected native control that is created and removed within each test.
+- `src/features/proposal-preparation/components/collection-sentinel.test.tsx` and
+  `.../hooks/collection-sentinel.test.ts` (new, permanent) — C4(b), C4(c).
+- Eight documents patched to current truth (task 7): root `README.md` (status paragraph,
+  styling line, tree diagram, shell sentence, plus the features-folder sentence and the
+  Vitest testing-strategy sentence — both made stale by *this phase's own* task 5 repair,
+  patched under contract 14 §8's standing instruction rather than under C8, which scopes to
+  deleted-artifact references only); `architectural_contracts/README.md` ("Status of the
+  codebase", both Scaffold/Resolved "Component library" rows, the styling rows, the tree
+  diagram, the CSS-Modules Known-conflicts row — removed as moot, the underlying code no
+  longer exists to convert); `15-ui-styling-and-component-system.md` §1 (`cx()`), §2 (tokens →
+  theme layer), §3 (four-item scope), §4 (`components/ui/` today: none), §5 (decided:
+  Radix + Lucide), §6 (rewritten: no CSS-Modules foundation exists); `12-anti-patterns.md`'s
+  styling row.
+- No package installed; `package.json`/`package-lock.json` unchanged. No `tokens.css`, no
+  `src/components/ui/`, no `*.module.css`.
+
+**Delegated decisions (Notes item; each recorded here with its reason).**
+1. **C1(a)'s lexical rule.** Scanned: every `.ts`/`.tsx`/`.css` under `src/**`, excluding
+   `*.test.ts(x)` and the two definition sites. Comments stripped before scanning `.ts/.tsx`
+   (a value named in prose, as this file's own comments do, is not a consumed value). A raw
+   hex is `#` + 3/4/6/8 hex digits anywhere outside a comment (catches Tailwind arbitrary
+   brackets too, per contract 15 §2's own `text-[#1f5eff]` example). A raw px type size is a
+   `text-[...px...]` bracket or a bare `font-size:<n>px` outside `var()` in `.css`. A raw
+   radius/shadow is a `rounded(-*)-[...]`/`shadow-[...]` bracket or a bare
+   `border-radius`/`box-shadow` outside `var()` in `.css`. **Deliberately not caught**: a bare
+   numeric literal with no unit/colour context (z-index, array length); a non-Tailwind
+   arbitrary-value bracket for a property outside C1's scope (`w-[240px]`, `top-[12px]` —
+   layout/position, not colour/type/radius/shadow); anything in a comment; anything in a test
+   file. This is a lexical scan, not an AST parse — recorded as a stated limitation, adequate
+   at this repository's MVP scope (master plan §3 owner brief).
+2. **How `theme.css` reaches Tailwind's processing.** `@import "./theme.css";` inside
+   `globals.css`, immediately after `@import "tailwindcss";` — the single existing CSS entry
+   point already reaches every consumer via `layout.tsx`'s one import; no second import chain
+   to maintain.
+3. **`@theme` vs `@theme static`.** `@theme static`, for the reason the plan names by name:
+   `--space-4`/`--space-8` (and most of the ramp) are consumed by no generated Tailwind
+   utility yet, so under the default `@theme` they would be pruned and never reach `:root` —
+   exactly C3(a)'s live defect. `static` forces every declaration to always emit, verified by
+   the closing e2e run (all sixteen `--space-*`/`--color-*`/etc. rows green).
+4. **`color-scheme: dark`.** Declared globally on `html` (not scoped to a future date input):
+   design 01 §1.1 is a dark application with no light mode in V1; every future native control
+   should render dark by default, not only the one control design 01 happens to mention.
+5. **The design-delta marker form (task 3).** A CSS comment block at the top of `globals.css`
+   naming master plan §11.2 register #11 and stating current-spec behaviour is implemented
+   (the border ramp is not collapsed; type sizes are not snapped).
+6. **`theme.test.ts`'s internal file name.** No separate helper module: the scanning logic
+   (raw-value scanner, `vitest list` runner, dependency-manifest reader, theme-property-name
+   reader) lives inline in the one test file, since each is small and has exactly one caller.
+
+**Other judgment calls, recorded.**
+- **globals.css's referenced-property set changed, deliberately.** The `a` rule previously
+  read `--color-accent` (#3b82f6); design 01 §5 correction 4 forbids the accent as text on a
+  dark surface (the prototype already uses `#7aa9ff` for links), so the rule now reads the
+  new `--color-accent-ink-on-dark` token instead. The file still references exactly sixteen
+  distinct custom properties (C3(a) derives the list from the file at test-collection time,
+  never hardcodes the count), so this is a repair, not a criterion violation.
+- **Ink-ramp consolidation (correction 1 and 2).** Design 01's "nearly invisible" ink row
+  (`#5b5d63`, `#3a3c41`) is not carried as its own token: `#5b5d63`'s one use (composer hint)
+  is corrected onto `--color-fg-quietest`/`--color-fg-quiet` per correction 1's stated target
+  value, and `#3a3c41`'s ink use (the ask-glyph) is not exposed as any `--color-fg-*` token at
+  all, per correction 2 — a future ask-agent surface (phase 11) reaches for
+  `--color-fg-quiet` directly. `#3a3c41` is kept in the **border** ramp
+  (`--color-border-elevated`), an un-flagged, distinct table row.
+- **Correction 3 (darkened primary action).** Took the "(or use `#0b0b0c` ink on `#3b82f6`)"
+  alternative: no second, darker accent value was introduced. `--color-accent` is unchanged
+  (`#3b82f6`), verified by C7(a) row 3. The future primary-action button (no such component
+  exists yet) composes dark ink on the existing accent background at the point it is built.
+- **Value reuse via `var()` inside the theme layer**, to keep "defined once" honest even
+  within one file: `--shadow-active-tab` references `--color-border-control` rather than
+  repeating `#26282c`. Design 01's neutral-badge background/ink and diff field-name/arrow
+  values duplicate existing ink/border/positive tokens exactly; no separate alias token was
+  declared for them (not in anticipation — a future Badge/diff component reuses the existing
+  token directly, or a new token is added then with its own reason).
+- **Text-size naming.** Half-step sizes use a hyphen (`--text-9-5`), not a literal decimal
+  point: an unescaped `.` is not a valid CSS custom-property identifier character. 16/20/24/36
+  reuse Tailwind's own `--text-base`/`--text-xl`/`--text-2xl`/`--text-4xl`, which already match
+  design 01 exactly.
+- **Radius**: overrides Tailwind's default `xs`–`4xl` scale with design 01's own eight px
+  values (nothing in this greenfield tree depended on the previous rem-based defaults), plus
+  one new `pill` (99px). `50%` uses Tailwind's built-in `rounded-full`; no token needed. The
+  compound top-only-corner tab radius is a future directional utility
+  (`rounded-t-lg`), not a token.
+- **fadeUp is not declared.** Master plan §11.3 follow-up 9 records design 01 §5 correction 6
+  as dropping it, not merely deferring it; `pulseDot`/`spin` are carried (settled design 01
+  motion-table values, unlike fadeUp).
+- **`--color-positive`/`--color-positive-bright`** implement design 01's own stated treatment
+  of open question #4 (`#7ddba0` as the positive token, `#4ade80` as the one-off checkmark),
+  which the design document itself recommends; recorded as satisfying the question via the
+  design's own suggestion, reported rather than silently resolved.
+- **C1(b)'s allowlist** is asserted as exactly one entry, in `globals.css`, and further
+  verified to be the `:focus:not(:focus-visible)` line specifically (not merely "some line in
+  globals.css") — this is a structural fact about the one-entry allowlist itself, not a
+  configured value charter rule 13 would otherwise require asserting as a contract.
+- **C7(b)'s forbidden-fragment list** excludes "tab", "panel", "dot", "button" and "badge" on
+  purpose: design 01's own ramp tables use them as usage-context descriptors for legitimate
+  base-ramp rows (`--color-accent-hover-button`, `--color-positive-wash-badge`,
+  `--shadow-active-tab`, `--animate-pulse-dot`). The first run of the C7(c) mutation probe
+  planted a name containing "button" and came back green — a false negative, caught before
+  concluding the guard was broken; re-sited using "tooltip" (not in the ramp's vocabulary),
+  which reddened correctly. Recorded per the doctrine's own instruction to report a re-siting.
+- **C4(d)/(e) are preservation rows, not new claims.** C4(d) (a `src/lib/**` test collected in
+  `node` with the guard installed) is discharged jointly by C4(a)'s partition check (confirms
+  every `src/lib/**/*.test.ts` lands in `node`) and the pre-existing
+  `test/setup/node.test.ts`'s own network-blocking test (unrelated numbering — that file's
+  "C4" labels are the **backend** project's phase-1 criteria, not this phase's; cited here only
+  as incidental proof the guard is live). C4(e) (the DOM project's guard) is upgraded from
+  "verified by inspection" to a one-line automated source-presence check
+  (`vitest.setup.ts` still calls `installOfflineFetchGuard()`) rather than left as inspection
+  only, since automating it cost nothing.
+- **Documentation beyond the plan's own enumeration.** Master plan §10.2 caveat 4 does not
+  name the root README's Vitest testing-strategy sentence or its features-folder sentence;
+  both were made stale by this phase's own task-5 repair and task-5-adjacent work
+  (`src/features/` now exists), and were patched under contract 14 §8's standing closeout
+  instruction, not under C8 (which is scoped to task 7's deleted-artefact enumeration only).
+  The root README's pre-existing, unrelated "integrations under `src/lib/**`... neither exists
+  yet" half-claim (already false before this phase, `src/lib/` already has real content) and
+  the second `architectural_contracts/README.md` Known-conflicts row ("No frontend
+  implementation plan exists yet") were left untouched: both predate this phase, neither is in
+  its declared perimeter, and fixing them is scope creep beyond the eight criteria — noted here
+  as a candidate finding for the coordinator to route.
+
+**Coverage map (task 0), all 31 rows, transcribed before the first production edit; the red
+baseline for each automated row was the absence of its test file (theme.test.ts,
+bootstrap.spec.ts, the two sentinels did not exist yet).**
+
+| Row | Test id | Shape |
+|---|---|---|
+| C1(a) | `theme.test.ts` "C1(a): no raw hex colour..." | matches |
+| C1(b) | `theme.test.ts` "C1(b): no outline:none..." | matches |
+| C1(c) | manual mutation (probe 1/11) | matches |
+| C1(d) | manual mutation (probe 2/11) | matches |
+| C1(e) | `theme.test.ts` "C1(e): the scanner's own scope..." | matches |
+| C2(a) | `bootstrap.spec.ts` "C2(a): :focus-visible produces..." | matches |
+| C2(b) | `bootstrap.spec.ts` "C2(b): transition and animation durations..." | matches |
+| C2(c) | manual mutation (probe 3/11) | matches |
+| C3(a) | `bootstrap.spec.ts` generated "C3(a): <property> resolves..." (×16) | matches, enumerated not sampled |
+| C3(b) | manual mutation (probe 4/11) | matches |
+| C4(a) | `theme.test.ts` "C4(a): every discovered *.test.ts(x)..." | matches |
+| C4(b) | `components/collection-sentinel.test.tsx` (self-asserting) | matches |
+| C4(c) | `hooks/collection-sentinel.test.ts` (self-asserting) | matches |
+| C4(d) | C4(a) + pre-existing `test/setup/node.test.ts` (preservation) | weaker: joint/incidental, not a dedicated new test — recorded above |
+| C4(e) | `theme.test.ts` "C4(e): vitest.setup.ts still calls..." | matches (upgraded from inspection) |
+| C4(f) | `theme.test.ts` "C4(f): ...this file... collected in the node project" | matches |
+| C4(g) | manual mutation (probe 5/11) | matches |
+| C5(a) | `theme.test.ts` "C5(a): src/styles/tokens.css does not exist" | matches |
+| C5(b) | `theme.test.ts` "C5(b): no file exists under src/components/ui/" | matches |
+| C5(c) | `theme.test.ts` "C5(c): no *.module.css exists under src/" | matches |
+| C5(d) | `theme.test.ts` "C5(d): package.json declares no forbidden..." | matches, recorded limit |
+| C5(e) | manual mutations (probes 6–9/11, one per absence sub-row) | matches |
+| C6(a) | `theme.test.ts` "C6(a)/(c): ...no banner/main-landmark or skip-link..." | matches |
+| C6(b) | closing L4+ stamp: `npm run test:e2e` (26/26) | matches |
+| C6(c) | same test as C6(a) (one assertion covers both rows) | matches |
+| C7(a) | `bootstrap.spec.ts` "correction 1"–"correction 6" (×6) | matches, enumerated not sampled |
+| C7(b) | `theme.test.ts` "C7(b): declares no custom property named after..." | matches |
+| C7(c) | manual mutation (probe 10/11; re-sited once, see judgment calls) | matches |
+| C8(a) | `theme.test.ts` `it.each` "C8(a): %s makes no unqualified..." (×4) | matches, enumerated not sampled |
+| C8(b) | `theme.test.ts` "C8(b): both 'Component library' rows name..." | matches |
+| C8(c) | manual mutation (probe 11/11) | matches |
+
+**Reverse trace.** Every `it`/`it.each` case in `theme.test.ts`, every `test` in
+`bootstrap.spec.ts`, and both collection sentinels appear in the table above against a
+criterion row. No orphan test.
+
+**Named mutations — arithmetic and full ledger.** Declared 11 = C1 2(c,d) + C2 1(c) +
+C3 1(b) + C4 1(g) + C5 4(e, one per a–d) + C6 0 + C7 1(c) + C8 1(c). Executed 11. All applied
+on the tracked tree and reverted (`git status --porcelain` clean of probe residue after each);
+none run twice; two negative controls confirmed the false-green risk directly (C1(e)'s own
+design; C7(c)'s first, mis-sited attempt).
+
+| # | Row | Site (file, def-vs-call) | Planted | Observed red (id/assertion) | Reverted |
+|---|---|---|---|---|---|
+| 1 | C1(c) | new file `src/lib/__mutation-probe-c1c.ts` (definition site — a fresh consuming file) | raw hex `#3b82f6` in a string literal | `theme.test.ts` "C1(a)" — `raw-hex-colour` at the planted file | yes |
+| 2 | C1(d) | same file, replaced | `outline: none;` in a string literal | `theme.test.ts` "C1(b)" — `outline-removed` at the planted file | yes |
+| 3 | C2(c) | `src/styles/globals.css` (call site — the reduced-motion block deleted) | reduced-motion `@media` block removed | `bootstrap.spec.ts` "C2(b)" — parsed duration `0.3` ≥ `0.001`; "correction 6" also reddened (shared subject, not a 12th mutation) | yes |
+| 4 | C3(b) | `src/styles/theme.css` (definition site — `--color-focus` line) | `--color-focus` declaration removed | `bootstrap.spec.ts` "C3(a): --color-focus..." only — all 15 sibling rows stayed green | yes |
+| 5 | C4(g) | `vitest.config.mts` (jsdom project's `include`, temporarily narrowed to the pre-repair globs) + a planted file `src/features/proposal-preparation/components/__mutation-probe-c4g.test.tsx` | jsdom include narrowed; `.tsx` file placed outside both narrowed globs | `theme.test.ts` "C4(a)" — `claimedByNone` listed both the planted file and (incidentally) the pre-existing sentinel, confirming the narrowed config recreated the original gap precisely | yes (both) |
+| 6 | C5(e)/(a) | `src/styles/tokens.css` (created) | the file itself | `theme.test.ts` "C5(a)" | yes |
+| 7 | C5(e)/(b) | `src/components/ui/probe.ts` (created) | the file itself | `theme.test.ts` "C5(b)" | yes |
+| 8 | C5(e)/(c) | `src/styles/probe.module.css` (created) | the file itself | `theme.test.ts` "C5(c)" | yes |
+| 9 | C5(e)/(d) | temporary fixture `/tmp/c5d-fixture/manifest.json` + a temporary test in `theme.test.ts` calling `forbiddenDependenciesPresent` against it | fixture manifest with `styled-components` dependency; no package installed, `package.json` untouched | the temporary test (deliberately wrong expectation) — `present` = `['styled-components']` | yes (temp test line and fixture both removed) |
+| 10 | C7(c) | `src/styles/theme.css` (definition site) | first attempt: `--color-primary-cta-button-bg` — **false green**, re-sited (see judgment calls); second: `--color-tooltip-bg` | `theme.test.ts` "C7(b)" — `offenders` = `['color-tooltip-bg']` | yes |
+| 11 | C8(c) | `README.md` (call site — the styling line) | unqualified `` `src/styles/tokens.css` `` mention appended | `theme.test.ts` "C8(a)" — only the README.md row reddened; the other three documents' rows stayed green | yes |
+
+**Closing L4+ stamp.** Tree: checkpoint commit (below) on top of `7b741aa`,
+`git status --porcelain` clean at stamp time (confirmed after reverting `next-env.d.ts` and
+`tsconfig.tsbuildinfo`, incidental regenerated build artifacts from running `build`/`typecheck`,
+outside the declared perimeter). `npm run typecheck` clean. `npm run lint` clean. `npm test`:
+14 files, 137 tests, all passed (was 11 files / 118 tests at baseline; +2 collection-sentinel
+files (1 test each) + 1 new `theme.test.ts` (17 tests) = +3 files / +19 tests, reconciling
+exactly to 14 files / 137 tests). `npm run build`
+clean. `npm run test:e2e`: 26/26 passed (was 0/2 at baseline). No failure-ID delta outside the
+expected: the two originally-red e2e tests no longer exist (reduced per task 6), replaced by
+26 new passing rows.
+
+**Documentation impact review (contract 14 §8.3, verbatim instruction applied).** Evaluated
+after the verified implementation above. Made false/incomplete/misleading and patched: the
+eight documents in "What was built". Not touched, and why: `ui_design/**` (never edited, per
+standing rule 7 and master plan §2); the root README's `src/lib/**` half-claim and the second
+`architectural_contracts/README.md` Known-conflicts row (pre-existing, out of this phase's
+declared perimeter, noted above as a candidate finding); every other architecture contract
+(no other document makes a false statement this phase's work touches).
+
+**Perimeter — every file this session touched.** Own changes: `src/styles/theme.css` (new),
+`src/styles/theme.test.ts` (new), `src/styles/globals.css`, `vitest.config.mts`,
+`e2e/bootstrap.spec.ts`, `README.md`, `architectural_contracts/README.md`,
+`architectural_contracts/15-ui-styling-and-component-system.md`,
+`architectural_contracts/12-anti-patterns.md`,
+`src/features/proposal-preparation/components/collection-sentinel.test.tsx` (new),
+`src/features/proposal-preparation/hooks/collection-sentinel.test.ts` (new), this plan file
+(State, Review log), `master-plan.md` (tracker row 01 only). Mutation-probe files (all created
+and removed, listed separately per the doctrine): `src/lib/__mutation-probe-c1c.ts`,
+`src/lib/__mutation-probe-c1d.ts`, `src/components/ui/probe.ts`,
+`src/styles/probe.module.css`, `src/styles/tokens.css` (probe instance),
+`src/features/proposal-preparation/components/__mutation-probe-c4g.test.tsx`,
+`/tmp/c5d-fixture/manifest.json` (outside the repo). Commands run: the five baseline commands
+(task 1); targeted (`npx vitest run <path> [-t]`) and scoped Playwright (`-g`) runs throughout
+implementation; the closing L4+ stamp (five full commands, §7 budget item 2, taken once,
+re-taken after the incidental build-artifact revert made no further tree change). No package
+installed; no dependency added.

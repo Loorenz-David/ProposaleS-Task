@@ -19,16 +19,16 @@ Rules:
 - New production UI is styled with Tailwind utility classes.
 - A second styling mechanism is not introduced beside it. CSS-in-JS libraries, styled-components, Emotion, SCSS, and utility wrappers around Tailwind are prohibited.
 - Long class lists are acceptable. They are not a reason to invent an abstraction; extracting a component is how repetition is removed, not extracting a class-name constant.
-- `cx()` (`src/components/ui/cx.ts`) composes conditional class names. No `clsx`/`classnames` dependency is added for that.
+- Conditional class-name composition uses a small utility created inside the feature that first needs it. No file exists yet, and no `clsx`/`classnames` dependency is added for it; it is promoted to `src/components/ui/` only when §4's promotion rule is actually met.
 
-## 2. Design tokens
+## 2. Design tokens (the Tailwind theme layer)
 
-`src/styles/tokens.css` is the **single definition of visual values** (color, type scale, spacing, radii, layout constants). It exists, is small, and stays small.
+`src/styles/theme.css` is the **single definition of visual values** (color, type scale, spacing, radii, shadows, motion). It is Tailwind's own theme layer (`@theme` / `@theme static`), not a separate mechanism wired onto Tailwind — declaring a value there both defines it once and makes it available to utility classes. It exists, is small, and stays small.
 
-- Tokens are wired into Tailwind's theme so utility classes resolve to the same values. Values are defined once, in the token file, and never duplicated into a JavaScript config or repeated as literals in components.
-- A token is added when a second consumer needs the same value, not in anticipation.
+- Values are defined once, in the theme file, and never duplicated into a JavaScript config or repeated as literals in components.
+- A value is added when a second consumer needs it, not in anticipation.
 - Building a larger token taxonomy (semantic layers, component-level tokens, multi-theme scales) is prohibited until repeated product patterns demand it. One flat set of values is the target.
-- Raw values in markup (`text-[#1f5eff]`, `p-[13px]`) are a signal the value is either a token or an accident. Prefer a token; use an arbitrary value only for a genuinely one-off measurement.
+- Raw values in markup (`text-[#1f5eff]`, `p-[13px]`) are a signal the value is either a theme entry or an accident. Prefer a theme entry; use an arbitrary value only for a genuinely one-off measurement.
 
 ## 3. Inline styles
 
@@ -43,11 +43,11 @@ The `style` prop is reserved for values that **cannot be known at build time**:
 
 The rule is: if the value is the same on every render, it is a class. Style objects as the general styling architecture are prohibited — this is the most common shape a prototype arrives in ([16-design-prototype-porting.md](16-design-prototype-porting.md) §4).
 
-Global CSS in `src/styles/globals.css` is limited to the reset, base element typography, and focus treatment. Feature-specific rules do not go there.
+Global CSS in `src/styles/globals.css` is limited to the reset, base element typography, the focus treatment, and the reduced-motion treatment. Feature-specific rules do not go there.
 
 ## 4. Shared primitives (`src/components/ui/`)
 
-`src/components/ui/` holds **generic, domain-free** presentational primitives ([03-feature-architecture.md](03-feature-architecture.md) §3). Today: `Button`, `Input`, `Textarea`, `cx`.
+`src/components/ui/` holds **generic, domain-free** presentational primitives ([03-feature-architecture.md](03-feature-architecture.md) §3). Today: none. The first primitive is created only when the promotion rule below is actually met.
 
 Promotion rule, in order:
 
@@ -61,18 +61,14 @@ A `src/components/ui/` component MUST NOT: know a domain concept (proposal, bloc
 
 ## 5. Component library and accessible primitives
 
-**Status: intentionally undecided.** No component library is ratified, and none is required.
+**Status: decided.** Radix UI Primitives is the adopted headless accessible-primitive library and Lucide React is the adopted icon library ([README.md](README.md) "Resolved decisions"), recorded per [13-decision-checklist.md](13-decision-checklist.md) §5.
 
 - Do not adopt a library because a design tool, a prototype, or a generator assumes one.
 - Project-owned components built on native elements are the default and are sufficient for controls whose semantics the platform already provides (`button`, `a`, `input`, `select`, `dialog`, `details`).
-- Hand-rolling the semantics of a **composite** widget — modal focus trapping, tab/tablist roving focus, popover positioning with dismissal, combobox — is where accessibility is usually lost ([05-client-architecture.md](05-client-architecture.md) §7). When a composite widget is actually needed, adopting a headless accessible primitive library (Radix-class) for that widget is the reasonable answer, and is preferred over a bespoke implementation.
-- That adoption is an architectural decision: it is recorded in [README.md](README.md) "Resolved decisions" with the widget that justified it, per [13-decision-checklist.md](13-decision-checklist.md) §5. Adopting a set of primitives does not adopt a design system: styling stays ours, per §1–§3.
-- Scaffolding tools that copy component source into the repository (shadcn-class) are permitted only under the same recorded decision, and the copied code is then **our code**: it is reviewed, styled to our tokens, and held to every contract in this folder. It does not arrive with an exemption.
+- Hand-rolling the semantics of a **composite** widget — modal focus trapping, tab/tablist roving focus, popover positioning with dismissal, combobox — is where accessibility is usually lost ([05-client-architecture.md](05-client-architecture.md) §7). Radix UI Primitives is adopted for exactly this: a composite widget whose semantics a Radix primitive correctly models. It supplies interaction mechanics and accessibility primitives only; it never brings a design system or a pre-styled visual identity with it — styling stays ours, per §1–§3.
+- Packages are added per milestone for the primitive actually used, never the ecosystem pre-emptively. Each addition is recorded in the consuming phase's Review log with the widget that justified it.
+- Scaffolding tools that copy component source into the repository (shadcn-class) are not adopted by this decision; adopting one would require its own recorded decision, and the copied code would then be **our code**: reviewed, styled to our theme layer, and held to every contract in this folder.
 
-## 6. The existing CSS Modules foundation
+## 6. CSS Modules
 
-The scaffold shipped before this contract used CSS Modules (`*.module.css`) for the three primitives and the shell. That is **existing code, not the rule** ([README.md](README.md) "Known conflicts").
-
-- New UI is Tailwind (§1).
-- A CSS-Modules file is converted when the port touches its component, not in a separate sweep, and never partially: a component is Tailwind or CSS Modules, not both.
-- `tokens.css` and `globals.css` are not migrated away. They keep their §2 role.
+No CSS-Modules foundation exists in this tree. The scaffold's original three primitives and shell, which used CSS Modules, were deliberately deleted during bootstrap simplification ([README.md](../README.md) "Status"). New UI is Tailwind (§1); a `*.module.css` file introduced outside this rule is a violation of §1, not existing code grandfathered under this section.

@@ -6,7 +6,7 @@ These documents are **contracts, not tutorials**. Any engineer or coding agent m
 
 ## Status of the codebase
 
-The Next.js application is scaffolded: a product-neutral shell (root layout, styling foundation, three shared primitives) with typecheck, lint, unit, end-to-end, and build steps running locally and in CI. No feature, integration, agent, or schema exists yet; the backend feature work is planned and in progress, and no product UI has been built. The root [README.md](../README.md) is the authority on what currently exists.
+The Next.js application is scaffolded: a bare root layout, a neutral root route, and the production visual foundation (Tailwind theme layer, base typography, focus and reduced-motion treatment) established ahead of any component, with typecheck, lint, unit, end-to-end, and build steps running locally and in CI. No shared UI primitive exists yet. No feature, integration, agent, or schema exists yet; the backend feature work is planned and in progress, and no product UI has been built. The root [README.md](../README.md) is the authority on what currently exists.
 
 The contract remains ahead of the code in places. Where it is, the difference is recorded under "Known conflicts" rather than left implicit.
 
@@ -73,10 +73,10 @@ These are fixed by this contract. Rows the scaffold has already established are 
 | Node.js version | Pinned by the repository at initialization in `package.json` `engines` and matched to the Vercel project setting. The value is the concrete version the runtime establishes when the app is created, not a number chosen in advance. |
 | Application database | None. Deliberate. See "Resolved decisions" and [09-database-and-persistence.md](09-database-and-persistence.md). |
 | Authentication system | None. Deliberate. See "Resolved decisions". |
-| Styling | Tailwind CSS for production UI, with `src/styles/tokens.css` as the single definition of visual values. Existing CSS Modules are converted as their components are touched. See [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md). |
+| Styling | Tailwind CSS for production UI. Visual values are defined once, in the Tailwind theme layer (`src/styles/theme.css`). See [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md). |
 | Client state library | Zustand is available for feature-scoped stores only, under the conditions in [05-client-architecture.md](05-client-architecture.md) §5.1. No global store. |
 | Remote-state library | None. Server Components, Server Actions, and `router.refresh()` are the mechanisms. TanStack Query only on a named requirement; TanStack Router/Start never. See [05-client-architecture.md](05-client-architecture.md) §4. |
-| Component library | None decided. Project-owned components on native elements. See [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §5. |
+| Component library | Radix UI Primitives (headless, per-widget packages, added per milestone for the widget that justifies each) and Lucide React (interface icons) are the adopted foundation. Project-owned components on native elements remain the default everywhere else. See [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §5. |
 | Client-side persistence | None. The session is browser-page-lifetime. See [05-client-architecture.md](05-client-architecture.md) §5.2. |
 
 ## Resolved decisions
@@ -86,10 +86,10 @@ Decisions that were open questions and are now closed. Reopening one requires a 
 | Topic | Decision |
 |---|---|
 | **Persistence** | The MVP has no application database. Transient browser/application state holds in-progress work; Proposales is the system of record for proposals and content; stable correlation metadata is attached where useful. Introducing a database requires the decision record in [09-database-and-persistence.md](09-database-and-persistence.md) §14. Do not add PostgreSQL, SQLite, Redis, an ORM, migration tooling, or a hosted database until then. |
-| **Styling mechanism** | Tailwind CSS is the styling mechanism for production UI. Design tokens stay in `src/styles/tokens.css` and are wired into the Tailwind theme; values are defined once. Inline `style` is limited to runtime-computed values. No second styling system, no design-system abstraction beyond one small token set. Rules: [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md). The scaffold's existing CSS Modules are converted as the port touches them (see "Known conflicts"). |
+| **Styling mechanism** | Tailwind CSS is the styling mechanism for production UI. Visual values are defined once, in the Tailwind theme layer (`src/styles/theme.css`), wired into Tailwind's `@theme`. Inline `style` is limited to runtime-computed values. No second styling system, no design-system abstraction beyond one flat set of values. Rules: [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md). |
 | **Client state library** | Zustand is the store library, for **feature-scoped** stores only, and only for transient client state that several components of one feature share or that coordinates a feature workflow. `useState` and `useReducer` come first; a single global store is prohibited; server-authoritative data is not mirrored into a store. Rules: [05-client-architecture.md](05-client-architecture.md) §5.1. |
 | **Remote client state** | No client-side data-fetching library. Server Components, Server Actions, `client/` adapters, and `router.refresh()` cover the product's needs. TanStack Query is conditionally allowed once a concrete requirement (polling, background refetch, cross-component cache synchronization, optimistic reconciliation, infinite queries) is named here first; it is not forbidden, it is unearned. TanStack Router and TanStack Start are not applicable: Next.js owns routing and the application runtime. Rules: [05-client-architecture.md](05-client-architecture.md) §4. |
-| **Component library** | Intentionally undecided. Project-owned components built on native elements are the default. A headless accessible-primitive library (Radix-class) or a copy-in generator (shadcn-class) is adopted only for a composite widget that genuinely needs it, recorded here at that moment, and it never brings a design system with it. Rules: [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §5. |
+| **Component library** | Radix UI Primitives is the adopted headless accessible-primitive library, for composite interactions where a primitive's semantics match (session tabs' tablist mechanics; the anchored ask-agent surface). Lucide React is the adopted icon library for ordinary interface controls. Both are added per milestone for the primitive or icon actually used, never pre-emptively; neither brings a design system with it — styling stays Tailwind. Project-owned components built on native elements remain the default for everything else. Rules: [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §5. |
 | **Session model** | A proposal session lives for the browser page lifetime. A refresh destroys it, and the UI says so rather than implying durability. No `localStorage`, `sessionStorage`, IndexedDB, cross-device sync, or account-based restore. Expanding this is a decision recorded here; durable application-owned state additionally requires [09-database-and-persistence.md](09-database-and-persistence.md) §14. Rules: [05-client-architecture.md](05-client-architecture.md) §5.2. |
 | **Client state kinds** | Workflow/domain state, conversational context, and UI mechanics are three separate typed things in the browser and are never merged into one untyped object. The browser holds copies; it is never authoritative for consequential execution. Rules: [05-client-architecture.md](05-client-architecture.md) §5. |
 | **Prototype artifacts** | An external interactive prototype (Claude Design canvas or equivalent) is evidence of product decisions, never authority over architecture. Its layout, interaction, and UX decisions are preserved; its component structure, state shapes, mock layer, and styling mechanism are translated. Rules: [16-design-prototype-porting.md](16-design-prototype-porting.md). |
@@ -125,8 +125,7 @@ Decisions that were open questions and are now closed. Reopening one requires a 
 │   │                           # (a future src/lib/db/ adapter, if ever justified, sits beside these; see 09-database-and-persistence.md)
 │   │   ├── ai/                     # AI provider adapter (server-only)
 │   │   └── agent/                  # Agent runtime primitives: tool definition, approval envelope (server-only)
-│   ├── components/ui/              # Shared presentational primitives with no domain knowledge
-│   └── styles/                     # Global base styles and design tokens (15-ui-styling-and-component-system.md)
+│   └── styles/                     # Tailwind theme layer (visual values, defined once) and global base styles (15-ui-styling-and-component-system.md)
 └── .env.example                    # Committed. Lists every variable, no values.
 ```
 
@@ -149,5 +148,4 @@ Recorded, not yet resolved. Each entry names the conflict, the contract rule, an
 
 | Conflict | Contract rule | Intended resolution |
 |---|---|---|
-| The scaffold styles the shell and the three `src/components/ui/` primitives with CSS Modules, while Tailwind is the ratified production mechanism | [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §1 | Existing CSS-Modules components are converted when the UI work touches them (§6), not in a separate sweep. `tokens.css` and `globals.css` keep their role. |
 | No frontend implementation plan exists yet; the current master plan is backend-only and excludes contract 05 | [01-implementation-contract-guide.md](01-implementation-contract-guide.md) §8 | Correct while there is no UI work. The frontend project plans its own phases and lists 05, 15, 16, 02, 03, 06, 11 among its applicable contracts. |

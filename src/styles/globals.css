@@ -1,4 +1,13 @@
 @import "tailwindcss";
+@import "./theme.css";
+
+/*
+ * DESIGN DELTA (register #11, master plan §11.2): design 01's border-ramp collapse (six
+ * steps -> four) and half-pixel type-size snapping are open design questions, not ratified
+ * decisions. This file and the theme layer implement design 01's current specification
+ * behaviour (the full ramp, the exact half-pixel sizes) rather than the recommendation, per
+ * design 10 §4. Reported, not resolved, here.
+ */
 
 /* Base reset: the minimum needed for predictable layout. */
 *,
@@ -9,6 +18,8 @@
 
 html {
     -webkit-text-size-adjust: 100%;
+    /* Design 01 §1.1: the production UI is a dark application; no light mode exists in V1. */
+    color-scheme: dark;
 }
 
 body {
@@ -64,7 +75,9 @@ small {
 }
 
 a {
-    color: var(--color-accent);
+    /* Design 01 §5 correction 4: never the accent as text on a dark surface; use the
+       corrected ink-on-dark value, which the prototype already uses for links. */
+    color: var(--color-accent-ink-on-dark);
     text-underline-offset: 0.15em;
 }
 
