@@ -166,7 +166,7 @@ derived from the tables, never typed forward: re-derive before any count-bearing
 
 | # | Phase | Plan file | Criteria | State | Date | Actor | Note |
 |---|---|---|---|---|---|---|---|
-| 01 | Repository baseline, visual foundation, test collection | `plans/phase-01-baseline-and-visual-foundation.md` | 6 | `NOT_STARTED` | 2026-09-06 | coordinator | projection **not waived** — C5's four absence rows and C1's purity check are §7.2 mandatory families, and this phase is the foundation sixteen phases style, test and document from; projection round 0 dispatched, row moves to `PROJECTED` when its ledger is routed |
+| 01 | Repository baseline, visual foundation, test collection | `plans/phase-01-baseline-and-visual-foundation.md` | 8 | `PROJECTED` | 2026-09-06 | coordinator | projection round 0 returned `AMENDMENTS_REQUIRED` (21 rows, 1 owner card); all rows routed, owner decision 13 taken, plan amended to 8 criteria; implementer prompt compiles next |
 | 02 | Persistent shell: landmarks, divider, narrow width, containment | `plans/phase-02-workspace-shell.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | F30 absence half ships with its planted probe |
 | 03 | Session runtime and the tab strip | `plans/phase-03-session-runtime-and-tabs.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (ordering) |
 | 04 | Derived presentation: status, unread, the derivation register | `plans/phase-04-derived-presentation.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (derivations) |
@@ -184,8 +184,9 @@ derived from the tables, never typed forward: re-derive before any count-bearing
 | 16 | Browser-to-server boundary | `plans/phase-16-transport-boundary.md` | 5 | `NOT_STARTED` | 2026-09-06 | planner | **gated on backend phases 11–14 `APPROVED` and merged** |
 | 17 | Seam replacement, critical flow, closeout | `plans/phase-17-seam-replacement-and-closeout.md` | 5 | `NOT_STARTED` | 2026-09-06 | planner | **gated on backend phases 5, 6, 10–14 `APPROVED` and merged** |
 
-Criteria total: **113** — derived on 2026-09-06 from the seventeen acceptance tables:
-6 + 6 + 6 + 6 + 6 + 7 + 7 + 7 + 7 + 7 + 8 + 8 + 7 + 8 + 7 + 5 + 5. A criterion is a distinct
+Criteria total: **115** — re-derived on 2026-09-06 from the seventeen acceptance tables after
+the phase-01 projection fold-back added C7 and C8 to phase 01:
+8 + 6 + 6 + 6 + 6 + 7 + 7 + 7 + 7 + 7 + 8 + 8 + 7 + 8 + 7 + 5 + 5. A criterion is a distinct
 `C<n>` in a phase's acceptance table; a lettered row inside a criterion is a row, not a
 criterion. Row and named-mutation totals are derived per phase at dispatch, not carried
 here, because they change with every fold-back.
@@ -392,6 +393,46 @@ counter, and this retained context. Every other presentation value is either ret
 server or computed at render from its one source. No derivation-register row may read an
 entry, and no entry may be a register row's source.
 
+### 6.5A The theme layer's scope (owner decision, 2026-09-06)
+
+**The conflict, surfaced rather than silently chosen** (guide §6). Ratified intention §5.9 asks
+for a "coherent, reusable visual foundation from design 01's surface, border, ink, semantic,
+radius, shadow, type, and motion tables". Contract 15 §2 says "a token is added when a second
+consumer needs the same value, **not in anticipation**" and prohibits "building a larger token
+taxonomy (semantic layers, component-level tokens, multi-theme scales) … until repeated product
+patterns demand it. **One flat set of values is the target.**" With zero screens built, phase 01
+sits exactly between them, and its own plan contradicted itself — task 2 said express the eight
+tables, its Notes said "the values V1 actually uses, not a taxonomy".
+
+**Decision (owner, 2026-09-06, on the phase-01 projection's card 1): the flat base set.**
+
+- The theme layer carries **design 01's base ramps once** — surface, border, ink, semantic,
+  radius, shadow, type and motion — with design 01 §5's corrections applied where the corrected
+  value and the prototype value differ.
+- It carries **no semantic layer, no component-level value, and no multi-theme scale.** That is
+  the half contract 15 §2 prohibits, and prohibiting it is what "one flat set of values is the
+  target" means. The contract's "not in anticipation" rule governs taxonomy growth — which is
+  what every neighbouring bullet in §2 is about — and not the flat ramp the intention ratifies.
+- **A later phase does not invent a value.** It uses a ramp entry, or it amends this section.
+  A phase adding a value to the theme layer records in its Review log which design 01 table row
+  or §5 correction the value comes from.
+
+**Why not the alternatives, recorded so no phase re-argues this.** *Whole system now* (every
+value in every table, semantic layers included) ships dead values, which is the defect contract
+15 §2 was written against. *Grow as needed* (only the values the current page reads) was the
+projection's recommendation; it was declined because its stated safety mechanism does not exist:
+the phase-01 purity check catches a literal typed into a **component**, and cannot catch a later
+phase adding a slightly different grey to the theme layer itself. Growing incrementally trades
+"unused values" for "values that quietly stop matching design 01", and nothing in this project
+would observe the second.
+
+**What is measured and what is not.** Phase 01 C7 asserts, in the browser, that design 01 §5's
+corrections are the values that landed, and asserts with a planted probe that no semantic or
+component-level name is declared. **Value-by-value fidelity of the ramps to design 01's tables
+is verified at review, not by test**, deliberately: a test transcribing the same table into
+assertions proves only that two copies of one table agree, and it is the row-that-cannot-fail
+shape. The reviewer reads the ramp against design 01.
+
 ### 6.6 Fixture-era markers and the two eras (§12A.8, §9.3)
 
 | Era | A fixture is | Named |
@@ -497,15 +538,19 @@ cells; this is the project-level check in the other direction.
 
 ### 7.4 Trace-cell vocabulary
 
-A criterion's trace cell names **one** of:
+A criterion's trace cell carries **one measurement anchor**, optionally followed by supporting
+citations. The anchor is what the trace chain checks in both directions; the supporting
+citations are context and are not themselves traces.
+
+**The anchor** is one of:
 
 - a measurement-ledger ID, `F1`–`F30`;
 - a mechanism contract, `§12A.1`–`§12A.23`;
 - an architecture contract section, written `15 §2` style — **admissible only for the
   criteria enumerated here**, because they serve a repository engineering constraint rather
   than a product measurement, and each names the defect it guards: phase 01 C1 and C3
-  (`15 §2`), phase 01 C4 (`11 §1`), phase 01 C5 (`15 §4`), phase 01 C6 (`11 §3`), phase 17
-  C4 (`14 §6`), phase 17 C5 (charter manifest property 5).
+  (`15 §2`), phase 01 C4 (`11 §1`), phase 01 C5 (`15 §4`), phase 01 C6 (`11 §3`), phase 01 C8
+  (`14 §8`), phase 17 C4 (`14 §6`), phase 17 C5 (charter manifest property 5).
 
   **Phase 01 C6 was added to this enumeration on 2026-09-06** by the coordinator's
   pre-dispatch plan lint. The plan shipped C6 tracing to `11 §3` while this list omitted it,
@@ -517,8 +562,38 @@ A criterion's trace cell names **one** of:
   unnoticed). The enumeration was therefore corrected here rather than the criterion
   re-rooted to a measurement it does not have.
 
+  **Phase 01 C8 was added on the same day**, when the projection fold-back created it — the
+  criterion that measures the documentation half of conflict C-4. It anchors on `14 §8` and,
+  like C6, serves no `F` entry: no measurement-ledger objective covers "the repository's
+  current-state documents are true". Recorded plainly because the coordinator authored C8 and
+  then had to catch its own inadmissible anchor by re-running the same check that had just
+  found C6's — the enumeration is easy to forget precisely when a fold-back adds a criterion.
+
 Any other criterion tracing only to an architecture contract is a criterion that has not
 found its measurement, and is cut or re-rooted before the plan ships.
+
+**Supporting citations** may follow the anchor in the same cell, separated by `·`. They carry
+the authority a reader needs to interpret the row and they are not required to be one of the
+anchor forms. The vocabulary in use across this project's plans, enumerated from the plans
+themselves rather than prescribed: architecture-contract sections (`05 §7`), design
+specification sections (`design 07 §5`), backend intention sections (`§17A.7`), intention
+sections (`§5.4`, `§8.6`, `§14.1`), this file's own sections (`§9.3`, `§10.3`), ratified owner
+decisions and boundaries, conflict IDs (`C-1`–`C-6`), and charter rules. A supporting citation
+must resolve and must support what the row asserts, exactly like an anchor; it simply is not
+the row's declared measurement.
+
+**Recorded 2026-09-06, because getting this wrong nearly cost 110 rows.** The phase-01
+projection read this section's original "names **one** of" as "exactly one citation" and
+proposed reducing the cells that carry more. The coordinator checked the claim against the
+artifact set before applying it: **110 of the project's 113 criterion rows carry more than one
+citation**, so multi-citation cells are the planner's deliberate, universal convention and not
+a phase-01 slip — and reducing them would have deleted real authority from every plan. The
+coordinator then tested the property this section actually protects, mechanically, over all
+113 rows: *does every row carry a measurement anchor unless it is one of the enumerated
+architecture-contract exceptions?* Exactly six rows carry no `F` or `§12A` anchor — phase 01
+C1, C3, C4, C5, C6 and phase 17 C4 — which is precisely the enumerated set above. The property
+held everywhere; only this section's description of the vocabulary was too narrow. The
+description was corrected; no criterion row was touched.
 
 ### 7.5 Structurally held clauses, and what converts each
 
@@ -669,27 +744,100 @@ Four caveats a phase must know before it measures anything:
    and is silently not collected, and a hook test at `src/features/**/*.test.ts` is collected
    into a DOM-less environment. Phase 01 C4 repairs this and proves the repair with a planted
    probe. Until then, standing rule 13 applies.
-4. **Stale current-state documents.** The root `README.md` (its status paragraph and its
-   Tailwind/token line), `architectural_contracts/README.md` ("Scaffold decisions record"
-   styling and component-library rows, the "Resolved decisions" styling and component-library
-   rows, and the CSS-Modules "Known conflicts" row), and `15-ui-styling-and-component-system.md`
-   §2, §4 and §6 all describe a foundation commit `f957f66` deleted. Phase 01 patches them to
-   current truth and records Radix UI Primitives and Lucide per contract 15 §5 and 13 §5.
+4. **Stale current-state documents.** Every statement below describes a foundation commit
+   `f957f66` deleted. Phase 01 patches all of them to current truth and records Radix UI
+   Primitives and Lucide per contract 15 §5 and 13 §5. **The list was widened on 2026-09-06**
+   by the phase-01 projection, which found the original enumeration short by six statements —
+   two of them in contracts that no perimeter in this project named at all:
+
+   - root `README.md`: the status paragraph; the Tailwind/token line; the tree diagram's
+     `src/components/ui/` and `src/styles/` "design tokens" entries; and the
+     "Application shell, styling foundation, and shared UI primitives" line.
+   - `architectural_contracts/README.md`: the "Scaffold decisions record" styling and
+     component-library rows; the "Resolved decisions" styling and component-library rows; the
+     CSS-Modules "Known conflicts" row; the "product-neutral shell (root layout, styling
+     foundation, three shared primitives)" sentence; and the tree diagram's `components/ui/`
+     and "design tokens" entries.
+   - `15-ui-styling-and-component-system.md` §2, §4 and §6 — and **§1's `cx()` sentence**,
+     which names `src/components/ui/cx.ts`, a file phase 01 C5(b) requires not to exist. §1 is
+     selected by §5 of this plan as binding **as written**, so a stale current-state claim
+     inside it is the sharpest form of this drift.
+   - `12-anti-patterns.md`'s styling row, which prescribes "A token in `src/styles/tokens.css`,
+     wired into the Tailwind theme" as the remedy for hard-coded values — pointing the reader
+     at the deliberately deleted file, in the very contract section phase 01 C5's trace cites.
+   - `15-ui-styling-and-component-system.md` §3's `globals.css` sentence, which states a
+     three-item scope where §6.2 of this plan sanctions four (it omits the reduced-motion
+     treatment).
+
+   Guide §6's "the contract is stale → patch the contract in its own change, with rationale"
+   applies to all of them, and phase 01 is that change. **No rule is weakened by any of these
+   patches**: only the description of what exists changes.
 
 ### 10.3 Vitest layout after phase 01
 
 Phase 01 repairs the two projects so that they partition every `*.test.ts(x)` under `src/`
-and `test/`, with feature component and hook tests landing in the DOM project. The exact
-include globs are phase 01's to write; the **contract** they must satisfy is:
+and `test/`. The exact include globs are phase 01's to write; the **contract** they must
+satisfy is stated below.
 
-- every `*.test.ts(x)` under `src/` or `test/` is claimed by **exactly one** project;
-- a test file at `src/features/<feature>/components/**/*.test.tsx` is collected, in `jsdom`;
-- a test file at `src/features/<feature>/hooks/**/*.test.ts` is collected, in `jsdom`;
-- server and library tests keep the `node` environment and its offline fetch guard;
-- `e2e/**` and `**/*.live.test.ts` stay excluded from both.
+**Amended 2026-09-06** after the phase-01 projection found this contract enumerated four
+locations while requiring a total partition — so `src/styles/**` (where phase 01's own new
+test file lands), `src/features/**/client/**` (where phase 04's view-model and adapter tests
+land) and `src/features/**/types/**` were required to be claimed by exactly one project and
+assigned to none. A contract that demands totality and enumerates a subset is not a contract;
+the rule below is total by construction, because it partitions on two axes that between them
+cover every file.
+
+**The partition rule.** Every `*.test.ts(x)` under `src/` or `test/` is claimed by **exactly
+one** project:
+
+- **DOM project (`jsdom`)** claims: every `*.test.tsx` under `src/` or `test/` — a `.tsx` test
+  renders; and every `*.test.ts` under `src/features/**/hooks/**` — a hook test needs a DOM
+  even when it renders no markup.
+- **`node` project** claims: every other `*.test.ts` under `src/` or `test/`. That is
+  `src/lib/**`, `src/styles/**`, `src/app/**`, `src/components/**`, `src/features/**/client/**`,
+  `src/features/**/types/**`, and `test/**` — every one of them a module with no DOM
+  dependency.
+- Neither project claims `e2e/**` or `**/*.live.test.ts`; both stay excluded from both.
+- The offline `fetch` guard stays installed in **both** projects.
+
+The two axes are *extension* (`.tsx` renders, so DOM) and *one named directory* (feature
+`hooks/`). Everything else falls to `node` by construction, so a location this document has
+never heard of is still claimed exactly once — which is the property the four-location
+enumeration lacked.
+
+**Where phase 01's own foundation tests land.** The source-level checks (the purity check, the
+absence rows, the collection assertion) read files from disk and need no DOM, so they are
+`node`. The rendered-document checks do not run under Vitest at all — see §10.3A.
 
 The offline `fetch` guard is installed in both projects today (`test/setup/node.ts` and
 `vitest.setup.ts`) and stays installed: no test in this project may reach the network.
+
+### 10.3A Measurements that no Vitest project can take (added 2026-09-06)
+
+The phase-01 projection established, at source, that **neither configured Vitest project can
+measure a rendered document's computed style** in this repository, and the finding is
+permanent rather than phase-01-local:
+
+- **jsdom does not resolve `var()`.** `node_modules/jsdom/lib/jsdom/living/css/CSSStyleDeclaration-impl.js`
+  carries the line `// TODO: Resolve css var().` and returns the literal `var(--x)` text. Every
+  custom property this project defines is therefore unmeasurable there.
+- **jsdom has no media-query facility at all.** No `matchMedia` and no `MediaQueryList`
+  implementation exists anywhere in the package, and `getComputedStyle` does not apply `@media`
+  blocks. `prefers-reduced-motion` cannot be entered.
+- **The stylesheet never reaches the document.** `src/styles/globals.css` begins
+  `@import "tailwindcss"`, which requires PostCSS; Vitest does not process CSS imports into the
+  jsdom document and `vitest.config.mts` sets no `css` option.
+
+**Consequence, binding on every phase.** A criterion that asserts *what the browser computes* —
+a resolved custom property, a focus indicator, a media-query-conditional treatment, a real
+cascade — is measured in **Playwright**, against the running application, and says so. A
+criterion that asserts *what the source says* is measured in Vitest. A phase that writes a
+computed-style assertion into a Vitest test has written a test that cannot observe its own
+subject, which is charter rule 15's family.
+
+Playwright can take all three measurements: `reducedMotion` is a supported context option in
+the installed `playwright-core`, Chromium is installed, and `playwright.config.ts` starts
+`npm run dev` itself, so the application is served with its real processed stylesheet.
 
 ### 10.4 Commands and evidence scopes
 
@@ -740,6 +888,8 @@ This section absorbs the project README, which is now a one-screen pointer to th
 | Pipeline documentation commit | `a9d9fc0`, 2026-09-06 — the plan set, the ratified intention amendments (inventory rounds 1–2, owner decisions 7–12; the owner confirmed on 2026-09-06 that this is the content the plan set was written against), the reduced README, and the `archive/pre_plan/` move. Committed before phase 01 was dispatched so the phase's checkpoint diff carries only its own work |
 | Coordinator handover round 1 | 2026-09-06 — the coordinator role moved from a Codex session to a Claude session. The charter's role split is unchanged: coordinator and reviewer are Claude-side, the implementer is Codex. §7.4 amended by the pre-dispatch plan lint (phase 01 C6) |
 | Phase 01 projection gate | **not waived**, 2026-09-06 — see the tracker note and §7.2 |
+| Phase 01 projection round 0 | `AMENDMENTS_REQUIRED`, 2026-09-06 — 21 ledger rows, 1 owner card. Consumed by the coordinator the same day: write perimeter verified against the tree (one file, the handoff), zero L4 evidence spent as budgeted, and its load-bearing claims independently re-verified before routing. All 21 rows routed; one (L14) routed differently from its proposal, with the reason recorded in §7.4 and in the phase plan's Review log |
+| Owner decision 13 (theme-layer scope) | 2026-09-06 — **the flat base set**, no semantic or component-level layer. Resolves the projection's card 1 and the §5.9-versus-contract-15-§2 conflict it surfaced. Recorded in §6.5A |
 | Owner card 1 (handover round 1) resolved | 2026-09-06 — the owner confirmed the split and recorded that Codex sessions are exhausted: phase 01 is implemented by a **Claude Sonnet 5** session and reviewed by a **Claude Opus 5** session. Recorded as a substitution in §3, with what it keeps and what it spends |
 | Backend phases merged from `main` | 1 (topology and environment), 2 (errors, logger, shared value shapes), 3 (Proposales adapter: transport, error translation, content read) — all `APPROVED`. Backend phases 4–15 `NOT_STARTED` |
 
@@ -770,13 +920,14 @@ specification behaviour where it does not conflict with §13, leaves a marker, a
 | # | Item | Owner | Where it lands |
 |---|---|---|---|
 | 1 | `architectural_contracts/README.md` "Scaffold decisions record" and "Resolved decisions" rows still read `Component library: none decided`; contract 15 §5 still reads "intentionally undecided" | this project | phase 01 |
-| 2 | contract 15 §2, §4 and §6 name `src/styles/tokens.css`, three `src/components/ui/` primitives and a CSS-Modules foundation that no longer exist | this project | phase 01 |
+| 2 | contract 15 §2, §4 and §6 name `src/styles/tokens.css`, three `src/components/ui/` primitives and a CSS-Modules foundation that no longer exist — **widened 2026-09-06** to include contract 15 §1's `cx()` sentence, contract 15 §3's three-item `globals.css` scope, and contract 12's styling row prescribing `src/styles/tokens.css` (§10.2 caveat 4) | this project | phase 01 |
 | 3 | the root `README.md` status paragraph describes the deleted foundation as present | this project | phase 01 |
 | 4 | `e2e/bootstrap.spec.ts` asserts a shell the tree does not render | this project | phase 01, replaced in phase 02 |
 | 5 | the Vitest include globs do not partition the tree (§10.2 caveat 3) | this project | phase 01 |
 | 6 | the root README "Tech stack" table gains Radix and Lucide entries when the first primitive package lands | this project | phase 03 |
 | 7 | `src/features/proposal-preparation/README.md` does not exist and must not be written until the feature's behaviour is verified | this project | phase 17 |
 | 8 | phases 16 and 17 wait on backend approvals; the coordinator re-checks backend master plan §4 at every phase-15 closeout | coordinator | ongoing |
+| 9 | **Per-animation reduced-motion treatment.** Phase 01's `globals.css` collapses every transition and animation duration to `0.01ms`, which is correct as a floor and is what phase 01 C2(c) measures. Design 01 §5 correction 6 asks for more than a floor on three named animations: the attention **pulse holds at full opacity** (a `0.01ms` pulse settles on its keyframe at `opacity:.25` — dimmed, which is the opposite of held), the **spinner becomes a static ring plus text**, and **`fadeUp` is dropped**. Nothing animates in phase 01, so nothing bites there; the phase that introduces each animation implements its correction and **may not rely on the blanket collapse**. Standing rule 6: the correction wins | phases 04, 06, 12 (whichever introduces each animation) | at introduction |
 
 ### 11.4 Live pipeline tables
 
