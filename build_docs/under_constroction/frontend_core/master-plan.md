@@ -180,7 +180,7 @@ derived from the tables, never typed forward: re-derive before any count-bearing
 
 | # | Phase | Plan file | Criteria | State | Date | Actor | Note |
 |---|---|---|---|---|---|---|---|
-| 01 | Repository baseline, visual foundation, test collection | `plans/phase-01-baseline-and-visual-foundation.md` | 8 | `IMPLEMENTED` | 2026-09-06 | Sonnet (implementer) | baseline re-enumerated (green at `7b741aa` except e2e, red as predicted); theme layer + repaired globals.css + partitioned Vitest projects + reduced e2e spec; 8 stale documents patched; 31/31 criterion rows discharged, 11/11 named mutations run and reverted; closing stamp green (`npm test` 137/137, `npm run test:e2e` 26/26, typecheck/lint/build clean); handoff at `handoffs/implementer/phase-01-round-1.handoff.implementer.md` |
+| 01 | Repository baseline, visual foundation, test collection | `plans/phase-01-baseline-and-visual-foundation.md` | 8 | `CHANGES_REQUESTED` | 2026-09-06 | Opus (reviewer) | review round 1: 2 blocking, 6 should-fix, 6 notes; 0 owner decisions. Blocking: contract 15 §5's prospective recording rule was replaced with a weaker project-local one; C7(b)'s denylist cannot observe a component-level value (5 planted names all green), and the same shape defeats C7(a) correction 2. Theme ramp verified value-by-value against design 01 and sound. Evidence: tree byte-identical to `d30ef8f`, closing stamp cited not re-run, zero L4 spent, 13 independent L1 mutants. Handoff at `handoffs/reviewer/phase-01-review-round-1.handoff.reviewer.md`. Prior implementer note: baseline re-enumerated (green at `7b741aa` except e2e, red as predicted); theme layer + repaired globals.css + partitioned Vitest projects + reduced e2e spec; 8 stale documents patched; 31/31 criterion rows discharged, 11/11 named mutations run and reverted; closing stamp green (`npm test` 137/137, `npm run test:e2e` 26/26, typecheck/lint/build clean); handoff at `handoffs/implementer/phase-01-round-1.handoff.implementer.md` |
 | 02 | Persistent shell: landmarks, divider, narrow width, containment | `plans/phase-02-workspace-shell.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | F30 absence half ships with its planted probe |
 | 03 | Session runtime and the tab strip | `plans/phase-03-session-runtime-and-tabs.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (ordering) |
 | 04 | Derived presentation: status, unread, the derivation register | `plans/phase-04-derived-presentation.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (derivations) |
@@ -440,6 +440,15 @@ phase adding a slightly different grey to the theme layer itself. Growing increm
 "unused values" for "values that quietly stop matching design 01", and nothing in this project
 would observe the second.
 
+**The instrument for "no component-level value" is an allowlist, never a denylist** (added
+2026-09-06, phase-01 review round 1 B2). This section closes the name set by construction — "a
+later phase does not invent a value; it uses a ramp entry, or it amends this section" — so the
+only enforceable form is *the declared name set is a subset of design 01's enumerated ramp
+names*. A denylist cannot measure this prohibition at all: the name universe is open, so a
+denylist proves only that the forbidden list matches itself. Earned concretely — the shipped
+nine-fragment denylist passed five planted component-level values, four of them nouns the list
+never contemplated. **No later phase re-derives a denylist here.**
+
 **What is measured and what is not.** Phase 01 C7 asserts, in the browser, that design 01 §5's
 corrections are the values that landed, and asserts with a planted probe that no semantic or
 component-level name is declared. **Value-by-value fidelity of the ramps to design 01's tables
@@ -619,6 +628,8 @@ description was corrected; no criterion row was touched.
 | typed clarification questions — option lists, amounts, dates, units, per-question notes and skip labels | 08 C5 | a backend amendment supplies typed questions (§14.1 item 1) |
 | live progress steps in the `thought` pill and in the creating presentation | 07 C3, 12 C5 | a backend contract defines a safe user-facing progress representation (§14.1 item 4) |
 | field-scoped revision as a structured turn parameter | 11 C7 | §14.1 item 2 is decided by the backend |
+| phase 01 C7(a)'s row for design 01 §5 **correction 2** — the `✦` ask affordance resting at `--color-fg-quiet`, or hover-revealed **and** keyboard-reachable with the global focus ring | 01 C7(a) | phase 11 builds the ask-agent affordance (§11.3 follow-up 11) |
+| phase 01 C7(a)'s row for design 01 §5 **correction 3** — `#0b0b0c` ink composed on `--color-accent`, never white | 01 C7(a) | phase 12 builds the primary/approval action (§11.3 follow-up 12) |
 
 Each is marked in its phase plan as **structurally held** with this trigger, so no row looks
 testable when it is not.
@@ -783,6 +794,16 @@ Four caveats a phase must know before it measures anything:
      three-item scope where §6.2 of this plan sanctions four (it omits the reduced-motion
      treatment).
 
+   - `13-decision-checklist.md` §5 item 32, which lists "a component library" among the
+     decisions **not** yet ratified. Phase 01's own decision-recording made that false.
+     *(Added 2026-09-06, review round 1 S1.)*
+
+   **Read this caveat as "every document this phase's change makes stale", not only as the list
+   authored before the phase ran.** Two falsehoods were created *by* phase 01's own work and
+   missed by its closing documentation review — the item above, and the root README's
+   end-to-end-spec description. A phase's documentation-impact review covers what its change
+   made untrue, not only what a caveat enumerated in advance.
+
    Guide §6's "the contract is stale → patch the contract in its own change, with rationale"
    applies to all of them, and phase 01 is that change. **No rule is weakened by any of these
    patches**: only the description of what exists changes.
@@ -903,6 +924,7 @@ This section absorbs the project README, which is now a one-screen pointer to th
 | Coordinator handover round 1 | 2026-09-06 — the coordinator role moved from a Codex session to a Claude session. The charter's role split is unchanged: coordinator and reviewer are Claude-side, the implementer is Codex. §7.4 amended by the pre-dispatch plan lint (phase 01 C6) |
 | Phase 01 projection gate | **not waived**, 2026-09-06 — see the tracker note and §7.2 |
 | Phase 01 projection round 0 | `AMENDMENTS_REQUIRED`, 2026-09-06 — 21 ledger rows, 1 owner card. Consumed by the coordinator the same day: write perimeter verified against the tree (one file, the handoff), zero L4 evidence spent as budgeted, and its load-bearing claims independently re-verified before routing. All 21 rows routed; one (L14) routed differently from its proposal, with the reason recorded in §7.4 and in the phase plan's Review log |
+| Phase 01 review round 1 | `CHANGES_REQUESTED`, 2026-09-06 — 2 blocking, 6 should-fix, 6 notes, 0 owner decisions. Zero L4 runs: the reviewer's tree was byte-identical to checkpoint `d30ef8f`, verified, so the implementer's stamp was cited and thirteen independent L1 mutants were spent on variation instead. Consumed by the coordinator the same day; perimeter and both blocking findings re-verified independently before routing |
 | Owner decision 13 (theme-layer scope) | 2026-09-06 — **the flat base set**, no semantic or component-level layer. Resolves the projection's card 1 and the §5.9-versus-contract-15-§2 conflict it surfaced. Recorded in §6.5A |
 | Owner card 1 (handover round 1) resolved | 2026-09-06 — the owner confirmed the split and recorded that Codex sessions are exhausted: phase 01 is implemented by a **Claude Sonnet 5** session and reviewed by a **Claude Opus 5** session. Recorded as a substitution in §3, with what it keeps and what it spends |
 | Backend phases merged from `main` | 1 (topology and environment), 2 (errors, logger, shared value shapes), 3 (Proposales adapter: transport, error translation, content read) — all `APPROVED`. Backend phases 4–15 `NOT_STARTED` |
@@ -928,6 +950,8 @@ specification behaviour where it does not conflict with §13, leaves a marker, a
 | 9 | the approval control's enabled / disabled / warning treatment while unresolved information remains (C-3, §14.2); V1 keeps the control always available, replaces "push" with creation vocabulary, and presents unresolved information beside it | this planning pass |
 | 10 | **the creation error state is designed only in outline** (design 09 §4.3): its medallion values are inferred from the attention tokens rather than read from the prototype, and its copy is placeholder. Design 10 §8 asks for it to be resolved before that flow ships. Phase 13 implements the outline, because leaving failures unrendered would break F2 and F23 | this planning pass |
 | 11 | the five design 01 open questions (tab-strip tone, border-ramp collapse, hover easing, the positive token, half-pixel type snapping) | design 10 §4 |
+| 12 | **The type ramp is `px`-locked** for 15 of its 19 steps — design 01's own values, correctly carried under §6.5A. Browser font-size scaling does not reach those steps. Design 01 §5 names no correction, so nothing was deviated from; the accessibility consequence is recorded rather than silently inherited | phase-01 review round 1 N3 |
+| 13 | **Design 01 §5 correction 1 inverts one pair of ink names.** Lightening `#6b6d73 → #84868c` while leaving `#7c7e84` alone makes `--color-fg-quietest` *lighter* than `--color-fg-quiet`. The specification is internally inconsistent on that pair; phase 01 carried it faithfully. Whichever way the phase-01 fix round resolves the naming, the design inconsistency is the design owner's | phase-01 review round 1 S5 |
 
 ### 11.3 Follow-up register
 
@@ -942,6 +966,8 @@ specification behaviour where it does not conflict with §13, leaves a marker, a
 | 7 | `src/features/proposal-preparation/README.md` does not exist and must not be written until the feature's behaviour is verified | this project | phase 17 |
 | 8 | phases 16 and 17 wait on backend approvals; the coordinator re-checks backend master plan §4 at every phase-15 closeout | coordinator | ongoing |
 | 10 | **Two stale statements outside phase 01's perimeter**, found by the phase-01 implementer and refused for that phase because both predate it and neither belongs to conflict C-4: the root `README.md`'s "integrations under `src/lib/**` … neither exists yet" half-claim (`src/lib/` already carries real content), and `architectural_contracts/README.md`'s "No frontend implementation plan exists yet" Known-conflicts row (this master plan and seventeen phase plans exist). Both are current-state falsehoods under contract 14 §1 | this project | the next phase that patches either document, or a dedicated documentation pass |
+| 11 | **Design 01 §5 correction 2, the surviving half.** The ask-glyph value is kept out of the readable ink ramp, but the correction's actual requirement is that the `✦` affordance rests at `--color-fg-quiet`, **or** is hover-revealed *and* keyboard-reachable with the global focus ring. Phase 01 has no such affordance to measure | phase 11 | at introduction |
+| 12 | **Design 01 §5 correction 3, the surviving half.** The correction asks the primary action to be darkened to ~`#2f6fe0` **or** to carry `#0b0b0c` ink on `#3b82f6`. Phase 01 discharged it by taking the alternative — a composition rule for a control that does not exist yet — so `--color-accent` remains `#3b82f6` and nothing yet measures the ink pairing. The phase that builds the primary/approval action composes `#0b0b0c` ink on `--color-accent`, **never white**, and asserts the computed pair in the browser | phase 12 | at introduction |
 | 9 | **Per-animation reduced-motion treatment.** Phase 01's `globals.css` collapses every transition and animation duration to `0.01ms`, which is correct as a floor and is what phase 01 C2(c) measures. Design 01 §5 correction 6 asks for more than a floor on three named animations: the attention **pulse holds at full opacity** (a `0.01ms` pulse settles on its keyframe at `opacity:.25` — dimmed, which is the opposite of held), the **spinner becomes a static ring plus text**, and **`fadeUp` is dropped**. Nothing animates in phase 01, so nothing bites there; the phase that introduces each animation implements its correction and **may not rely on the blanket collapse**. Standing rule 6: the correction wins | phases 04, 06, 12 (whichever introduces each animation) | at introduction |
 
 ### 11.4 Live pipeline tables

@@ -156,18 +156,20 @@ measurement anchor, optionally followed by supporting citations.
 
 | # | Criterion | Rows | Trace |
 |---|---|---|---|
-| **C1** | The project's visual values are defined **once**, and the focus indicator is never silently removed. (a) A source-level check over `src/**` finds no raw hex colour, no raw `px` type size, and no raw radius or shadow literal outside the theme layer and `globals.css`. **The implementer defines the exact lexical rule** — including whether Tailwind arbitrary values (`text-[13px]`, `rounded-[9px]`, `shadow-[…]`) are caught, and which `.css` files under `src/**` are in scope — anchored on contract 15 §2's own signal examples (`text-[#1f5eff]`, `p-[13px]`), and **records it in the Review log together with the forms it deliberately does not catch** (delegated, projection L17). (b) The same check finds no `outline: none` and no `outline: 0` under `src/**` outside a stated allowlist, which today holds exactly one entry: the `:focus:not(:focus-visible)` rule in `globals.css` whose replacement is the `:focus-visible` rule above it. (c) Planted-defect probe for (a): introduce a raw hex colour in a consuming file, observe the check redden, revert. (d) Planted-defect probe for (b): add a second `outline: none` outside the allowlist, observe the check redden, revert. (e) The check's own scope is asserted — it reads the files it claims to read, proven by pointing it at a file it must ignore and at a **synthetic fixture** it must read. The fixture is **stated as synthetic in the test**, because no file under `src/**` carries a styling value today and this phase creates none outside the theme layer; without it the positive half of the scope assertion has no subject and measures nothing. | 5 | `15 §2` · contract 15 §2's signal examples — guards a visual value drifting across components, which is invisible until two surfaces disagree, and a focus indicator removed without replacement |
+| **C1** | The project's visual values are defined **once**, and the focus indicator is never silently removed. (a) A source-level check over `src/**` finds no raw hex colour, no raw `px` type size, and no raw radius or shadow literal outside the theme layer and `globals.css`. **The implementer defines the exact lexical rule** — including whether Tailwind arbitrary values (`text-[13px]`, `rounded-[9px]`, `shadow-[…]`) are caught, and which `.css` files under `src/**` are in scope — anchored on contract 15 §2's own signal examples (`text-[#1f5eff]`, `p-[13px]`), and **records it in the Review log together with the forms it deliberately does not catch** (delegated, projection L17). (b) The same check finds no `outline: none` and no `outline: 0` under `src/**` outside a stated allowlist, which today holds exactly one entry: the `:focus:not(:focus-visible)` rule in `globals.css` whose replacement is the `:focus-visible` rule above it. (c) Planted-defect probe for (a), **one per value class the criterion names** — a raw hex colour, a raw `px` type size, a raw radius, and a raw shadow — each introduced in a consuming file, each observed reddening its own violation kind, each reverted. *(Amended 2026-09-06, review round 1 S3, charter rule 12: the criterion named four classes and the plan declared one mutation for them.)* (d) Planted-defect probe for (b): add a second `outline: none` outside the allowlist, observe the check redden, revert. (e) The check's own scope is asserted — it reads the files it claims to read, proven by pointing it at a file it must ignore and at a **synthetic fixture** it must read. The fixture is **stated as synthetic in the test**, because no file under `src/**` carries a styling value today and this phase creates none outside the theme layer; without it the positive half of the scope assertion has no subject and measures nothing. **The positive half asserts one expected violation kind per scanner class the fixture plants** — never a count of violations — so that a class which silently stops matching reddens this row. *(Amended 2026-09-06, review round 1 S3: the row was pinned by `positive.length > 0`, and disabling two of the four scanner classes left both C1(a) and C1(e) green.)* | 5 | `15 §2` · contract 15 §2's signal examples — guards a visual value drifting across components, which is invisible until two surfaces disagree, and a focus indicator removed without replacement |
 | **C2** | The global accessibility treatment is reachable by the **shipped default configuration**, measured in the browser. (a) `:focus-visible` produces a visible indicator on a **native control the test injects into the running `/` document** and disposes with the page, rendered with no component-level styling. (b) Under `prefers-reduced-motion: reduce`, transition and animation durations collapse for every element, asserted by rendering with Playwright's `reducedMotion` context option rather than by reading the stylesheet. (c) Planted-defect probe: delete the reduced-motion block, observe (b) redden, revert. | 3 | F6 — accessibility deferred to a later pass is the defect family; an unreachable default is the shape it hides in |
 | **C3** | `src/styles/globals.css` references no custom property that has no definition, measured in the browser. (a) Every custom property the file reads resolves to a non-empty computed value on the running `/` document — **enumerated one row per property the file references**, not sampled. The file references sixteen today; seven of them have no definition anywhere, which is the live defect. (b) Planted-defect probe: remove one property's definition from the theme layer, observe its row redden, revert. | 2 | `15 §2` · master plan §10.2 caveat 2 — guards the exact live defect where the base layer silently has no background, foreground or focus colour |
-| **C4** | Test collection partitions the tree. (a) Every `*.test.ts(x)` under `src/` and `test/` is claimed by **exactly one** Vitest project — asserted as a set relation over the discovered files and the configured projects, not as a count. **The instrument is `npx vitest list`, spawned by the test and read for what the runner actually collects** — not a glob matcher re-derived inside the test, which would be a proxy for collection rather than collection itself and is the shape charter rule 15's fourth recorded instance names. The assertion file counts itself in its own discovered set. (b) The component sentinel at `src/features/proposal-preparation/components/collection-sentinel.test.tsx` is collected, in a DOM environment, asserted by the file itself. (c) The hook sentinel at `src/features/proposal-preparation/hooks/collection-sentinel.test.ts` is collected, in a DOM environment, asserted by the file itself. (d) A library test under `src/lib/**` is collected in the `node` environment with the offline `fetch` guard installed. (e) The DOM project also installs the offline `fetch` guard — a preservation row: `vitest.setup.ts` already calls `installOfflineFetchGuard()`, and this row exists so the repair does not drop it. (f) `src/styles/theme.test.ts`, this phase's own new test file, is collected in the `node` project. (g) Planted-defect probe: place a test file outside every include glob, observe (a) redden, revert. | 7 | `11 §1` · backend master plan §10.3 hazard · master plan §10.3 — a test claimed by no project is silently not collected and the suite stays green, which is the failure this project would otherwise ship into every later phase |
+| **C4** | Test collection partitions the tree. (a) Every `*.test.ts(x)` under `src/` and `test/` is claimed by **exactly one** Vitest project — asserted as a set relation over the discovered files and the configured projects, not as a count. **The instrument is `npx vitest list`, spawned by the test and read for what the runner actually collects** — not a glob matcher re-derived inside the test, which would be a proxy for collection rather than collection itself and is the shape charter rule 15's fourth recorded instance names. The assertion file counts itself in its own discovered set. (b) The component sentinel at `src/features/proposal-preparation/components/collection-sentinel.test.tsx` is collected, in a DOM environment, asserted by the file itself. (c) The hook sentinel at `src/features/proposal-preparation/hooks/collection-sentinel.test.ts` is collected, in a DOM environment, asserted by the file itself. (d) A library test under `src/lib/**` is collected in the `node` environment with the offline `fetch` guard installed. (e) **The offline `fetch` guard's call site in `vitest.setup.ts` survives the repair** — a preservation row: `vitest.setup.ts` already calls `installOfflineFetchGuard()`, and this row exists so the repair does not drop it. *(Headline narrowed 2026-09-06, review round 1 N2: the row previously claimed the DOM project installs the guard, which its instrument — a grep of `vitest.setup.ts` — does not measure, since a project that dropped `setupFiles` would keep the row green.)* (f) `src/styles/theme.test.ts`, this phase's own new test file, is collected in the `node` project. (g) **Two planted-defect probes, one per half of (a)'s assertion**: *narrow* one project's include globs so a real test file is claimed by **no** project, observe (a) redden, revert; and *widen* one project's include globs so a real test file is claimed by **two**, observe (a) redden, revert. *(Amended 2026-09-06, review round 1 P5: the original wording — "place a test file outside every include glob" — is unconstructible under the §10.3 partition, which is total by construction, and it exercised only the claimed-by-none half.)* | 7 | `11 §1` · backend master plan §10.3 hazard · master plan §10.3 — a test claimed by no project is silently not collected and the suite stays green, which is the failure this project would otherwise ship into every later phase |
 | **C5** | Nothing deliberately deleted is restored, and no second styling mechanism appears. (a) `src/styles/tokens.css` does not exist. (b) No file exists under `src/components/ui/`. (c) No `*.module.css` exists under `src/`. (d) No CSS-in-JS, styled-components, Emotion or SCSS dependency is present. **The check reads a manifest path it takes as a parameter, defaulting to `package.json`**, and it is a **fixed name list**: the criterion records that it therefore proves membership of that list and does not catch an unlisted styling dependency. (e) Each of (a)–(d) ships with its **planted-defect probe**: create the forbidden artefact, observe the row redden, revert — because measuring an absence proves the absence, not that the instrument could observe the presence. **(d)'s probe points the check at a fixture manifest carrying a forbidden dependency; it installs no package and does not edit `package.json`**, which is what keeps it compatible with this phase installing nothing. | 5 | `15 §4` · `12` "Styling and UI system" · intention §5.9 — guards the stale documents bootstrapping themselves into authority and recreating a foundation the owner deleted |
 | **C6** | The end-to-end suite is green against the tree this phase leaves. (a) `e2e/bootstrap.spec.ts` asserts only what the tree renders. (b) `npm run test:e2e` passes. (c) The spec contains no assertion about a landmark, a skip link, or a shell, so that phase 02 writes the workspace spec rather than inheriting a half-true one. C2's and C3's browser-measured rows are not shell assertions and do not violate this. | 3 | `11 §3` — guards a permanently red CI step being normalised into "expected", which is how a real end-to-end regression later goes unnoticed |
-| **C7** | The theme layer is the corrected foundation, and nothing more. (a) Design 01 §5's required corrections are the values that landed where the corrected value and the prototype value differ — **enumerated one row per correction**, measured on the running `/` document. (b) The theme layer declares no semantic-layer name, no component-level value, and no multi-theme scale (master plan §6.5A, contract 15 §2's taxonomy prohibition) — a source-level absence row. (c) Planted-defect probe for (b): declare a component-level value in the theme layer, observe (b) redden, revert. **Value-by-value fidelity of the ramps to design 01's tables is deliberately not asserted here**: a test transcribing the same table into assertions proves only that two copies of one table agree. The reviewer reads the ramp against design 01, and master plan §6.5A records that as the chosen instrument. | 3 | F6 · master plan §6.5A · design 01 §5 — guards the corrections silently losing to the prototype values they exist to overrule, and the taxonomy the owner declined |
+| **C7** | The theme layer is the corrected foundation, and nothing more. (a) Design 01 §5's required corrections are the values that landed where the corrected value and the prototype value differ — **enumerated one row per correction**, measured on the running `/` document. **The rows for corrections 2 and 3 are `structurally held`** (master plan §7.5): each was discharged by taking the correction's stated *alternative*, which is a composition rule for a control this phase does not build, so no measurable subject exists here. Their named triggers are the phases that build those controls — correction 2 → phase 11, correction 3 → phase 12 — registered as master plan §11.3 follow-ups 11 and 12. *(Added 2026-09-06, review round 1 S4: without this, both rows read as completed measurements and their surviving obligation lived only in a Review log that archives at closeout.)* **The ink set correction 2's row measures is derived from `theme.css` — every `--color-fg-*` name actually declared — never a hardcoded name list.** (b) The theme layer declares no semantic-layer name, no component-level value, and no multi-theme scale (master plan §6.5A, contract 15 §2's taxonomy prohibition) — a source-level absence row. **The instrument is an allowlist, never a denylist**: the set of custom-property names declared in `src/styles/theme.css` is asserted to be a **subset of an enumerated in-file list of design 01 ramp names**, so any name not in the ramp is an offender until the enumeration is amended alongside master plan §6.5A. *(Amended 2026-09-06, review round 1 B2: a denylist over an open name universe cannot measure this prohibition — five planted component-level values passed the shipped nine-fragment denylist, four of them using nouns the list never contemplated.)* (c) Planted-defect probe for (b): declare a component-level value in the theme layer **using a name the previous denylist instrument passed — `--color-tab-active-bg`** — observe (b) redden, revert. **Value-by-value fidelity of the ramps to design 01's tables is deliberately not asserted here**: a test transcribing the same table into assertions proves only that two copies of one table agree. The reviewer reads the ramp against design 01, and master plan §6.5A records that as the chosen instrument. | 3 | F6 · master plan §6.5A · design 01 §5 — guards the corrections silently losing to the prototype values they exist to overrule, and the taxonomy the owner declined |
 | **C8** | The stale current-state documents are true after this phase. (a) No document in task 7's perimeter makes an unqualified current-state reference to a deleted artefact — `src/styles/tokens.css`, `src/components/ui/`, a CSS Module foundation, or "three shared primitives" — enumerated one row per document, where a reference on a line marked as historical (naming the deletion) is permitted and an unmarked one is not. (b) Both `Component library: none decided` rows name Radix UI Primitives and Lucide React with the widget that justified each, so the patch is a correction rather than a deletion. (c) Planted-defect probe: reintroduce one unqualified reference, observe its row redden, revert. **The rule's limit is recorded in the criterion**: it catches the named artefacts, not every future false sentence. | 3 | `14 §8` · conflict C-4 · master plan §10.2 caveat 4 — guards the documentation half of C-4, which this plan's own Notes make a finding against this phase if a later phase discovers it |
 
-**Derived totals for this phase, re-derived at dispatch:** 8 criteria; rows 5 + 3 + 2 + 7 + 5 +
-3 + 3 + 3 = **31**; named mutations C1 **2** (c, d) · C2 1 (c) · C3 1 (b) · C4 1 (g) · C5 **4**
-(one probe per absence sub-row a–d) · C6 0 · C7 1 (c) · C8 1 (c) = **11**.
+**Derived totals, re-derived 2026-09-06 after the review-round-1 fold-back:** 8 criteria; rows
+5 + 3 + 2 + 7 + 5 + 3 + 3 + 3 = **31** (unchanged — the amendments tightened rows, none added
+one); named mutations C1 **5** (four value classes in (c), plus (d)) · C2 1 (c) · C3 1 (b) ·
+C4 **2** (both halves of (g)) · C5 4 (one per absence sub-row a–d) · C6 0 · C7 1 (c) · C8 1 (c)
+= **15**. *(Was 11. C1 gained three under charter rule 12, C4 one under P5.)*
 
 ## Notes
 
@@ -553,3 +555,385 @@ implementation to cover documents it was never asked to patch is how a phase sto
 on its own. **Declining them is the reason C8(a) must not be read as "every false sentence is
 gone"** — its criterion already records that it catches the named artefacts and not every future
 false statement.
+
+---
+
+**2026-09-06 — reviewer (Claude Opus 5), round 1, `CHANGES_REQUESTED`.**
+
+*Evidence posture.* The code tree at review entry is **byte-identical to checkpoint `d30ef8f`**
+(`git diff d30ef8f HEAD -- . ':!build_docs'` is empty; HEAD is `a798d75`, whose diff is pipeline
+documentation only). The implementer's closing L4+ stamp is therefore **cited, not re-run**
+(charter test-evidence reuse; master plan §10.4 budget). Zero L4 runs were spent. All independent
+evidence below is L1 (`npx vitest run src/styles/theme.test.ts -t "<name>"`) at sites and in
+mutant shapes the implementer's ledger did not use, plus structural reading. No Playwright run
+was taken; where an e2e row is judged, it is judged structurally (doctrine rule 3), which is
+sufficient because the defect is in what the assertion *can* observe, not in what it observed.
+
+*Same-family reading, declared per master plan §3.* Two judgments below rest on reading the plan
+the same way the implementer did and are **not corroboration this round**: (i) that C4(a)'s
+`vitest list` instrument satisfies the criterion's "not a glob matcher re-derived inside the
+test"; (ii) that admitting the two collection sentinels as permanent product-folder files is
+within the "Not in this phase" exception as written. Both look right to me and to the
+implementer, and we are the same model family.
+
+### Findings
+
+**B1 — blocking. Contract 15 §5's prospective recording rule was replaced with a weaker,
+project-local one.**
+`architectural_contracts/15-ui-styling-and-component-system.md` §5. The patch deleted
+*"That adoption is an architectural decision: it is recorded in [README.md](README.md) "Resolved
+decisions" with the widget that justified it, per [13-decision-checklist.md](13-decision-checklist.md)
+§5."* and replaced it with *"Each addition is recorded in the consuming phase's Review log with the
+widget that justified it."* A phase Review log is a pipeline row archived under
+`archive/plan_<n>/`; it is not the repository's durable architecture record. Three authorities
+disagree with the patched text: this plan's own "Files expected to change" (*"No rule in any of
+them is weakened … Only the description of what exists changes"*); master plan §5 "Added by this
+re-derivation", which names §5's README-recording requirement as a section-level addition binding
+on this project; and the **ratified intention §2.2** contract row, which states that §5 *"requires
+the adoption to be recorded in the contracts README with the widget that justified it"*.
+`13-decision-checklist.md` §5 item 32 still routes a component-library decision to `README.md`
+"Resolved decisions", so the contract set now contradicts itself. The decision this phase had to
+record *is* correctly recorded in both README rows — the defect is prospective, not current.
+**Correction:** restore the deleted sentence verbatim as its own bullet in §5, and keep the new
+per-milestone package bullet beside it as an addition rather than as its replacement.
+
+**B2 — blocking. C7(b)'s guard cannot observe a component-level value; §6.5A's central
+prohibition is effectively unmeasured. (Adjudicates P2: confirmed.)**
+`src/styles/theme.test.ts:312-338`. The instrument is a nine-fragment denylist. I planted five
+component-level custom properties in `theme.css` and ran C7(b) at L1 on each mutant; **all five
+passed green**: `--color-tab-active-bg`, `--color-card-header-bg`, `--color-pill-bg`,
+`--color-thread-bg`, `--color-fg-ask-glyph`. Only the first is covered by the documented `tab`
+exclusion; the other four are nouns the denylist simply never contemplated, which is structural to
+a denylist over an open name universe — not a gap in the list. Master plan §6.5A forbids
+"no semantic layer, no component-level value, and no multi-theme scale" and names C7 as its
+measurement; standing rule 8 and charter rule 15 require an absence row's instrument to be shown
+capable of observing the presence. The shipped probe (C7(c), `--color-tooltip-bg`) proves only
+that the denylist matches its own list — which is why the implementer's first attempt
+(`--color-primary-cta-button-bg`) came back green. The multi-theme half of the row (exactly one
+`@theme` block) and the semantic-layer half are sound; the component-level half is not.
+**Second site, same defect:** `e2e/bootstrap.spec.ts:139-141` discharges C7(a) correction 2
+against a **hardcoded ten-name ink list**, so the same planted `--color-fg-ask-glyph: #3a3c41`
+defeats correction 2 as well — the exact value correction 2 exists to keep out of readable ink.
+**Correction:** replace both denylists with allowlist-shaped instruments. C7(b) asserts that the
+set of custom-property names declared in `theme.css` is a subset of an enumerated, in-file list of
+design 01 ramp names (§6.5A closes that set by construction: "a later phase uses a ramp entry, or
+it amends this section"), so any new name is an offender until the enumeration is amended
+alongside §6.5A. C7(a) correction 2 derives its ink set from `theme.css` (every `--color-fg-*`
+name declared) instead of a literal list, then asserts none resolves to `#3a3c41`. Re-run C7(c)
+against a name the previous instrument passed — `--color-tab-active-bg` — and record the red.
+
+**S1 — should-fix. Two current-state falsehoods created by this phase's own work, both missed by
+the contract 14 §8.3 documentation-impact review.**
+(i) `README.md:99` still reads *"Today it has one spec that checks the application shell renders
+and the skip link works."* Task 6 and C6(c) deleted exactly those assertions from
+`e2e/bootstrap.spec.ts`. The implementer patched the adjacent Vitest bullet in the same list for
+precisely this reason and left the Playwright bullet one line below it.
+(ii) `architectural_contracts/13-decision-checklist.md` §5 item 32 still reads *"TanStack Query,
+**a component library**, and client-side persistence are not [ratified], and each needs the named
+requirement first."* Task 7 ratified a component library, which makes that clause false. Contract
+13 was not in task 7's perimeter, and master plan §10.2 caveat 4's enumeration does not name it.
+Neither is a C8 violation — C8(a)'s pattern set is scoped to the deleted artefacts and records
+that limit — but both are contract 14 §1 falsehoods **this phase created**, which is the class the
+review declared empty (*"no other document makes a false statement this phase's work touches"*).
+They are categorically different from follow-up 10's two pre-existing statements, which were
+correctly refused. **Correction:** patch `README.md:99` to describe what `e2e/bootstrap.spec.ts`
+now asserts, and patch `13-decision-checklist.md` §5 item 32 to remove "a component library" from
+the not-yet-ratified list and point at the recorded decision. Both are inside the meaning of task
+7 (documents this phase's change made stale), not a perimeter widening.
+
+**S2 — should-fix. C7(a) correction 6 is a source-substring check wearing a browser-measurement
+name.** `e2e/bootstrap.spec.ts:188-194`. The test takes a `page` fixture, navigates to `/`, then
+asserts `GLOBALS_CSS.includes("prefers-reduced-motion: reduce")` — a string in a file read at
+module load. The `page` is never used again. C7(a) requires each correction "measured on the
+running `/` document"; master plan §10.3A requires exactly this class of assertion to be a
+Playwright measurement. The row's own name claims it "shares its subject with C2(b)"; it shares
+nothing with C2(b). The ledger's probe 3 deleted the whole `@media` block, which removes the
+substring too — which is why the row's emptiness was invisible. C2(b) does carry the substance
+(it reddens on a weakened floor), so nothing about reduced motion is actually unmeasured; the
+defect is a row that cannot fail for its stated reason. **Correction:** either make correction 6 a
+real two-sided browser measurement — under `reducedMotion: "reduce"` assert the collapse on an
+injected element carrying a non-`none` animation, and under `reducedMotion: "no-preference"`
+assert the same element is **not** collapsed — or delete the row and record in this plan that
+C2(b) discharges correction 6, so the coverage map stops claiming a measurement that does not
+exist.
+
+**S3 — should-fix. C1's scanner: three of its four declared value classes ship unmutated, C1(e)
+cannot detect scanner decay, and two blind spots are unrecorded. (Adjudicates P1 site 2:
+confirmed.)** `src/styles/theme.test.ts:85-190`.
+- *Sub-check coverage (charter rule 12).* C1(a) names four classes — hex colour, `px` type size,
+  radius, shadow — and the plan declares one named mutation for them (C1(c), a hex). I mutated the
+  other three independently at L1 and **all three bite**: `text-[13px]` →
+  `raw-px-type-size` red; `shadow-[0_18px_40px_rgba(0,0,0,.55)]` → `raw-shadow-arbitrary` red;
+  `.probe { border-radius: 9px; }` in a consumer `.css` → `raw-css-radius-or-shadow` red. So the
+  scanner is correct today; what is missing is the ledger rows proving it, one per sub-check.
+- *C1(e) cannot see decay.* I replaced `RAW_TEXT_SIZE` and `RAW_RADIUS_ARBITRARY` with patterns
+  that can never match and ran both C1(a) and C1(e): **both stayed green.** Two of the four value
+  classes died silently and the row whose stated job is "the scanner's own scope" did not move,
+  because its fixture's outcome is pinned only by `positive.length > 0` and
+  `some(kind === "raw-hex-colour")`. Its planted string also contains `p-[13px]`, which the rule
+  deliberately does not catch, so the fixture reads as three forms and asserts one.
+- *Two unrecorded blind spots.* C1(a) delegates the lexical rule on condition that the forms it
+  deliberately does not catch are recorded. Two are not: (a) `BARE_CSS_FONT_SIZE` and
+  `BARE_CSS_RADIUS_OR_SHADOW` both require a trailing `;`, so a declaration that is **last in its
+  block** — ordinary, valid CSS — escapes; I confirmed `.probe { font-size: 13px }` green and
+  `.probe { font-size: 13px; }` red, and the same pair for `border-radius`. (b) `stripComments`
+  removes everything after `//` on a line, including inside string literals, so
+  `export const docs = "see https://example.com/style — brand #3b82f6";` scans green.
+**Correction:** make C1(e)'s fixture assert **one expected violation kind per scanner class it
+plants** (`raw-hex-colour`, `raw-px-type-size`, `raw-radius-arbitrary`, `raw-shadow-arbitrary`,
+and, on a `.css` fixture, the two bare-CSS kinds), replacing `positive.length > 0`; add the three
+sub-check mutations above to the ledger as named mutations of C1(c); and add the trailing-semicolon
+requirement and the `//`-inside-a-string stripping to the recorded "deliberately not caught" list —
+or make `stripComments` string-aware and the bare-CSS patterns tolerate a closing `}`.
+
+**S4 — should-fix. Design 01 §5 corrections 2 and 3 were discharged by deferral with no carrier
+into the phase that must implement them.** `src/styles/theme.css:40-44, 59`;
+`e2e/bootstrap.spec.ts:133-155`; master plan §11.3. Correction 3 offers two forms; the implementer
+took the alternative ("`#0b0b0c` ink on `#3b82f6`"), which is a **composition rule for a control
+that does not exist yet**, and C7(a) correction 3 therefore asserts `--color-accent === #3b82f6` —
+i.e. it measures that the *first* form was not applied, and nothing measures that the second will
+be. Correction 2 is the same shape: the ask-glyph value is kept out of the ink ramp, but
+`--color-border-elevated: #3a3c41` remains reachable, and the requirement that the `✦` affordance
+rest at `#7c7e84` (or be hover-revealed *and* keyboard-reachable with a visible ring) lands in
+phase 11. Master plan §11.3 follow-up 9 registers correction 6's per-animation half for exactly
+this reason; corrections 2 and 3 have no equivalent row, so their surviving obligation exists only
+in this plan's Review log, which archives at closeout. Design 10 §5 and standing rule 6 make these
+corrections binding, and standing rule 5 forbids treating accessibility as a later pass without a
+mechanism. **Correction:** add master plan §11.3 follow-up rows for correction 3 (owner: the phase
+that builds the primary/approval action — phase 12; obligation: the label composes `#0b0b0c` ink
+on `--color-accent`, never white, and the phase asserts the computed pair) and for correction 2
+(owner: phase 11; obligation: the ask-agent affordance rests at `--color-fg-quiet` or is
+hover-revealed **and** keyboard-reachable with the global focus ring). Record in this plan that
+C7(a) rows 2 and 3 are **structurally held** in the master plan §7.5 sense, with those phases as
+their named triggers, so neither row reads as a completed measurement.
+
+**S5 — should-fix. The ink ramp's names now invert its own order.** `src/styles/theme.css:53-54`:
+`--color-fg-quiet: #7c7e84` sits directly above `--color-fg-quietest: #84868c`, and `#84868c` is
+the **lighter** of the two. This is a correct consequence of applying correction 1 to one row only,
+but it leaves a name that lies: a later phase reaching for "quietest" to mean the dimmest readable
+ink gets the brightest of the pair. Master plan §6.3's naming rules require one meaning per name,
+and no consumer exists yet, so this is free to fix now and expensive later.
+**Correction:** either reorder the two names so the ramp reads monotonically (the corrected
+`#84868c` becomes `--color-fg-quiet` and `#7c7e84` becomes `--color-fg-quieter`/`--color-fg-quietest`,
+with correction 1's C7(a) row re-pointed at whichever name carries `#84868c`), or, if the names are
+kept, state the inversion and its cause in the ramp's own comment so no phase reads the order off
+the names.
+
+**S6 — should-fix, one-line class. C4(d)'s environment half is met by inference, not by the
+instrument the same file already uses. (Adjudicates P3.)** The row has a real subject — ten tests
+under `src/lib/**` — and its guard half is genuinely evidenced by `test/setup/node.test.ts`. But
+C4(a) proves *exactly one project*, never *which*, so "collected in the `node` environment" rests
+on reading `vitest.config.mts`, not on a measurement. `theme.test.ts:244-249` already does exactly
+this assertion for one file via `runVitestList()`. **Correction:** extend that filter to every
+discovered `src/lib/**/*.test.ts` and assert each entry's `projectName === "node"`, so C4(d) is
+discharged by the same instrument as C4(f) rather than by inference.
+
+### Probes adjudicated (all five reached)
+
+| Probe | Verdict | Evidence |
+|---|---|---|
+| **P1** site 1 — `bootstrap.spec.ts:107`, C3(a) `referenced.length > 0` | **dismissed, with a residual (see note N1)** | The failure the probe fears — the derivation collapsing — *is* caught: I re-ran the derivation over a `globals.css` rewritten to the legal `var( --x )` form and it yields **0**, which reddens the `> 0` guard loudly. The derivation is from the file at load time, which is the correct instrument (standing rule 11). What survives is only a *partial* shrink from a file that mixes both spacings. |
+| **P1** site 2 — `theme.test.ts:176`, C1(e) `positive.length > 0` | **confirmed as a defect** → S3 | Two of four scanner classes disabled; C1(a) and C1(e) both stayed green. |
+| **P1** site 3 — `theme.test.ts:384`, C8(b) `rows.length >= 2` | **dismissed** | I deleted one of the two `Component library` rows: the row reddens (`expected 1 to be greater than or equal to 2`), and the loop asserts Radix + Lucide on *every* matched row. The disjunction cannot hide the defect the criterion names. |
+| **P1** site 4 — `theme.test.ts:247`, C4(f) `own.length > 0` | **dismissed** | `> 0` only rules out vacuity; the assertion is carried by `every(projectName === "node")`, and exactly-one is carried by C4(a). I widened the jsdom include to claim `src/**/*.test.ts`, giving `theme.test.ts` two owners: **both** C4(f) and C4(a)'s `claimedByMoreThanOne` half reddened. |
+| **P2** — C7(b)'s denylist | **confirmed as a defect** → B2 | Five planted component-level names, all green. |
+| **P3** — C4(d) self-declared weaker | **met in substance, weakly instrumented** → S6 | Subject exists (10 tests under `src/lib/**`); the `node` half is inferred from the config rather than measured. |
+| **P4** — C5(d)'s shipped wiring | **dismissed; the wiring is correct** | `theme.test.ts:294` calls `forbiddenDependenciesPresent(path.join(REPO_ROOT, "package.json"))`. The shipped test does pass the real manifest to the probed function; the injectable parameter is used only by the probe, exactly as the plan prescribed. |
+| **P5** — C4(g)'s substitute for an unachievable wording | **sound discharge; fold the wording, and widen it** | Narrowing the jsdom includes to the pre-repair globs and planting a `.tsx` under `src/features/**/components/` reproduces the *precise* pre-repair defect on C4(a)'s own discovery set, which is stronger than "a file outside every glob" — a construction the total partition makes impossible. One gap: C4(a) has two halves and the named mutation exercised only `claimedByNone`. My MV-9 shows `claimedByMoreThanOne` also bites. **Fold C4(g) as: "narrow one project's include globs so a real test file is claimed by no project, observe (a) redden; and widen one project's include globs so a real test file is claimed by two, observe (a) redden" — two named mutations, one per half.** |
+
+### My own mutation record (all L1, all applied on the tracked tree and reverted)
+
+| # | Hypothesis | Site (file, def-vs-call) | Planted | Observed |
+|---|---|---|---|---|
+| MV-1 | C1(a)'s px-type-size sub-check bites | `src/lib/__rv-px.ts` (new consumer file) | `"text-[13px]"` | **red** — `raw-px-type-size` |
+| MV-2 | C1(a)'s shadow sub-check bites | `src/lib/__rv.ts` (new consumer file) | `"shadow-[0_18px_40px_rgba(0,0,0,.55)]"` | **red** — `raw-shadow-arbitrary` |
+| MV-3 | C1(a)'s bare-CSS radius sub-check bites | `src/styles/consumer-probe.css` (new consumer file) | `.probe { border-radius: 9px; }` | **red** — `raw-css-radius-or-shadow` |
+| MV-3b/c/d | the bare-CSS rules require a trailing `;` | same | `font-size: 13px` (no `;`) / `font-size: 13px;` / `border-radius: 9px` (no `;`) | **green / red / green** — semicolon is the discriminator |
+| MV-4 | `stripComments` strips inside string literals | `src/lib/__rv.ts` | `"see https://example.com/style — brand #3b82f6"` | **green** — blind spot |
+| MV-5a | C7(b) catches a component-level value using an excluded noun | `src/styles/theme.css` (definition site) | `--color-tab-active-bg: #1f2023;` | **green** |
+| MV-5b | C7(b) catches component-level values using un-excluded nouns | `src/styles/theme.css` (definition site) | `--color-card-header-bg`, `--color-pill-bg`, `--color-thread-bg`, `--color-fg-ask-glyph` | **green** (all four) |
+| MV-6 | C1(e) detects decay of a scanner class it plants | `src/styles/theme.test.ts` (definition site — the pattern constants) | `RAW_TEXT_SIZE` and `RAW_RADIUS_ARBITRARY` replaced with never-matching patterns | **green** on both C1(a) and C1(e) |
+| MV-7 | C8(b)'s `>= 2` detects a deleted row | `architectural_contracts/README.md` (call site — the Scaffold-decisions row) | one `Component library` row deleted | **red** |
+| MV-8 | C3(a)'s derivation survives a legal `var( --x )` spacing | derivation re-run out-of-tree over a rewritten copy of `globals.css` | space after `var(` | derivation → **0 properties**, which reddens the `> 0` guard |
+| MV-9 | C4(a)'s `claimedByMoreThanOne` half bites (never in the ledger) | `vitest.config.mts` (definition site — jsdom `include`) | jsdom widened to `src/**/*.test.ts` | **red** — C4(a) *and* C4(f) |
+
+**Mutation-probe declaration.** Files created and removed: `src/lib/__rv-px.ts`, `src/lib/__rv.ts`,
+`src/styles/consumer-probe.css`. Files edited and restored, each verified byte-identical by
+SHA-256 against a pre-probe baseline: `src/styles/theme.css`, `src/styles/theme.test.ts`,
+`vitest.config.mts`, `architectural_contracts/README.md` (`src/styles/globals.css` and
+`e2e/bootstrap.spec.ts` were never edited and are checksum-confirmed unchanged). No database or
+tool-recorded state exists in this worktree to restore. `git status --porcelain` at close shows
+only this session's documentation writes.
+
+### Verified correct, recorded so the next round is cheap
+
+- **The theme ramp against design 01, value by value** — the instrument master plan §6.5A assigns
+  to the reviewer rather than to a test. Surfaces 8/8, borders 8/8, ink 10 rows plus the two
+  correctly-dropped "nearly invisible" values, semantics 11/11 with the neutral-badge row correctly
+  folded onto existing tokens, diff 4/4 (three by reuse, one own token), radii 10/10 (two by
+  Tailwind built-ins, declared), shadows 4 carried and the nav-rail correctly refused as
+  prototype-only, type 19/19 size steps and 5/5 line-heights (four by Tailwind default or override,
+  declared), motion 3 carried and `fadeUp` correctly dropped per correction 6. Every deviation I
+  found is declared in the Review log with its reason. **Spacing is correctly limited to
+  `--space-4`/`--space-8`:** §6.5A's eight ramps do not include spacing, and Tailwind's own scale
+  covers the rest — carrying design 01 §1.9 would have been the taxonomy §6.5A declines.
+- **`@theme static` was the right delegated call and it is load-bearing.** Under the default
+  `@theme`, `--space-4`/`--space-8` reach no generated utility and would be pruned — the exact
+  defect C3(a) exists to catch.
+- **The `globals.css` referenced-property set is genuinely derived, and its change is honest.**
+  It references 16 distinct properties; six of master plan §10.2 caveat 2's seven are among them,
+  and the seventh (`--color-accent`) is absent precisely because correction 4 moved the `a` rule to
+  `--color-accent-ink-on-dark`. A derived enumeration is the correct instrument and it behaved
+  correctly under that change.
+- **C1(b)'s allowlist** is asserted as exactly one entry *and* positionally bound to the
+  `:focus:not(:focus-visible)` rule below the `:focus-visible` rule — a structural assertion, not a
+  pinned literal, so charter rule 13 is satisfied.
+- **The partition rule is total as configured.** node = `src/**/*.test.ts` + `test/**/*.test.ts`
+  minus feature `hooks/`; jsdom = all `.tsx` + feature `hooks/*.test.ts`. No file under `src/` or
+  `test/` can fall to neither or to both, and both projects exclude `e2e/**` and `**/*.live.test.ts`
+  while keeping the offline `fetch` guard.
+- **The two collection sentinels are the right instrument** and their permanence is correctly
+  declared. They fail loudly under `node`, which is the only environment a broken partition could
+  route them to.
+- **C7(a) corrections 4 and 5 are real browser measurements** on injected native controls, and
+  correction 5's computed `outlineColor` genuinely pins design 01 §5's `#7aa9ff`.
+- **Documentation:** contract 15's promotion rule (§4), inline-style rule (§3) and one-mechanism
+  rule (§1), and **§2's taxonomy prohibition verbatim**, all survive the patch unchanged. §6's
+  rewrite is *stronger* than what it replaced, not weaker. The two README rows record Radix and
+  Lucide with the widgets that justified each, exactly as contract 15 §5 and intention §2.2 ask.
+  B1 is the single exception.
+- **Session hygiene:** the checkpoint's 14 files match the declared perimeter; no package
+  installed; the evidence budget was one stamp plus one legitimate re-take. The self-caught false
+  green on probe 10 was reported rather than buried, which is the behaviour the doctrine asks for
+  and is what made P2 findable.
+
+### Notes (non-blocking, routed in the handoff's carry-forward table)
+
+- **N1 — C3(a)'s residual.** A `globals.css` that mixes `var(--x)` and `var( --x )` would silently
+  drop only the spaced rows while the `> 0` guard stays green. One line closes it: assert the
+  derived set **contains** the six caveat-2 properties it still references, by name.
+- **N2 — C4(e)'s instrument is narrower than its headline.** The row's title is "the DOM project
+  also installs the offline `fetch` guard"; the check greps `vitest.setup.ts` for the call. If a
+  later phase dropped `setupFiles` from the jsdom project the row stays green. Factually satisfied
+  today (`vitest.config.mts:43`); the criterion's own explanation scopes to the call, so this is a
+  plan lesson, not an implementation defect.
+- **N3 — the type ramp is px-locked** for 15 of its 19 steps (design 01's own values, correctly
+  carried), so browser font-size scaling does not reach them; the four Tailwind-inherited steps are
+  `rem`. Design 01 §5 names no correction for this and §6.5A says carry the ramp, so the
+  implementer was right — but it is a real accessibility consequence and belongs in the
+  design-delta register (§11.2) rather than nowhere.
+- **N4 — the design-delta marker names two of design 01's five open questions.** It cites register
+  #11, which carries all five, so nothing is lost. The one worth watching is question 3 (hover
+  easing): the theme declares **no** transition or easing value at all, so the first phase to add
+  `transition: … 120ms` resolves an open design question with nothing in place to notice.
+- **N5 — no light-surface values exist.** Design 01 §1.12 / design 08's client-preview document is
+  a light surface inside a dark application; phase 10 will need those values and §6.5A both forbids
+  inventing them and forbids a "multi-theme scale". That tension is phase 10's to route, not this
+  phase's to pre-solve.
+- **N6 — row-schema drift.** The implementer handoff's frontmatter reads `role: implement` while
+  its filename and the master plan §3 table use `implementer`. Cosmetic today; it is the kind of
+  thing that breaks a table read mechanically later.
+
+### Lessons for the plans, routed by home
+
+- **To the master plan (§11.3 follow-up register):** design 01 §5's corrections 2 and 3 need
+  follow-up rows naming their owning phase and surviving obligation, the way follow-up 9 does for
+  correction 6. A correction discharged by choosing its alternative is a correction deferred, and
+  the register is the only artifact that outlives this plan. *(→ S4)*
+- **To the master plan (§10.2 caveat 4):** the stale-document enumeration missed
+  `13-decision-checklist.md` §5 item 32, which this phase's own decision-recording made false. The
+  caveat should be read as "documents this phase's change makes stale", not only as the list
+  authored before the phase ran. *(→ S1)*
+- **To the master plan (§6.5A):** it names C7 as the measurement for "no component-level value" but
+  does not say what shape that instrument must take. Because §6.5A closes the name set by
+  construction, the enforceable form is an **allowlist derived from design 01's ramps**; a denylist
+  cannot measure the prohibition at all. Say so, so no later phase re-derives a denylist. *(→ B2)*
+- **To this phase plan (C1(a)):** the criterion names four value classes and the plan declares one
+  named mutation for them. Charter rule 12 asks for one mutation per sub-check. Amend the mutation
+  arithmetic to C1 **5** (a–d plus one per remaining value class) rather than 2. *(→ S3)*
+- **To this phase plan (C1(e)):** "a synthetic fixture it must read" under-specifies the assertion.
+  The row should require **one asserted violation kind per class the fixture plants**, which is what
+  makes the fixture's own predicate the only reason the outcome holds (charter rule 2's companion).
+  *(→ S3)*
+- **To this phase plan (C4(g)):** fold the wording as P5 describes, and widen it to two named
+  mutations — one per half of C4(a)'s assertion. *(→ P5)*
+- **To this phase plan (C7(a)):** the criterion says "one row per correction", which reads as though
+  every correction has a measurable subject in this phase. Two do not. The rows for corrections 2
+  and 3 should be marked **structurally held** with their converting phase named, per master plan
+  §7.5. *(→ S4)*
+- **To this phase plan (C4(e)):** the row's headline claims more than its own explanation. Either
+  narrow the headline to "the guard's call site in `vitest.setup.ts` survives the repair", or widen
+  the instrument to assert the jsdom project's `setupFiles` wiring. *(→ N2)*
+- **To the charter / the coordinator's plan lint, as an observation rather than an amendment:** four
+  of this round's findings (B2, S2, S3, and half of S4) are the same shape — *an absence or
+  correction row whose instrument is a fixed literal list*. The manifest, the arithmetic and the
+  coverage map all passed cleanly over every one of them, which is exactly what the charter's
+  manifest section warns a passing manifest means. The cheap generalisation: **when a criterion
+  asserts an absence over an open universe, the plan names whether the instrument is an allowlist
+  or a denylist, and a denylist row records its limit inside the criterion** — C5(d) already does
+  this and is the only one of the five that does.
+
+### Write perimeter (this session)
+
+Documents: `master-plan.md` (tracker row 01 only), this plan file (this Review log entry),
+`handoffs/reviewer/phase-01-review-round-1.handoff.reviewer.md` (new). Code: **none** — every
+mutation probe listed above was reverted and checksum-verified. Commands run: eleven L1
+`npx vitest run src/styles/theme.test.ts -t "<name>"` invocations (the mutation table), one
+out-of-tree `node -e` derivation check (MV-8), and read-only `git`/`grep`/`find`. **Not run:**
+`npm test`, `npm run test:e2e`, `npm run typecheck`, `npm run lint`, `npm run build` — the tree is
+byte-identical to the stamped checkpoint and re-running them would be a finding against this
+session. No package installed, no dependency added. No architecture graph exists in this worktree;
+no graph delta is reported. The untracked `build_docs/future_implementations/` and
+`build_docs/under_constroction/frontend_core/prompts/astra_prompts/` are not this session's work.
+
+**2026-09-06 — coordinator, consuming review round 1 (`CHANGES_REQUESTED`; 2 blocking, 6
+should-fix, 6 notes, 0 owner decisions).**
+
+*Reconciliation.* The reviewer's central evidence claim was verified, not accepted:
+`git diff d30ef8f HEAD -- . ':!build_docs'` is **empty**, so its tree genuinely was byte-identical
+to the checkpoint its cited stamp was taken on, and citing rather than re-running was correct —
+zero L4 spent, thirteen independent L1 mutants spent on variation instead. Its declared write
+perimeter (three documentation writes, no code) matches the tree. Both blocking findings were
+re-derived independently before routing: **B1** — the deleted §5 bullet and its replacement were
+read from the checkpoint diff, and `13-decision-checklist.md` §5 item 32 does still route a
+component-library decision to `README.md` "Resolved decisions", so the contract set does now
+contradict itself; **B2** — all five planted names were checked against the shipped nine-fragment
+denylist and **all five evade it**, four using nouns the exclusion list never contemplated. **No
+finding against the review session.**
+
+*Criteria amended before the fix round is compiled*, so the fixer builds against the tightened
+rows rather than against the rows that admitted the defects: C1(c) now carries one named mutation
+per value class it names (S3, charter rule 12); C1(e) asserts one violation kind per class its
+fixture plants, replacing a count (S3); C4(e)'s headline is narrowed to what its instrument
+measures (N2); C4(g) becomes two mutations, one per half of C4(a) (P5); C7(a)'s rows for design 01
+§5 corrections 2 and 3 are marked **structurally held** with phases 11 and 12 as named triggers,
+and correction 2's ink set is derived rather than hardcoded (S4, S2's second site); C7(b)'s
+instrument is required to be an **allowlist** (B2). Derived totals re-derived: 31 rows unchanged,
+named mutations **11 → 15**.
+
+*Master plan amended.* §6.5A now states that the instrument for "no component-level value" is an
+allowlist and that no later phase re-derives a denylist, with the reason (B2). §10.2 caveat 4
+gains `13-decision-checklist.md` §5 item 32 and, more importantly, the **reading** that it means
+"every document this phase's change makes stale", not only the list authored before the phase ran
+(S1). §7.5 gains the two structurally-held C7(a) rows; §11.3 gains follow-ups 11 and 12 carrying
+corrections 2 and 3 into phases 11 and 12 (S4); §11.2 gains deltas 12 and 13 for the `px`-locked
+type ramp and design 01's own inverted ink-name pair (N3, S5); §11.1 records the round.
+
+*One note dismissed, with the reason.* **N6 is not a defect.** The implementer handoff's
+`role: implement` is exactly what the `implementation-executor` doctrine prescribes
+(`role: implement|fix`); the folder `implementer/` is the *table* name and `implement` is the
+*session kind*. Two vocabularies, both correct, neither drifting. No amendment made — recorded so
+the observation is not re-raised.
+
+*Dispositions carried forward without action here:* N1 folds into the fix round beside S3; N4
+(the theme declares no easing value, so the first phase to add a transition silently resolves
+design 01's open question 3) is carried to phase 02's prompt; N5 (no light-surface values, and
+§6.5A forbids both inventing them and a multi-theme scale) is phase 10's to route.
+
+*The reviewer's generalisation is accepted and is now a coordinator lint step.* Four of this
+round's findings share one shape — an absence or correction row whose instrument is a fixed
+literal list — and the plan manifest, the arithmetic and the coverage map all passed cleanly over
+every one of them. **When a criterion asserts an absence over an open universe, the plan states
+whether the instrument is an allowlist or a denylist, and a denylist row records its limit inside
+the criterion.** C5(d) was the only row that already did this, which is why it was the probe that
+dismissed cleanly.
