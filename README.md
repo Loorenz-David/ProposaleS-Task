@@ -4,7 +4,7 @@ An AI-assisted workflow for turning incomplete commercial intent (briefs, meetin
 
 ## Status
 
-**Foundation established, product workflow not yet implemented.** The repository has a working Next.js scaffold with typecheck, lint, unit, end-to-end, and build steps running locally and in CI, a complete set of normative architecture contracts, agent bootstrap for Claude Code and Codex, and a vendored Proposales API reference. The application currently provides a bare root layout, a neutral `/` route, and the production visual foundation established ahead of any component: a Tailwind theme layer defining every visual value once, base element typography, and a global focus and reduced-motion treatment. No shared UI primitive exists yet; one is created only when a second feature genuinely needs it ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md) §4). The `/` route is intentionally neutral until the product UI is ported. No proposal generation, agent, Proposales integration, schema, or business flow exists yet.
+**Persistent workspace shell established; product workflow not yet implemented.** The repository has a working Next.js scaffold with typecheck, lint, unit, end-to-end, and build steps running locally and in CI, a complete set of normative architecture contracts, agent bootstrap for Claude Code and Codex, and a vendored Proposales API reference. The root route now renders the two-pane Proposal Preparation shell with named landmarks, a keyboard- and pointer-operable divider, and an honest idle state. The production visual foundation is a Tailwind theme layer defining every visual value once, with base element typography and global focus and reduced-motion treatment. No shared UI primitive exists yet; one is created only when a second feature genuinely needs it ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md) §4). No proposal generation, session workflow, agent turn, schema, or business flow exists yet.
 
 ## Intended workflow
 
@@ -96,7 +96,7 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs typecheck, lint, 
 ## Testing strategy
 
 - **Vitest and React Testing Library** cover everything below the browser: pure functions, schemas, domain rules, services, adapters with mocked HTTP, and component tests. Every `*.test.ts(x)` under `src/` or `test/` is claimed by exactly one project: the `jsdom` project claims every `.tsx` test and every `.ts` test under a feature's `hooks/`; the `node` project claims everything else (`src/lib/**`, `src/styles/**`, `src/app/**`, `src/features/**` outside `hooks/`, `test/**`). Vitest excludes `e2e/` and `*.live.test.ts` so the default projects never overlap with end-to-end or opt-in live tests.
-- **Playwright** covers critical browser-level flows from `e2e/`. It starts `npm run dev` itself and runs against Chromium. Today `e2e/bootstrap.spec.ts` checks the document title, that `/` renders without a client or server error, the global focus and reduced-motion treatment, and that every custom property read by `globals.css` resolves.
+- **Playwright** covers critical browser-level flows from `e2e/`. It starts `npm run dev` itself and runs against Chromium. Today `e2e/workspace.spec.ts` checks the workspace landmarks, skip link, divider interactions, narrow-width containment, idle state, and the carried visual-foundation checks.
 - Layers, what each must prove, and the rules for agent evals: [11-testing-principles.md](architectural_contracts/11-testing-principles.md).
 
 ## Agent development
@@ -120,13 +120,13 @@ First-party Proposales documentation and the OpenAPI spec are vendored under [ap
 ./scripts/update-proposales-api-docs.sh
 ```
 
-A refresh detects possible contract drift; a dependency-aware review of the diff decides whether the application must change. Only vendor changes that touch behavior the application relies on (adapter assumptions, schemas, tests, known quirks) require action. The rule is in that folder's README. How this application uses the API will be documented in `src/lib/proposales/README.md` once the adapter exists.
+A refresh detects possible contract drift; a dependency-aware review of the diff decides whether the application must change. Only vendor changes that touch behavior the application relies on (adapter assumptions, schemas, tests, known quirks) require action. The rule is in that folder's README. How this application uses the API is documented in [`src/lib/proposales/README.md`](src/lib/proposales/README.md).
 
 ## Repository structure
 
 ```
 .
-├── src/app/                     # Next.js routes: root layout and neutral root route
+├── src/app/                     # Next.js routes: root layout and Proposal Preparation workspace route
 ├── src/styles/                  # Tailwind theme layer (visual values, defined once) and global base styles
 ├── e2e/                         # Playwright specs
 ├── architectural_contracts/     # Normative engineering contracts (numbered in read order)
@@ -138,7 +138,7 @@ A refresh detects possible contract drift; a dependency-aware review of the diff
 └── .env.example                 # Configuration inventory
 ```
 
-Feature code lives under `src/features/<feature>/` and integrations under `src/lib/<system>/` per [03-feature-architecture.md](architectural_contracts/03-feature-architecture.md); `src/features/proposal-preparation` exists today only as phase 01's test-collection sentinels (no component, hook, or product surface yet).
+Feature code lives under `src/features/<feature>/` and integrations under `src/lib/<system>/` per [03-feature-architecture.md](architectural_contracts/03-feature-architecture.md); `src/features/proposal-preparation` currently owns the persistent workspace shell and its idle surface, divider hook, and presentation state type. Sessions, turns, and proposal workflow remain future work.
 
 ## Deployment
 
@@ -149,7 +149,7 @@ The baseline deploys to Vercel. Environment variables are configured in the Verc
 Established:
 
 - Next.js scaffold, TypeScript, lint, unit and end-to-end test harnesses, CI.
-- A bare root layout, a neutral root route, and the production visual foundation (Tailwind theme layer, base typography, focus and reduced-motion treatment). No shared UI primitive exists yet.
+- The persistent Proposal Preparation workspace shell: fixed agent surface, session-controlled main-surface seam, user-controlled divider, named landmarks, skip link, and honest idle state. The divider width is page-lifetime state and is not persisted. No shared UI primitive exists yet.
 - Architecture contracts and agent bootstrap.
 - Vendored Proposales reference and refresh workflow.
 

@@ -493,12 +493,3 @@ describe("C4(e): the DOM project also installs the offline fetch guard (preserva
     expect(source).toMatch(/installOfflineFetchGuard\(\)/);
   });
 });
-
-describe("C6(a)/(c): the reduced e2e spec asserts no landmark, skip link, or shell", () => {
-  it("e2e/bootstrap.spec.ts contains no banner/main-landmark or skip-link assertion", () => {
-    const source = readFileSync(path.join(REPO_ROOT, "e2e/bootstrap.spec.ts"), "utf-8");
-    expect(source).not.toMatch(/getByRole\(\s*["']banner["']/);
-    expect(source).not.toMatch(/getByRole\(\s*["']main["']/);
-    expect(source).not.toMatch(/Skip to content/);
-  });
-});

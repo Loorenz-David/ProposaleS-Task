@@ -312,3 +312,61 @@ enumeration replacing conjunction, five things the plan asserted in prose and me
 four probes for guards that shipped without one. The tracker row and master plan §11.1 carry the
 same numbers.
 
+**2026-09-06 — implementer, round 1 (`IMPLEMENTED`).** Built the persistent Proposal Preparation
+workspace shell: a Server Component page now composes one client workspace root; the root keeps one
+named complementary Agent Surface and one named Main Application Surface mounted for the page
+lifetime; the divider is a project-owned valued separator with pointer drag, keyboard resize/reset,
+double-click reset, polite reset announcement, effective viewport maximum, and root-scoped drag text
+selection suppression; the Main Application Surface is consumed with `MainSurfaceState` and pinned
+to `idle` by its only caller; the idle surface is intentionally honest and minimal. The idle visual
+treatment remains a **design gap marker**, not an invented design decision, and is reported for the
+design follow-up.
+
+Contract selection re-emitted before coding: `02-runtime-boundaries.md` §§1–3, 5; `03-feature-
+architecture.md` §§1–4; `05-client-architecture.md` §§2, 5, 7; `15-ui-styling-and-component-system.md`
+§§1, 3; `16-design-prototype-porting.md` §§3–5; `11-testing-principles.md` §§2–3;
+`12-anti-patterns.md` (Components and client; Structure and abstraction); `13-decision-checklist.md`
+§5; and `14-documentation-principles.md` §8. No persistence, integration, server authority, schema,
+dependency, or new theme property was introduced, so the other routed contracts did not add
+constraints.
+
+Delegated decisions and reasons: (1) chose `1440` as the designed-wide member of
+`NARROW_WIDTH_TEST_SET`, above the two specified thresholds; (2) imported browser-test constants
+through the `@/` TypeScript path alias after `npm run typecheck` confirmed resolution; (3) made
+`MainApplicationSurface` take `MainSurfaceState` and expose it as `data-surface-state`, with the
+caller pinned to `idle`, giving the type a real seam consumer without adding future state behavior;
+(4) chose the skip link label `Skip to main content`, target `#main-content`, and a focus-only
+translated treatment; (5) chose a `div` for the valued separator because the platform has no
+focusable separator with a value; (6) omitted `title`, keeping the accessible name in `aria-label`;
+(7) declined the clamp-resistance cue because it was optional and the phase adds no motion or extra
+visual state; (8) used a feature-local template-literal class composition instead of adding a
+utility; (9) toggled `select-none` on the workspace root so drag suppression stays within the shell;
+(10) placed pure clamp tests and component/source tests in the jsdom partition and browser layout
+tests in `e2e/`, because jsdom cannot measure layout.
+
+Task 3's contract resolution was implemented as written: the separator is project-owned with
+`role="separator"`, vertical orientation, `tabIndex={0}`, accessible name, and valued ARIA
+attributes. Contract 05 §7's prohibition on click handlers on `div`s and contract 12's prohibition
+on reproducing native control semantics do not apply because this is not a native-control
+replacement: no platform element supplies a focusable valued separator, no library in this phase
+models a splitter, and the phase explicitly defers a resizable-pane library. Pointer events and
+guarded pointer capture preserve the specified pen/touch path without a jsdom-only shim.
+
+The judgement for §12A.23 bullet 5 is that the shell-level `MainApplicationSurface` abstraction is
+justified by decision 11's meaningful session-controlled surface boundary and has one real
+consumer; it is not a generic registry, factory, provider, or extension point, and it carries no
+speculative infrastructure. This is reviewer judgement, not a lexical test.
+
+Verification: the pre-edit baseline was unit 137/137, E2E 27/27, typecheck green, build green, and
+lint blocked by the pre-existing missing `test-results/` directory. The closing stamp was unit
+154/154, E2E 49/49, typecheck green, lint green after creating the required transient output
+directory, and build green. The pure-hook implementation derives the clamped width from the
+requested page-lifetime value and the observed container width rather than setting state in an
+effect; this preserves the contract and satisfies the repository's React lint rule.
+
+Documentation impact review completed under `14-documentation-principles.md` §8: the root README
+was patched for the now-live workspace route, current feature scope, relocated E2E spec, and the
+existing Proposales integration README; no feature README was added because the phase perimeter
+allows only the root README and the feature's current behavior is still a shell slice. No package,
+lockfile, architecture graph, architecture contract, theme file, Vitest/Playwright config, or
+future-implementations file changed.
