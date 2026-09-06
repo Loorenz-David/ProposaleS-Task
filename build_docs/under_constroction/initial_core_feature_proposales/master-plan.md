@@ -92,6 +92,20 @@ The initial blocker report at `handoffs/coordinator/astra-window-01-round-1.hand
 is consumed and its owner card resolved by the owner's “this has been resolved” message and
 the supplied header/prompt patch. That historical report is not rewritten.
 
+**Usage continuity (owner instruction, 2026-09-06):** the owner confirmed adding credits after
+the interrupted phase-08 projection and authorized continuation. The external-limit card in
+`handoffs/coordinator/astra-window-01-round-2.handoff.coordinator.md` is resolved by that
+confirmation; actual restored access is checked by resuming the interrupted sub-context.
+Periodically inspect available usage signals. The current tool catalog exposes goal token/time
+accounting but no remaining account-credit meter; elapsed time or token totals must not be
+represented as a remaining-credit estimate. At each phase/cycle checkpoint keep a concrete
+resume handoff (phase/round/state, live prompt and report paths, full write perimeter, evidence
+already taken, outstanding mutations/decisions and exact next action). If a usage warning or
+limit occurs, preserve progress and emit a handoff suitable for another model/session before
+stopping. Incomplete work is a WIP checkpoint, never `IMPLEMENTED` or `APPROVED`. The owner may
+continue in another model session; preserve role independence and reviewer capability when
+handing off. No automatic model substitution is inferred from this continuity instruction.
+
 ## 4. Progress tracker
 
 One row per phase. Agents update only their own row; findings go to the phase plan's Review log.
