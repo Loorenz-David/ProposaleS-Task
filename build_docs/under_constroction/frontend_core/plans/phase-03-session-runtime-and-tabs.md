@@ -174,16 +174,16 @@ the frozen rows iterate the `complementary` and `main` subtrees):
 | **C2** | Reorder is one move, total over its cases, and pointer and keyboard agree. **Runner split (contract 11 §3, projection L27): the list and active-session halves are asserted on the store's move function without rendering, in Vitest `node`; the focus and announcement halves in Vitest `jsdom`; nothing here runs in Playwright.** (a) A move from one index to a different index places the moved id at the target and preserves every other id's relative order. (b) The active session id is unchanged by a move, **including when the moved tab is the active one, on the pointer path as well as the keyboard path**. *Named mutation: remove the guard that preserves the active session id in the move function; (b) must redden.* The pointer path is named explicitly because the adopted foundation activates a tab on `mousedown` and a drag begins with one (projection F4) — task 4 owes the suppression. (c) A move to the same index is a no-op in three separately instrumented respects: **no state write** (the store's list reference is identical before and after), **no announcement** (the named live region gains no child), **no focus change** (`document.activeElement` is the same node). *Three named mutations, one per sub-check (charter rule 12): write the list back unconditionally; announce unconditionally; move focus to the moved tab unconditionally — each must redden its own sub-check and no other.* (d) A move that would land before the first or past the last index is a no-op by the same rule. (e) For the same source and target the pointer path and the keyboard path produce the identical list, **asserted by both paths calling the one move function with the same `(i, j)`**; the DOM drag handler is asserted separately to call it with the indices the drag implies. jsdom implements no `DragEvent` and no `DataTransfer` (projection F5), so a DOM-level drag is not the subject here. (f) The keyboard move keeps focus on the moved tab and announces its new position. (g) Reorder is reachable without a pointer. (h) A session created or closed during a drag leaves the remaining moves applying to the list as it then is, and no move targets a removed id — **asserted on the move function applied against a list that changed underneath it**, for the same reason as (e). | 8 | §12A.5 · F12 · F24 |
 | **C3** | Close is total over its four cases, with the stated newly-active session and focus destination. **Runner split as C2.** (a) Closing a non-active tab leaves the active session unchanged, and leaves focus unchanged unless focus was inside the removed tab, in which case focus lands on the tab now at the removed index, clamped to the last index. **The fixture for the focus clause exists because of owner decision 15** (2026-09-07): every tab carries a close control revealed on hover and on keyboard focus, so focus can rest inside a non-active tab. Under the previous shape it could not — the foundation activates on focus and only the active tab had a close control — and the clause had no producible subject. (b) Closing the active tab that is not at the last index activates the session now at the same index and focuses that tab. (c) Closing the active tab at the last index activates the session now at the last index and focuses that tab. (d) Closing the only remaining tab creates a fresh empty session and focuses that tab. (e) **The close action's intermediate list is non-empty at every step of the transition**, asserted on the transition rather than on rendered output. *Named mutation: split the action into two separate writes with the removal first; (e) must redden.* **Re-authored 2026-09-07 (projection F2):** the previous wording asserted that "no rendered frame contains an empty strip", which cannot fail — the close is one store transition, React batches it into one commit, and both orderings expose the same final list with no intermediate frame at all. (f) Focus never lands on the document body after any of (a)–(d). (g) A closed session's id is never reused by a later session. *Named mutation: replace the id generator with the tab's array index; (g) must redden* — create A, create B, close A, create C issues C the id `"1"`, colliding with B. This is the observation that distinguishes a forbidden generator from a permitted one, which is why it lands here and not on C1(b) (projection L2). (h) Planted-defect probe: on closing the active tab, activate the first index instead of the same index; row (b) must redden. (i) Every path that ends a session passes through **exactly one** named gate point, asserted by enumerating the call sites that remove a session from the ordered list and finding that set equal to the single permitted gate — an allowlist over an open universe of call sites, with a subject assertion. *Named mutation: add a second close path that removes a session without passing through the gate; (i) must redden.* | 9 | §12A.5 · F12 · F24 |
 | **C4** | The active tab is kept in view without a forbidden mechanism. **Split by runner 2026-09-07 (projection F3, master plan §10.3A): jsdom performs no layout — every geometry accessor returns a hard-coded zero and there is no `ResizeObserver` — so no part of this criterion's geometry can be observed in Vitest.** (a) **The reveal arithmetic is a pure function**, unit-tested in Vitest `node` over values: given the tab's offset and width, the region's `scrollLeft` and `clientWidth`, and `ACTIVE_TAB_REVEAL_MARGIN_PX`, it returns a `scrollLeft` that places the tab fully inside the visible region with at least the margin clear on both sides. Five input cases, one per operation that can move the tab — switch, reorder, close, creation, resize — each asserting the constant's contract, never its literal (charter rule 13). (b) **The end-to-end guarantee in Playwright**, against the running application with enough sessions to overflow the strip: after each of those five operations the active tab is fully inside the strip's visible region with the margin. (c) `scrollIntoView` appears nowhere in this feature's source. (d) The tab is not located by a document query or selector. (e) The window width is not read during render. Rows (c)–(e) are **allowlists over an open universe** (standing rule 17), each asserting its scan had a subject (standing rule 18). (f) Planted-defect probe for (c)–(e): introduce each forbidden mechanism in turn **as a construct no denylist would have contained**, observe the corresponding row redden, revert. Three named mutations. | 6 | §12A.5 · F12 |
-| **C5** | The strip meets its accessibility contract. **Runner: Vitest `jsdom` for roles, states and key handling; Playwright for (e), (f) and (g), which are browser-computed measurements.** Grounded against `@radix-ui/react-tabs@1.1.13` and `@radix-ui/react-roving-focus@1.1.11`, both read at source by the coordinator on 2026-09-07; a fresh install may resolve higher, and the first contradiction between these outcomes and the installed version is a stop-and-report, not a silent adaptation. (a) Tablist role and orientation, and an accessible name on the strip — **the name is owed by the composition, not the foundation**, which spreads props and supplies none. (b) Each tab exposes its selected state, and the roving tabindex places **exactly one** tab at `tabindex="0"` with every other at `-1`. (c) The key map, enumerated rather than sampled (charter rule 2): `ArrowRight` moves focus to the next tab and is a **no-op on the last tab** (the foundation's `loop` defaults to `false`); `ArrowLeft` moves to the previous and is a no-op on the first; `Home` and `PageUp` jump to the first; `End` and `PageDown` jump to the last; `ArrowUp` and `ArrowDown` move focus **nowhere** at horizontal orientation; and activation follows focus. (d) Close is reachable by keyboard on a focused tab — **on every tab, active or not** (owner decision 15) — and its control carries an accessible name naming the session. **The close control is a sibling of the tab trigger inside a wrapper, never a descendant of it**: the foundation renders the trigger as `<button type="button">`, and a `<button>` may not contain a `<button>` (projection L17). (e) Every tab and the close control carry a visible focus indicator. (f) The close control's hit area meets the size design 04 §5 requires (≥ 24px). (g) A tab's full title remains available when the visible label is elided. **`data-elided` goes on the inner title span, whose own accessible name is its own text — never on the tab**, whose accessible name carries status, note and unread and is deliberately not equal to its text. Phase 02's frozen `C4(<width>-4)` requires every `[data-elided]` element that overflows to have an accessible name equal to its `textContent`; phase 03 supplies that row's first real subject, and the tab is the one placement that would redden a row this phase may not edit (projection F7). Phase 02 set the same precedent at `agent-surface.tsx:10`. | 7 | F6 · §12A.5 · `05 §7` |
+| **C5** | The strip meets its accessibility contract. **Runner: Vitest `jsdom` for roles, states and key handling; Playwright for (e), (f) and (g), which are browser-computed measurements.** Grounded against the versions npm actually resolves, **`@radix-ui/react-tabs@1.1.21` and `@radix-ui/react-roving-focus@1.1.19`**, read at source by the coordinator on 2026-09-07 after round 1 stopped (Review log, "Round 1 stopped"). The phase accepts the currently resolving compatible release and **pins nothing** to recover a dependency default. (a) Tablist role and orientation, and an accessible name on the strip — **the name is owed by the composition, not the foundation**, which spreads props and supplies none. (b) Each tab exposes its selected state, and the roving tabindex places **exactly one** tab at `tabindex="0"` with every other at `-1`. (c) The key map, enumerated rather than sampled (charter rule 2): `ArrowRight` moves focus to the next tab and is a **no-op on the last tab**; `ArrowLeft` moves to the previous and is a **no-op on the first**; `Home` and `PageUp` jump to the first; `End` and `PageDown` jump to the last; `ArrowUp` and `ArrowDown` move focus **nowhere** at horizontal orientation; and activation follows focus. **Non-wrapping navigation is this application's own contract, configured explicitly, and is never inherited from a dependency default** — the foundation's `TabsList` accepts `loop` as public API (`interface TabsListProps { loop?: RovingFocusGroupProps["loop"] }`) and **defaults it to `true`**, so the strip sets it to `false` at that boundary deliberately. *Named mutation: remove the explicit non-wrapping configuration at the tablist boundary, leaving the dependency's default in force; the two no-op rows must redden.* A test that passes only because a default happens to agree with us is charter rule 15's family: it cannot fail when the default changes, which is the exact way this row was wrong before round 1 caught it. (d) Close is reachable by keyboard on a focused tab — **on every tab, active or not** (owner decision 15) — and its control carries an accessible name naming the session. **The close control is a sibling of the tab trigger inside a wrapper, never a descendant of it**: the foundation renders the trigger as `<button type="button">`, and a `<button>` may not contain a `<button>` (projection L17). (e) Every tab and the close control carry a visible focus indicator. (f) The close control's hit area meets the size design 04 §5 requires (≥ 24px). (g) A tab's full title remains available when the visible label is elided. **`data-elided` goes on the inner title span, whose own accessible name is its own text — never on the tab**, whose accessible name carries status, note and unread and is deliberately not equal to its text. Phase 02's frozen `C4(<width>-4)` requires every `[data-elided]` element that overflows to have an accessible name equal to its `textContent`; phase 03 supplies that row's first real subject, and the tab is the one placement that would redden a row this phase may not edit (projection F7). Phase 02 set the same precedent at `agent-surface.tsx:10`. | 7 | F6 · §12A.5 · `05 §7` |
 | **C6** | The shell's landmark identity holds across every session operation. **Runner: Vitest `jsdom`, with (c) also asserted in Playwright.** (a) Across a sequence containing at least one activation, one creation, one close and one reorder, the count of complementary regions is 1 and the count of `main` elements is 1 — **asserted after every operation in the sequence, and additionally by a render-recording probe that collects both counts on each commit**, so the claim is about the whole sequence and not only its endpoints. (b) Both are the **same elements** throughout rather than replacements — asserted by element identity across the sequence, not by count alone. (c) No URL, route, or history entry changes during the sequence. (d) **Structurally held in this phase** (projection L21): the Agent Surface's structure is not a function of the active session. §12A.23 words this over "the active session's result kind, status, or presented Main Application Surface state" — none of which exists here, where sessions differ only by identity and title, so the row has a degenerate subject. Named triggers: **phase 04** introduces derived status; **phase 14** introduces the second Main Application Surface state. Master plan §7.5. (e) Planted-defect probe: push a history entry on session activation, observe (c) redden, revert. (f) Second planted-defect probe: remount the Agent Surface when the active session changes, observe (b) redden, revert. | 6 (5 measurable, 1 held) | F30 · §12A.23 |
 | **C7** | Creating a session, and the control that does it. **Added 2026-09-07 by owner decision 16**, which puts the new-session control in this phase; the creation semantics it exercises were previously asserted by no row in this plan. **Runner: Vitest `node` for (a)–(c), `jsdom` for (d)–(e).** (a) Creating a session appends it at the **end** of the ordered list, leaving every existing id in its relative order (§12A.5, "Order"). *Named mutation: insert the new session at index 0; (a) must redden.* (b) The created session becomes the active session. (c) Its runtime record is a separate, empty record — no field is shared with, copied from, or serialised out of any other session's record (§12A.1, "Records are separate per session"). (d) The control carries an accessible name and is reachable by keyboard. (e) The control is a **sibling of the tablist, never a child of it**: a non-tab child inside a `tablist` is an accessibility defect and would join the roving-focus group, making it an arrow-key target (projection L24). Design 04 §2 places it outside the scroll region, pinned. | 5 | §12A.5 · F12 · F6 |
 
 **Derived totals for this phase** (re-derived at source after routing the projection ledger,
 2026-09-07; re-derive again at dispatch): **7 criteria, 46 rows** — C1 5 · C2 8 · C3 9 · C4 6 ·
 C5 7 · C6 6 · C7 5 — of which **42 are measurable in this phase** and 4 are structurally held
-with the triggers their cells name (C1(c), C1(d), C1(e), C6(d)). **15 runnable named mutations** —
-C1(b) 1 · C2(b) 1 · C2(c) 3 · C3(e) 1 · C3(g) 1 · C3(h) 1 · C3(i) 1 · C4(f) 3 · C6(e) 1 ·
-C6(f) 1 · C7(a) 1 — plus **1 held** (C1(e)), which converts with the rows it serves and is not
+with the triggers their cells name (C1(c), C1(d), C1(e), C6(d)). **16 runnable named mutations** —
+C1(b) 1 · C2(b) 1 · C2(c) 3 · C3(e) 1 · C3(g) 1 · C3(h) 1 · C3(i) 1 · C4(f) 3 · C5(c) 1 ·
+C6(e) 1 · C6(f) 1 · C7(a) 1 — plus **1 held** (C1(e)), which converts with the rows it serves and is not
 part of this phase's executable set.
 
 ## Explicit delegations — decisions granted to the implementer on purpose
@@ -324,8 +324,9 @@ stamp is citable and was not re-run.
 nowhere on this machine" and proposed either coordinator grounding or a delegated
 stop-and-report — while naming the exact version, `1.1.11`. The tarball is in `~/.npm/_cacache`
 and extracts by the identical method the session had just used for `react-tabs`. Grounded here
-instead, and folded into C5(b) and C5(c) as exact outcomes: `loop` defaults to **`false`**, so
-`ArrowRight` on the last tab is a **no-op** and does not wrap; `tabIndex: isCurrentTabStop ? 0 : -1`;
+instead, and folded into C5(b) and C5(c) as exact outcomes — **one of which was wrong and is
+corrected in the next entry**: `loop` defaults to `false`, so `ArrowRight` on the last tab is a
+no-op and does not wrap; `tabIndex: isCurrentTabStop ? 0 : -1`;
 and at horizontal orientation `ArrowUp`/`ArrowDown` move focus **nowhere**, while `PageUp` and
 `PageDown` alias `Home` and `End`. Two of seven C5 rows were about to ship as delegated guesses
 about a package that was readable all along.
@@ -369,3 +370,124 @@ otherwise: the grounded foundation facts are about `@radix-ui/react-tabs@1.1.13`
 `@radix-ui/react-roving-focus@1.1.11`, and task 3's install may resolve higher. The first
 contradiction between a stated outcome and the installed version is a stop-and-report, not a
 silent adaptation.
+
+### Round 1 stopped before production work — coordinator, 2026-09-07
+
+**Round 1 wrote no production code and deposited no handoff.** It ran its baseline, installed the
+dependency task 3 names, hit the stop condition §3A of its prompt required it to hit, reverted
+`package.json` and `package-lock.json` to their committed content, and reported to the owner in
+conversation. The tree is byte-identical to `b53b9b2` at the time of writing. This entry is the
+round's only artifact, and it is written by the coordinator because the round produced none.
+
+**Classification: not an implementer defect.** The stop condition was correct, the stop was
+correct, and the report was accurate about what it observed. The defect was in the pre-dispatch
+artifacts — mine.
+
+**What the contradiction actually was, which is not what the stop report inferred.** The report
+concluded that the installed release had changed the default: inspected `@radix-ui/react-tabs@1.1.13`
+and `@radix-ui/react-roving-focus@1.1.11` were recorded as non-wrapping, npm resolved `1.1.21` and
+`1.1.19`, and those wrap. The first half of that is a mis-grounding by the coordinator, not a
+version drift. Verified at source on 2026-09-07 from both cached tarballs:
+
+| Package | `loop` default | Where |
+|---|---|---|
+| `@radix-ui/react-roving-focus@1.1.11` and `@1.1.19` | `loop = false` | `RovingFocusGroup.Root` |
+| `@radix-ui/react-tabs@1.1.13` **and** `@1.1.21` | `loop = true` | `TabsList`, `const { __scopeTabs, loop = true, ...listProps } = props` |
+
+`TabsList` sits between the application and `RovingFocusGroup.Root` and **overrides the inner
+default before passing it down**, identically in both releases. The coordinator read the inner
+primitive's default and attributed it to the composite the application actually mounts.
+**`1.1.13` would have wrapped too**, so no pin could ever have delivered the behaviour the plan
+asserted, and "the installed version changed the default" is false in both directions. Recording
+this precisely matters: the wrong diagnosis would have sent the next round looking for a version
+to pin, which does not exist.
+
+**Owner decision applied (2026-09-07).** Keep the currently resolving compatible release; pin
+nothing. Non-wrapping session-tab navigation is **application behaviour, not a dependency-default
+contract**, and the phase configures it explicitly at the correct boundary. Verified against the
+installed API: `loop` is public, typed API on `TabsList`
+(`interface TabsListProps extends PrimitiveDivProps { loop?: RovingFocusGroupProps["loop"] }`), so
+the explicit mechanism is `loop={false}` on the tablist — not on the roving-focus group, which the
+composite does not expose. The other grounded facts were re-verified unchanged in `1.1.19`:
+`tabIndex: isCurrentTabStop ? 0 : -1`, the key map (`Home`/`PageUp` → first, `End`/`PageDown` →
+last), and horizontal orientation filtering `ArrowUp`/`ArrowDown` out. The keyboard semantics C5(c)
+specifies are therefore unchanged; only their **source of truth** moves, from a dependency default
+to an explicit configuration this phase owns.
+
+**Artifacts corrected.** C5(c) now states non-wrapping as this application's contract, names the
+explicit mechanism, and carries a **named mutation that reddens when the explicit configuration is
+removed** — the row previously could not fail, because it asserted behaviour a default supplied for
+free. Runnable named mutations 15 → 16. The C5 preamble now names the accepted versions. The
+projection-consumption entry above is corrected forward rather than rewritten, and the round-1
+prompt is superseded rather than edited: its §3A recorded what was believed at dispatch and stays
+truthful as history.
+
+**Planning lesson, folded to master plan standing rule 19.** Where product correctness depends on
+a third-party **configurable** default, the phase configures it explicitly and asserts the
+configuration; a criterion satisfied by a default it does not set cannot fail when the default
+moves. This is charter rule 15's family reached through a dependency rather than through a test
+instrument, which is why none of the existing rules caught it: the row had a probe planned, and the
+probe would have passed for the wrong reason.
+
+### Inherited baseline finding — one end-to-end failure, 2026-09-07
+
+**Independent of the Radix decision and routed separately.** Round 1 reported unit 154/154,
+typecheck, lint and build green, and end-to-end **65/66**. Reproduced by the coordinator on the
+received tree (authorization recorded before the run: the report reached the pipeline as
+conversation with no handoff and therefore no tree identity, which is the case the charter reserves
+full reproduction for).
+
+**Identity.** `e2e/workspace.spec.ts:92` —
+`phase 01 evidence relocated from bootstrap › C2(a): :focus-visible produces a visible indicator on
+an injected native control`. Failing assertion: `expect(page.locator("#__c2a-focus-probe")).toBeFocused()`
+at `:107`. The probe exists and resolves; it is simply not what has focus.
+
+**Intermittent, and the first measurement of it was wrong.** The coordinator's initial reading —
+"deterministic, 5 of 5" — was taken entirely within one dev-server state and is **corrected here**
+rather than carried. The full record: 6 observed failures (one full-suite run, one isolated pair,
+five consecutive isolated runs), then **9 consecutive passes** after the dev server was killed and
+restarted, with no repository change in between. Both measurements are real; the row is
+**intermittent**, not deterministic and not permanently green.
+
+**Cause, established by instrumenting the tab order rather than by inference.** After three `Tab`
+presses the focused element is `<nextjs-portal>` — the **Next.js dev-tools overlay**, which is a
+tab stop:
+
+```
+Tab 1: A "Skip to main content"      Tab 3: NEXTJS-PORTAL          (expected: the probe)
+Tab 2: DIV (the divider)             Tab 4: BUTTON#__c2a-focus-probe
+```
+
+**Classification: an intermittent, environment-dependent evidence defect — not a phase-02 product
+regression.**
+`playwright.config.ts` starts `npm run dev`, and the overlay exists only under `next dev` — it is
+absent from `next build` / `next start`, so no shipped tab order contains it. No product code
+changed: the tree is byte-identical to phase 02's approval commit `3796dc1`. Every phase-02
+*product* invariant on this axis is still green, including `C1(d)` (the skip link is the first tab
+stop) and all three `C4(<width>-3)` rows (skip link, then divider). The one failing row is the only
+one that counts **absolute** `Tab` presses to reach a probe appended at the end of `<body>`, which
+is what makes it sensitive to an element the product does not own.
+
+**Not blocking, and deliberately not worked around.** The assertion is sound and is **not**
+weakened, re-baselined or deleted to recover a green baseline. The suite is green as this is
+written (66/66), so standing rule 16 is satisfied and phase 03 may proceed; the round-2 prompt's
+gate check re-confirms it at session start rather than trusting this record, and applies the
+charter's flaky-capture rule if it is red — capture, re-run once, and stop-and-report if it
+persists, rather than inventing an exception.
+
+**The hazard is structural and outlives this round.** The suite runs against `next dev`, so a
+framework-injected focusable element sits inside the same tab order the phase-01 evidence counts
+through, and **phase 03 is the phase that re-baselines exactly those rows and adds a tab stop of
+its own**. A recurrence during round 2 is expected behaviour of this arrangement, not a new
+finding. The durable repair — removing the dev-only injection from the measured document, or
+measuring a production build — changes how the whole suite runs, sits outside this phase's declared
+perimeter, and is the owner's call. Registered as master plan §11.3 follow-up 18.
+
+**What the coordinator could not establish**, recorded rather than glossed: the trigger. No product
+code, dependency or lockfile entry changed (`next@16.3.4` installed matches the lockfile, and
+`node_modules/next` has not been written since 2026-09-05), and moving the persisted dev-tools
+preference file aside changed nothing. The failures clustered immediately after round 1 ran
+`npm run build`, which overwrites `.next/` that `next dev` then rebuilds; overlay mount timing
+against that transitional state is the leading hypothesis and is **unproven**. **The classification
+does not depend on it** — the extra tab stop belongs to the dev server under every hypothesis — but
+a repair chosen on the assumption that this is purely a race would be chosen on a guess.
