@@ -140,7 +140,7 @@ derived from the tables, never typed forward: re-derive before any count-bearing
 
 | # | Phase | Plan file | Criteria | State | Date | Actor | Note |
 |---|---|---|---|---|---|---|---|
-| 01 | Repository baseline, visual foundation, test collection | `plans/phase-01-baseline-and-visual-foundation.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | resolves C-4; projection waivable |
+| 01 | Repository baseline, visual foundation, test collection | `plans/phase-01-baseline-and-visual-foundation.md` | 6 | `NOT_STARTED` | 2026-09-06 | coordinator | projection **not waived** — C5's four absence rows and C1's purity check are §7.2 mandatory families, and this phase is the foundation sixteen phases style, test and document from; projection round 0 dispatched, row moves to `PROJECTED` when its ledger is routed |
 | 02 | Persistent shell: landmarks, divider, narrow width, containment | `plans/phase-02-workspace-shell.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | F30 absence half ships with its planted probe |
 | 03 | Session runtime and the tab strip | `plans/phase-03-session-runtime-and-tabs.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (ordering) |
 | 04 | Derived presentation: status, unread, the derivation register | `plans/phase-04-derived-presentation.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (derivations) |
@@ -478,8 +478,18 @@ A criterion's trace cell names **one** of:
 - an architecture contract section, written `15 §2` style — **admissible only for the
   criteria enumerated here**, because they serve a repository engineering constraint rather
   than a product measurement, and each names the defect it guards: phase 01 C1 and C3
-  (`15 §2`), phase 01 C4 (`11 §1`), phase 01 C5 (`15 §4`), phase 17 C4 (`14 §6`), phase 17
-  C5 (charter manifest property 5).
+  (`15 §2`), phase 01 C4 (`11 §1`), phase 01 C5 (`15 §4`), phase 01 C6 (`11 §3`), phase 17
+  C4 (`14 §6`), phase 17 C5 (charter manifest property 5).
+
+  **Phase 01 C6 was added to this enumeration on 2026-09-06** by the coordinator's
+  pre-dispatch plan lint. The plan shipped C6 tracing to `11 §3` while this list omitted it,
+  which made the row's trace cell inadmissible by this section's own rule. C6 was checked
+  against the measurement ledger and serves no F entry: "the end-to-end suite is honestly
+  green against the tree the phase leaves" is a repository engineering constraint of exactly
+  the class this bullet admits, and it names the defect it guards (a permanently red CI step
+  normalised into "expected", which is how a real end-to-end regression later goes
+  unnoticed). The enumeration was therefore corrected here rather than the criterion
+  re-rooted to a measurement it does not have.
 
 Any other criterion tracing only to an architecture contract is a criterion that has not
 found its measurement, and is cut or re-rooted before the plan ships.
@@ -701,6 +711,9 @@ This section absorbs the project README, which is now a one-screen pointer to th
 | Owner decision 11 (persistent shell + Main Application Surface) | ratified 2026-09-06; §16 round 6 |
 | Mechanism inventory round 2 | `PASSED` 2026-09-06; §12A.21–§12A.23, F28–F30; §16 round 7. Owner decision 12 ratified its sole recommendation; §16 round 8; exit gate fully passed |
 | Implementation planning round 1 | **this file plus 17 phase plans**, 2026-09-06 |
+| Pipeline documentation commit | `a9d9fc0`, 2026-09-06 — the plan set, the ratified intention amendments (inventory rounds 1–2, owner decisions 7–12; the owner confirmed on 2026-09-06 that this is the content the plan set was written against), the reduced README, and the `archive/pre_plan/` move. Committed before phase 01 was dispatched so the phase's checkpoint diff carries only its own work |
+| Coordinator handover round 1 | 2026-09-06 — the coordinator role moved from a Codex session to a Claude session. The charter's role split is unchanged: coordinator and reviewer are Claude-side, the implementer is Codex. §7.4 amended by the pre-dispatch plan lint (phase 01 C6) |
+| Phase 01 projection gate | **not waived**, 2026-09-06 — see the tracker note and §7.2 |
 | Backend phases merged from `main` | 1 (topology and environment), 2 (errors, logger, shared value shapes), 3 (Proposales adapter: transport, error translation, content read) — all `APPROVED`. Backend phases 4–15 `NOT_STARTED` |
 
 Every future `main` merge is recorded here with its date and the backend phases it brought.
