@@ -13,16 +13,20 @@ class ScriptExhaustedError extends Error {
 
 export function createScriptedAiClient(steps: readonly GenerateStepResult[]): AiClient & {
   calls: GenerateStepInput[];
+  stepOptions: Array<{ timeoutMs: number }>;
 } {
   const calls: GenerateStepInput[] = [];
+  const stepOptions: Array<{ timeoutMs: number }> = [];
   let index = 0;
 
   return {
     provider: "scripted",
     model: "scripted",
     calls,
-    async generateStep(input) {
+    stepOptions,
+    async generateStep(input, options) {
       calls.push(input);
+      stepOptions.push(options);
       const step = steps[index];
       index += 1;
       if (step === undefined) throw new ScriptExhaustedError();

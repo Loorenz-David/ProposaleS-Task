@@ -1,7 +1,7 @@
 ---
 plan: 9
 phase: Agent runtime — tool definition, run loop, budgets, read tools
-state: PROMPT_READY
+state: IMPLEMENTED
 date: 2026-09-07
 author: implementation-planner round 1
 ---
@@ -167,3 +167,23 @@ integration failure. C5 now traces to §17A.13 + M15. M6 keeps nine other server
 
 Phase state → `PROMPT_READY`. Implementer prompt:
 `prompts/implementer/phase-09-round-1.implementer.md`.
+
+### Implementer round 1 — 2026-09-07 (Codex)
+
+State **IMPLEMENTED**. Built the provider-neutral tool definition/runtime boundary, bounded
+run loop, read-only preparation tools, shared content detail schema, scanner proof, and scripted
+timeout recording seam. The loop uses a `while` control flow; `invoke` is `async` and awaits the
+possibly asynchronous `execute`. Retry wording is: `The structured output was invalid. Correct
+these issue paths and return a valid structured output: <JSON issue paths>`. Zod issue paths are
+flattened with `issue.path.map(String)`, matching the existing repository spelling. `run` passes
+`outputJsonSchema` on every model call using `z.toJSONSchema(outputSchema, { io: "input" })`; tool
+descriptors use the same `{ io: "input" }` option. No plan defect or semantic conflict was found.
+
+The phase tests cover all 34 rows; focused phase evidence is 4 files / 35 tests green. All 13
+named mutations were run one at a time, each reddened its named row, and every probe was reverted;
+the complete evidence record is in the implementer handoff.
+
+Documentation impact review under contract 14 §8 found no current-state README made false: the
+feature README does not yet exist, and the implementation plan/master registry remain the
+authoritative project documents. The generated `tsconfig.tsbuildinfo` rewrite from typecheck is
+attributed in the handoff and is not part of the intended production perimeter.

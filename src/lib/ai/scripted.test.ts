@@ -21,6 +21,7 @@ describe("scripted AI clients", () => {
     await expect(client.generateStep(input, { timeoutMs: 1 })).resolves.toBe(second);
     await expect(client.generateStep(input, { timeoutMs: 1 })).rejects.toMatchObject({ reason: "script_exhausted" });
     expect(client.calls).toHaveLength(3);
+    expect(client.stepOptions).toEqual([{ timeoutMs: 1 }, { timeoutMs: 1 }, { timeoutMs: 1 }]);
     expect([first, second]).toEqual(original);
   });
 

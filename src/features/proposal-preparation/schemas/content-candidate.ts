@@ -16,6 +16,15 @@ export const contentCandidateSchema = z.strictObject({
 export type MatchStrength = z.infer<typeof matchStrengthSchema>;
 export type ContentCandidate = z.infer<typeof contentCandidateSchema>;
 
+export const contentDetailSchema = z.strictObject({
+  variationId: z.string().min(1),
+  productId: z.string().min(1),
+  title: z.string().trim().min(1),
+  description: z.string().trim(),
+  truncated: z.boolean(),
+});
+export type ContentDetail = z.infer<typeof contentDetailSchema>;
+
 export const MAX_SEARCH_QUERY_CHARS = 200;
 export const searchContentInputSchema = z.strictObject({
   query: z.string().trim().min(1).max(MAX_SEARCH_QUERY_CHARS),
