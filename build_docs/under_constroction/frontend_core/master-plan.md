@@ -104,6 +104,20 @@ this substitution is in force states its scope fences and its named mutations
 "plant a probe for each guard". This costs the coordinator prompt length and buys back the
 determinacy the plan lint and the projection are there to establish.
 
+**The coordinator orchestrates; the owner runs the sessions (owner instruction, 2026-09-06,
+standing until withdrawn).** The coordinator authors prompts, lints plans before dispatch,
+consumes handoffs adversarially, routes findings to the artifact that owns them, keeps the
+tracker and the gate log honest, relays owner cards, and commits pipeline documentation. **It
+does not start implementer, reviewer or projection sessions itself** — it prepares the prompt,
+records the row as ready, and reports. The owner opens each session.
+
+Why this is recorded rather than remembered: a session prompt in this pipeline is written to be
+self-contained precisely so that whoever opens it gets the same session. Who *opens* it is the
+owner's call, and a coordinator that quietly starts one has taken a decision about scope, cost
+and timing that was never delegated. *(Earned the same day: a coordinator read one "move to the
+next stage" as standing authorization and started an implementer session that would have written
+and committed code. It was stopped before it wrote anything.)*
+
 **Positional state.** A row's state is its folder, never a column. Live prompts sit in
 `prompts/<role>/`; unconsumed reports sit in `handoffs/<role>/`; closed rows move to
 `archive/plan_<n>/` at the coordinator's closeout ritual. A state transition is a file

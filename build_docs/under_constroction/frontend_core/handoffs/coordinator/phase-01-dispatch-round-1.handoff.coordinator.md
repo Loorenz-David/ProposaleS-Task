@@ -162,9 +162,11 @@ architecture graph exists here.
 
 ## 7. Next action
 
-**Dispatch `prompts/implementer/phase-01-round-1.prompt.implementer.md`** to a **Claude Sonnet 5**
-session (master plan §3 substitution). Its gate check was self-tested against the tree it will
-open; all six rows pass and none names a SHA, a clean tree, or a file count.
+**The prompt `prompts/implementer/phase-01-round-1.prompt.implementer.md` is ready for a
+**Claude Sonnet 5** session (master plan §3 substitution). **The owner opens it** — per the
+standing instruction of 2026-09-06 recorded in master plan §3, the coordinator prepares prompts
+and does not start sessions. Its gate check was self-tested against the tree it will open; all
+six rows pass and none names a SHA, a clean tree, or a file count.
 
 **When its handoff lands**, consume it adversarially and check specifically:
 
