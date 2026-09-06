@@ -258,7 +258,7 @@ derived from the tables, never typed forward: re-derive before any count-bearing
 |---|---|---|---|---|---|---|---|
 | 01 | Repository baseline, visual foundation, test collection | `plans/phase-01-baseline-and-visual-foundation.md` | 8 | `APPROVED` | 2026-09-06 | coordinator | fix round 2 verified and approved **without a re-review round, by owner decision**. 31/31 rows, 15/15 named mutations plus 3 unnamed probes red and reverted; closing stamp `npm test` 137/137, `npm run test:e2e` 27/27, typecheck/lint/build clean. Approval basis and its limits recorded in §11.1 and the plan's Review log |
 | 02 | Persistent shell: landmarks, divider, narrow width, containment | `plans/phase-02-workspace-shell.md` | 6 | `APPROVED` | 2026-09-07 | coordinator | approved **without a re-review session, on the owner's explicit decision**. Fix round 2: 60/60 rows mapped, 17/17 named mutations executed and reverted (16 reds, C4(g) honestly unmeasured); unit 154/154, E2E 66/66, typecheck/lint/build green, re-verified by the coordinator on the handed-over tree. Six independent coordinator mutations, none of a shape the fix round used: five reddened, one passed and is §11.3 follow-up 16 |
-| 03 | Session runtime and the tab strip | `plans/phase-03-session-runtime-and-tabs.md` | 6 | `NOT_STARTED` | 2026-09-07 | coordinator | projection required (§7.2, ordering and identity). Pre-dispatch lint run 2026-09-07: six folds, recorded in the plan's Review log — rows 39 → 40, runnable named mutations 7 → 8, three C1 rows structurally held (§7.5), `ACTIVE_TAB_REVEAL_MARGIN_PX` added to §6.4, follow-up 16 routed into the plan. `prompts/reviewer/phase-03-projection-round-0.prompt.reviewer.md` is live and awaiting the owner's session |
+| 03 | Session runtime and the tab strip | `plans/phase-03-session-runtime-and-tabs.md` | 7 | `PROMPT_READY` | 2026-09-07 | coordinator | projection round 0 `AMENDMENTS_REQUIRED`: 27 ledger rows (20 plan gaps, 1 master-plan gap, 6 delegations), 2 owner cards, zero L4 spent. All 27 routed the same day, none dismissed, plus 2 coordinator additions; owner decisions 15 and 16 answered and folded upstream. Criteria 6 → 7 (C7, creation), rows 40 → 46, runnable named mutations 8 → 15, held rows 3 → 4. One projection claim disproved: `@radix-ui/react-roving-focus@1.1.11` **is** in the npm cache, so C5(b)/C5(c) were grounded at source here rather than delegated. `prompts/implementer/phase-03-round-1.prompt.implementer.md` is live and awaiting the owner's session |
 | 04 | Derived presentation: status, unread, the derivation register | `plans/phase-04-derived-presentation.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (derivations) |
 | 05 | Turn dispatch, origin attribution, close/discard guard | `plans/phase-05-turn-dispatch-and-close-guard.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (attribution, destructive guard) |
 | 06 | Agent surface: thread, autoscroll, composer, empty state | `plans/phase-06-agent-surface.md` | 7 | `NOT_STARTED` | 2026-09-06 | planner | projection waivable |
@@ -620,7 +620,7 @@ cells; this is the project-level check in the other direction.
 | F5 | 12, 13, 17 |
 | F6 | 01, 02, 03, 04, 06, 07, 08, 09, 10, 11 |
 | F7 | 15, 16 |
-| F8 | 03, 16 |
+| F8 | 03 (**held** — see §7.5), 16; phase 05's pre-dispatch lint adds `05` when it converts the held rows |
 | F9 | 05 |
 | F10 | 04, 05 |
 | F11 | 04 |
@@ -708,6 +708,7 @@ description was corrected; no criterion row was touched.
 | Held clause | Phase | Named trigger that converts it into a real assertion |
 |---|---|---|
 | F8's fixture-era half — "no client-generated identifier appears in any value the workspace hands to a dispatch boundary" (03 C1(c)), the generation-id round trip (03 C1(d)), and the probe that proves them (03 C1(e)) | 03 C1 | **phase 05 creates the fixture-era dispatch surface** (its task 1 and `client/fixtures/turns.temporary-fixture.ts`). At that trigger, phase 05's pre-dispatch lint converts the three rows into phase-05 criteria and adds `05` to §7.3's F8 row; the real-submission half stays held for phase 16 C5, its own row below. Added by the phase-03 pre-dispatch lint, 2026-09-07: phase 03's perimeter contains no dispatch boundary, so all three rows were subjectless where they stood |
+| F30's "the Agent Surface's structure is not a function of the active session" (03 C6(d)) | 03 C6 | **phase 04 introduces derived tab status** and **phase 14 introduces the second Main Application Surface state**. §12A.23 words the invariant over "the active session's result kind, status, or presented Main Application Surface state" — none of which exists in phase 03, where sessions differ only by identity and title, so the row has a degenerate subject. Added by the phase-03 projection (L21), routed 2026-09-07 |
 | F15's seam-replacement half — presentation components byte-identical, existing tests unedited | 15 C7 | the first backend schema phase this project consumes is `APPROVED` and merged (phase 17) |
 | F8's "no client-generated identifier appears in any submitted payload", over a real submission | 03 C1 | the browser-to-server boundary exists (phase 16 C5) |
 | the `diff` pill kind and its payload | 07 C3 | a backend result carries a server-supplied difference record (§14.1 item 3) |
@@ -949,7 +950,7 @@ absence rows, the collection assertion) read files from disk and need no DOM, so
 The offline `fetch` guard is installed in both projects today (`test/setup/node.ts` and
 `vitest.setup.ts`) and stays installed: no test in this project may reach the network.
 
-### 10.3A Measurements that no Vitest project can take (added 2026-09-06)
+### 10.3A Measurements that no Vitest project can take (added 2026-09-06; extended 2026-09-07)
 
 The phase-01 projection established, at source, that **neither configured Vitest project can
 measure a rendered document's computed style** in this repository, and the finding is
@@ -972,6 +973,20 @@ parameterised test** (added 2026-09-06, phase-02 review B4). `playwright.config.
 title says — the loop variable reaches only the title. Phase 02 shipped six of fifteen
 narrow-width rows that way, three identical measurements at a width that is not in the named set,
 and had no evidence at all at its own V1 floor until the review found it.
+
+**Layout geometry is the same class, and it is not computed style** (added 2026-09-07, phase-03
+projection F3). jsdom performs no layout at all, and every geometry accessor returns a hard-coded
+zero rather than failing: `getBoundingClientRect()` returns literal zeros and `getClientRects()`
+returns `[]` (`node_modules/jsdom/lib/jsdom/living/nodes/Element-impl.js:328` and `:340`),
+`scrollWidth` and `clientWidth` `return 0` (`:344`, `:361`), `offsetWidth` returns `0`
+(`HTMLElement-impl.js:196`), and there is **no `ResizeObserver`** in `interfaces.js`. This is
+worse than an unmeasurable value, because zeros satisfy many predicates silently: "is this
+element inside that region", "does this text overflow its box", "is this hit area at least N
+pixels" are all trivially true or trivially false at zero, and the test goes green having
+observed nothing. **Any criterion whose predicate contains a position, a size, an overflow
+comparison, or an observed resize is a Playwright row.** The decidable Vitest half of such a
+criterion is the **pure arithmetic** underneath it — a function from measurements to a result,
+tested over values, never over a rendered document.
 
 **Consequence, binding on every phase.** A criterion that asserts *what the browser computes* —
 a resolved custom property, a focus indicator, a media-query-conditional treatment, a real
@@ -1050,6 +1065,9 @@ This section absorbs the project README, which is now a one-screen pointer to th
 | Owner decision 14 (narrow-width floor) | 2026-09-06 — **780px**, the projection's recommendation, confirmed by the owner. Folded upstream into intention §12A.19 and §15 (never patched downstream), then into §6.4 and phase 02's C4. Its declared limit — below-floor non-corruption is unmeasured in V1 — is §11.3 follow-up 13 |
 | Phase 03 pre-dispatch plan lint | 2026-09-07, coordinator — the five manifest properties and the three collision checks, at source, against gate commit `3796dc1`. Six folds, each recorded with its reason in the plan's Review log: the phase-02 tab-order collision and the file perimeter that hid it; three C1 rows held for want of a dispatch surface; task 2's unachievable type claim narrowed; task 5's unrowed acceptance claim added as C3(i); C4(a)'s missing exact outcome given a §6.4 constant; and §11.3 follow-up 16, which names this phase, folded into task 8 |
 | Phase 03 projection gate | **not waived**, 2026-09-07 — mandatory by §7.2 (ordering rules and identity separation); see the tracker note |
+| Owner decision 15 (closing a background session) | 2026-09-07 — **yes**, a session can be closed without being activated first; the close affordance reaches every tab on hover and on keyboard focus. The projection's card-1 recommendation, confirmed by the owner: *"yes user should be able to close none active tabs ( tabs the user is not in at )"*. Folded upstream into intention §12A.5 and §15 (never patched downstream), then into phase 03's C3 and C5, with design 04 §3.2 and its open question 2 recorded as superseded in §11.2 |
+| Owner decision 16 (the new-session control ships in phase 03) | 2026-09-07 — **yes**: *"yes we should have the add new session"*. Planning-level scope, so it is recorded here and in the phase plan rather than in the intention (the decision-13 precedent). Without it the strip has one tab and nothing this phase builds — switching, reordering, closing, keeping the active tab in view — can be reached by a user or by a browser check at all. Design 04 §2 and §3.5 already specify the control; this decides only which phase builds it |
+| Phase 03 projection round 0 | `AMENDMENTS_REQUIRED`, 2026-09-07 — 27 ledger rows (20 plan gaps, 1 master-plan gap, 6 proposed delegations), 2 owner cards, **zero L4 evidence spent** as budgeted. Consumed by the coordinator the same day: write perimeter verified against the tree (one file; the tarball extraction was outside the worktree), ledger arithmetic re-derived and exact, and the load-bearing claims re-verified independently at source — the foundation's `onMouseDown` activation and unconditional `aria-controls`, `TabsContent`'s `children: present && children`, jsdom's absent `DataTransfer`/`DragEvent`, and the frozen elision row's accessible-name equality. **One claim disproved by variation:** F6/L16 reported `@radix-ui/react-roving-focus` "present nowhere on this machine" while naming its version; the tarball is in `~/.npm/_cacache` and extracts by the identical method the session used for `react-tabs`. Grounded here instead: `loop = false` (no wrap at the ends), `tabIndex: isCurrentTabStop ? 0 : -1`, and a key map in which `ArrowUp`/`ArrowDown` are **ignored** at horizontal orientation while `PageUp`/`PageDown` alias `Home`/`End`. All 27 rows routed, none dismissed, plus 2 coordinator additions |
 | Backend phases merged from `main` | 1 (topology and environment), 2 (errors, logger, shared value shapes), 3 (Proposales adapter: transport, error translation, content read) — all `APPROVED`. Backend phases 4–15 `NOT_STARTED` |
 
 Every future `main` merge is recorded here with its date and the backend phases it brought.
@@ -1076,6 +1094,10 @@ specification behaviour where it does not conflict with §13, leaves a marker, a
 | 12 | **The type ramp is `px`-locked** for 15 of its 19 steps — design 01's own values, correctly carried under §6.5A. Browser font-size scaling does not reach those steps. Design 01 §5 names no correction, so nothing was deviated from; the accessibility consequence is recorded rather than silently inherited | phase-01 review round 1 N3 |
 | 13 | **Design 01 §5 correction 1 inverts one pair of ink names.** Lightening `#6b6d73 → #84868c` while leaving `#7c7e84` alone makes `--color-fg-quietest` *lighter* than `--color-fg-quiet`. The specification is internally inconsistent on that pair; phase 01 carried it faithfully. Whichever way the phase-01 fix round resolves the naming, the design inconsistency is the design owner's | phase-01 review round 1 S5 |
 | 14 | **Three design 02 deviations in the shell, undeclared by the round that made them.** No grip bar (§4 specifies a centred 2px × 26px bar with a 2px radius; the shipped element is the 6px seam); no hover treatment, although §6 lists Hover as a divider state (only the resizing state is implemented); and `overflow-x-hidden` added to the main pane, which §4 does not specify and which clips a real overflow invisibly. The hit area **is** correct at 12px, and the omitted `title` attribute was a declared delegation. Recorded here rather than fixed: none is a criterion, and design deltas are recorded, never implemented as design decisions (standing rule 7) | phase-02 review round 1 N3 |
+
+| design 04 §3.2 and open question 2 — the close control on the **active tab only** | **superseded by owner decision 15** (2026-09-07): every tab carries a close control, revealed on hover and, equivalently, on keyboard focus. Reported, not edited: the specification still reads as written. The decision resolves the specification's own open question 2 |
+| design 04 §5 — "the agent pane below is the corresponding tabpanel (`role="tabpanel"`, `aria-labelledby` the active tab)" | **not implemented as written** (2026-09-07, phase-03 projection F8). Intention §12A.23 requires the Agent Surface to remain exactly one `complementary` landmark, the same element for the page's lifetime; one element carries one role, so it cannot be both. Standing rule 6 and contract guide §6 resolve a specification-versus-contract conflict in the contract's favour. The tabs relationship is carried without making the landmark the panel |
+| design 04 §4.1 — "the close button stops propagation", written against a `div` with `onClick` | **restated for the adopted foundation** (2026-09-07): the foundation activates a tab on `mousedown`, so propagation must be stopped on `mousedown`, not only on `click`. Same intent, different event |
 
 ### 11.3 Follow-up register
 

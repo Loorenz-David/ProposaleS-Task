@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **State** | `NOT_STARTED` |
-| **Criteria** | 6 |
+| **State** | `PROMPT_READY` |
+| **Criteria** | 7 |
 | **Projection** | **required** — ordering rules, focus destinations, identity separation |
 | **Serves** | F12 · F8 · F30 · F24 · F6 |
 
@@ -13,6 +13,8 @@ Introduce the page-lifetime session runtime and the tab strip that presents it: 
 identity, the ordered list, creating, activating, reordering, closing with its focus
 destinations, and keeping the active tab in view — with the shell's landmark identity holding
 across every one of those operations.
+
+**In this phase by owner decision 16** (2026-09-07): the **new-session control**. Without it the strip has one tab and nothing this phase builds — switching, reordering, closing, keeping the active tab in view — is reachable by a user or by a browser-level check. Design 04 §2 and §3.5 specify the control; the decision fixes only which phase builds it. Its rows are C7.
 
 **Not in this phase:** tab status, the unread counter, attention, the derivation register
 (phase 04); turn dispatch and the close/discard confirmation guard (phase 05); anything the
@@ -50,6 +52,7 @@ package.json / package-lock.json                                         edited 
 README.md                                                                edited — tech-stack rows (follow-up 6)
 src/features/proposal-preparation/components/workspace/workspace.test.tsx edited — see below
 e2e/workspace.spec.ts                                                    edited — see below
+e2e/session-tabs.spec.ts                                                 new — this phase's browser evidence
 ```
 
 **The two phase-02 test files are in the perimeter, and what may change in them is closed**
@@ -65,6 +68,25 @@ counts and node identity, the containment perimeter (`C5(a)`–`C5(d)` in
 narrow-width row. Weakening a frozen phase-02 assertion to make this phase's code pass is a
 blocking defect, not a re-baseline; if one of them is genuinely wrong, it is reported and
 routed, never edited. The one deliberate repair is task 8.
+
+**The freeze binds existing assertions; it does not forbid additions** (projection L11). This
+phase's own browser evidence — C4(b), C5(e), C5(f), C5(g) and C6(c)'s Playwright half — lands in
+a **new** spec, `e2e/session-tabs.spec.ts`. Nothing in this phase adds assertions to
+`e2e/workspace.spec.ts`; the only edits there are the five re-baselined instances.
+
+**Two frozen phase-02 rows constrain this phase's markup, and both apply because the strip lives
+inside the `complementary` landmark** (design 03 §2 places Session Tabs inside the Agent Surface;
+the frozen rows iterate the `complementary` and `main` subtrees):
+
+- `C4(<width>-2)` exempts horizontal overflow **only** for an element carrying the literal class
+  `overflow-x-auto` or `overflow-x-scroll`, an inline `style.overflowX` of `auto`/`scroll`, or the
+  attribute `data-horizontal-scroll`. Whichever element in the strip ends up with
+  `scrollWidth > clientWidth` must itself carry one of those four exact spellings — not merely an
+  ancestor of it (projection L26, extended by the coordinator).
+- the **second half of that same row has no exemption at all**: every `div` inside either pane
+  must have a `getBoundingClientRect().width` no greater than the pane's `clientWidth`. A
+  scrolling track wider than its pane would break it, and no attribute rescues it. Keep the
+  overflow inside a box that is itself pane-width (coordinator addition, 2026-09-07).
 
 ## Ordered tasks
 
@@ -85,8 +107,25 @@ routed, never edited. The one deliberate repair is task 8.
    following focus. Record the package and its resolved version in the Review log, with the
    widget that justified it (contract 15 §5). Compose reorder, close and title behaviour on top;
    if the primitive distorts any of them, use native elements for that part and record why.
+   **The tabpanel question is resolved here, not at the keyboard** (projection F8): design 04 §5
+   asks for the Agent Surface itself to be the `role="tabpanel"`, and intention §12A.23 requires
+   it to remain exactly one `complementary` landmark, the same element for the page's lifetime.
+   One element carries one role, so it cannot be both; standing rule 6 and the contract guide's §6
+   conflict protocol resolve this in the mechanism contract's favour, and the design delta is
+   recorded in master plan §11.2. **The landmark is never the panel and never unmounts.** Two
+   grounded facts constrain whatever shape carries the tabs relationship: the foundation's
+   `TabsContent` renders `children: present && children`, so a panel per session unmounts the
+   outgoing session's subtree and hands back a different element — which is precisely what C6(b)
+   forbids and what C6(f)'s probe plants; and every trigger emits `aria-controls` **unconditionally**,
+   so building no panel at all leaves a dangling ARIA reference on every tab. Resolve both; how is
+   the implementer's, and the choice is recorded in the Review log.
 4. **Implement reorder** as one move, total over §12A.5's four cases, with pointer and keyboard
-   producing the same list for the same source and target. The keyboard move-by-one keeps focus
+   producing the same list for the same source and target. **Drag initiation must suppress the
+   foundation's activation** (projection F4): `TabsTrigger` calls `onValueChange` from
+   `onMouseDown`, and a pointer drag begins with a `mousedown`, so beginning a drag on a
+   non-active tab would activate it and break C2(b) on the pointer path. Design 04 §4.1's "the
+   close button stops propagation" is written against a `div` with an `onClick` and must likewise
+   be applied at `mousedown` for this foundation. The keyboard move-by-one keeps focus
    on the moved tab and announces its new position. Live reorder during a drag commits each
    move; an abandoned drag keeps the last committed order (design 04 §4.2 — the alternative is a
    reported delta, not a decision this phase takes).
@@ -108,6 +147,12 @@ routed, never edited. The one deliberate repair is task 8.
    instrument asserts that its scan had a subject (standing rule 18), and each ships with the
    C4(e) probe that plants a construct **no denylist would have contained**.
 7. **A closed session's id is never reused.**
+7A. **Build the new-session control** (owner decision 16). It creates a session, appends it at the
+   end of the ordered list, and makes it active (§12A.5, "Order"). It is a **sibling of the
+   tablist, never a child** — a non-tab child of a `tablist` is an accessibility defect and would
+   join the roving-focus group as an arrow-key target — and it sits outside the scroll region,
+   pinned, per design 04 §2. It carries an accessible name and is keyboard reachable. Its rows
+   are C7.
 8. **Inherited repair, and the phase-02 re-baseline.** Repair master plan §11.3 **follow-up
    16**, which names this phase: `workspace.test.tsx` C5(a) forbids "assignment to
    `window.location` or `location.hash`" while its regex
@@ -125,19 +170,45 @@ routed, never edited. The one deliberate repair is task 8.
 
 | # | Criterion | Rows | Trace |
 |---|---|---|---|
-| **C1** | The two identifiers stay totally separate. (a) The page-lifetime session id is generated once per session at creation and is stable for that session's lifetime. (b) It is never derived from the tab's index, a thread position, or a module-level counter — asserted by creating, reordering and closing sessions and observing every surviving id unchanged. *Named mutation: at the id's definition site, replace the generator with the tab's array index; (b) must redden.* (c) **Structurally held in this phase** (pre-dispatch lint, 2026-09-07): it never appears in any value the workspace hands to a dispatch boundary. This phase's perimeter contains no dispatch boundary and no fixture-era dispatch surface — phase 05 task 1 creates both, with `client/fixtures/turns.temporary-fixture.ts` — so the row has no subject here and an implementer asked to assert it would have to build one, which is phase 05's work. Named triggers, in order: phase 05's dispatch surface, then the browser-to-server boundary for a real submission (phase 16 C5). Master plan §7.5. (d) **Held with (c), same trigger**: the Generation ID is never generated, reformatted, parsed or defaulted by the client, and a workflow state the client holds is returned unchanged, asserted by structural equality with what was handed in. No server-returned workflow state exists until a turn has run (§12A.1), and no turn runs before phase 05. (e) **Held with (c) and (d)** — the planted-defect probe places the page-lifetime session id in the generation-id position of a dispatched value and observes (c) redden, asserting **equality with the server-returned value**, not that the submitted value is a well-formed UUID. A probe with no instrument to prove is not a probe; it converts with the rows it serves. | 5 (2 measurable, 3 held) | F8 · §12A.1 |
-| **C2** | Reorder is one move, total over its cases, and pointer and keyboard agree. (a) A move from one index to a different index places the moved id at the target and preserves every other id's relative order. (b) The active session id is unchanged by a move, **including when the moved tab is the active one**. (c) A move to the same index is a no-op: no state write, no announcement, no focus change. (d) A move that would land before the first or past the last index is a no-op by the same rule. (e) For the same source and target, the pointer path and the keyboard path produce the identical list. (f) The keyboard move keeps focus on the moved tab and announces its new position. (g) Reorder is reachable without a pointer. (h) A session created or closed during a drag leaves the remaining moves applying to the list as it then is, and no move targets a removed id. | 8 | F12 · F24 · §12A.5 |
-| **C3** | Close is total over its four cases, with the stated newly-active session and focus destination. (a) Closing a non-active tab leaves the active session unchanged, and leaves focus unchanged unless focus was inside the removed tab, in which case focus lands on the tab now at the removed index, clamped to the last index. (b) Closing the active tab that is not at the last index activates the session now at the same index and focuses that tab. (c) Closing the active tab at the last index activates the session now at the last index and focuses that tab. (d) Closing the only remaining tab creates a fresh empty session and focuses that tab. (e) In (d) the replacement is created **before** the removal, asserted by observing that no rendered frame contains an empty strip. (f) Focus never lands on the document body after any of (a)–(d). (g) A closed session's id is never reused by a later session. (h) Planted-defect probe: on closing the active tab, activate the first index instead of the same index; row (b) must redden. (i) Every path that ends a session passes through **exactly one** named gate point, asserted by enumerating the call sites that remove a session from the ordered list and finding that set equal to the single permitted gate — an allowlist over an open universe of call sites, with a subject assertion that the enumeration found the gate at all. *Named mutation: add a second close path that removes a session without passing through the gate; (i) must redden.* This is what phase 05 inserts its guard into, and the row exists so that "phase 05 inserts one gate rather than rewriting four rows" is a fact rather than an intention. | 9 | F12 · F24 · §12A.5 |
-| **C4** | The active tab is kept in view without a forbidden mechanism. (a) After a switch, a reorder, a close, a creation, and a strip resize — five rows — the active tab is fully inside the strip's visible region with **at least `ACTIVE_TAB_REVEAL_MARGIN_PX` clear on both sides**, asserted as the named constant's contract and never as its literal (charter rule 13, master plan §6.4). The constant's value is this phase's to choose; design 04 §4.4 asks only for "a small margin". (b) `scrollIntoView` appears nowhere in this feature's source. (c) The tab is not located by a document query or selector. (d) The window width is not read during render. (e) Planted-defect probe for (b)–(d): introduce each forbidden mechanism in turn, observe the corresponding row redden, revert. | 5 | F12 · §12A.5 |
-| **C5** | The strip meets its accessibility contract. (a) Tablist role, orientation and accessible name on the strip. (b) Each tab exposes its selected state, with a roving tabindex placing exactly one tab in the tab order. (c) Arrow keys move focus, `Home` and `End` jump, and activation follows focus. (d) Close is reachable by keyboard on a focused tab and its control carries an accessible name naming the session. (e) Every tab and the close control carry a visible focus indicator. (f) The close control's hit area meets the size design 04 §5 requires. (g) A tab's full title remains in its accessible name when the visible label is elided. | 7 | F6 · §12A.5 · `05 §7` |
-| **C6** | The shell's landmark identity holds across every session operation. (a) Across a sequence containing at least one activation, one creation, one close and one reorder, the count of complementary regions is 1 and the count of `main` elements is 1 at every rendered frame. (b) Both are the **same elements** throughout rather than replacements — asserted by element identity across the sequence, not by count alone. (c) No URL, route, or history entry changes during the sequence. (d) The Agent Surface's structure is not a function of the active session. (e) Planted-defect probe: push a history entry on session activation, observe (c) redden, revert. (f) Second planted-defect probe: remount the Agent Surface when the active session changes, observe (b) redden, revert. | 6 | F30 · §12A.23 |
+| **C1** | The two identifiers stay totally separate. **Runner: Vitest `node` (store + source scan).** (a) The page-lifetime session id is generated once per session at creation and is stable for that session's lifetime, observed across creating, reordering and closing sessions. (b) **The id's construction site passes a source-level allowlist**: the module that mints an id calls exactly one permitted generator, and the site contains no module-level mutable counter, no read of the tab's array index, and no thread position. An allowlist over an open universe of ways to derive a value (standing rule 17), asserting that its scan had a subject (standing rule 18). *Named mutation: introduce a module-level counter as the id source at the construction site; (b) must redden.* **Re-authored 2026-09-07 (projection F1):** the previous wording asserted only that ids survive unchanged, which every generator §12A.1 forbids also satisfies — a counter, an index and a thread position are each assigned once and stored, so stability distinguishes nothing. (c) **Structurally held in this phase** (pre-dispatch lint): it never appears in any value the workspace hands to a dispatch boundary. This phase's perimeter contains no dispatch boundary and no fixture-era dispatch surface — phase 05 task 1 creates both, with `client/fixtures/turns.temporary-fixture.ts`. Named triggers, in order: phase 05's dispatch surface, then the browser-to-server boundary (phase 16 C5). Master plan §7.5. (d) **Held with (c), same trigger**: the Generation ID is never generated, reformatted, parsed or defaulted by the client, and a workflow state the client holds is returned unchanged, asserted by structural equality with what was handed in. No server-returned workflow state exists until a turn has run (§12A.1). (e) **Held with (c) and (d)** — the probe places the page-lifetime session id in the generation-id position of a dispatched value and observes (c) redden, asserting **equality with the server-returned value**, not that the submitted value is well-formed. A probe with no instrument is not a probe; it converts with the rows it serves. | 5 (2 measurable, 3 held) | §12A.1 · F8 (held rows only) |
+| **C2** | Reorder is one move, total over its cases, and pointer and keyboard agree. **Runner split (contract 11 §3, projection L27): the list and active-session halves are asserted on the store's move function without rendering, in Vitest `node`; the focus and announcement halves in Vitest `jsdom`; nothing here runs in Playwright.** (a) A move from one index to a different index places the moved id at the target and preserves every other id's relative order. (b) The active session id is unchanged by a move, **including when the moved tab is the active one, on the pointer path as well as the keyboard path**. *Named mutation: remove the guard that preserves the active session id in the move function; (b) must redden.* The pointer path is named explicitly because the adopted foundation activates a tab on `mousedown` and a drag begins with one (projection F4) — task 4 owes the suppression. (c) A move to the same index is a no-op in three separately instrumented respects: **no state write** (the store's list reference is identical before and after), **no announcement** (the named live region gains no child), **no focus change** (`document.activeElement` is the same node). *Three named mutations, one per sub-check (charter rule 12): write the list back unconditionally; announce unconditionally; move focus to the moved tab unconditionally — each must redden its own sub-check and no other.* (d) A move that would land before the first or past the last index is a no-op by the same rule. (e) For the same source and target the pointer path and the keyboard path produce the identical list, **asserted by both paths calling the one move function with the same `(i, j)`**; the DOM drag handler is asserted separately to call it with the indices the drag implies. jsdom implements no `DragEvent` and no `DataTransfer` (projection F5), so a DOM-level drag is not the subject here. (f) The keyboard move keeps focus on the moved tab and announces its new position. (g) Reorder is reachable without a pointer. (h) A session created or closed during a drag leaves the remaining moves applying to the list as it then is, and no move targets a removed id — **asserted on the move function applied against a list that changed underneath it**, for the same reason as (e). | 8 | §12A.5 · F12 · F24 |
+| **C3** | Close is total over its four cases, with the stated newly-active session and focus destination. **Runner split as C2.** (a) Closing a non-active tab leaves the active session unchanged, and leaves focus unchanged unless focus was inside the removed tab, in which case focus lands on the tab now at the removed index, clamped to the last index. **The fixture for the focus clause exists because of owner decision 15** (2026-09-07): every tab carries a close control revealed on hover and on keyboard focus, so focus can rest inside a non-active tab. Under the previous shape it could not — the foundation activates on focus and only the active tab had a close control — and the clause had no producible subject. (b) Closing the active tab that is not at the last index activates the session now at the same index and focuses that tab. (c) Closing the active tab at the last index activates the session now at the last index and focuses that tab. (d) Closing the only remaining tab creates a fresh empty session and focuses that tab. (e) **The close action's intermediate list is non-empty at every step of the transition**, asserted on the transition rather than on rendered output. *Named mutation: split the action into two separate writes with the removal first; (e) must redden.* **Re-authored 2026-09-07 (projection F2):** the previous wording asserted that "no rendered frame contains an empty strip", which cannot fail — the close is one store transition, React batches it into one commit, and both orderings expose the same final list with no intermediate frame at all. (f) Focus never lands on the document body after any of (a)–(d). (g) A closed session's id is never reused by a later session. *Named mutation: replace the id generator with the tab's array index; (g) must redden* — create A, create B, close A, create C issues C the id `"1"`, colliding with B. This is the observation that distinguishes a forbidden generator from a permitted one, which is why it lands here and not on C1(b) (projection L2). (h) Planted-defect probe: on closing the active tab, activate the first index instead of the same index; row (b) must redden. (i) Every path that ends a session passes through **exactly one** named gate point, asserted by enumerating the call sites that remove a session from the ordered list and finding that set equal to the single permitted gate — an allowlist over an open universe of call sites, with a subject assertion. *Named mutation: add a second close path that removes a session without passing through the gate; (i) must redden.* | 9 | §12A.5 · F12 · F24 |
+| **C4** | The active tab is kept in view without a forbidden mechanism. **Split by runner 2026-09-07 (projection F3, master plan §10.3A): jsdom performs no layout — every geometry accessor returns a hard-coded zero and there is no `ResizeObserver` — so no part of this criterion's geometry can be observed in Vitest.** (a) **The reveal arithmetic is a pure function**, unit-tested in Vitest `node` over values: given the tab's offset and width, the region's `scrollLeft` and `clientWidth`, and `ACTIVE_TAB_REVEAL_MARGIN_PX`, it returns a `scrollLeft` that places the tab fully inside the visible region with at least the margin clear on both sides. Five input cases, one per operation that can move the tab — switch, reorder, close, creation, resize — each asserting the constant's contract, never its literal (charter rule 13). (b) **The end-to-end guarantee in Playwright**, against the running application with enough sessions to overflow the strip: after each of those five operations the active tab is fully inside the strip's visible region with the margin. (c) `scrollIntoView` appears nowhere in this feature's source. (d) The tab is not located by a document query or selector. (e) The window width is not read during render. Rows (c)–(e) are **allowlists over an open universe** (standing rule 17), each asserting its scan had a subject (standing rule 18). (f) Planted-defect probe for (c)–(e): introduce each forbidden mechanism in turn **as a construct no denylist would have contained**, observe the corresponding row redden, revert. Three named mutations. | 6 | §12A.5 · F12 |
+| **C5** | The strip meets its accessibility contract. **Runner: Vitest `jsdom` for roles, states and key handling; Playwright for (e), (f) and (g), which are browser-computed measurements.** Grounded against `@radix-ui/react-tabs@1.1.13` and `@radix-ui/react-roving-focus@1.1.11`, both read at source by the coordinator on 2026-09-07; a fresh install may resolve higher, and the first contradiction between these outcomes and the installed version is a stop-and-report, not a silent adaptation. (a) Tablist role and orientation, and an accessible name on the strip — **the name is owed by the composition, not the foundation**, which spreads props and supplies none. (b) Each tab exposes its selected state, and the roving tabindex places **exactly one** tab at `tabindex="0"` with every other at `-1`. (c) The key map, enumerated rather than sampled (charter rule 2): `ArrowRight` moves focus to the next tab and is a **no-op on the last tab** (the foundation's `loop` defaults to `false`); `ArrowLeft` moves to the previous and is a no-op on the first; `Home` and `PageUp` jump to the first; `End` and `PageDown` jump to the last; `ArrowUp` and `ArrowDown` move focus **nowhere** at horizontal orientation; and activation follows focus. (d) Close is reachable by keyboard on a focused tab — **on every tab, active or not** (owner decision 15) — and its control carries an accessible name naming the session. **The close control is a sibling of the tab trigger inside a wrapper, never a descendant of it**: the foundation renders the trigger as `<button type="button">`, and a `<button>` may not contain a `<button>` (projection L17). (e) Every tab and the close control carry a visible focus indicator. (f) The close control's hit area meets the size design 04 §5 requires (≥ 24px). (g) A tab's full title remains available when the visible label is elided. **`data-elided` goes on the inner title span, whose own accessible name is its own text — never on the tab**, whose accessible name carries status, note and unread and is deliberately not equal to its text. Phase 02's frozen `C4(<width>-4)` requires every `[data-elided]` element that overflows to have an accessible name equal to its `textContent`; phase 03 supplies that row's first real subject, and the tab is the one placement that would redden a row this phase may not edit (projection F7). Phase 02 set the same precedent at `agent-surface.tsx:10`. | 7 | F6 · §12A.5 · `05 §7` |
+| **C6** | The shell's landmark identity holds across every session operation. **Runner: Vitest `jsdom`, with (c) also asserted in Playwright.** (a) Across a sequence containing at least one activation, one creation, one close and one reorder, the count of complementary regions is 1 and the count of `main` elements is 1 — **asserted after every operation in the sequence, and additionally by a render-recording probe that collects both counts on each commit**, so the claim is about the whole sequence and not only its endpoints. (b) Both are the **same elements** throughout rather than replacements — asserted by element identity across the sequence, not by count alone. (c) No URL, route, or history entry changes during the sequence. (d) **Structurally held in this phase** (projection L21): the Agent Surface's structure is not a function of the active session. §12A.23 words this over "the active session's result kind, status, or presented Main Application Surface state" — none of which exists here, where sessions differ only by identity and title, so the row has a degenerate subject. Named triggers: **phase 04** introduces derived status; **phase 14** introduces the second Main Application Surface state. Master plan §7.5. (e) Planted-defect probe: push a history entry on session activation, observe (c) redden, revert. (f) Second planted-defect probe: remount the Agent Surface when the active session changes, observe (b) redden, revert. | 6 (5 measurable, 1 held) | F30 · §12A.23 |
+| **C7** | Creating a session, and the control that does it. **Added 2026-09-07 by owner decision 16**, which puts the new-session control in this phase; the creation semantics it exercises were previously asserted by no row in this plan. **Runner: Vitest `node` for (a)–(c), `jsdom` for (d)–(e).** (a) Creating a session appends it at the **end** of the ordered list, leaving every existing id in its relative order (§12A.5, "Order"). *Named mutation: insert the new session at index 0; (a) must redden.* (b) The created session becomes the active session. (c) Its runtime record is a separate, empty record — no field is shared with, copied from, or serialised out of any other session's record (§12A.1, "Records are separate per session"). (d) The control carries an accessible name and is reachable by keyboard. (e) The control is a **sibling of the tablist, never a child of it**: a non-tab child inside a `tablist` is an accessibility defect and would join the roving-focus group, making it an arrow-key target (projection L24). Design 04 §2 places it outside the scroll region, pinned. | 5 | §12A.5 · F12 · F6 |
 
-**Derived totals for this phase** (re-derived by the pre-dispatch lint, 2026-09-07; re-derive
-again at dispatch): **6 criteria, 40 rows** — C1 5 · C2 8 · C3 9 · C4 5 · C5 7 · C6 6 — of which
-**37 are measurable in this phase** and 3 (C1(c), C1(d), C1(e)) are structurally held with the
-triggers their cells name. **8 runnable named mutations** — C1(b) 1 · C3(h) 1 · C3(i) 1 · C4(e) 3
-(one per forbidden mechanism) · C6(e) 1 · C6(f) 1 — plus **1 held** (C1(e)), which converts with
-the rows it serves and is not part of this phase's executable set.
+**Derived totals for this phase** (re-derived at source after routing the projection ledger,
+2026-09-07; re-derive again at dispatch): **7 criteria, 46 rows** — C1 5 · C2 8 · C3 9 · C4 6 ·
+C5 7 · C6 6 · C7 5 — of which **42 are measurable in this phase** and 4 are structurally held
+with the triggers their cells name (C1(c), C1(d), C1(e), C6(d)). **15 runnable named mutations** —
+C1(b) 1 · C2(b) 1 · C2(c) 3 · C3(e) 1 · C3(g) 1 · C3(h) 1 · C3(i) 1 · C4(f) 3 · C6(e) 1 ·
+C6(f) 1 · C7(a) 1 — plus **1 held** (C1(e)), which converts with the rows it serves and is not
+part of this phase's executable set.
+
+## Explicit delegations — decisions granted to the implementer on purpose
+
+Recorded in writing so the freedom is granted rather than taken silently. Each is a free choice;
+none is a licence to skip a criterion.
+
+1. **The instrument for C4(c)–(e)'s allowlists.** `typescript@^6.0.3` is an installed
+   devDependency, so `ts.createSourceFile` is available and a real member-expression allowlist is
+   possible rather than a regex over text. The choice of instrument is the implementer's; the
+   allowlist shape and the C4(f) probe are not.
+2. **`ACTIVE_TAB_REVEAL_MARGIN_PX`'s value.** Master plan §6.4 records it as this phase's choice;
+   design 04 §4.4 asks only for "a small margin". Criteria assert the contract, never the literal.
+3. **How the tabs relationship is carried without making the landmark the panel** (task 3). The
+   resolution — the landmark is never the panel — is fixed; the construction is not.
+4. **The activation interaction under test.** `@testing-library/user-event` is **not** a
+   dependency of this repository, and `fireEvent.click` does not fire `mousedown`, which is what
+   the foundation activates on. Add the dependency, drive `mousedown` directly, or assert
+   activation through the store — the implementer's call, recorded here so it does not cost a
+   round to discover.
+5. **The new-session control's exact position** within the strip wrapper, subject to C7(e): a
+   sibling of the tablist, outside the scroll region.
+6. **How C2 and C3's rows are split between the store test and the rendered test**, subject to
+   contract 11 §3 (a feature store's transitions are asserted directly, without rendering) and to
+   each row naming both halves where it has two.
 
 ## Notes
 
@@ -228,3 +299,73 @@ each criterion row can be turned into a concrete assertion by a session holding 
 artifacts, whether the mandated primitive's semantics permit the invariants the plan asserts
 alongside it, and whether rows quantified over "every rendered frame" are observable at all.
 Those are the projection's, and the projection gate for this phase is mandatory (§7.2).
+
+### Projection round 0 consumed — coordinator, 2026-09-07
+
+`handoffs/reviewer/phase-03-projection-round-0.handoff.reviewer.md`, verdict
+`AMENDMENTS_REQUIRED`. **All 27 ledger rows routed, none dismissed**, plus two coordinator
+additions and two owner decisions. Rows 40 → 46, criteria 6 → 7, runnable named mutations
+8 → 15, held rows 3 → 4.
+
+**Consumption checks.** Write perimeter matched the tree exactly — one file, no code, no
+config, no dependency; the tarball extraction was outside the worktree. Ledger arithmetic
+re-derived and exact (19 plan gaps + 1 minor + 1 master-plan gap + 6 free choices = 27, ids
+L1–L27 contiguous). L4 budget: zero, as instructed. `git diff 3796dc1 66aa5c3 -- src e2e
+package.json vitest.config.mts playwright.config.ts vitest.setup.ts` is empty, so the phase-02
+stamp is citable and was not re-run.
+
+**Independently re-verified at source, by variation rather than reproduction.** The foundation's
+`onMouseDown` activation, unconditional `aria-controls` and `type="button"` trigger; `TabsContent`'s
+`children: present && children`; jsdom's absent `DataTransfer` and `DragEvent`; the frozen
+`C4(<width>-4)` accessible-name equality and its single existing subject; and the frozen
+`C4(<width>-2)` exemption spellings. All held.
+
+**One projection claim disproved.** F6/L16 reported `@radix-ui/react-roving-focus` as "present
+nowhere on this machine" and proposed either coordinator grounding or a delegated
+stop-and-report — while naming the exact version, `1.1.11`. The tarball is in `~/.npm/_cacache`
+and extracts by the identical method the session had just used for `react-tabs`. Grounded here
+instead, and folded into C5(b) and C5(c) as exact outcomes: `loop` defaults to **`false`**, so
+`ArrowRight` on the last tab is a **no-op** and does not wrap; `tabIndex: isCurrentTabStop ? 0 : -1`;
+and at horizontal orientation `ArrowUp`/`ArrowDown` move focus **nowhere**, while `PageUp` and
+`PageDown` alias `Home` and `End`. Two of seven C5 rows were about to ship as delegated guesses
+about a package that was readable all along.
+
+**Two coordinator additions.**
+
+- **The strip is inside the `complementary` landmark** (design 03 §2), which is *why* phase 02's
+  frozen overflow row applies to it at all — a reader assuming a shell-level header would find no
+  collision. Stated in §4, together with the half the projection did not reach: that row's second
+  loop requires every `div` in the pane to be no wider than the pane's own `clientWidth`, and
+  **that half has no exemption attribute**. The projection covered only the first loop's four
+  exempt spellings.
+- **Creation had no criterion row.** The plan's goal names "creating, activating, reordering,
+  closing", and C1–C6 covered every one but creation: that a new session is appended at the
+  **end** and becomes active — §12A.5's own "Order" paragraph — was asserted nowhere. Owner
+  decision 16 brought the control into this phase; **C7** brings the semantics it exercises.
+
+**Routing, by home artifact.** Upstream first, never patched downstream. **Intention** — owner
+decision 15 (§15) and its operative clause in §12A.5, plus §16 round 11. **Master plan** — §7.3's
+F8 row corrected to `03 (held)`, since every C1 row serving F8 is held and the cell was false at
+the project level (L3); §7.5 gained C6(d) (L21); §10.3A gained the layout-geometry paragraph,
+because jsdom's geometry zeros are permanent and of the same class as its `var()` and
+`matchMedia` gaps rather than phase-03-local (F3); §11.2 gained three design-04 deltas; §11.1
+recorded both owner decisions and the gate. **This plan** — everything else.
+
+**Row-by-row disposition.** L1, L2 → C1(b) re-authored as a source-level allowlist, the
+distinguishing mutation re-attributed to C3(g). L3 → master plan §7.3. L4, L6 → C2(b) and C2(c)
+gained four named mutations, one per sub-check. L5 → task 4. L7 → C2(e) and C2(h) re-rooted onto
+the move function. L8 → resolved by owner decision 15, stated in C3(a). L9 → C3(e) re-authored as
+a transition assertion. L10, L18 → C4 split into a pure-arithmetic row and a Playwright row;
+C5(e)–(g) assigned to Playwright. L11 → every criterion names its runner, and
+`e2e/session-tabs.spec.ts` is this phase's browser home; §4 now states that the freeze binds
+existing assertions and permits additions. L12 → determined by owner decision 16. L13 → C4(f)
+carries task 6's stronger wording. L14, L15, L23, L24, L26, L27 → the Explicit delegations
+section. L16 → grounded, above. L17 → C5(d)'s sibling placement. L19 → C5(g)'s `data-elided`
+placement. L20 → C6(a)'s instrument. L21 → C6(d) held. L22 → task 3's conflict resolution. L25 →
+C4's trace cell reordered to `§12A.5 · F12`.
+
+**What this routing does not settle**, recorded so the implementer prompt does not imply
+otherwise: the grounded foundation facts are about `@radix-ui/react-tabs@1.1.13` and
+`@radix-ui/react-roving-focus@1.1.11`, and task 3's install may resolve higher. The first
+contradiction between a stated outcome and the installed version is a stop-and-report, not a
+silent adaptation.
