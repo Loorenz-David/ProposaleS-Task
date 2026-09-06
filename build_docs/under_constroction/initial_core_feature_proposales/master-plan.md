@@ -8,7 +8,7 @@
 | **Intention** | [planing/proposal-preparation-backend-intention.md](planing/proposal-preparation-backend-intention.md) — `RATIFIED` 2026-09-05; ledger M1–M20 ratified (§17, §17.1); mechanism contracts §17A |
 | **Evidence** | [planing/proposales-source-evidence.md](planing/proposales-source-evidence.md) |
 | **Written** | 2026-09-05, implementation-planner round 1; **amended 2026-09-05, round 2** (multi-turn conversational continuity: new phase 10, phases 10–14 renumbered 11–15, `ProposalWorkflowState` naming, R13–R15, §6.9, rules 11–12, card 2, FB-2) |
-| **Phases** | 15: phases 1–5 `APPROVED`, phase 6 `PROJECTED`, phases 7–15 `NOT_STARTED` (§4) |
+| **Phases** | 15: phases 1–5 `APPROVED`, phase 6 `PROMPT_READY`, phases 7–15 `NOT_STARTED` (§4) |
 | **Absorbs** | the project `README.md` index — its folder-table mapping and follow-up register now live in §11 of this file; `README.md` is left as a one-screen pointer (see §11) |
 
 This is the shared skeleton every session reads: names, contracts, environment, standing rules, the tracker. It states shared truths once. It never restates product semantics — the intention owns those — and never restates a phase's tasks or criteria — the phase plan owns those.
@@ -62,7 +62,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 | 3 | Proposales adapter: transport, error translation, content read | `plans/phase-03-proposales-transport-and-content.md` | `APPROVED` | 2026-09-05 | coordinator | Owner-directed coordinator closeout of checkpoint `5fd0e61`: exact three-file perimeter and round-3 handoff/mutation evidence validated; no further independent review by owner decision. Caveat: round 3 itself was not independently re-reviewed. |
 | 4 | Proposales adapter: create, recovery search, read-back, Applied Pricing | `plans/phase-04-proposales-proposals.md` | `APPROVED` | 2026-09-05 | Claude | Independent delta re-review of `d937fe8` at tree `f342549`: 17-file perimeter verified, B1–B3 and S1–S8 all confirmed repaired by 18 reverted probes, N1–N3 closed; no blocking or should-fix. Notes N5 (consistent fixture no longer internally consistent) and N6 (MUT-04-3/34 cover more rows than one mutation demonstrates) carried forward; N4 stays with phase 15. L4 `npm test` 12 files / 163 tests green. |
 | 5 | Proposition schema and structural provenance | `plans/phase-05-proposition-and-provenance.md` | `APPROVED` | 2026-09-06 | coordinator | Owner-authorized coordinator validation approved fix checkpoint `b84dd10`: exact five-file repair perimeter and restoration hashes verified; S1–S3 and N2–N5 resolved. Current-tree L4 `npm test`: 15 files / 224 tests green; direct numeric-comparator no-op probe reddened C8(b). No independent re-review after fix by owner decision. N1 remains phase-13 follow-up 10; N6 stays phase 7 C7(d). |
-| 6 | Information items, clarification, workflow state, identity | `plans/phase-06-items-clarification-state.md` | `PROJECTED` | 2026-09-06 | coordinator | Mandatory projection round 0 queued; 8 criteria / 45 rows / 5 mutations. |
+| 6 | Information items, clarification, workflow state, identity | `plans/phase-06-items-clarification-state.md` | `PROMPT_READY` | 2026-09-06 | coordinator | Projection round 0 folded after owner selected both recommended options: 1 MiB ceiling and application-owned policies. Implementer prompt ready; 8 criteria / 54 rows / 5 mutations. |
 | 7 | Content ranking domain and human search | `plans/phase-07-ranking-and-human-search.md` | `NOT_STARTED` | 2026-09-05 | planner | 7 criteria |
 | 8 | AI provider boundary (`@/lib/ai`) | `plans/phase-08-ai-provider-boundary.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
 | 9 | Agent runtime: tool definition, run loop, budgets, read tools | `plans/phase-09-agent-runtime.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
@@ -73,7 +73,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 | 14 | Execution: recovery, create, read-back, result | `plans/phase-14-execution.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
 | 15 | Whole-workflow proof, isolation scans, opt-in live suites, documentation closeout | `plans/phase-15-closeout.md` | `NOT_STARTED` | 2026-09-05 | planner | 5 criteria |
 
-Criteria total: 103; rows: 542; named mutations: 139 — derived from the phase acceptance tables on 2026-09-05 after the Phase-5 projection fold: 5 + 7 + 6 + 8 + 8 + 8 + 7 + 6 + 6 + 6 + 8 + 8 + 7 + 8 + 5 criteria; 22 + 52 + 44 + 80 + 61 + 45 + 28 + 26 + 22 + 25 + 28 + 33 + 26 + 32 + 18 rows; 11 + 19 + 9 + 35 + 21 + 5 + 3 + 4 + 4 + 5 + 7 + 4 + 4 + 4 + 4 mutations. A criterion is a distinct `C<n>` in a phase table; each table line is one row unless its ID explicitly spans letters. Re-derive after any plan amendment; never edit these numbers by hand.
+Criteria total: 103; rows: 551; named mutations: 139 — derived from the phase acceptance tables after the Phase-6 projection fold: 5 + 7 + 6 + 8 + 8 + 8 + 7 + 6 + 6 + 6 + 8 + 8 + 7 + 8 + 5 criteria; 22 + 52 + 44 + 80 + 61 + 54 + 28 + 26 + 22 + 25 + 28 + 33 + 26 + 32 + 18 rows; 11 + 19 + 9 + 35 + 21 + 5 + 3 + 4 + 4 + 5 + 7 + 4 + 4 + 4 + 4 mutations. A criterion is a distinct `C<n>` in a phase table; each table line is one row unless its ID explicitly spans letters. Re-derive after any plan amendment; never edit these numbers by hand.
 
 **Coordinator note (projection fold, 2026-09-05):** the prior summary `102 / 477 / 71` was not reproducible from the phase tables even before that fold: the fifteen declared phase headers summed to `102 / 483 / 79`. At the projection fold, the re-derivation reported the actual table rows and named mutation identifiers after phase 2 grew by 12 rows and 8 mutations, phase 15 grew by 2 rows and 2 mutations, and phase 2 gained one criterion. The summary above is the current re-derivation after the Phase-4 review fold. Historical handoffs remain records of the counts their sessions saw and are not rewritten.
 
@@ -222,8 +222,8 @@ Type names are the inferred pair of each schema (`xSchema` / `X`). Sources: `Pro
 | `isoTimestampSchema` | string matching `YYYY-MM-DDTHH:mm:ss.sssZ` exactly (UTC, millisecond precision) |
 | `uuidV4Schema` | `/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/` |
 | `informationItemKeySchema` (`information-items.ts`) | enum: `language`, `title`, `block_selection`, `sold_scope`, `recipient_identity`, `quantities`, `recipient_contact_detail`, `description_narrative`, `block_comments`, `deadline_and_terms_notes` (10 members, §17A.6) |
-| `informationItemStateSchema` | `{ askPolicy: "ask_if_underivable" \| "do_not_ask", createPolicy: "required_to_create" \| "not_required", resolution: "supplied" \| "unresolved" \| "deferred_by_user" }` |
-| `clarificationQuestionSchema` (`clarification.ts`) | `{ questionId: uuidV4, itemKey, text }`; `clarificationSchema = { questions: array max MAX_CLARIFICATION_QUESTIONS }` |
+| `informationItemStateSchema` | `{ resolution: "supplied" \| "unresolved" \| "deferred_by_user" }`; policies live only in the application-owned `INFORMATION_REGISTRY` (§17A.6) |
+| `clarificationQuestionSchema` (`clarification.ts`) | `{ questionId: uuidV4, itemKey, text }`; `clarificationSchema = { questions: array max MAX_CLARIFICATION_QUESTIONS, answers: array }` |
 | `clarificationAnswerSchema` | `{ questionId, answer: { kind: "answer", text } \| { kind: "skip" } }`; `clarificationAnswersInputSchema = { answers: array }.strict()` |
 | `contentCandidateSchema` (`content-candidate.ts`) | `{ variationId: string, productId: string, title: string, description: string, truncated: boolean, score: int 0–1000, matchStrength: "weak" \| "possible" \| "strong", reason: string }` |
 | `matchStrengthSchema` (`content-candidate.ts`) | `z.enum(["weak", "possible", "strong"])` |
@@ -288,7 +288,7 @@ Type names are the inferred pair of each schema (`xSchema` / `X`). Sources: `Pro
 | `MAX_CLARIFICATION_QUESTIONS` | `schemas/clarification.ts` | 5 | positive int (§17A.7) |
 | `MAX_CONVERSATION_TURNS` | `schemas/conversation.ts` | 12 | positive even int ≥ 4; the window keeps the newest turns; `appendTurns` drops the oldest beyond it and counts them in `omittedTurns` |
 | `MAX_TURN_TEXT_CHARS` | `schemas/conversation.ts` | 3000 | positive int ≥ `MAX_INSTRUCTION_CHARS` (a human turn is an instruction verbatim); `renderAssistantTurn` cuts to it with a marker |
-| `MAX_WORKFLOW_STATE_BYTES` | `schemas/workflow-state.ts` | 262144 | positive int; > a state containing MAX_BRIEF_CHARS + MAX_BLOCKS blocks with MAX_ALTERNATIVES_PER_BLOCK alternatives (§17A.3) |
+| `MAX_WORKFLOW_STATE_BYTES` | `schemas/workflow-state.ts` | 1048576 | positive int; greater than a maximally conforming state with two propositions, a capped brief, and a capped clarification round (§17A.3; owner card 1 → A, 2026-09-06) |
 | `MAX_CANDIDATES` | `server/domain/rank-candidates.ts` | 10 | positive int; fixture catalog length > it (§17A.8) |
 | `MAX_ALTERNATIVES_PER_BLOCK` | `schemas/proposition.ts` | 3 | positive int |
 | `MAX_CANDIDATE_DESCRIPTION_CHARS` | `server/domain/rank-candidates.ts` | 280 | positive int; truncation sets `truncated: true` |
@@ -325,8 +325,8 @@ All services: `(input, deps = defaultDeps): Promise<TurnResult | …>`; `deps` b
 | `rankCandidates` | `domain/rank-candidates.ts` | `(query: string, catalog: ContentItem[], language: string) → ContentCandidate[]` — pure |
 | `scoreItem` / `strengthForScore` | `domain/strength.ts` | `(query, item, language) → int` / `(score: int) → MatchStrength \| null` |
 | `resolveLanguage` | `domain/resolve-language.ts` | `(candidate: string \| null, catalogLanguages: string[]) → { kind: "resolved", language } \| { kind: "ask" }` |
-| `evaluateApprovability` | `domain/approvability.ts` | `(items) → { approvable: true } \| { approvable: false, itemKeys }` |
-| `applyAnswers` | `domain/information-registry.ts` | `(items, questions, answers) → items'` |
+| `evaluateApprovability` | `domain/approvability.ts` | `(items) → { approvable: true } \| { approvable: false, itemKeys }`; joins caller-held resolutions with application-owned `INFORMATION_REGISTRY` |
+| `applyAnswers` | `domain/information-registry.ts` | `(items, questions, input: ClarificationAnswersInput) → items'` (pure; does not mutate `items`) |
 | `INFORMATION_REGISTRY` | `domain/information-registry.ts` | the 10-row policy table (§17A.6) |
 | `validateAgentOutput` | `domain/validate-agent-output.ts` | `(raw: unknown, ctx: { retrieval: RetrievalRecord, answeredQuestionIds, currentTurn?: { turnId, text } }) → AgentOutput \| { invalid: issues }` — `human` refs resolve to an answered question (prepare), an existing human leaf, or the current turn by `turnId` + verbatim `quote` (revise) |
 | `assembleProposition` | `domain/assemble-proposition.ts` | `(output, ctx: { generationId, version, preparedAt, retrieval, items, companyCurrency }) → Proposition` — adds the application-owned warnings (`non_strong_selection`, `no_acceptable_match`, `currency_mismatch`) |

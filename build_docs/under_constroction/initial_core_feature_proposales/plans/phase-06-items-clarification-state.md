@@ -27,17 +27,17 @@ Phase 5 `APPROVED`.
 
 ## Files expected to change
 
-`schemas/information-items.ts`, `schemas/clarification.ts`, `schemas/workflow-state.ts`, `schemas/workflow-state.test.ts`, `schemas/clarification.test.ts`, `server/domain/information-registry.ts`, `information-registry.test.ts`, `server/domain/approvability.ts`, `approvability.test.ts`, `server/domain/bump-version.ts`, `bump-version.test.ts`, `fixtures/states.ts` — 12 new files.
+`schemas/information-items.ts`, `schemas/clarification.ts`, `schemas/workflow-state.ts`, `schemas/workflow-state.test.ts`, `schemas/clarification.test.ts`, `server/domain/information-registry.ts`, `server/domain/information-registry.test.ts`, `server/domain/approvability.ts`, `server/domain/approvability.test.ts`, `server/domain/bump-version.ts`, `server/domain/bump-version.test.ts`, `fixtures/states.ts` — 12 new files.
 
 ## Implementation tasks (ordered)
 
-1. `schemas/information-items.ts`: key enum (10), policies, resolution state, `informationItemsRecordSchema` = strict object with all 10 keys required.
-2. `server/domain/information-registry.ts`: `INFORMATION_REGISTRY` (the §17A.6 table); `initialItems()` (every item `unresolved` with its policies); `applyAnswers(items, questions, answers)`: unknown `questionId` → `ValidationError` reason `unknown_question_id` with path `["answers", i, "questionId"]`; duplicate `questionId` → `ValidationError`; `skip` → `deferred_by_user`; `answer` → `supplied`; no entry → unchanged (`unresolved`).
-3. `server/domain/approvability.ts`: `evaluateApprovability(items)` — refuse iff some item has `createPolicy === "required_to_create"` and `resolution !== "supplied"`; returns sorted `itemKeys`.
-4. `schemas/clarification.ts`: question, clarification (array `.max(MAX_CLARIFICATION_QUESTIONS)`), answer union, `clarificationAnswersInputSchema` (strict).
-5. `schemas/workflow-state.ts`: `proposalWorkflowStateSchemaFor(editorOrigin: string)` returning the strict schema (Draft Reference `editorUrl` refinement: `new URL(u).protocol === "https:" && new URL(u).origin === editorOrigin`); `parseProposalWorkflowState(raw: unknown, editorOrigin)`: **first** `Buffer.byteLength(JSON.stringify(raw))` (raw is re-serialized; the caller may also pass the original string length via an option) `> MAX_WORKFLOW_STATE_BYTES` → `ValidationError` reason `workflow_state_too_large`; **then** `safeParse`; failure → `ValidationError` with issues. `brief.text` uses `boundedText(MAX_BRIEF_CHARS)`.
-6. `server/domain/bump-version.ts`: `nextVersion(state)` = `state.currentProposition ? state.currentProposition.version + 1 : 1`.
-7. `fixtures/states.ts`: `validState(overrides?)`, `maximalConformingState()` (brief at cap, `MAX_BLOCKS` blocks each with `MAX_ALTERNATIVES_PER_BLOCK` alternatives and every text at cap, two propositions, a clarification round at cap).
+1. `schemas/information-items.ts`: key enum (10), policy enums, resolution state, and `informationItemsRecordSchema` = strict object with all 10 keys required, each item carrying **only** its `resolution`. The policies belong only to `INFORMATION_REGISTRY`.
+2. `server/domain/information-registry.ts`: `import "server-only"`; `INFORMATION_REGISTRY` (the §17A.6 table); `initialItems()` (every item `unresolved`); `applyAnswers(items, questions, input: ClarificationAnswersInput)` returns a new record and never mutates `items`. Process input answers left-to-right: for each entry, reject an unknown `questionId` before duplicate detection; otherwise reject a repeated id. The first violation wins. Unknown → `ValidationError` reason `unknown_question_id`, path `["answers", i, "questionId"]`; duplicate → reason `domain_rule`, same path. A `skip` for an `ask_if_underivable` item → `deferred_by_user`; a skip for `do_not_ask` → `ValidationError` reason `domain_rule`, path `["answers", i, "answer"]`; `answer` → `supplied`; no entry → unchanged (`unresolved`).
+3. `server/domain/approvability.ts`: `import "server-only"`; `evaluateApprovability(items)` joins the caller-held resolution record to application-owned `INFORMATION_REGISTRY`, refuses iff a registry item has `createPolicy === "required_to_create"` and its resolution is not `supplied`, and returns sorted `itemKeys`.
+4. `schemas/clarification.ts`: question; strict `clarificationSchema = { questions, answers }` for state; strict answer union; `clarificationAnswersInputSchema = { answers }.strict()` for caller input. Questions are capped by `MAX_CLARIFICATION_QUESTIONS`.
+5. `schemas/workflow-state.ts`: `proposalWorkflowStateSchemaFor(editorOrigin: string)` returns the strict runtime-neutral schema. The Draft Reference URL is `z.url().refine((u) => new URL(u).protocol === "https:" && new URL(u).origin === editorOrigin)` so malformed input becomes a schema issue. `parseProposalWorkflowState(raw: unknown, editorOrigin)` first safely serializes `raw` with `JSON.stringify`; a throw or `undefined` result throws `ValidationError` reason `domain_rule`, issues `[{ path: [], message: "workflow state must be JSON-serializable" }]`. It then measures `new TextEncoder().encode(serialized).length`; above `MAX_WORKFLOW_STATE_BYTES` throws `ValidationError` reason `workflow_state_too_large` before schema parsing; otherwise it safe-parses and converts failure to `ValidationError` with issues. There is no caller-supplied original-byte-length option. `brief.text` uses `boundedText(MAX_BRIEF_CHARS)`. `workflow-state.test.ts` declares `TEST_EDITOR_ORIGIN = "https://proposales.test"` once and uses it for every origin fixture.
+6. `server/domain/bump-version.ts`: `import "server-only"`; `nextVersion(state)` = `state.currentProposition ? state.currentProposition.version + 1 : 1`.
+7. `fixtures/states.ts`: `validState(overrides?)` is the minimal valid state: lowercase generation id, valid brief, all ten resolutions supplied, and no clarification, proposition, or Draft Reference unless supplied by the override. `maximalConformingState()` builds its two capped propositions inline from `validProposition` (the phase-10 `maximalConformingProposition()` does not yet exist), includes a brief at cap and a clarification round at cap; every bounded text is at its cap and every uncapped alternative title is the non-empty literal `"alternative"`.
 8. Named mutations, revert, stamp, checkpoint commit.
 
 ## Acceptance criteria
@@ -49,7 +49,7 @@ Phase 5 `APPROVED`.
 | C2(a) | all supplied | | `{ approvable: true }` | — | M2, §17A.6 |
 | C2(b) | language unresolved | | `{ approvable: false, itemKeys: ["language"] }` | — | M2 |
 | C2(c) | deferred not-required | `recipient_identity: deferred_by_user`, rest supplied | approvable | MUT-06-1 `approvability.ts` · predicate · refuse on any `resolution !== "supplied"` → C2(c) red | M2, §8.1 |
-| C2(d) | confirmation satisfies selection | `block_selection: supplied` (set by the caller when confirmation is human-sourced; the derivation rule lands in phase 11) | approvable | — | crit 15 |
+| C2(d) | only required items gate | every required item supplied; all not-required items unresolved | approvable | — | crit 15, §17A.6 |
 | C2(e) | selection unresolved | | `itemKeys: ["block_selection"]` | — | crit 15 |
 | C2(f) | title unresolved | | `["title"]` | — | §17A.6 |
 | C2(g) | two unresolved | `title`, `language` | `["language", "title"]` (sorted) | — | §17A.6 |
@@ -57,31 +57,40 @@ Phase 5 `APPROVED`.
 | C3(b) | skip | `{ kind: "skip" }` | item `deferred_by_user` | — | M18 |
 | C3(c) | answer | `{ kind: "answer", text: "Anna" }` | item `supplied` | — | M18 |
 | C3(d) | no entry | question present, no answer | item stays `unresolved` | MUT-06-2 `information-registry.ts` · `applyAnswers` · treat a missing entry as skip → C3(d) red | M18, §17A.7 |
-| C3(e) | duplicate entries | two answers same id | `ValidationError` | — | §17A.7 |
+| C3(e) | duplicate entries | two answers for one known question id; second at index 1 | `ValidationError` reason `domain_rule`, issue path `["answers","1","questionId"]` | — | §17A.7 |
+| C3(f) | unknown precedes duplicate | first and second answers share an unknown id | first `ValidationError` is reason `unknown_question_id`, issue path `["answers","0","questionId"]` | — | M18, §17A.7 |
+| C3(g) | skip cannot defer do-not-ask | skip answer for a `do_not_ask` item | `ValidationError` reason `domain_rule`, issue path `["answers","0","answer"]` | — | M18, §17A.6 |
+| C3(h) | pure application | one answered known question | returned record changes only that resolution; original `items` deep-equals its pre-call value | — | §17A.6 |
 | C4(a) | question cap | exactly `MAX_CLARIFICATION_QUESTIONS` | parses | — | §17A.7 |
 | C4(b) | over cap | `+1` | fails at `["questions"]` | — | §17A.7 |
 | C4(c) | question text cap | `MAX_QUESTION_CHARS + 1` | fails | — | §17A.16 |
 | C4(d) | answer text cap | `MAX_ANSWER_CHARS + 1` | fails | — | §17A.16 |
+| C4(e) | strict skip answer | `{ kind: "skip", text: "x" }` | fails at `["answer","text"]` | — | §17A.7 |
 | C5(a) | valid state | `validState()` | parses | — | M17 |
 | C5(b) | unknown top-level key | `{ ...validState(), foo: 1 }` | fails at `["foo"]` | — | M17, §17A.3 |
 | C5(c) | misspelled draft reference not stripped | `draftRefrence: {…}` | fails at `["draftRefrence"]`; the parsed output (if any) is never produced | MUT-06-3 `workflow-state.ts` · state object · `z.object` instead of `z.strictObject` → C5(c) red | M17, §17A.3 |
 | C5(d) | nested unknown key | `brief: { text, receivedAt, extra: 1 }` | fails at `["brief","extra"]` | — | M17 |
 | C5(e) | JSON round trip | state with `{ known: false }` leaves | `parse(JSON.parse(JSON.stringify(s)))` deep-equals `s` | — | M9, §17A.3 |
 | C5(f) | brief cap | `brief.text` of `MAX_BRIEF_CHARS + 1` | fails at `["brief","text"]` | — | §17A.16 |
+| C5(g) | missing item key | state with `items.language` omitted | fails at `["items","language"]` | — | M17, §17A.6 |
+| C5(h) | unknown item key | state with `items.extra` | fails at `["items","extra"]` | — | M17, §17A.6 |
+| C5(i) | clarification round state | state carrying one question and its matching answer | parses and preserves both `questions` and `answers` | — | M17, §17A.7 |
 | C6(a) | valid draft reference | uuid v4 + `https://proposales.test/p/<uuid>` with origin `https://proposales.test` | parses | — | M17, §17A.3 |
 | C6(b) | http | `http://proposales.test/p/x` | fails at `["draftReference","editorUrl"]` | — | §17A.3, 10 §10 |
 | C6(c) | other origin | `https://evil.test/p/x` | fails | MUT-06-4 `workflow-state.ts` · editorUrl refinement · drop the origin equality → C6(c) red | M17 |
 | C6(d) | same host, other port | `https://proposales.test:8443/p/x` | fails | — | §17A.3 |
 | C6(e) | uuid uppercase | | fails at `["draftReference","proposalUuid"]` | — | M8 |
+| C6(f) | malformed editor URL | `editorUrl: "not-a-url"` | fails at `["draftReference","editorUrl"]`, not a thrown exception | — | M17, 10 §10 |
 | C7(a) | within bound | `validState()` | parses | — | M17 |
 | C7(b) | over bound wins over strictness | raw object with an extra key `pad` holding a string that pushes the serialized size over `MAX_WORKFLOW_STATE_BYTES` | `ValidationError` reason `workflow_state_too_large` (not an unknown-key issue) | MUT-06-5 `workflow-state.ts` · `parseProposalWorkflowState` · move the size check after `safeParse` → C7(b) red | M17, §17A.3 |
 | C7(c) | bound exceeds ordinary use | `maximalConformingState()` | serialized byte length `< MAX_WORKFLOW_STATE_BYTES` and it parses | — | §17A.3 |
+| C7(d) | non-serializable raw | `undefined` | `ValidationError` reason `domain_rule`, issues exactly `[{ path: [], message: "workflow state must be JSON-serializable" }]` | — | M17, 06 §3 |
 | C8(a) | generation id form | lowercase v4 | parses; uppercase fails at `["generationId"]` | — | M8, §17A.2 |
 | C8(b) | first version | state without propositions | `nextVersion === 1` | — | §17A.2 |
 | C8(c) | increment | `currentProposition.version = 4` | `5` | — | §17A.2 |
-| C8(d) | caller cannot supply | the version is not an input anywhere: `nextVersion` takes only the state (signature assertion via `expectTypeOf`) | compiles | — | §17A.2 |
+| C8(d) | caller cannot supply | `nextVersion` export | runtime function arity is exactly `1` | — | §17A.2 |
 
-Criteria: 8 (C1–C8), 45 rows (a table line is one row; a lettered span counts its letters). Named mutations: 5.
+Criteria: 8 (C1–C8), 54 rows (a table line is one row; a lettered span counts its letters). Named mutations: 5.
 
 ## Notes
 
@@ -92,3 +101,5 @@ Criteria: 8 (C1–C8), 45 rows (a table line is one row; a lettered span counts 
 ## Review log
 
 *(append-only)*
+
+**Projection fold, 2026-09-06 (coordinator):** owner accepted both recommended cards: `MAX_WORKFLOW_STATE_BYTES` is 1 MiB and information-item policies are application-owned, with caller state carrying only resolutions. Routed D1–D22: runtime-neutral `TextEncoder` sizing; fail-closed serialization; no original-length option; malformed-URL schema failure; inline maximal fixture with a fixed uncapped alternative title; precise answer precedence/errors; do-not-ask skip refusal; strict clarification/state records; `nextVersion` naming and runtime arity guard; minimal `validState`; named origin fixture convention; strict answer arms; and pure `applyAnswers`. Count re-derived: 8 criteria / 54 rows / 5 mutations. The projection handoff remains the historical record.

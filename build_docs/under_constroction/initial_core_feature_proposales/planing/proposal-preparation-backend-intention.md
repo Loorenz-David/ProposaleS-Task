@@ -555,13 +555,13 @@ Deepens §5.2, §16.2. Ledger: **M17**.
 
 **Serializable contract.** The state is plain JSON: no `undefined`, no `Date`, no `Map`, no class instances, no functions. Every timestamp inside it is an ISO 8601 UTC string (§17A.16).
 
-**Contents.** Generation ID; brief; the information-item registry with each item's resolution state (§17A.6); the clarification round, if one occurred (§17A.7); **exactly two propositions** — `preparedProposition` (the last one the server emitted) and `currentProposition` (that one plus any manual edits) — and the Draft Reference once it exists. The state carries **no version history**: two propositions, not a list. This is what makes the approval diff computable (§17A.10) while keeping the state bounded.
+**Contents.** Generation ID; brief; the information-item record with each item's **resolution state only** (§17A.6); the clarification round, if one occurred (§17A.7); **exactly two propositions** — `preparedProposition` (the last one the server emitted) and `currentProposition` (that one plus any manual edits) — and the Draft Reference once it exists. The state carries **no version history**: two propositions, not a list. This is what makes the approval diff computable (§17A.10) while keeping the state bounded. The ask and create policies are fixed application rules, not caller-held state.
 
 **Parsed every turn, whole, strictly.** Every turn re-parses the entire state before doing anything else, including fields that turn does not use, because every turn returns the state and a silently dropped field is a silently lost fact. The state schema is **strict** (contract `06-data-contracts-and-validation.md` §3): an unknown or misspelled key fails with a path rather than being stripped. The reason is concrete: Zod's default strip would silently remove a misspelled `draftReference`, and a stripped Draft Reference re-enables a create — a duplicate draft produced by a typo.
 
 **Validated beyond shape**, without I/O: Generation ID pattern (§17A.2); Draft Reference `uuid` matched against the UUID pattern; Draft Reference `editorUrl` parsed as an absolute `https:` URL whose **origin equals the configured Proposales editor origin** (contract `10-security-and-trust-boundaries.md` §10 — an upstream-provided URL is validated against the expected origin before it is ever handed back to a human as a link).
 
-**Size bound.** The serialized state is bounded by a named constant (`MAX_WORKFLOW_STATE_BYTES`), checked at parse, failing with a dedicated `validation_error` reason. Without it a long revision chain silently exceeds the platform request-body limit and surfaces as transport noise rather than as a bounded, explainable failure. The brief cap and the per-block alternative cap (§17A.16, §17A.8) are set so that a conforming workflow cannot reach the state bound by ordinary use.
+**Size bound.** The serialized state is bounded by a named constant (`MAX_WORKFLOW_STATE_BYTES`, initially 1 MiB), checked at parse, failing with a dedicated `validation_error` reason. Without it a long revision chain silently exceeds the platform request-body limit and surfaces as transport noise rather than as a bounded, explainable failure. The brief cap and the per-block alternative cap (§17A.16, §17A.8) are set so that even the maximally conforming two-proposition state remains below the bound.
 
 **A state that parses but is stale is accepted** (§5.2). The reachable cases, enumerated, so none is handled by accident:
 
@@ -662,6 +662,8 @@ Deepens §8.1, §11.3. Serves **M2**.
 | **resolution state** | `supplied` · `unresolved` · `deferred_by_user` |
 
 Projections back to §8.1's vocabulary, unchanged in meaning: *required-to-ask* = `ask_if_underivable`; *required-to-create* = `required_to_create`; *optional* = `do_not_ask` ∧ `not_required`; *deferred-by-user* = state `deferred_by_user`, reachable only from `ask_if_underivable`.
+
+**Ownership.** The two policy columns are the application-owned `INFORMATION_REGISTRY`; they are never carried in, or trusted from, caller-held workflow state. The state record is total over the ten item keys and carries only each item's `resolution`. The server evaluates approvability by joining that resolution record with the fixed registry, so a stale or hand-edited payload cannot relax a required-to-create rule.
 
 **Approvability, total and decidable:** approval is refused **iff** some item has create policy `required_to_create` and resolution state ≠ `supplied`. Deferral has no effect on approvability except through the create policy. This is §8.1's reconciliation of "the human can always defer" with contract 08 §6, expressed as one predicate.
 
@@ -1184,3 +1186,9 @@ A later implementation satisfies this intention when all of the following hold. 
 
 - **Projection card 1 → per field.** The owner confirmed the standing reading of §17A.4: the five recipient leaves carry independent provenance and the recipient object is only present or absent. The confirming sentence is inserted beside the governing granularity rule; it resolves contradictory wording in the enumeration, changes no behavior, and does not reopen ratification.
 - **Alternative reason made explicit in the text-bound inventory.** It was already a free-text presentational leaf under §17A.4 and the standing rule required every free-text field to be bounded; §17A.16 now names it so the phase-5 constant is traceable. No numeric cap was ratified here; the implementation plan owns that bounded-value choice.
+
+**Round 14 (2026-09-06, phase-6 projection owner decisions).** Status stays `RATIFIED`.
+
+- **Card 1 → A.** The owner selected the recommended 1 MiB workflow-state ceiling. It remains a runaway-payload guard, while a maximally conforming two-proposition workflow remains representable.
+- **Card 2 → A.** The owner selected application ownership of the information-item policy table. Caller-held state carries resolutions only; approvability joins those resolutions with the fixed registry.
+- These clarify existing caller-held-state and approvability mechanisms; they add no capability, persistence, transport, or external call, so the ratification gate remains closed.
