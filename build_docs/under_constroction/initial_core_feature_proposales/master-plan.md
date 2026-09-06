@@ -106,6 +106,19 @@ stopping. Incomplete work is a WIP checkpoint, never `IMPLEMENTED` or `APPROVED`
 continue in another model session; preserve role independence and reviewer capability when
 handing off. No automatic model substitution is inferred from this continuity instruction.
 
+**Window closed unexecuted beyond projection (owner direction, 2026-09-06).** The owner withdrew
+the window: *"I tried running the astra prompts but i fail as it consume to much session, thus i
+will continue my agentic implementaiton for this backend implementation as we have been doing."*
+Exactly one sub-context ran under this authorization — phase 8's projection round 0, whose handoff
+stands and is folded — and nothing was implemented or reviewed under it. The withdrawn
+arrangements resume **now**, not at phase 11: the owner opens every session, and §9.0.1's
+staffing split applies as capability allows. Consequence 4 above (a fresh re-review after every
+fix round) was a property of this window and dies with it; §9.0.2 is the standing rule in its
+place. Consequence 1 outlives the window on its own merit — projection stays mandatory for phases
+08–10 by the plans' own gate ranks. The window prompt and its resume prompt are archived under
+`build_docs/archived/astra_prompts/`; the two coordinator handoffs and this section are preserved
+as the record of what was authorized and what actually ran, and are not rewritten.
+
 ## 4. Progress tracker
 
 One row per phase. Agents update only their own row; findings go to the phase plan's Review log.
@@ -119,7 +132,7 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 | 5 | Proposition schema and structural provenance | `plans/phase-05-proposition-and-provenance.md` | `APPROVED` | 2026-09-06 | coordinator | Owner-authorized coordinator validation approved fix checkpoint `b84dd10`: exact five-file repair perimeter and restoration hashes verified; S1–S3 and N2–N5 resolved. Current-tree L4 `npm test`: 15 files / 224 tests green; direct numeric-comparator no-op probe reddened C8(b). No independent re-review after fix by owner decision. N1 remains phase-13 follow-up 10; N6 stays phase 7 C7(d). |
 | 6 | Information items, clarification, workflow state, identity | `plans/phase-06-items-clarification-state.md` | `APPROVED` | 2026-09-06 | coordinator | Owner-authorized coordinator validation approved checkpoint `ba77165`: exact seven-file repair perimeter verified; S1/S2 guards discriminate under their repaired mutants, N1/N3/N4 closed, N2 carried to phase 10. Closing L4 `npm test`: 20 files / 278 tests green. No independent re-review after fix by owner decision; the handoff's 7-versus-6 mutation-table count is corrected in the phase Review log and did not affect the code proof. |
 | 7 | Content ranking domain and human search | `plans/phase-07-ranking-and-human-search.md` | `APPROVED` | 2026-09-06 | coordinator | Owner-authorized coordinator validation approved fix checkpoint `5949615`: exact test-side perimeter verified (`git diff f2399ac HEAD` over the five production files is empty) and both restoration digests confirmed. 8 criteria / 57 rows / 21 distinct named mutations. Projection round 0 folded 33 ledger rows; review round 1 `CHANGES_REQUESTED` found three guards that could not fail (B1 the sort order, B2 the score and strength values, B3 the missing-title filter) — all repaired test-side, no production change in either fold. Two of the review's prescriptions and three of the coordinator's ledger cells were themselves wrong and were corrected by running them. Approval-gate L4 `npm test`: 24 files / 335 tests green, typecheck and lint clean; two independent coordinator probes (denominator `3`→`4`, type-only `@/lib/ai` import) reddened C6(a–c)/C6(f) and C7(d) respectively. **Caveat: no independent re-review followed fix round 2, by owner decision** — and this phase is the one where review found three cannot-fail guards that two prior sessions missed. Phase-5 N6 closed by C8. N1 → phase 11, N2 → phase 12. |
-| 8 | AI provider boundary (`@/lib/ai`) | `plans/phase-08-ai-provider-boundary.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
+| 8 | AI provider boundary (`@/lib/ai`) | `plans/phase-08-ai-provider-boundary.md` | `PROMPT_READY` | 2026-09-06 | coordinator | Projection round 0 (`AMENDMENTS_REQUIRED`, Codex Astra sub-context) consumed: all 24 ledger rows routed, owner card 1 answered **add the two reasons** and folded intention-first (§23 round 17 → master §6.3 → C4). The projection found 8 of the original 26 rows writable but unable to observe the behavior they named and 4 blocked for want of a seam; the table is now **6 criteria / 47 rows / 16 distinct mutations**. The coordinator re-ran every load-bearing SDK and Zod claim before folding it — one correction: the `result.output` getter throws `NoOutputGeneratedError` (message and cause only), not `NoObjectGeneratedError`, so a content filter is never recoverable from that throw. Implementation gate **open**; prompt at `prompts/implementer/phase-08-round-1.implementer.md`. Zero tests, installs or provider calls in the projection or in this fold. |
 | 9 | Agent runtime: tool definition, run loop, budgets, read tools | `plans/phase-09-agent-runtime.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria |
 | 10 | Conversation context, retrieval record, agent message assembly | `plans/phase-10-conversation-context.md` | `NOT_STARTED` | 2026-09-05 | planner | 6 criteria; **new (round 2)**; gate: FB-2 folded |
 | 11 | Prepare from brief and clarification turns | `plans/phase-11-prepare-and-clarify.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
@@ -128,11 +141,11 @@ One row per phase. Agents update only their own row; findings go to the phase pl
 | 14 | Execution: recovery, create, read-back, result | `plans/phase-14-execution.md` | `NOT_STARTED` | 2026-09-05 | planner | 8 criteria |
 | 15 | Whole-workflow proof, isolation scans, opt-in live suites, documentation closeout | `plans/phase-15-closeout.md` | `NOT_STARTED` | 2026-09-05 | planner | 5 criteria |
 
-Criteria total: **104**; rows: **587**; named mutations: **164** — re-derived 2026-09-06 (after the phase-7 approval fold) from the fifteen phase acceptance tables (span-aware: `C2(a–o)` counts fifteen rows, `C8(b1..b20)` twenty). Per-phase summands, in phase order:
+Criteria total: **104**; rows: **608**; named mutations: **176** — re-derived 2026-09-06 (after the phase-8 projection fold) from the fifteen phase acceptance tables (span-aware: `C2(a–o)` counts fifteen rows, `C8(b1..b20)` twenty; mutation letter suffixes such as `MUT-08-4a` are retained). Per-phase summands, in phase order:
 
 - criteria `5 + 7 + 6 + 8 + 8 + 8 + 8 + 6 + 6 + 6 + 8 + 8 + 7 + 8 + 5`
-- rows `22 + 52 + 51 + 80 + 61 + 54 + 57 + 26 + 22 + 25 + 28 + 33 + 26 + 32 + 18`
-- mutations `11 + 19 + 16 + 35 + 21 + 5 + 21 + 4 + 4 + 5 + 7 + 4 + 4 + 4 + 4`
+- rows `22 + 52 + 51 + 80 + 61 + 54 + 57 + 47 + 22 + 25 + 28 + 33 + 26 + 32 + 18`
+- mutations `11 + 19 + 16 + 35 + 21 + 5 + 21 + 16 + 4 + 5 + 7 + 4 + 4 + 4 + 4`
 
 Every summand equals the phase plan's own declared header; all fifteen reconcile. A criterion is a distinct `C<n>` in a phase table; each table line is one row unless its ID explicitly spans letters. Re-derive after any plan amendment; never edit these numbers by hand.
 
@@ -252,7 +265,7 @@ Every file under `src/lib/env`, `src/lib/proposales`, `src/lib/ai`, `src/lib/age
 | Registry | Members | Defining module / phase |
 |---|---|---|
 | `ProposalesFailureReason` | `transport`, `timeout`, `bad_request`, `unauthenticated_upstream`, `forbidden_upstream`, `not_found_upstream`, `conflict_upstream`, `rate_limited_upstream`, `server_error`, `invalid_body`, `schema_mismatch` (11 members; `details.system = "proposales"`, `details.status` when an HTTP status exists, `details.retryable` per the §17A.13 table, `details.operation` = the client method name) | `src/lib/proposales/errors.ts` / phase 3 |
-| `AiProviderFailureReason` | `unauthenticated_upstream`, `timeout`, `rate_limited_upstream`, `server_error`, `transport`, `content_filtered`, `not_configured` (7 members; `details.system = "ai_provider"`, message always generic) | `src/lib/ai/errors.ts` / phase 8 |
+| `AiProviderFailureReason` | `unauthenticated_upstream`, `timeout`, `rate_limited_upstream`, `server_error`, `transport`, `content_filtered`, `not_configured`, `request_rejected`, `invalid_response` (**9 members**; `details.system = "ai_provider"`, `details.status` when an HTTP status exists, `details.retryable` and `details.operation` always present, message **always** the fixed generic constant — no upstream text is bounded and forwarded on this path, unlike `ProposalesFailureReason`). `request_rejected` covers any non-`429` 4xx and `invalid_response` a reply that fails the provider's own protocol; both `false`. Added by owner decision on the phase-8 projection card, intention §23 round 17; the §17A.13 table is total and phase 8 C4 writes one row per member | `src/lib/ai/errors.ts` / phase 8 |
 | `ValidationReason` (optional `details.reason` on `ValidationError`) | `model_output_invalid`, `workflow_state_too_large`, `unknown_question_id`, `pricing_acknowledgment_missing`, `required_to_create_unresolved`, `consequential_provenance_invalid`, `domain_rule` | `src/lib/errors/app-error.ts` / phase 2 |
 | `ConflictReason` | `draft_already_exists` (terminal state), `multiple_recovery_matches` | `src/lib/errors/app-error.ts` / phase 2 |
 | `AppliedPricingUnavailableReason` | `read_failed_upstream`, `read_failed_timeout`, `read_failed_schema_mismatch`, `read_budget_exhausted` | `src/features/proposal-preparation/schemas/draft-result.ts` / phase 14 |
@@ -334,6 +347,10 @@ Type names are the inferred pair of each schema (`xSchema` / `X`). Sources: `Pro
 | `AiClient` | `{ provider: AiProvider \| "scripted", model: string, generateStep(input: GenerateStepInput, options: { timeoutMs: number }): Promise<GenerateStepResult> }` |
 | `GenerateStepInput` | `{ system: string, messages: AgentMessage[], tools: ToolDescriptor[], outputJsonSchema?: JsonSchema }` |
 | `GenerateStepResult` | `{ kind: "tool_calls", calls: Array<{ toolCallId, name, input: unknown }>, usage } \| { kind: "final", output: unknown, usage }`; `usage: { inputTokens: int \| null, outputTokens: int \| null, totalTokens: int \| null }` |
+| `Usage` | `{ inputTokens: int \| null, outputTokens: int \| null, totalTokens: int \| null }` — **exactly three fields**, each mapped `?? null` from the SDK's `LanguageModelUsage`. That SDK type also carries nested `inputTokenDetails` / `outputTokenDetails` objects (verified in `ai@7.0.92`, `dist/index.d.ts:318`); whole-object mapping would leak them, so the mapping names the three fields one by one. A **reported** `0` stays `0`; only an absent figure becomes `null` (§17A.14) |
+| `JsonSchema` | `Record<string, unknown>` — a JSON Schema document owned by this repository, not an SDK type. It is what `ToolDescriptor.inputJsonSchema` and `GenerateStepInput.outputJsonSchema` carry, and the only thing the adapter passes to `ai.jsonSchema()`. No vendor schema type is re-exported (D03, phase-8 projection) |
+| `ToolDescriptor` | `{ name: string, description: string, inputJsonSchema: JsonSchema }` — provider-neutral; the adapter converts it to the SDK's `tool()` shape with **no `execute`** (the run loop executes tools, 08 §3) |
+| `AgentMessage` | Provider-neutral, closed, three forms (D03, phase-8 projection; **phase 8 owns this type, phase 9 and 10 consume it** and must not re-derive it): `{ role: "user" \| "assistant", content: string }` · `{ role: "assistant", toolCalls: Array<{ toolCallId: string, name: string, input: unknown }> }` · `{ role: "tool", results: Array<{ toolCallId: string, name: string, output: unknown }> }`. The correlation key is `toolCallId` and it is carried on both the call and the result. The SDK's tool message requires an **array** `ToolContent`, never text (`@ai-sdk/provider-utils` `dist/index.d.ts:1610`, verified), which is why the neutral tool form is a list. The SDK's own message union is never aliased or re-exported outside `client.ts` |
 | `ToolKind` | `"read" \| "prepare" \| "mutate"` (only `read` is instantiated in v1) |
 | `ToolDefinition<I, O>` | from `defineTool({ name, description, kind, input: ZodSchema, output: ZodSchema, execute(input, ctx) })` |
 | `ToolContext` | `{ runId: string, traceId: string, companyId: number, remainingBudget: RunBudgets, catalog: ContentItem[], language: string \| null }` |
@@ -369,7 +386,8 @@ Type names are the inferred pair of each schema (`xSchema` / `X`). Sources: `Pro
 | `PROPOSALES_READ_MAX_ATTEMPTS`, `PROPOSALES_READ_BACKOFF_MS`, `PROPOSALES_READ_TOTAL_MS` | `lib/proposales/http.ts` | 3 / 300 / 8000 | attempts ≥ 1; an overall read deadline: every attempt's abort timeout is `min(PROPOSALES_TIMEOUT_MS, remaining total)` and no retry starts after the deadline (§17A.12 read-back bounds) |
 | `MAX_UPSTREAM_MESSAGE_CHARS`, `MAX_UPSTREAM_ISSUES`, `GENERIC_UPSTREAM_ERROR_MESSAGE` | `lib/proposales/errors.ts` | 500 / 25 / `"The Proposales request could not be completed."` | a forwarded upstream message or issue message is used only when ≤ the message cap; at most `MAX_UPSTREAM_ISSUES` issues cross; every other upstream text uses the exported generic message (§17A.13) |
 | `DEFAULT_RUN_BUDGETS` | `lib/ai/config.ts` | `{ wallTimeMs: 60000, maxToolCalls: 12, maxTokens: 60000 }` | each positive int (§17A.14) |
-| `AI_CALL_TIMEOUT_MS` | `lib/ai/config.ts` | 45000 | ≤ `wallTimeMs`; passed per call |
+| `AI_CALL_TIMEOUT_MS` | `lib/ai/config.ts` | 45000 | ≤ `wallTimeMs`; passed per call. The **caller** owns the ceiling: phase 9 computes `min(AI_CALL_TIMEOUT_MS, remaining wall time)` and the phase-8 adapter forwards exactly the `timeoutMs` it is given, adding no second minimum (D07, phase-8 projection) |
+| `GENERIC_AI_ERROR_MESSAGE` | `lib/ai/errors.ts` | `"The AI provider request could not be completed."` | the **only** message an `AiProviderError` ever carries. Unlike the Proposales path there is no bounded-forwarding exception: no provider message, issue message, or generated text is ever used as the message (§17A.13, D11/D22) |
 | `MAX_OUTPUT_RETRIES` | `lib/agent/run.ts` | 1 | int ≥ 0; bounded model retry on invalid structured output |
 
 ### 6.6 Services, domain functions, tools (signatures)
@@ -412,7 +430,9 @@ All services: `(input, deps = defaultDeps): Promise<TurnResult | …>`; `deps` b
 | `createFakeProposalesClient` | `lib/proposales/fake.ts` | `({ catalog?, company?, proposals?, proposalReadbacks?, proposalReadback?, editorOrigin?, now?, newUuid? }) → FakeProposalesClient`; `now: () => number` and `newUuid: () => string` are injectable, `proposalReadback` supplies a newly-created draft's read-back, `proposals` seeds recovery rows, and `proposalReadbacks` seeds their read-backs by proposal UUID. It exposes `calls` (a create call is exactly `{ op: "createProposalDraft", input, request }`), `writes`, `stored`, `storedReadbacks: Map<uuid, ProposalReadback>`, `failNext(op, error)`, and `assertNoWrites()`. `input` is omitted for no-argument reads. |
 | `createScriptedAiClient` | `lib/ai/scripted.ts` | `(steps: GenerateStepResult[]) → AiClient & { calls: GenerateStepInput[] }`; throws `script_exhausted` past the end |
 | `createFailingAiClient` | `lib/ai/scripted.ts` | `() → AiClient` whose `generateStep` throws `new Error("model must not be called")` |
-| `createAiClient` | `lib/ai/client.ts` | `(env = serverEnv) → AiClient` via `registry.ts` |
+| `createAiClient` | `lib/ai/client.ts` | `(env: ServerEnv = serverEnv, deps: { generateText, resolveModel } = defaultDeps) → AiClient` via `registry.ts`. **A factory, not a service** — the phase-7 getter-based `defaultDeps` precedent does not apply and must not be copied here: no provider or SDK client is constructed at import, and `env` is an ordinary parameter default. Tests always pass an explicitly parsed fixture env and never rely on the module singleton. Note for the record (D19, phase-8 projection): `src/lib/env/server.ts:56` parses at module load, and the phase-7 service's static import chain already reaches that module through the Proposales client — the getter there defers *client construction*, not env validation. Module-load env validation is deliberate (§6.2) and this phase does not refactor it |
+| `callModel` | `lib/ai/client.ts` | **module-local, exported for the colocated test only — never from the barrel** (D02, phase-8 projection). `(model: LanguageModelInstance, request: CallModelRequest) → Promise<CallModelResult>`; the one place the SDK's `generateText` is invoked. `generateStep` must call this exact function, so a disconnected helper cannot satisfy C1(c–d). Its first parameter is the seam that makes a string model id unrepresentable |
+| `resolveModel` | `lib/ai/registry.ts` | `({ provider, model, apiKey }, factories = DEFAULT_FACTORIES) → LanguageModelInstance`. `DEFAULT_FACTORIES` is `satisfies Record<AiProvider, (apiKey: string) => (modelId: string) => LanguageModelInstance>`. **Runtime totality is proven against `serverEnvSchema.shape.AI_PROVIDER.options`** — `AiProvider` is a type union and is erased, so a handwritten two-item loop proves nothing (D09, phase-8 projection). Verified in `zod@4.5.4`: `.superRefine()` returns a `ZodObject`, so `.shape` survives on `serverEnvSchema` and `.options` is `["anthropic", "openai"]`. A throw from **either** site — constructing the vendor factory or invoking it for a model id — is caught and becomes `AiProviderError` reason `not_configured` |
 | `run` | `lib/agent/run.ts` | `({ system, initialMessages, tools, outputSchema, budgets }, deps: RunDeps) → RunResult` |
 
 ### 6.7 Fixtures and doubles
@@ -485,7 +505,7 @@ Every M1–M20 is served by at least one criterion row (derived from the phase t
 | M4 | 7.C7, 12.C1, 12.C2, 12.C3, 13.C7, 14.C3 |
 | M5 | 3.C3, 4.C3, 13.C7, 14.C3, 14.C4 |
 | M6 | 3.C1, 3.C2, 8.C4, 9.C5, 14.C1, 14.C2, 14.C6, 14.C7, 14.C8, 15.C4 |
-| M7 | 1.C4, 8.C5, 15.C1, 15.C2, 15.C3, 15.C5 |
+| M7 | 1.C4, 8.C5, 8.C6, 15.C1, 15.C2, 15.C3, 15.C5 |
 | M8 | 2.C6, 4.C3, 6.C6, 6.C8, 11.C1, 13.C1, 13.C2, 14.C1, 14.C5, 15.C1 |
 | M9 | 2.C4, 4.C1, 4.C2, 5.C1, 6.C5, 14.C3 |
 | M10 | 5.C2, 5.C3, 5.C4, 11.C8, 12.C5, 12.C7 |
@@ -585,6 +605,41 @@ implements, Claude reviews** — different model families fail differently, whic
 as much as raw capability. Review is the judgment work: whether a guard could fail,
 whether a fixture has a second sufficient cause, whether a gap is real or belongs to a
 later phase.
+
+### 9.0.2 Re-review after a fix round is waived (standing, owner direction, 2026-09-06)
+
+**Verbatim:**
+
+> "remember the review restriction as this is an mvp, for as long as code works and it is
+> tested with the ratifications then we don't need re-reviews ( this is a fast mvp we are
+> building )"
+
+Given for phase 7 first and made standing here. It replaces the per-phase asking recorded
+in the phase-7 tracker caveat.
+
+**What it waives:** the second, independent review session after a fix round. The
+coordinator validates the fix and closes the phase.
+
+**What it does not waive:** the *first* independent review of an implementation, and the
+mandatory projection where a phase's gate rank requires one. Phase 7 is the argument for
+keeping both — its one review found three guards that could not fail, which two prior
+sessions had passed over, and the code itself was correct throughout. Removing the first
+review would remove the only session whose job is to ask whether a guard can fail.
+
+**The condition is not decorative.** "for as long as code works and it is tested with the
+ratifications" is a precondition the coordinator must observe, not assume, before closing
+a phase without re-review:
+
+1. the closing L4 stamp is green — full suite, typecheck, lint — on the tree being approved;
+2. every named mutation in the phase table actually ran, reddened the row it names, and was
+   reverted, with the tree restored byte-identical;
+3. the repair perimeter is exactly what the fix prompt authorized, verified by diff;
+4. at least one **independent** coordinator probe, chosen as variation the fix round did not
+   run, reddens a guard it should;
+5. every criterion still traces to ratified authority — the intention, not the plan alone.
+
+If any of the five fails, the waiver does not apply and the phase gets its review.
+Record the closure and the probes in the phase Review log and the tracker row.
 
 ### 9.1 Project-specific rules
 
@@ -736,7 +791,7 @@ remain binding and the standing staffing arrangement resumes at phase 11.
 | 3 | Contract `06` §6 Money row example invites a decimal conversion on integer-cent package-split values (R6). Contract patch in its own change; fold into follow-up 1's session if convenient. | dispatchable agent session | *(raise a prompt row when dispatched)* | inventory handoff §6.1 |
 | 5 | ~~intention amendment FB-2~~ — **CLOSED 2026-09-05.** Ratified by the owner and folded into the intention: §5.2 bullet, §7 concept row, §8.3 `human` row, §12.1 operation list, §17A.4 `ref` paragraph, new §17A.17, ledger M19, §23 round 8. Cards 1 and 2 folded with it. `(proposed)` markers cleared from §7.2 and phases 10–15. | coordinator — **done** | — | intention §23 round 8 |
 | 4 | ~~intention §17A.15 phrase "the SDK's language-model type, which a `string` does not satisfy" is inaccurate against `ai@7.0.92`~~ — **CLOSED 2026-09-06.** Folded into §17A.15's code-shape paragraph with the accurate `Exclude<LanguageModel, string>` phrasing and recorded as §23 round 16; status stayed `RATIFIED`, the mechanism is unchanged. Done ahead of phase 8's projection, which reads that paragraph as its authority. | coordinator — **done** | — | this plan §6.4, handoff finding F1 |
-| 6 | **AI model id unresolved.** `.env.example` reads `AI_MODEL=gpt-5.6-luna`; the owner stated `gpt-6.6-luna` when confirming it (2026-09-05). One is a typo; **the coordinator did not guess.** Nothing depends on it yet — phase 1 empties `.env.example`, the schema has no defaults, and the test placeholder is `test-placeholder-model`. Load-bearing from **phase 8** (provider boundary). | owner — one line | — | this section; §6.2 |
+| 6 | **AI model id unresolved.** The earlier example and owner-stated spelling differed; **the coordinator did not guess**. Phase 1 already emptied `.env.example`; the schema has no defaults and the test placeholder is `test-placeholder-model`. Load-bearing at the **first live model exercise (planned phase 15)**, not phase 8's offline boundary tests. Timing corrected by phase-08 projection D18 and window §8; no real model literal selected. | owner — one line before live exercise | — | this section; §6.2; phase-08 projection D18 |
 | 7 | Contract `06` §8 says Zod's `error.issues` maps directly to `string[]` paths, but Zod 4 emits numeric array indices. Patch the contract to require `issue.path.map(String)` at a DTO boundary. **Second shape, added 2026-09-06 (phase 7):** a `z.strictObject` reports an unrecognized key as **one** `unrecognized_keys` issue at the object's own path with the offending names in a separate `keys` array — not one issue per key at `[...path, key]`. Any boundary that wants per-key paths must flatten it (`zodIssues`, now in `schemas/workflow-state.ts` and `services/search-content-for-human.ts`); a criterion asserting a raw `safeParse` must assert the raw shape. Verified against `zod@4.5.4`. | dispatchable agent session | *(raise a prompt row when dispatched)* | phase-2 projection D2 |
 | 8 | `tsconfig.tsbuildinfo` is tracked although `npm run typecheck` rewrites it. Decide in a dedicated repository-hygiene change whether to ignore it and remove it from the index, so routine evidence stamps do not create irrelevant dirty-tree identity drift. | dispatchable agent session | *(raise a prompt row when dispatched)* | phase-2 review N4 |
 | 9 | Phase 2 intentionally validates ISO timestamp **form**, not calendar validity; phase 3's mandatory projection must assess whether its epoch mapper can produce an out-of-range `Date` and route any new refinement through the intention/plan rather than silently changing the shared value contract. | phase-3 projection | phase-3 reviewer prompt | phase-2 review N6 |

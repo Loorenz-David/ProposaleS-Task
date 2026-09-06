@@ -888,7 +888,25 @@ All carry `details.system = "proposales"` and `details.status` where an HTTP sta
 
 **Transport precedence.** Classify a non-2xx reply by its HTTP status before examining whether its body is readable. Thus a `429` is `rate_limited_upstream` and a `5xx` is `server_error`, both retryable, even when the body is HTML, empty, or otherwise not JSON. `invalid_body` applies only when a successful (2xx) reply cannot be parsed as JSON; a successful JSON reply that fails its response schema remains `schema_mismatch`. A readable non-2xx body may supply only the bounded safe message and issues described above; it never changes the status classification. This closes the status × body-shape product rather than leaving retry behavior to parser order.
 
-**AI provider failures.** Same shape, `details.system` naming the provider generically, and — because contract `07-integrations.md` §4 assumes only Proposales' messages are safe — **the provider message never crosses**; it lives in `cause`. Reasons: `unauthenticated_upstream`, `timeout`, `rate_limited_upstream`, `server_error`, `transport`, `content_filtered`, and `not_configured` (§17A.15).
+**AI provider failures.** Same shape, `details.system` naming the provider generically, and — because contract `07-integrations.md` §4 assumes only Proposales' messages are safe — **the provider message never crosses**; it lives in `cause`. Unlike the Proposales table above, no upstream text is bounded and forwarded: the message is always the fixed generic string.
+
+**The map is total over what the boundary can produce** (owner ratification, §23 round 17):
+
+| Upstream condition | `details.reason` | `details.retryable` |
+|---|---|---|
+| provider factory construction or model-factory invocation throws | `not_configured` | false |
+| 401 | `unauthenticated_upstream` | false |
+| 429 | `rate_limited_upstream` | true |
+| 5xx | `server_error` | true |
+| **any other 4xx** (403, 404, 408, 422, …) | `request_rejected` | false |
+| the provider's reply cannot be decoded as its own protocol (unreadable or shape-invalid response) | `invalid_response` | false |
+| abort or timeout raised locally | `timeout` | true |
+| network failure at the SDK invocation (DNS / connect / socket) | `transport` | true |
+| the provider reports the generation was filtered | `content_filtered` | false |
+
+Nine members (§17A.15). `request_rejected` and `invalid_response` were added by owner decision on the phase-8 projection card; before them, an ordinary rejected request and a malformed provider reply had no faithful label, and calling either a `transport` failure would have advertised a retry for a request that can never succeed — contract `07-integrations.md` §4 requires non-`429` 4xx to be nonretryable.
+
+**Three boundaries this table does not cross.** A **408** is a reply the provider sent and is therefore a rejected request, not a local `timeout`. A response the *provider* could not encode is `invalid_response`; text the *model* generated that fails **our** schema is not an integration failure at all (next paragraph). An arbitrary thrown value that is not a recognizable provider or SDK error is a programming error under contract `04-server-architecture.md` §6 — it is never relabelled as transport, and retryability is never inferred from a message substring.
 
 **Model output that fails our schema after bounded retries is not an integration failure:** `validation_error` with `details.reason = "model_output_invalid"` and the issue **paths only** — never the model's text — and the run ends `failed` (§15.2 row 2).
 
@@ -1203,3 +1221,9 @@ A later implementation satisfies this intention when all of the following hold. 
 **Round 16 (2026-09-06, editorial correction ahead of phase 8).** Status stays `RATIFIED`.
 
 - **§17A.15's code-shape paragraph corrected** (master plan §11 follow-up 4, raised at planning round 1 and held until it became load-bearing). The claim that a `string` does not satisfy the SDK's language-model type is false for `ai@7.0.92`: `LanguageModel` is `GlobalProviderModelId | LanguageModelV4 | LanguageModelV3 | LanguageModelV2`. The accurate phrasing is `Exclude<LanguageModel, string>`, which master plan §6.4 already registers as `LanguageModelInstance` and phase 8 C1(c) already asserts. **No mechanism changed** — the explicit-provider rule and the never-assign rule on `globalThis.AI_SDK_DEFAULT_PROVIDER` are untouched — so this is editorial and the ratification gate stays closed. Folded now rather than later because phase 8's projection reads this paragraph as its authority.
+
+**Round 17 (2026-09-06, phase-8 projection owner decision).** Status stays `RATIFIED`.
+
+- **Card 1 → add the two reasons.** The owner selected the recommended option: `request_rejected` and `invalid_response` join the AI provider failure registry, both nonretryable. The projection showed the map was **not total** — §17A.13 named seven reasons while contract `07-integrations.md` §4 requires every non-`429` 4xx to be classified and nonretryable, and a provider reply that fails its own protocol had no label at all. The alternative was to broaden an existing reason, which would have made a `transport` failure — the one reason that advertises a retry — cover requests that can never succeed.
+- **§17A.13's AI paragraph is now a total table** in the same form as the Proposales table above it, with the three boundaries the table must not cross stated explicitly: a `408` is a rejected request and not a local timeout; a provider-encoding failure (`invalid_response`) is distinct from model-generated text failing our schema (`model_output_invalid`, which is not an integration failure); and an unrecognizable thrown value stays a programming error under contract `04-server-architecture.md` §6 rather than being relabelled.
+- This closes a gap in an existing mechanism rather than adding one. No capability, endpoint, persistence, transport, or external call changed, so the ratification gate stays closed. Master plan §6.3 carries the nine-member registry and phase 8 C4 asserts one row per reason.
