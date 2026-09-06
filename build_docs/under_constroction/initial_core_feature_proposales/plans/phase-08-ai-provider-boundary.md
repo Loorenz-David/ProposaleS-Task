@@ -114,3 +114,25 @@ changed. The future timeout observable, message shape, internal signature test s
 SDK failure shapes remain for the fresh projection's derivation; this lint is not semantic proof.
 No test run or L4 spent. Projection remains mandatory; the existing prompt content is unchanged,
 with only the prescribed `.prompt.` filename correction before launch.
+
+### Projection dispatch interrupted by external usage limit — 2026-09-06
+
+Astra window 01: coordinated, projected, implemented and reviewed by Codex Astra sub-contexts.
+Workflow label only: projection round 0 was launched as a fresh `gpt-6-astra` sub-context from
+`prompts/reviewer/phase-08-projection-round-0.prompt.reviewer.md` alone, but terminated at the
+platform usage limit before depositing a handoff. No projection verdict exists and no ledger
+is consumed. Phase remains `NOT_STARTED`; implementation is not dispatched.
+
+At HEAD `d9cd8da5dfff23bec6cf9f25687f00370f7f8fd0`, post-failure porcelain status was empty;
+there were no partial agent writes. The only report in the handoff tables was the historical
+opening blocker, already resolved under master §3A. Zero tests, L4 stamps, mutation probes,
+package installs or model-provider calls ran. Coordinator report:
+`handoffs/coordinator/astra-window-01-round-2.handoff.coordinator.md`.
+
+An independent coordinator count command over all fifteen acceptance tables (expanding lettered
+row spans and retaining letter suffixes in mutation IDs) reconfirmed master §4:
+criteria `5+7+6+8+8+8+8+6+6+6+8+8+7+8+5 = 104`;
+rows `22+52+51+80+61+54+57+26+22+25+28+33+26+32+18 = 587`;
+mutations `11+19+16+35+21+5+21+4+4+5+7+4+4+4+4 = 164`.
+The first diagnostic regex omitted mutation letter suffixes and was corrected before relying
+on its output; no artifact count changed.
