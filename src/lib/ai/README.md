@@ -1,0 +1,24 @@
+# AI provider boundary
+
+The application imports `@/lib/ai` for model generation. This server-only adapter owns provider
+selection, vendor SDK imports, model construction, message/tool conversion, timeout forwarding,
+usage shaping, and provider error translation. Features and the agent runtime do not import
+`@ai-sdk/anthropic`, `@ai-sdk/openai`, or `ai` directly.
+
+`AI_PROVIDER`, `AI_MODEL`, and the conditional provider keys are validated by
+`src/lib/env/server.ts`; the adapter selects the configured key and constructs a model instance
+through the matching vendor factory. A string model id is deliberately not accepted by the
+internal SDK call seam because the AI SDK resolves strings through its default provider/gateway
+path. The installed-package evidence for that hazard is recorded in
+`build_docs/under_constroction/initial_core_feature_proposales/planing/proposales-source-evidence.md`
+§9.1.
+
+Every SDK call disables SDK retries (`maxRetries: 0`) and receives the caller's timeout signal.
+Phase 9 owns bounded output retries. The adapter reports only the three application usage fields,
+using `null` when the provider did not report a figure. Provider failures become
+`AiProviderError` with a fixed safe message; provider messages, issues, and generated text remain
+in `cause` or a deliberate invalid-output candidate and never cross as an error DTO message.
+
+The scripted fake is the default test seam. It records attempted calls, including exhaustion, and
+the failing fake makes accidental model use explicit. No default-suite test makes a real provider
+call or reads `.env`.

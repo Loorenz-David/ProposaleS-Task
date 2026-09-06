@@ -36,7 +36,7 @@ Verified against `package.json`.
 |---|---|
 | Framework | Next.js 16, App Router, React 19 |
 | Language | TypeScript, `strict` |
-| AI layer | Vercel AI SDK (`ai`) installed; no model provider configured yet |
+| AI layer | Vercel AI SDK (`ai`) with Anthropic/OpenAI provider boundary in `src/lib/ai/` |
 | Runtime validation | Zod 4 |
 | Unit and component tests | Vitest 5 with React Testing Library and jest-dom; node project for server tests, jsdom project for app/component tests |
 | End-to-end tests | Playwright, Chromium |

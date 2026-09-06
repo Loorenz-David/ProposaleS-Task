@@ -1,7 +1,7 @@
 ---
 plan: 8
 phase: AI provider boundary (`@/lib/ai`)
-state: PROMPT_READY
+state: IMPLEMENTED
 date: 2026-09-06
 author: implementation-planner round 1; amended by the coordinator at the projection round-0 fold
 ---
@@ -362,3 +362,31 @@ every level. Project totals re-derived across all fifteen tables: **104 / 608 / 
 **Evidence spent in this fold: none.** No test, no L4 stamp, no mutation, no install, no provider
 call. The projection's own zero-run budget was honoured — its handoff claims no run, `src/lib/ai/`
 is still absent, and neither vendor package appears in `package.json`.
+
+### Implementer round 1 — 2026-09-06 (Codex)
+
+Implemented the complete `src/lib/ai/` boundary: provider-neutral types and closed message forms,
+named run constants, Anthropic/OpenAI instance registry, fixed-message `AiProviderError` with the
+total nine-reason translation, `createAiClient`/`callModel`, SDK message/tool/output conversion,
+per-call timeout and `maxRetries: 0`, three-field usage mapping with `null` for absent figures, and
+the scripted/failing fakes. The barrel exports only the public domain surface; vendor factory
+internals and `callModel` remain unexported from the barrel. Added `src/lib/ai/README.md`.
+
+The normal install resolved `ai` 7.0.92, `@ai-sdk/anthropic` 4.0.49, `@ai-sdk/openai` 4.0.60,
+and `@ai-sdk/provider-utils` 5.0.36. `package.json` gained the two vendor dependencies; the
+lockfile gained the two package records and root dependency entries, with no manual edits. The
+root README's stale “no model provider configured yet” line was updated after verification.
+
+Coverage map and pre-edit baseline are in the implementer handoff. The phase test files add 45
+tests, and their 47 acceptance rows are mapped there. Named mutation execution was complete:
+MUT-08-1, -2, -3, -4a, -4b, -4c, -5, -6, -7, -8, -9, -10, -11, -12, -13, and -14 each reddened
+the specified row and was restored byte-identically. The only implementation judgment beyond the
+plan was to let an unrecognizable thrown value become a generic `IntegrationError` with
+`system: "ai_provider"`, no fabricated reason, and the original cause; this preserves the
+intention's programming-error boundary while all recognizable provider failures use
+`AiProviderError`.
+
+Applicable contracts used: 02 §§3,8; 06 §5; 07 §§4,5,8,10; 08 §§3,7,8; 10 §§2,11; 11 §§1–5;
+12 runtime/integration/agent/dependency/testing sections; 13 §§1–3; and 14 §§8–9. No persistence,
+client, UI, or feature README was implicated. Documentation impact review found the root README
+and the new integration README were the authoritative updates required.
