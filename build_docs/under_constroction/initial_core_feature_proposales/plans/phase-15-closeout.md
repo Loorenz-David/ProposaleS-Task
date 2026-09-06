@@ -73,6 +73,8 @@ From phase 8 review round 1 (coordinator, 2026-09-06).
 
 4. **The public barrel's *negative* surface is unguarded** (review N4). `src/lib/ai/index.ts` deliberately does **not** export `callModel` or any vendor factory internal — projection D22 required it, the implementer honoured it, and the reviewer verified it by reading the file. No row asserts it, so nothing stops a later phase from widening the barrel and letting an internal seam or a vendor type escape the boundary. Phase 15's C2 already scans for vendor imports and is the right instrument; extend it to assert the exported surface of `@/lib/ai` is exactly its declared public list, with a planted extra export as the named mutation. The same shape will apply to `@/lib/agent`'s barrel once phase 9 exists.
 
+5. **The phase-7 purity guard is a §9.1 rule-17 defect and was deliberately left alone** (phase-9 projection, routed here 2026-09-07). `rank-candidates.test.ts:63`–`:83` carries eight inline regex literals inside one `it()`, with no row proving the instrument fires — the shape rule 17 was written against, and the same shape phase 8 shipped and had to repair. Phase 9 is not the place to fix it: phase 7 is approved and its test file lies outside phase 9's perimeter, so extracting the predicate across both would widen a phase perimeter into a closed phase. Adopt phase 9's shared `test/helpers/agent-boundary-scan.ts` symbol here, where the isolation scans already live, and give the adoption a planted-form proof row.
+
 ## Notes
 
 - C3 is automated and opt-in (intention §16.3's closing paragraph); it is the only criterion family not run by the closing L4 stamp. The Review log records the last live run's date and tree identity when one is made.
