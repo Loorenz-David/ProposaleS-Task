@@ -5,7 +5,7 @@ export function MainApplicationSurface({ state }: { state: MainSurfaceState }) {
   return (
     <main
       id="main-content"
-      aria-labelledby="proposal-preparation-title"
+      aria-label="Proposal preparation"
       tabIndex={-1}
       data-surface-state={state}
       className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-[var(--color-bg)]"

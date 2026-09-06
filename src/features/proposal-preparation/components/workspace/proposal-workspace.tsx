@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { AgentSurface } from "./agent-surface";
 import { MainApplicationSurface } from "./main-application-surface";
@@ -11,8 +12,12 @@ export function ProposalWorkspace() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [isResizing, setIsResizing] = useState(false);
-  const [announcement, setAnnouncement] = useState("");
+  const [announcementKey, setAnnouncementKey] = useState(0);
   const { width, effectiveMax, setWidth, reset } = useDividerWidth(containerWidth);
+
+  const announceReset = () => {
+    flushSync(() => setAnnouncementKey((key) => key + 1));
+  };
 
   useEffect(() => {
     const root = rootRef.current;
@@ -38,7 +43,7 @@ export function ProposalWorkspace() {
       </div>
       <WorkspaceDivider
         effectiveMax={effectiveMax}
-        onAnnouncement={() => setAnnouncement("Agent panel reset to default width")}
+        onAnnouncement={announceReset}
         onReset={() => reset()}
         onResizeEnd={() => setIsResizing(false)}
         onResizeStart={() => setIsResizing(true)}
@@ -48,7 +53,9 @@ export function ProposalWorkspace() {
       />
       <MainApplicationSurface state="idle" />
       <span aria-live="polite" className="sr-only" data-divider-announcement>
-        {announcement}
+        {announcementKey > 0
+          ? `Agent panel reset to default width${"\u200b".repeat(announcementKey)}`
+          : null}
       </span>
     </div>
   );

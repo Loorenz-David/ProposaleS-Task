@@ -576,3 +576,41 @@ standing rules added today are the general form of that, and the cross-family sp
 this round see it — the implementer was Codex, the reviewer was Claude, and phase 01's review ran
 without that property and found less.
 
+**2026-09-07 — Codex, fix round 2 implementation.** The routed corrections are implemented in
+the cycle-scoped perimeter: the C5 scanners now read source contents with non-empty subject
+guards; C5(c) enumerates exports and the four state members as sets; C5(d) includes the required
+file/export noun denylist; C6(a) uses an accessible-role allowlist in Vitest and the Chromium AX
+tree; C4 condition 2 uses authored class/style/opt-in declarations and measures every descendant
+overflow plus every content-column width; C4 conditions 3 and 4 set their named viewport; C4(4)
+records `unmeasured` at all three widths because no product text elides in this shell; C1(f) uses
+separate landmark handles and proves the divider value changed; C2(b) uses constants-derived
+viewports and waits past the pre-observer maximum; C2 announcements are counted by a pre-action
+MutationObserver, including two consecutive resets and non-reset silence; the live region carries
+a monotonic zero-width marker so every reset mutates it exactly once. The first-paint hook uses a
+constants-derived wide fallback until its observer measures the container, keeping `aria-valuenow`
+inside `[aria-valuemin, aria-valuemax]`; `main` owns the stable accessible name `Proposal
+preparation`; and the probe-dependent `flex-none` was removed. `overflow-x-hidden` remains a
+deliberate main-pane containment choice: it prevents document-level horizontal spill while the
+condition-2 instrument still measures descendant scroll widths.
+
+The six dropped phase-01 assertions restored here are the focus probe's `toBeFocused`, C3's
+non-empty caveat-property set and one-test-per-property enumeration, C7 correction 2's non-empty
+ink-property set, C7 correction 5's focus assertion, and both reduced-motion correction 6
+`animation.name !== "none"` assertions. The carried title test retains inherited evidence
+identity; only the skip-link row is `C1(d)`. The phase-02 fix's delegated judgment is the
+constants-derived pre-observer fallback described above; no new package, route, persistence,
+surface, or design treatment was introduced. No owner decision is required.
+
+Baseline re-enumeration before edits: `npm test` 154/154, `npm run test:e2e` 49/49,
+`npm run typecheck` green, `npm run lint` green as `eslint .` with `test-results/` absent, and
+`npm run build` green. The round-1 claim that lint failed because `test-results/` was absent is
+not reproducible and is recorded as undiagnosed rather than carried forward. Closing targeted
+verification after the fix: 154/154 unit, 66/66 E2E, typecheck, lint and build green.
+
+All 17 named mutations were executed and reverted: C1 3, C2 3, C3 1, C4 4, C5 4, C6 2. Sixteen
+reddened the named assertion(s). C4(g) was executed against the corrected condition-4 instrument
+at 780px and remained explicitly `unmeasured`, because the product shell has no naturally elided
+text; it is not reported as a green proof. The required extra C4 condition-2 probes planted a
+4000px child in the agent pane and main pane independently at 1440, 1100 and 780; all six runs
+reddened the authored-declaration instrument. Mutation sites and observed IDs are in the fix
+handoff.

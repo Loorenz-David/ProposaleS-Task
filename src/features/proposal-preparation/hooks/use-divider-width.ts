@@ -20,8 +20,10 @@ export function clampDividerWidth(requested: number, containerWidth: number): nu
 
 export function useDividerWidth(containerWidth: number) {
   const [requestedWidth, setRequestedWidth] = useState(AGENT_PANE_DEFAULT_PX);
-  const effectiveMax = getEffectiveDividerMax(containerWidth);
-  const width = containerWidth > 0 ? clampDividerWidth(requestedWidth, containerWidth) : requestedWidth;
+  const effectiveContainerWidth =
+    containerWidth > 0 ? containerWidth : AGENT_PANE_MAX_PX + MAIN_PANE_MIN_PX;
+  const effectiveMax = getEffectiveDividerMax(effectiveContainerWidth);
+  const width = clampDividerWidth(requestedWidth, effectiveContainerWidth);
 
   const setWidth = useCallback(
     (requested: number) => setRequestedWidth(requested),
