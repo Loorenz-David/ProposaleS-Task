@@ -4,7 +4,7 @@
 |---|---|
 | **State** | `NOT_STARTED` |
 | **Criteria** | 6 |
-| **Projection** | waivable |
+| **Projection** | **not waived** — mandatory in Fable window 01 (master plan §3A consequence 1; §7.2 lists 02 as waivable outside the window) |
 | **Serves** | F30 · F26 · F29 (A row 4) · F24 · F6 |
 
 ## Goal
@@ -51,7 +51,13 @@ src/features/proposal-preparation/hooks/use-divider-width.ts  new
 src/features/proposal-preparation/types/presentation.ts       new — MainSurfaceState
 e2e/workspace.spec.ts                                         new — replaces e2e/bootstrap.spec.ts
 e2e/bootstrap.spec.ts                                         deleted
+src/styles/theme.test.ts                                      edited — phase 01's C6(a)/(c) guard retired (task 8)
+README.md                                                     edited — current-state statements this phase makes stale (task 9)
 ```
+
+*(The last two rows were added by the coordinator's pre-dispatch lint on 2026-09-06 — see the
+Review log. `src/styles/theme.test.ts` reads `e2e/bootstrap.spec.ts` from disk, so deleting that
+spec without retiring the guard cannot close green.)*
 
 ## Ordered tasks
 
@@ -84,8 +90,25 @@ e2e/bootstrap.spec.ts                                         deleted
 7. **Establish the containment perimeter** as a source-level check with a planted probe, per
    §12A.23's closed forbidden list.
 8. **Replace the end-to-end spec** with `e2e/workspace.spec.ts` asserting the two landmarks, the
-   skip link, and keyboard reachability of the main content. Delete `bootstrap.spec.ts`.
-9. Closeout: contract 14 §8's impact review, tracker row, Review log.
+   skip link, and keyboard reachability of the main content. Delete `bootstrap.spec.ts`. **Retire
+   phase 01's C6(a)/(c) guard** — the `describe("C6(a)/(c): …")` block in `src/styles/theme.test.ts`
+   that reads `e2e/bootstrap.spec.ts` and asserts it names no landmark or skip link. Its subject is
+   deleted by this task and its assertion is the negation of this phase's C1; delete exactly that
+   block and nothing else in the file (its imports stay in use by the other checks). Carry the
+   phase-01 rows C2, C3(a) and C7(a) that `bootstrap.spec.ts` discharged into `workspace.spec.ts`
+   **unchanged in substance**: they are phase 01's approved evidence and this phase relocates them
+   because it retires their host file, not because it owns them.
+9. Closeout: contract 14 §8's impact review, tracker row, Review log. Known in advance (master plan
+   §10.2 caveat 4's reading: "every document this phase's change makes stale"): the root
+   `README.md`'s status paragraph and "Current scope" bullets ("a bare root layout, a neutral `/`
+   route"), its tree-diagram entry for `src/app/` ("neutral root route"), its
+   `src/features/proposal-preparation` sentence ("exists today only as phase 01's test-collection
+   sentinels"), and its Playwright bullet naming `e2e/bootstrap.spec.ts`. Because this phase patches
+   `README.md`, master plan §11.3 follow-up 10's README half — the "integrations under `src/lib/**`
+   … neither exists yet" claim — lands here too, per that follow-up's own routing ("the next phase
+   that patches either document"). The contracts-README half of follow-up 10 stays where it is:
+   this phase does not patch that document. The impact review also covers what this list does not
+   name.
 
 ## Acceptance criteria
 
@@ -94,12 +117,14 @@ e2e/bootstrap.spec.ts                                         deleted
 | **C1** | The shell renders exactly one complementary region and exactly one `main`, both named and both present from the first render. (a) Exactly one element with the complementary role, carrying an accessible name. (b) Exactly one `main`. (c) `src/app/page.tsx` carries no `"use client"` directive and the directive appears on the workspace root. (d) Planted-defect probe: add a second `main` inside the Main Application Surface, observe (b) redden, revert. | 4 | F30 · §12A.23 · `02 §1–§2` |
 | **C2** | The divider is a real separator with design 02 §5's keyboard model. (a) It exposes the separator role, vertical orientation, an accessible name, and current, minimum and maximum values. (b) The maximum is the **effective** maximum and is recomputed when the viewport changes — asserted at two viewport widths whose effective maxima differ. (c) One row per keyboard interaction: arrow decrease, arrow increase, shifted decrease, shifted increase, `Home`, `End`, reset — seven rows, enumerated, each asserting the resulting width against the clamp contract rather than a literal. (d) Reset announces politely, exactly once; a drag announces nothing. (e) Focus stays on the divider across every interaction in (c), including reset. (f) It is operable without a pointer. | 6 | F26 · F6 · F24 (divider-reset row) · §12A.19 |
 | **C3** | The clamp is the specification's arithmetic, including its ordering. (a) A requested width below the agent minimum resolves to the agent minimum. (b) A requested width above the agent maximum resolves to the agent maximum. (c) At a viewport where the main-pane minimum and the agent minimum cannot both hold, **the agent minimum wins** and the main pane is squeezed — the ordering row, stated because the opposite ordering is the natural implementation and is wrong. (d) A viewport change re-clamps an already-set width. (e) The width is asserted against the named constants' contract, never their literals. (f) Planted-defect probe: reverse the clamp's ordering, observe (c) redden, revert. | 6 | F26 · §12A.19 · charter rule 13 |
-| **C4** | All five §12A.19 conditions hold **simultaneously** at every width in the named test set, verified by rendering. One row per width in the set — the designed wide width, the specification's two stated thresholds, and the V1 floor — each asserting all five conditions: the document does not scroll horizontally; no pane's content overflows its own pane except inside a container that declares its own horizontal scroll; every interactive element of this phase is reachable and operable by keyboard; no text node is clipped to zero rendered width and any elided text keeps its full value in the accessible name; the agent pane is never rendered below its stated minimum. Plus a planted-defect probe: give a content column a fixed width instead of a maximum, observe the narrowest width's row redden, revert. | 5 | F26 · §12A.19 |
-| **C5** | The V1 containment perimeter holds, and its check can observe a breach. (a) No router, route, URL segment, query parameter, history entry, or navigation event exists for a workspace surface. (b) No surface registry, surface map, surface factory, provider that resolves a surface, plugin point, or extension point exists. (c) No discriminant whose domain is "which application surface" exists — `MainSurfaceState` is asserted to be a state discriminant inside the one surface, by naming its four members against §12A.22 (A)'s four rows. (d) No second Main Application Surface, dashboard, analytics surface, product library, customers or settings surface, proposal list, or session-history surface exists. (e) **Planted-defect probe, required:** add a second member to a surface-kind discriminant, observe (c) redden, revert; and add a second `main`-bearing surface module, observe (d) redden, revert. | 5 | F30 · §12A.23 · `12` "Structure and abstraction" |
+| **C4** | All five §12A.19 conditions hold **simultaneously** at every width in the named test set (`NARROW_WIDTH_TEST_SET`, master plan §6.4), verified by rendering. One row per width in the set, each asserting all five conditions: the document does not scroll horizontally; no pane's content overflows its own pane except inside a container that declares its own horizontal scroll; every interactive element of this phase is reachable and operable by keyboard; no text node is clipped to zero rendered width and any elided text keeps its full value in the accessible name; the agent pane is never rendered below its stated minimum. (a) The designed wide width. (b) The specification's upper stated threshold. (c) The specification's lower stated threshold. (d) The V1 floor. (e) Planted-defect probe: give a content column a fixed width instead of a maximum, observe (d) redden, revert. | 5 | F26 · §12A.19 |
+| **C5** | The V1 containment perimeter holds, and its check can observe a breach. Every absence row here is over an open universe, so each names its instrument, and a denylist row records its limit inside the criterion (phase-01 review lesson; master plan §6.5A's allowlist rule). (a) No router, route, URL segment, query parameter, history entry, or navigation event exists for a workspace surface. **Instrument:** an allowlist — the route files under `src/app/` are exactly `layout.tsx` and `page.tsx` — plus a denylist over `src/app/**` and `src/features/**` source: no import from `next/navigation` or `next/link`, no `useRouter` / `usePathname` / `useSearchParams`, no `history.pushState` / `history.replaceState`, no assignment to `window.location` or `location.hash`. Recorded limit: a navigation mechanism outside that list is not observed by this row. (b) No surface registry, surface map, surface factory, provider that resolves a surface, plugin point, or extension point exists. **Instrument:** a denylist over `src/features/**` source for the identifier fragments `Registry`, `SurfaceMap`, `surfaceFactory`, `createSurface`, `resolveSurface`, `SurfaceProvider`, `plugin`, `extension`. Recorded limit: a registry under a name outside that list is caught only by (c) or (d). (c) No discriminant whose domain is "which application surface" exists. **Instrument:** an allowlist — `types/presentation.ts` exports exactly the type names master plan §6.3 assigns to it (in this phase, `MainSurfaceState` alone; a later phase amends the list when it adds §6.3's other members), and `MainSurfaceState`'s members are exactly `creating`, `created`, `review`, `idle` — §12A.22 (A)'s four rows — so it is a state discriminant inside the one surface and no other exported type in that module can carry a surface-kind domain. (d) No second Main Application Surface, dashboard, analytics surface, product library, customers or settings surface, proposal list, or session-history surface exists. **Instrument:** an exact count — exactly one module under `src/` renders a `main` element, and it is `MainApplicationSurface` — plus a denylist over file and exported-component names under `src/app/**` and `src/features/**`: `Dashboard`, `Analytics`, `Statistics`, `ProductLibrary`, `Customers`, `Settings`, `ProposalList`, `SessionHistory`, `Archive`. Recorded limit: a second surface under a noun outside that list is caught only by the `main` count. (e) **Planted-defect probes, required, two:** add a second exported union whose domain is surface kinds (`ApplicationSurface = "proposal-preparation" \| "dashboard"`) to `types/presentation.ts`, observe (c) redden, revert; and add a second module under `src/features/` that renders a `main` element, observe (d) redden, revert. | 5 | F30 · §12A.23 · `12` "Structure and abstraction" |
 | **C6** | The idle Main Application Surface renders the Proposal Preparation experience's own no-proposition state. (a) It renders an honest empty state with no proposition, no list, no statistics, and no navigation. (b) It renders inside the single `main`, without replacing it. (c) It offers no affordance that changes the URL or mounts a route. (d) Entering it moves no focus and fires no announcement of its own. | 4 | F29 (A row 4) · F30 · §12A.22 |
 
-**Derived totals for this phase:** 6 criteria, 30 rows, 4 named mutations (C1(d), C3(f), and
-C5(e)'s two). Re-derive at dispatch.
+**Derived totals for this phase:** 6 criteria, 30 rows (C1 4 · C2 6 · C3 6 · C4 5 · C5 5 · C6 4),
+**5** named mutations (C1 1 · C2 0 · C3 1 · C4 1 · C5 2 · C6 0 — C1(d), C3(f), C4(e), and C5(e)'s
+two). Re-derived by the coordinator's pre-dispatch lint on 2026-09-06 from the criteria table; the
+planner's "4" omitted C4's probe. Re-derive at dispatch.
 
 ## Notes
 
@@ -114,7 +139,50 @@ C5(e)'s two). Re-derive at dispatch.
   list is the failure this note exists to prevent.
 - Pane width is never persisted: no `localStorage`, no cookie, no URL parameter, and no store
   shape justified by future serialisation (contract 05 §5.2, intention §7).
+- **Carried from the phase-01 review (N4).** The theme layer declares **no transition or easing
+  value**, and design 01's open question 3 (hover easing) is unresolved. Design 02 §6 says "consider
+  a single 120ms eased transition" on reset — that is a suggestion this phase does **not** take: it
+  adds no transition, no easing, and no theme value. A phase that wants one amends master plan
+  §6.5A first (standing rule 4).
+- **Phase 01's guards bind this phase's code.** C1(a)'s scanner rejects raw hex, `text-[…px]`,
+  `rounded-[…]` and `shadow-[…]` literals in any `src/**` source; C7(b)'s allowlist rejects any
+  custom property name not in design 01's ramps, so this phase **adds no name to `theme.css`** —
+  every colour it needs (`--color-bg-agent-pane`, `--color-bg-resize-active`, `--color-accent`,
+  `--color-border-hairline`, `--color-border-control`, `--color-focus`) already exists; C5(b) keeps
+  `src/components/ui/` empty. Layout dimensions (the seam width, the hit area, the grip) are
+  Tailwind spacing utilities or the runtime-computed inline width, never theme values (§6.5A's
+  eight ramps carry no spacing).
 
 ## Review log
 
-*(empty)*
+**2026-09-06 — coordinator (Fable window 01), pre-dispatch plan lint, before projection.**
+Fable window 01: coordinated, projected, implemented and reviewed by Claude Fable 5.1 sub-contexts
+(master plan §3A). Five manifest properties checked at source; four folds applied to this plan,
+none changing product semantics:
+
+1. **Count.** The named-mutation total read "4" while the criteria table carries five: C4's own
+   text names a planted-defect probe. Re-derived with per-criterion summands (C1 1 · C3 1 · C4 1 ·
+   C5 2 = **5**); C4's rows lettered (a)–(e) so the probe is addressable. Row total 30 confirmed
+   (4 + 6 + 6 + 5 + 5 + 4).
+2. **Perimeter-vs-guard collision.** `src/styles/theme.test.ts` (phase 01, C6(a)/(c)) reads
+   `e2e/bootstrap.spec.ts` from disk and asserts it names no `main`, no `banner` and no skip link.
+   This phase deletes that file and asserts exactly those things, so the guard throws or reddens
+   in a file the plan did not permit anyone to touch. Folded: the file joins the perimeter and task
+   8 retires that one block. The phase-01 rows the deleted spec discharged (C2, C3(a), C7(a)) are
+   relocated into `workspace.spec.ts` unchanged, so phase 01's approved evidence survives.
+3. **Standing instructions naming this phase.** Master plan §6.2 (skip link, spec replacement),
+   §6.4 (the four constant groups), §11.3 follow-up 4 — all already in the plan. Follow-up 10
+   routes its README half to "the next phase that patches either document"; this phase patches
+   `README.md`, so task 9 now carries it, together with the README statements this phase's own
+   change makes stale.
+4. **Open-universe absence rows state their instrument** (the lint step adopted from phase-01
+   review round 1): C5(a)–(d) each now name allowlist or denylist and a denylist row records its
+   limit; C5(e)'s two probes are stated against the instruments they must redden.
+
+Also carried into the Notes: phase-01 review N4 (no easing value exists; design 02 §6's reset
+transition is not taken) and the phase-01 guards this phase's code must satisfy. Every path in
+"Files expected to change" exists or is marked new; every cited section resolves and says what the
+plan claims; every trace cell carries a `F`/`§12A` anchor. The V1 floor and the designed wide
+width of `NARROW_WIDTH_TEST_SET` are **not numerically fixed by any authority** (design 02 §3.3
+states the two thresholds only) — left for the projection to classify rather than pre-empted here.
+Sizing: 6 criteria, within the charter's target.
