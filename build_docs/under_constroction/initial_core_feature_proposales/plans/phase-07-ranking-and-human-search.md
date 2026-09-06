@@ -139,7 +139,7 @@ Phase 6 `APPROVED`.
 | C4(c) | exactly at the cap | the exactly-`MAX_CANDIDATE_DESCRIPTION_CHARS` item | description verbatim, `truncated === false` (half-open: only `> cap` truncates) | MUT-07-9 `rank-candidates.ts` · `rankCandidates`, definition · `>` to `>=` on the truncation test → C4(c) red | §17A.8 |
 | C4(d) | absent description | the item with no `en` `description` key, matched on its title | `description === ""`, `truncated === false`, and the item **is** a candidate | — | §17A.8 |
 | C5(a) | missing language excluded | `language: "sv"`, the item with no `sv` title key, query matching its `en` text | not in candidates | — | §17A.8, crit 13 |
-| C5(b) | empty title excluded | `language: "sv"`, the item whose `sv` title is whitespace only, query matching its `en` text | not in candidates | MUT-07-10 `rank-candidates.ts` · `rankCandidates`, definition · weaken the filter to a presence check (drop "non-empty after trim") → C5(b) red | §17A.8 |
+| C5(b) | empty title excluded | `language: "sv"`, the item whose `sv` title is whitespace only, and a query term drawn from **that item's own `sv` description**. **Corrected 2026-09-06:** the row previously specified a query matching the item's `en` text, which gave the exclusion a second sufficient cause — with the title filter removed the item still scored 0 against its `sv` text and stayed excluded through the floor, so MUT-07-10 left the row green. A query the item's own `sv` description answers clears the floor under the mutation and only under it | not in candidates | MUT-07-10 `rank-candidates.ts` · `rankCandidates`, definition · weaken the filter to a presence check (drop "non-empty after trim") → C5(b) red | §17A.8 |
 | C5(c) | matching in the proposal language | the term present only in one item's `sv` description | that item is a candidate for `sv`; for `en` the same query returns `[]` | — | §17A.8 |
 | C5(d) | catalog languages | | `catalogLanguages(FIXTURE_CATALOG)` deep-equals `["en", "sv"]` — `"no"` is absent because no item carries a non-empty `no` title | MUT-07-11 `rank-candidates.ts` · `catalogLanguages`, definition · drop the non-empty-after-trim filter → C5(d) red (yields `["en", "no", "sv"]`) | §17A.8, crit 13 |
 | C6(a) | strong before possible | the 3-token query of the Notes table | the `778` item precedes the `667` item | — | M12 |
@@ -169,7 +169,7 @@ Phase 6 `APPROVED`.
 | C8(i) | `score` at the scale ceiling | `score: SCORE_MAX` | `success === true` | — | §17A.8 |
 | C8(j) | `matchStrength` invalid | `matchStrength: "excellent"` | `success === false`; exactly one issue, path `["matchStrength"]` | — | 11 §3 (phase-5 N6) |
 | C8(k) | `reason` invalid | `reason: "   "` | `success === false`; exactly one issue, path `["reason"]` | — | 11 §3 (phase-5 N6) |
-| C8(l) | unknown key rejected | valid fixture plus `extra: 1` | `success === false`; exactly one issue, path `["extra"]` | — | 06 §3 (strict objects) |
+| C8(l) | unknown key rejected | valid fixture plus `extra: 1` | `success === false`; exactly one issue, `code === "unrecognized_keys"`, `path` `[]`, `keys` `["extra"]`. **Corrected 2026-09-06:** the row previously said path `["extra"]`, which is the *flattened* shape `zodIssues` produces, not what raw Zod 4 emits — a strict object reports an unrecognized key once, at the object's own path, with the offending names in a separate `keys` array. `content-candidate.ts` has no flattening wrapper and is not asked for one, so this row asserts raw Zod. C7(j) asserts the flattened `["extra"]` because the service *does* flatten | — | 06 §3 (strict objects) |
 
 Criteria: 8 (C1–C8), 56 rows (a table line is one row; a lettered span counts its letters). Named mutations: 14 (MUT-07-1 … MUT-07-14). Per-criterion mutation counts: C1 4 · C2 3 · C3 1 · C4 1 · C5 2 · C6 1 · C7 1 · C8 1 = 14.
 
@@ -234,3 +234,30 @@ Handoff: `handoffs/implementer/phase-07-round-1.implementer.md`. All 9 declared 
 - **Candidate criterion:** none. Every test added traces to a declared row; no orphan.
 - **Fixture design note for future phases:** `fixtures/catalog.ts`'s 14 items are built so a single shared query (`"service"`) ties every item at score 1000 (every en title carries that token), which is what makes the `variationId` tie-break exercisable catalog-wide rather than only between the one designated identical-text pair (ids `"9"`/`"10"`). A second token (`"premium"`) appears in exactly two titles and nowhere else, serving C3(c). Both are reused in the service test's C7(b) literal expected order.
 - **Evidence:** closing L4 stamp — `npm test`: 24 files / 334 tests green (was 20/278 at phase 6's close; +4 test files, +56 tests, exactly the phase's row count). `npm run typecheck` clean. `npm run lint` clean. Tree: HEAD `a9bfabe`, dirty with exactly the 9 declared paths (`git status --porcelain` and `git diff --stat` both confirm no file outside the declared perimeter changed). All 14 named mutations applied at their named site, observed red, and reverted; tree confirmed byte-identical to its pre-mutation state after each revert by re-running the full domain-scoped suite (171/171 green) between mutations and again at the end.
+
+**Coordinator fold of implementation round 1 (2026-09-06).** Handoff consumed and reconciled;
+tracker row 7 → `REVIEWING`. The checkpoint is `f2399ac`.
+
+- **Perimeter verified against the tree, not accepted as claimed.** `git show --stat f2399ac`
+  is exactly the 11 declared files (9 code + 2 documents); `git status --porcelain` afterwards
+  shows only `tsconfig.tsbuildinfo` (master §11 follow-up 8, a known incremental-build artifact,
+  correctly left unstaged) and this handoff. No undeclared write.
+- **Arithmetic reconciled.** The four new test files carry 12 + 12 + 21 + 11 = **56** `it` cases
+  and reference exactly the 56 declared row ids, matching the suite's +56 growth (278 → 334) and
+  the plan's derived row count. Mutations executed = declared = 14. L4 runs = 1 = budget.
+- **C8(l) corrected in the criteria table, in the implementer's favour.** Verified independently
+  against `zod@4.5.4`: `z.strictObject` emits one `unrecognized_keys` issue at the object's own
+  path with a `keys` array, so the row's stated path `["extra"]` was the *flattened* shape, which
+  only the service produces. The plan text was wrong and the implementation is right. Routed
+  onward to master §11 follow-up 7, which already tracks the neighbouring Zod-4 path defect in
+  contract `06` §8.
+- **C5(b) corrected in the criteria table, and the lesson routed upward.** The row as planned had
+  two independent sufficient causes — the title filter *and* the score floor both produce "not a
+  candidate" — so MUT-07-10 left it green. The implementer's own mutation run caught it and
+  re-sited the query; that is the mutation ledger doing exactly the work it exists for. The
+  generalized rule is now master §9.1 rule 15, because the same shape is live in every later
+  phase that asserts a filter by absence.
+- **The plan authored that defect, not the implementer.** Recorded here rather than in the
+  handoff, because the coordinator owns the criteria table. **C5(a) has the identical shape and
+  no named mutation forced the same check** — it is a named probe in the review prompt rather
+  than a repair made here, so the judgment is the reviewer's.
