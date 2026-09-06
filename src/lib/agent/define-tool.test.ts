@@ -36,6 +36,24 @@ describe("defineTool", () => {
     expect(execute).not.toHaveBeenCalled();
   });
 
+  it("C1(a) coerces an array-index issue path to strings", async () => {
+    const tool = defineTool({
+      name: "nested_input",
+      description: "nested",
+      kind: "read",
+      input: z.strictObject({ items: z.array(z.strictObject({ answer: z.string() })) }),
+      output: z.strictObject({ ok: z.boolean() }),
+      execute: async () => ({ ok: true }),
+    });
+
+    const result = await tool.invoke({ items: [{ answer: 5 }] }, context);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok && result.error.code === "invalid_arguments") {
+      expect(result.error.issues[0]?.path).toEqual(["items", "0", "answer"]);
+    }
+  });
+
   it("C1(b) validates tool output", async () => {
     const tool = defineTool({
       name: "bad_output",

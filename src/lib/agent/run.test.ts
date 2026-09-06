@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
+import { AI_CALL_TIMEOUT_MS } from "@/lib/ai/config";
 import { createScriptedAiClient } from "@/lib/ai/scripted";
 import type { GenerateStepResult } from "@/lib/ai/types";
 import { defineTool } from "@/lib/agent/define-tool";
@@ -69,12 +70,16 @@ describe("agent run", () => {
     expect(result).toMatchObject({ status: "failed", failure: { budget: "tool_calls" } });
   });
 
-  it("C3(f) passes the remaining wall-time as the timeout ceiling", async () => {
+  it("C3(f) binds the per-call timeout to the remaining wall time when that is the smaller term", async () => {
     let index = 0;
-    const dependencies = deps([final(output)], () => [0, 500][index++] ?? 500);
-    await run({ system: "system", initialMessages: [], tools: [], outputSchema, toolContext: baseContext, budgets: { ...baseBudgets, wallTimeMs: 1000 } }, dependencies);
-    expect(dependencies.ai.stepOptions[0].timeoutMs).toBeGreaterThanOrEqual(1);
-    expect(dependencies.ai.stepOptions[0].timeoutMs).toBeLessThanOrEqual(500);
+    const dependencies = deps([final(output)], () => [0, 0, 500][index++] ?? 500);
+    await run({ system: "system", initialMessages: [], tools: [], outputSchema, toolContext: baseContext, budgets: { ...baseBudgets, wallTimeMs: AI_CALL_TIMEOUT_MS + 60_000 } }, dependencies);
+    expect(dependencies.ai.stepOptions[0].timeoutMs).toBe(AI_CALL_TIMEOUT_MS);
+
+    index = 0;
+    const bound = deps([final(output)], () => [0, 0, 500][index++] ?? 500);
+    await run({ system: "system", initialMessages: [], tools: [], outputSchema, toolContext: baseContext, budgets: { ...baseBudgets, wallTimeMs: 1000 } }, bound);
+    expect(bound.ai.stepOptions[0].timeoutMs).toBe(500);
   });
 
   it("C3(g) reports wall time first when two budgets are exhausted", async () => {
@@ -122,10 +127,15 @@ describe("agent run", () => {
   });
 
   it("C5(b) fails after the bounded invalid-output retries with string paths", async () => {
-    const invalidObject = { answer: 5 };
-    const result = await executeRun([final(invalidObject), final(invalidObject)]);
-    expect(result.result).toMatchObject({ status: "failed", failure: { reason: "model_output_invalid", issues: expect.any(Array) } });
-    if (result.result.status === "failed") expect(result.result.failure.issues?.every((issue) => issue.path.every((part) => typeof part === "string"))).toBe(true);
+    const nestedSchema = z.strictObject({ items: z.array(z.strictObject({ answer: z.string() })) });
+    const invalidObject = { items: [{ answer: 5 }] };
+    const dependencies = deps([final(invalidObject), final(invalidObject)]);
+    const result = await run({ system: "system", initialMessages: [], tools: [], outputSchema: nestedSchema, toolContext: baseContext, budgets: baseBudgets }, dependencies);
+    expect(result).toMatchObject({ status: "failed", failure: { reason: "model_output_invalid", issues: expect.any(Array) } });
+    if (result.status === "failed") {
+      expect(result.failure.issues?.[0]?.path).toEqual(["items", "0", "answer"]);
+      expect(result.failure.issues?.length).toBeGreaterThan(0);
+    }
   });
 
   it("C5(c) stops at one retry and does not exhaust the scripted client", async () => {
@@ -167,6 +177,18 @@ describe("agent run", () => {
     expect(dependencies.ai.calls).toHaveLength(1);
   });
 
+  it("C7(e) sends the run's system prompt, initial messages, tool descriptors and output schema to the model", async () => {
+    const tool = defineTool({ name: "echo", description: "echo", kind: "read", input: z.strictObject({}), output: z.strictObject({ answer: z.string() }), execute: async () => ({ answer: "tool-value" }) });
+    const seed: AgentMessage[] = [{ role: "user", content: "SEED-MESSAGE" }];
+    const dependencies = deps([final(output)]);
+    await run({ system: "SYSTEM-PROMPT-SENTINEL", initialMessages: seed, tools: [tool], outputSchema, toolContext: baseContext, budgets: baseBudgets }, dependencies);
+    const request = dependencies.ai.calls[0];
+    expect(request.system).toBe("SYSTEM-PROMPT-SENTINEL");
+    expect(request.messages).toEqual(seed);
+    expect(request.tools).toEqual([tool.descriptor()]);
+    expect(request.outputJsonSchema).toEqual(z.toJSONSchema(outputSchema, { io: "input" }));
+  });
+
   it("C7(d) logs operational ids and counts without model text", async () => {
     const log = logger();
     const dependencies = deps([final("MODEL-TEXT-SENTINEL"), final(output)]);
@@ -178,6 +200,14 @@ describe("agent run", () => {
     const end = records.find(([event]) => event === "agent.run.end");
     expect(start?.[1]).toMatchObject({ runId: "run-1", traceId: "trace-1" });
     expect(end?.[1]).toMatchObject({ runId: "run-1", traceId: "trace-1", toolCallCount: 0 });
+    expect(records.filter(([event]) => event === "agent.run.step")).toHaveLength(2);
     expect(JSON.stringify(records)).not.toContain("MODEL-TEXT-SENTINEL");
+
+    const withTool = logger();
+    const tool = defineTool({ name: "echo", description: "echo", kind: "read", input: z.strictObject({}), output: z.strictObject({ answer: z.string() }), execute: async () => ({ answer: "tool-value" }) });
+    const toolDeps = deps([calls({ toolCallId: "tc-1", name: "echo", input: {} }), final(output)]);
+    toolDeps.logger = withTool;
+    await run({ system: "system", initialMessages: [], tools: [tool], outputSchema, toolContext: baseContext }, toolDeps);
+    expect(withTool.info.mock.calls.find(([event]) => event === "agent.run.end")?.[1]).toMatchObject({ toolCallCount: 1 });
   });
 });
