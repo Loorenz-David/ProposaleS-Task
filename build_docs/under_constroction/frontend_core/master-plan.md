@@ -171,6 +171,56 @@ CHANGES_REQUESTED (→ IMPLEMENTING) → APPROVED`
   consumes, never a cherry-pick and never against a phase plan's proposed shape. Every
   merge is recorded in the gate log (§11).
 
+### 3A. Fable window 01 (owner authorization, 2026-09-06)
+
+**What this is.** The owner authorized, in
+`prompts/astra_prompts/astra-window-01-phases-02-05.prompt.coordinator.md`, one controlled
+autonomous implementation window covering **phases 02 through 05 only**. The prompt was written
+for a Codex Astra session; the owner then assigned the same window, unchanged, to a **Claude
+Fable 5.1** session, and instructed that the repository record the actor that really executed the
+work. The window is therefore recorded as **Fable window 01**, and every reference to "Astra" in
+that prompt binds Fable in the same role. The prompt is a lower-authority artifact: this section
+is the record, and this file and the doctrine win wherever the prompt paraphrases them.
+
+**What it withdraws, for phases 02–05 only.** Two statements of §3 above:
+
+1. "the coordinator orchestrates; the owner runs the sessions" — in this window the coordinating
+   session opens the projection, implementer, reviewer, fix and re-review sessions itself, each
+   as a fresh isolated sub-context started from its prompt file and nothing else;
+2. the staffing split "Codex implements, Claude reviews" and the Sonnet/Opus substitution — every
+   role in this window runs on Claude Fable 5.1. The capability rule (reviewer at least as capable
+   as the implementer) holds trivially; **the cross-family property is spent**, exactly as it is
+   under the recorded substitution.
+
+**What it keeps — nothing else changes.** The architecture contracts; phase scopes; acceptance
+criteria; source-of-truth rules; checkpoint requirements; review quality; backend ownership;
+dependency gates; mutation-probe requirements; documentation requirements; git provenance rules;
+phase ordering; the positional-state artifact trail (every prompt and handoff row, with its
+frontmatter and declared write perimeter, exactly as the owner-run workflow leaves them); the
+evidence budget of §10.4. Phase 01 is established predecessor work and is not reopened. Phase 06
+is not started and no phase-06 prompt is compiled in this window.
+
+**Three consequences that bind for every phase in this window**, because the cross-family
+property is spent:
+
+1. **The projection gate is never waived in this window — not for phase 02 either**, although
+   §7.2 lists 02 as waivable. Projection is the only independent read of a plan before code
+   exists when one model fills every role.
+2. A reviewer finding that turns on "the implementer and I read this the same way" is recorded
+   as such in the Review log rather than treated as agreement.
+3. The Sonnet-implementer addendum applies: every implementer prompt compiled in this window
+   states its scope fences and its named mutations **enumeratively**, never by reference to
+   judgment.
+
+**Record of actorship.** Every tracker note and Review log entry written in this window records
+"Fable window 01: coordinated, projected, implemented and reviewed by Claude Fable 5.1
+sub-contexts". Handoff `actor` cells name the role and the window (for example
+`implementer (Fable window 01)`). The window's own closing report is deposited at
+`handoffs/coordinator/fable-window-01-round-1.handoff.coordinator.md`.
+
+**Resumption.** The standing instruction ("the coordinator orchestrates; the owner runs the
+sessions") and the standing split resume unchanged at phase 06, with no further decision.
+
 ---
 
 ## 4. Progress tracker
@@ -929,6 +979,7 @@ This section absorbs the project README, which is now a one-screen pointer to th
 | Phase 01 review round 1 | `CHANGES_REQUESTED`, 2026-09-06 — 2 blocking, 6 should-fix, 6 notes, 0 owner decisions. Zero L4 runs: the reviewer's tree was byte-identical to checkpoint `d30ef8f`, verified, so the implementer's stamp was cited and thirteen independent L1 mutants were spent on variation instead. Consumed by the coordinator the same day; perimeter and both blocking findings re-verified independently before routing |
 | Owner decision 13 (theme-layer scope) | 2026-09-06 — **the flat base set**, no semantic or component-level layer. Resolves the projection's card 1 and the §5.9-versus-contract-15-§2 conflict it surfaced. Recorded in §6.5A |
 | Owner card 1 (handover round 1) resolved | 2026-09-06 — the owner confirmed the split and recorded that Codex sessions are exhausted: phase 01 is implemented by a **Claude Sonnet 5** session and reviewed by a **Claude Opus 5** session. Recorded as a substitution in §3, with what it keeps and what it spends |
+| Fable window 01 authorized (phases 02–05) | 2026-09-06 — the owner authorized one autonomous implementation window for phases 02–05, originally addressed to a Codex Astra session and executed by a Claude Fable 5.1 session under the same terms. Recorded in §3A: withdraws, for this window only, the owner-runs-the-sessions instruction and the staffing split; keeps everything else; the projection gate is never waived in this window. Standing instruction and split resume at phase 06 |
 | Backend phases merged from `main` | 1 (topology and environment), 2 (errors, logger, shared value shapes), 3 (Proposales adapter: transport, error translation, content read) — all `APPROVED`. Backend phases 4–15 `NOT_STARTED` |
 
 Every future `main` merge is recorded here with its date and the backend phases it brought.
