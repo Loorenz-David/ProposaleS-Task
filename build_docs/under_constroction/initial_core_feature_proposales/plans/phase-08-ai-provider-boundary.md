@@ -1,7 +1,7 @@
 ---
 plan: 8
 phase: AI provider boundary (`@/lib/ai`)
-state: IMPLEMENTED
+state: APPROVED
 date: 2026-09-06
 author: implementation-planner round 1; amended by the coordinator at the projection round-0 fold
 ---
@@ -686,3 +686,72 @@ under contract 14 §8; `src/lib/ai/README.md` remains accurate, so no README cha
 Mutation-site note: MUT-08-3's wording says `fromSdkError` passes a message, but D11's narrowed
 constructor has no caller message field. The equivalent fixed-message super-call mutation
 reddened C4(o); it was reverted. No other plan or saved prescription defect was found.
+
+### Coordinator approval of fix round 2 — 2026-09-06
+
+Consumes `handoffs/implementer/phase-08-fix-round-2.implementer.md` at checkpoint `6c42535`.
+Closed on coordinator validation under master §9.0.2 by standing owner direction; **no independent
+re-review followed**. All five of §9.0.2's preconditions were observed, not assumed:
+
+**1 — the stamp.** Re-run by the coordinator on the checkpoint tree: `npm test` **28 files /
+383 tests** green (round 1 was 28 / 380; +3 net is four new rows less the orphan test folded into
+`C4(m)`), `npm run typecheck` clean, `npm run lint` clean.
+
+**2 — the mutations.** All 22 declared red and reverted; the four production digests match what I
+computed independently, and `client.ts`, `registry.ts` and `types.ts` are byte-identical to round 1
+(`4e3d90…`, `bd352d…`, `03cbb9…`), so `errors.ts` is the only production file this round changed.
+The handoff also declares that **MUT-08-3's site description had gone stale** — after D11 narrowed
+the constructor, `fromSdkError` can no longer pass a caller message at all — and records the
+feasible equivalent it ran instead. That is the report a fix round should make.
+
+**3 — the perimeter.** `git diff --name-status 46ece2e HEAD` is `errors.ts`, three test files, this
+plan, the master plan and the handoff. Nothing else: no `package.json`, no lockfile, no README, no
+`.env.example`, and `tsconfig.tsbuildinfo` restored rather than swept in.
+
+**4 — independent probes, chosen as variation the 22 did not run.** Two directions, both spent:
+
+*Forward, against the real vendor provider* (`@ai-sdk/anthropic` + real `generateText`, only `fetch`
+injected, no network) — the same harness that exposed B2 and B3, now re-run on the repaired tree:
+
+```
+connection failure (ECONNREFUSED) → transport / retryable:true        (was: no reason, retryable:false)
+undecodable 200 (HTML body)       → invalid_response / false          (was: request_rejected, status 200)
+200 parsing but failing the provider's own schema → invalid_response  (never exercised end-to-end before)
+429 control                       → rate_limited_upstream / true      (status classification still wins)
+```
+
+Both original defects are gone **on the path production takes**, and the third case — a reply that
+parses as JSON but is not the shape the provider promised — was added by me because no round had
+driven it end to end.
+
+*Reverse, three probes that must redden:*
+
+- widening the decode branch to accept **any** status with a decode cause → **`C4(s)` red**. That
+  row is the guard on the repair itself: it is what stops `invalid_response` from swallowing
+  ordinary rejected requests whose error body happens to be malformed. It fires.
+- removing the bare-`TypeError` disjunct from `isSdkNetworkError` → **`C4(h)` red**.
+- narrowing the **one** shared `hasForbiddenGatewayForm` to the global name only → **`C2(c)` red**
+  (1 failed / 9 passed). This is the exact edit that left the file **9/9 green** before the repair.
+  B1 is closed by construction, not by assertion.
+
+Every probe reverted; `errors.ts` back to `a1c241b6…`, `registry.test.ts` to its checkpoint content,
+my probe file deleted, final tree clean.
+
+**5 — the trace.** The four rows this round added trace to authority ratified before they were
+written: `C4(i)`, `C4(r)` and `C4(s)` to §17A.13's precedence paragraph (§23 round 18), `C4(h)` to
+its branch 3, `C7(a)` to master §6.5 and §17A.14. No row traces only to this plan.
+
+**Final counts, derived:** 7 criteria / 51 rows / 22 distinct named mutations; project
+**105 / 612 / 182**.
+
+**What this phase cost and what it bought.** Three sessions found, in total, **nine guards that
+could not fail** — one by a coordinator probe, six by the review, two by the coordinator verifying
+the review. Two of them were worse than unfalsifiable: `C4(h)` and `C4(i)` tested shapes the vendor
+SDK never builds, so the network path had *no* classification and the reason the owner had just
+ratified was unreachable, with every test green and every mutation reddening as designed. The
+production code was wrong in exactly one place — `errors.ts` — and no amount of mutation testing
+would have found it, because a mutation proves the test observes the code and cannot prove the code
+observes the world. Master §9.1 rules 17 and 18 exist because of this phase.
+
+Phase state → `APPROVED`. Phase-8 rows archived to `archive/plan_8/`. Phase 9's mandatory
+projection (rank 12, the project's highest) is the next dispatch.
