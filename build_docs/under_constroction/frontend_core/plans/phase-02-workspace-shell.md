@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **State** | `PROMPT_READY` — projection round 0 consumed 2026-09-06, all 27 rows routed (Review log); `prompts/implementer/phase-02-round-1.prompt.implementer.md` compiled |
+| **State** | `IMPLEMENTED` — round 1, 2026-09-06, Codex; unit 154/154, E2E 49/49, 11/11 named mutations executed and reverted |
 | **Criteria** | 6 |
 | **Projection** | **not waived** — mandatory: C5 makes open-universe absence claims, a charter rule 6 silent-failure mechanism. Master plan §7.2, which moved 02 to its mandatory list on 2026-09-06 |
 | **Serves** | F30 · F26 · F29 (A row 4) · F24 · F6 |
@@ -370,3 +370,53 @@ existing Proposales integration README; no feature README was added because the 
 allows only the root README and the feature's current behavior is still a shell slice. No package,
 lockfile, architecture graph, architecture contract, theme file, Vitest/Playwright config, or
 future-implementations file changed.
+
+**2026-09-06 — coordinator, consuming implementer round 1 (`IMPLEMENTED`).** Perimeter reconciled
+against checkpoint `7bfa79e` before anything was trusted: the commit touches exactly the nineteen
+paths the handoff declares and nothing else; `package.json`, `package-lock.json`, `theme.css`, all
+four config files and `build_docs/future_implementations/` are untouched, as declared; the probe
+files are listed separately from the own-change list; the working tree is clean. The declared
+arithmetic re-derives (C1 2 · C2 0 · C3 1 · C4 4 · C5 2 · C6 2 = 11), and the coverage map carries
+one line for each of the 58 rows. The round's own stamp was **not** re-run: the tree is
+byte-identical to the checkpoint, so reproducing it would be over-evidence. Verification was spent
+on variation instead, and it found three things.
+
+**Coordinator finding 1 — blocking. C6(a) ships as a denylist, in the one criterion the plan
+re-instrumented specifically to prevent that.** The plan's C6(a) requires an allowlist, in its own
+words: *"the idle subtree's accessible tree contains exactly the roles this state is allowed to
+have … and no other role at all; a denylist of forbidden nouns here would prove only that its own
+list matches itself."* What shipped
+(`components/workspace/workspace.test.tsx`, `C6(a)`, and `e2e/workspace.spec.ts`, `C6(a)`) is one
+heading assertion plus five `queryByRole` null checks — `list`, `navigation`, `link`, `status`,
+`alert`. Confirmed by planting **a statistics table, a button and an image** in the idle subtree
+and running the C6 block: **all five tests passed.** None of the three is in the denylist, and a
+statistics table is the literal example the criterion names ("no proposition, no list, no
+statistics, no navigation"). The round's own probe M11 planted a `<ul>` — drawn from the list it
+was meant to validate — which is why the round's evidence did not catch this. This is the
+phase-01 review's most expensive defect family, reproduced in the criterion written to close it.
+
+**Coordinator finding 2 — two tests share one row id.** `e2e/workspace.spec.ts` labels both the
+carried phase-01 document-title test and the phase-02 skip-link test `C1(d)`. The first is
+inherited evidence and belongs to no phase-02 row; the coverage map's both-ways property and any
+`-g "C1(d)"` selection are both broken by the collision.
+
+**Coordinator finding 3 — the handoff's lint diagnosis does not hold, and it reached the owner
+layer.** The handoff reports the baseline lint as "blocked by the pre-existing missing
+`test-results/` directory" and tells the owner "the repository's lint script needs a transient
+`test-results/` directory to exist". `npm run lint` was run here with `test-results/` absent and
+**passed**; nothing in `eslint.config.mjs`, `package.json` or any config references that path, and
+phase 01 closed lint-green with no source change since. Whatever failed at baseline, it was not
+this. A false statement about the repository in an owner-facing layer is a finding on its own
+terms, independent of the code.
+
+**Routing.** All three go to the reviewer as established facts rather than hypotheses, with the
+instruction not to spend the round re-deriving them but to look for their siblings — the same
+allowlist-versus-denylist question across C5 and C6, and the same "does this assertion count what
+it claims to count" question across C2(d) and C2(f). Ten further unadjudicated probes are named in
+the review prompt. The fix round repairs everything the review confirms, in one pass.
+
+**Not disturbed.** The implementer's Review log, its delegated decisions and its §12A.23 bullet-5
+judgement stand as written; the coordinator neither edited nor endorsed them. Task 3's contract
+resolution was implemented as the plan required and is the reviewer's to check, not the
+coordinator's to re-argue.
+
