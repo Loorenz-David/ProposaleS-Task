@@ -166,7 +166,7 @@ derived from the tables, never typed forward: re-derive before any count-bearing
 
 | # | Phase | Plan file | Criteria | State | Date | Actor | Note |
 |---|---|---|---|---|---|---|---|
-| 01 | Repository baseline, visual foundation, test collection | `plans/phase-01-baseline-and-visual-foundation.md` | 8 | `PROJECTED` | 2026-09-06 | coordinator | projection round 0 returned `AMENDMENTS_REQUIRED` (21 rows, 1 owner card); all rows routed, owner decision 13 taken, plan amended to 8 criteria; implementer prompt compiles next |
+| 01 | Repository baseline, visual foundation, test collection | `plans/phase-01-baseline-and-visual-foundation.md` | 8 | `PROMPT_READY` | 2026-09-06 | coordinator | projection round 0 routed (21 rows) and owner decision 13 taken; `prompts/implementer/phase-01-round-1.prompt.implementer.md` live — 31 rows, 11 named mutations, Sonnet implements per the §3 substitution |
 | 02 | Persistent shell: landmarks, divider, narrow width, containment | `plans/phase-02-workspace-shell.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | F30 absence half ships with its planted probe |
 | 03 | Session runtime and the tab strip | `plans/phase-03-session-runtime-and-tabs.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (ordering) |
 | 04 | Derived presentation: status, unread, the derivation register | `plans/phase-04-derived-presentation.md` | 6 | `NOT_STARTED` | 2026-09-06 | planner | projection required (derivations) |
