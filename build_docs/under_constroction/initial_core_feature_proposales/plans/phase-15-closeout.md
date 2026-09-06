@@ -69,6 +69,10 @@ From phase 1 review round 1. Both are plan-level hazards, not phase-1 defects; t
 2. **No file containing the `"use client"` directive imports a restricted module** (review F2). ESLint core rules cannot select on the directive, and a blanket `src/app/**` restriction would be wrong because contract 03 §4 permits `src/app/` Server Components to import feature `server/` modules. `scanTree` is the right instrument. **Deprioritized by the owner (MVP scoping, 2026-09-05): this project builds no UI, so nothing is reachable today.** Implement only if a UI phase is ever added; recorded here so the reasoning is not re-derived.
 3. **The tracked `tsconfig.tsbuildinfo` must not make routine verification stamps appear dirty** (phase-4 review N4). Resolve it in the dedicated repository-hygiene change already registered as master follow-up 8; do not silently restore or ignore it within a feature phase.
 
+From phase 8 review round 1 (coordinator, 2026-09-06).
+
+4. **The public barrel's *negative* surface is unguarded** (review N4). `src/lib/ai/index.ts` deliberately does **not** export `callModel` or any vendor factory internal — projection D22 required it, the implementer honoured it, and the reviewer verified it by reading the file. No row asserts it, so nothing stops a later phase from widening the barrel and letting an internal seam or a vendor type escape the boundary. Phase 15's C2 already scans for vendor imports and is the right instrument; extend it to assert the exported surface of `@/lib/ai` is exactly its declared public list, with a planted extra export as the named mutation. The same shape will apply to `@/lib/agent`'s barrel once phase 9 exists.
+
 ## Notes
 
 - C3 is automated and opt-in (intention §16.3's closing paragraph); it is the only criterion family not run by the closing L4 stamp. The Review log records the last live run's date and tree identity when one is made.

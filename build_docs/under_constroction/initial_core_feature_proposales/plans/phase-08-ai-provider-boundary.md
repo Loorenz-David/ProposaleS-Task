@@ -1,7 +1,7 @@
 ---
 plan: 8
 phase: AI provider boundary (`@/lib/ai`)
-state: REVIEWING
+state: CHANGES_REQUESTED
 date: 2026-09-06
 author: implementation-planner round 1; amended by the coordinator at the projection round-0 fold
 ---
@@ -129,9 +129,9 @@ being written here; the verifications are recorded in the Review log.
 | C1(e) | the negative row is not vacuous (positive control) | the same uninvoked function calls `callModel(<a real instance>, <the identical remaining request>)` with **no** directive | typecheck passes; the only difference between the two calls is the first argument, so nothing but the model type can be consuming the directive in C1(c) | — | §17A.15, rule 16 |
 | C1(d) | the SDK receives an instance | build the client through the real `registry.ts` (not a hand-made helper) with a spy `generateText` | `typeof spy.calls[0].model === "object"`; `spy.calls[0].model.modelId === env.AI_MODEL` | (MUT-08-1) | M16 |
 | C2(a) | global provider untouched | save `globalThis.AI_SDK_DEFAULT_PROVIDER`, run `createAiClient` and one `generateStep`, restore in `finally` | the global is `undefined` throughout and is restored after | MUT-08-2 `registry.ts` · `resolveModel` · assign the global from a **typed local fake provider** defined in the mutation itself (never an undeclared `gateway` identifier, which would fail on the symbol rather than the assertion) → C2(a) red | M16, §17A.15 |
-| C2(b) | no gateway in source | read every production `src/lib/ai/*.ts`, excluding `*.test.ts` (the guard's own assertions necessarily name the forbidden forms) | none contains `AI_SDK_DEFAULT_PROVIDER`, `@ai-sdk/gateway`, or `gateway(` | MUT-08-5 `types.ts` · module top level · add `void globalThis.AI_SDK_DEFAULT_PROVIDER;` → C2(b) red | M16 |
-| C2(c) | the scanner can actually see each forbidden form (instrument proof) | run the scanner's predicate over four synthetic source strings: a static `import … from "@ai-sdk/gateway"`, an `import type … from "@ai-sdk/gateway"`, a dynamic `await import("@ai-sdk/gateway")`, and a bare `globalThis.AI_SDK_DEFAULT_PROVIDER` read | each of the four is flagged; a control string naming none of them is not | — | rule 16, M16 |
-| C2(d) | every module is server-only | read every production `src/lib/ai/*.ts` | each contains `import "server-only"` — `types.ts` included | MUT-08-13 `types.ts` · remove the import → C2(d) red | 02 §3, master §6.1 |
+| C2(b) | no gateway in source | `productionModules()` — **one** module-scope helper, shared by C2(b), C2(c) and C2(d), which lists `src/lib/ai/*.ts` excluding `*.test.ts` **and asserts the listing equals the seven named modules**, so no row above it can pass over an empty list (S3). Each file's text is tested by `hasForbiddenGatewayForm`, likewise **one** module-scope symbol | no production module is flagged | MUT-08-5 `types.ts` · module top level · add `void globalThis.AI_SDK_DEFAULT_PROVIDER;` → C2(b) red | M16, rule 17 |
+| C2(c) | the scanner can actually see each forbidden form (instrument proof) | apply **the same `hasForbiddenGatewayForm` symbol C2(b) applies to production source** — not a predicate of the same shape — to four synthetic strings: a static `import … from "@ai-sdk/gateway"`, an `import type … from "@ai-sdk/gateway"`, a dynamic `await import("@ai-sdk/gateway")`, and a bare `globalThis.AI_SDK_DEFAULT_PROVIDER` read | each of the four is flagged; a control string naming none of them is not | MUT-08-15 `registry.test.ts` · the `hasForbiddenGatewayForm` **definition** · narrow the alternation to `AI_SDK_DEFAULT_PROVIDER` → C2(c) red. Before the repair this same weakening left the file 9/9 green, because C2(c) proved a copy | rule 16, **rule 17**, M16 |
+| C2(d) | every module is server-only | `productionModules()` — the same shared listing C2(b) uses | each file's **first line** is `import "server-only";` — `types.ts` included | MUT-08-13 `types.ts` · remove the import → C2(d) red | 02 §3, master §6.1, rule 17 |
 | C3(a) | `not_configured` — construction site | a `factories` entry whose **factory constructor** throws | `AiProviderError`, reason `not_configured`, `retryable false`, `GENERIC_AI_ERROR_MESSAGE`, `operation "resolveModel"`, `cause` is the thrown error by identity | — | M16, §17A.13 |
 | C3(c) | `not_configured` — invocation site | a factory that constructs fine and throws when **invoked with the model id** | the same outcome as C3(a); the two sites are separate fixtures because one catch can cover only one of them | — | §17A.13, D10 |
 | C3(b) | registry total over the configured providers | `serverEnvSchema.shape.AI_PROVIDER.options` (verified in `zod@4.5.4`: `.superRefine()` returns a `ZodObject`, so `.shape` survives and `.options` is `["anthropic","openai"]`) | `Object.keys(DEFAULT_FACTORIES)` deep-equals that tuple as a set, and **each name in it** resolves through `resolveModel` to an object. Not a handwritten two-item loop: `AiProvider` is a type union and is erased at runtime | MUT-08-6 `registry.ts` · `DEFAULT_FACTORIES` · delete the `openai` entry → C3(b) red | §17A.15 |
@@ -142,13 +142,16 @@ being written here; the verifications are recorded in the Review log.
 | C4(e) | 408 is a reply, not a local timeout | `APICallError` status 408 | `(request_rejected, false)` — **not** `timeout`; the provider answered | — | §17A.13 round 17 |
 | C4(f) | local abort | `DOMException` name `AbortError` | `(timeout, true)` | — | §17A.13, M6 |
 | C4(g) | local timeout | `DOMException` name `TimeoutError` (what `AbortSignal.timeout` raises) | `(timeout, true)` — a separate fixture from C4(f); the two are recognized by class **and** name | — | §17A.13, M6 |
-| C4(h) | network failure | a `TypeError` raised by the SDK invocation itself | `(transport, true)` | — | §17A.13, M6 |
-| C4(i) | protocol decode failure | an SDK response-decoding error (`InvalidResponseDataError`, or an `APICallError` with **no** status carrying a JSON decode `cause`) | `(invalid_response, false)` | — | §17A.13 round 17 |
+| C4(h) | network failure, in the shape the SDK actually builds | an `APICallError` with **no `statusCode`** and a cause carrying a network code — what `handleFetchError` constructs from a `fetch` rejection (`@ai-sdk/provider-utils/dist/index.js:472`–`:513`, reached from `postToApi`, used by both vendor providers). A bare `TypeError` is kept as a second fixture, since one escapes only when it carries no cause | `(transport, true)` for both | MUT-08-16 `errors.ts` · `isSdkNetworkError` · drop the status-less `APICallError` disjunct → C4(h) red | §17A.13 precedence 3, M6, **rule 18** |
+| C4(i) | undecodable reply, in the shape the SDK actually builds | an `APICallError` carrying the **2xx** status of the reply and a `JSONParseError` cause — what `createJsonResponseHandler` constructs when a successful reply will not parse (`@ai-sdk/provider-utils/dist/index.js:3999`–`:4015`). `InvalidResponseDataError` is kept as a second fixture | `(invalid_response, false)` | MUT-08-17 `errors.ts` · `fromSdkError` · move the decode check back **after** the status branch → C4(i) and C4(r) red | §17A.13 precedence 1, **rule 18** |
+| C4(r) | a 2xx that parses but fails the provider's own schema | an `APICallError` with a 2xx status and a `TypeValidationError` cause | `(invalid_response, false)` — the same class of failure as C4(i); JSON that parses is not JSON we can use | (MUT-08-17) | §17A.13 precedence 1 |
+| C4(s) | a decode failure never overrides a status | an `APICallError` with status **403** whose cause is a `JSONParseError` | `(request_rejected, false)` — classified by status, not by its unreadable body. Without this row the C4(i) repair could silently relabel every rejected request whose error body is malformed | (MUT-08-17, in the other direction) | §17A.13 precedence 2 |
+| C4(t) | the client's content-filter branch, not just the mapper's | drive `generateStep` with an injected `generateText` rejecting `NoObjectGeneratedError({ finishReason: "content-filter", text: "blocked", usage })` | `generateStep` **rejects** with `AiProviderError` `content_filtered`; it does not resolve to a `{ kind: "final" }` candidate. C4(k) proves the mapper; this proves the call site, and the precedence C4(k) *names* lives here | MUT-08-18 `client.ts` · `generateStep` catch · delete the inner `finishReason === "content-filter"` branch → C4(t) red. Before this row that deletion left the whole `src/lib/ai` suite green, turning a refused generation into a candidate phase 9 would pay to retry | §17A.13, D05, rule 17's sibling |
 | C4(j) | content filter, resolved | a resolved result whose finish reason is `content-filter` | `(content_filtered, false)` | — | §17A.13, M6 |
 | C4(k) | content filter, thrown | `NoObjectGeneratedError` whose `finishReason` is `content-filter` | `(content_filtered, false)` — outranks the invalid-output path of C6(c) | — | §17A.13, D05 |
 | C4(l) | factory throw | the C3(a) fixture, observed as a reason row | `(not_configured, false)` | — | §17A.13, M6 |
-| C4(m) | an unrecognizable value is not relabelled | reject with `{ nope: true }` (not an `Error`) and, separately, a plain `Error` whose message contains the word `timeout` | neither becomes `timeout` or `transport`; the generic DTO is produced with the original value at `cause`. Retryability is never read from message text | — | §17A.13 round 17, 04 §6 |
-| C4(n) | every row is the AI system | all rows above | `details.system === "ai_provider"`, `details.operation` present, and the message is `GENERIC_AI_ERROR_MESSAGE` | — | §17A.13 |
+| C4(m) | an unrecognizable value is not relabelled | three fixtures: `{ nope: true }` (not an `Error`); a plain `Error` whose **message** contains `timeout`; and **an impostor** — a non-`Error` object carrying `{ name: "TimeoutError" }` | none becomes `timeout` or `transport`; each produces the generic `IntegrationError` with **no `reason`**, `retryable: false`, `GENERIC_AI_ERROR_MESSAGE`, and the original value at `cause`. Retryability and reason are never read from a message or from a `name` on a value that is not an `Error` | MUT-08-19 `errors.ts` · `isNamedError` · drop the `instanceof Error` conjunct → C4(m) red on the impostor fixture. Without that fixture the narrowing was unguarded in both directions | §17A.13 boundary 3, 04 §6 |
+| C4(n) | every row is the AI system, and the registry is the ratified one | iterate `AI_PROVIDER_FAILURE_REASONS` | the exported registry is **exactly** master §6.3's nine members (set equality, so the loop cannot pass over a shortened list), and each yields `details.system === "ai_provider"`, `details.operation` present, and `GENERIC_AI_ERROR_MESSAGE` | — | §17A.13, master §6.3, rule 17 |
 | C4(o) | provider message never crosses | SDK error message `PROVIDER-MSG-SENTINEL` | absent from `err.message` and from `JSON.stringify(toErrorDto(err))`; present in `String(err.cause)` | MUT-08-3 `errors.ts` · `fromSdkError` · pass `message: err.message` → C4(o) red | §17A.13, M6 |
 | C4(p) | the constructor is closed | attempt to construct `AiProviderError` with a caller `message` and an `issues` array | both are type errors (`expectTypeOf`), and the constructed error's `details` keys are exactly `{ system, retryable, reason, operation }` plus `status` when present — no `issues` key | MUT-08-7 `errors.ts` · `AiProviderError` constructor · accept and forward a caller `message` → C4(p) red | D11, 04 §6 |
 | C4(q) | the production catch path uses the mapper | drive an `APICallError` 401 and an abort rejection through `generateStep` with an injected failing `generateText` | `generateStep` rejects with the mapped `AiProviderError` (`operation "generateStep"`), not the raw SDK error. A correct `fromSdkError` with no call site cannot satisfy this row | MUT-08-8 `client.ts` · `generateStep` catch · rethrow the raw error → C4(q) red | D10, §17A.13 |
@@ -165,16 +168,21 @@ being written here; the verifications are recorded in the Review log.
 | C6(d) | tools converted | input tools `[{ name: "search_content", description, inputJsonSchema }]` | the spy sees `tools.search_content` whose description equals the input's and whose `inputSchema` carries **the supplied schema document**; no `execute` property | MUT-08-9 `client.ts` · tool conversion · add an `execute` → C6(d) red; MUT-08-10 `client.ts` · tool conversion · pass a different schema document → C6(d) red | §12.2, 08 §3 |
 | C6(e) | timeout ceiling forwarded | `timeoutMs: 1234`, with `AbortSignal.timeout` spied | the spy was called with exactly `1234`, and the `abortSignal` the SDK received is the **same object** it returned; separately, an injected abort rejection maps to `timeout` | MUT-08-11 `client.ts` · `generateStep` · pass `AI_CALL_TIMEOUT_MS` instead of the caller's `timeoutMs` → C6(e) red | §17A.14, D07 |
 | C6(f) | retries are off | any successful call | the spy's options contain `maxRetries: 0`. The SDK default is 2, so omitting the option is a silent choice of hidden extra provider calls | MUT-08-12 `client.ts` · `callModel` · drop the option → C6(f) red | 07 §4, D06 |
-| C6(g) | system and text messages pass unchanged | `system` plus `{ role: "user", content: "…" }` | the spy sees the `system` string identically and one user message with identical text | — | 08 §7 |
+| C6(g) | system and text messages pass unchanged | `system` plus **both** text forms: `{ role: "user", content: "…" }` and `{ role: "assistant", content: "…" }` — the identity return covers a two-member enumeration and one member is not a sample of it | the spy sees the `system` string identically and both messages with identical roles and text | — | 08 §7 |
 | C6(h) | assistant tool-call message mapped | `{ role: "assistant", toolCalls: [{ toolCallId, name, input }] }` | the spy sees the SDK's assistant tool-call shape with `toolCallId` and `toolName` preserved | — | 08 §7, D03 |
 | C6(i) | tool-result message mapped | `{ role: "tool", results: [{ toolCallId, name, output }] }` | the spy sees a `role: "tool"` message whose `content` is an **array** of tool-result parts (the SDK's `ToolContent`, verified) carrying the same `toolCallId` — never a text string | — | 08 §7, D03 |
 | C6(j) | content filter outranks tool calls | a result carrying **both** `toolCalls` and finish reason `content-filter` | `AiProviderError` `content_filtered`; the tool-call branch is not taken. Fixes the branch order in one observation | — | D05, §17A.13 |
 | C6(k) | a finished-without-output step is not a silent final | a result with finish reason `length`, no tool calls, and an `output` getter that throws | `AiProviderError` (not a `{ kind: "final" }` with an invented value); the getter throw is not swallowed into a success | — | D05, §17A.13 |
+| C7(a) | the run constants keep their contracts | `DEFAULT_RUN_BUDGETS` and `AI_CALL_TIMEOUT_MS` | every budget value is a positive integer, and `AI_CALL_TIMEOUT_MS <= DEFAULT_RUN_BUDGETS.wallTimeMs`. Asserted as the contract, never as the literal (charter rule 13). `config.ts` was created by task 3 and guarded by nothing; phase 9 computes `min(AI_CALL_TIMEOUT_MS, remaining wall time)` against these values one phase from now | MUT-08-20 `config.ts` · `AI_CALL_TIMEOUT_MS` · raise it above `wallTimeMs` → C7(a) red | master §6.5, §17A.14 |
 
-Criteria: 6 (C1–C6). Rows: **47** — `C1 5 + C2 4 + C3 3 + C4 17 + C5 7 + C6 11`. Named mutations:
-**16 distinct** ids in 17 occurrences (MUT-08-1 serves C1(c) and C1(d)) — MUT-08-1, -2, -3, -4a,
--4b, -4c, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14. Every number on this line is printed output
-from the counter run over this table, not a typed summand.
+Criteria: **7** (C1–C7). Rows: **51** — `C1 5 + C2 4 + C3 3 + C4 20 + C5 7 + C6 11 + C7 1`. Named
+mutations: **22 distinct** ids in 25 occurrences (MUT-08-1 serves C1(c) and C1(d); MUT-08-17 serves
+C4(i), C4(r) and C4(s), the last in the opposite direction) — MUT-08-1, -2, -3, -4a, -4b, -4c, -5,
+-6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16, -17, -18, -19, -20. Every number on this line is
+printed output from the counter run over this table, not a typed summand.
+
+Round-1 review grew the table from 6 / 47 / 16. C7 is new (`config.ts` had no row at all); C4 gained
+four rows and C2's three rows were rewritten onto one shared instrument.
 
 ## Notes
 
@@ -194,6 +202,24 @@ from the counter run over this table, not a typed summand.
 - The vendor factories are the only place a vendor SDK is imported; phase 15 C2 scans for this.
 - Phase 9 consumes `AgentMessage`, `ToolDescriptor` and `GenerateStepResult` as this phase defines
   them, and must not re-derive them (master §6.4). D03 is forwarded to phase 9's projection.
+- **Recorded and closed by review round 1, so no later session re-derives them.** (N1) `statusReason`
+  sends a **3xx** and any status **above 599** to `request_rejected`. Neither is reachable through
+  `fetch` — redirects are followed and HTTP statuses are bounded — and both are correctly
+  nonretryable, so no row is written; the `<= 599` upper bound on the 5xx branch is therefore
+  untestable and is kept for readability, not for behavior. (N3) `C5(d)`'s three assertions are true
+  by construction, since both clients come from one factory: no plausible mutation reddens it, and
+  `C5(a)` carries the identity claim it is really making. Kept as a reduced ask under §9.0 rather
+  than deleted. (N5) `createAiClient`'s `!apiKey` guard is unreachable with a parsed env — the env
+  schema's refinement already guarantees the key for the selected provider — and is kept as defence
+  in depth, unguarded and deliberately so.
+- **Truncated generations (owner card 1, answered 2026-09-06).** A step that finishes with `length`
+  and no usable output is reported today as a provider failure. The owner confirmed the staged
+  recommendation: **phase 8 keeps this behavior** — it is nonretryable and safe — and the question of
+  where a truncated generation *belongs* goes to **phase 9's projection**, where the run loop and
+  `MAX_OUTPUT_RETRIES` actually live and where any change would be consumed. The owner also recorded
+  a leaning toward a different branch for phase 9 than the review recommended; that is captured in
+  the master plan's open-items section and is **not** settled here, because nothing in phase 8 turns
+  on it. See master §12.
 - Projection gate: mandatory (rank 4). Round 0 consumed; see the Review log.
 
 ## Review log
@@ -456,3 +482,180 @@ repaired here" is correct and correctly handled. **`npm run build` therefore yie
 would, and that assumption was wrong.
 
 Phase state → `REVIEWING`. Review prompt: `prompts/reviewer/phase-08-review-round-1.reviewer.md`.
+
+### Reviewer round 1 — 2026-09-06 (Claude, plan-reviewer doctrine)
+
+Verdict **`CHANGES_REQUESTED`**. Handoff:
+`handoffs/reviewer/phase-08-review-round-1.handoff.reviewer.md` (named `.handoff.reviewer.md`
+rather than the prompt's `.reviewer.md`, to match this table's existing row and archive naming;
+declared there). Gate passed on all four content checks. One closing L4 stamp on tree `8fe3482`
+with empty porcelain: `npm test` **28 files / 380 tests** green, typecheck and lint clean.
+
+**B1 — `C2(b)`'s scanner is proven by a copy of itself.** Coordinator P3 reproduced: weakening
+only `C2(b)`'s own regex literal (`registry.test.ts:82`) to `/AI_SDK_DEFAULT_PROVIDER/` leaves the
+file 9/9 green, `C2(c)` included. Repair verified in both directions: one module-scope
+`hasForbiddenGatewayForm` plus a `productionModules()` helper asserting the scanned set equals the
+seven production modules — with the shared instrument, 9/9 green; weakening it reddens `C2(c)`
+(1 failed / 8). `C2(c)` must name the shared **symbol**, not "a predicate", and gains
+`MUT-08-15` (narrow the alternation → `C2(c)` red).
+
+**B2 — a real network failure is not `transport` and is reported nonretryable.**
+`@ai-sdk/provider-utils`' `handleFetchError` (`dist/index.js:472-513`, called from `postToApi`
+`:3512`/`:3628`, used by both vendor providers) turns a fetch-level failure into an `APICallError`
+with **no `statusCode`**. `fromSdkError` matches no branch and returns the generic
+`IntegrationError` with no `reason` and `retryable: false`. Intention §17A.13 requires `transport`
+/ `true`; contract `07` §4 forbids advertising a retryable failure as final. `C4(h)`'s bare
+`TypeError` fixture is not a shape the boundary produces. Proven end-to-end through the real
+`@ai-sdk/anthropic` provider + real `generateText` + real `createAiClient` with only `fetch`
+injected (no network): `IntegrationError`,
+`{"system":"ai_provider","retryable":false,"operation":"generateStep"}`.
+
+**B3 — an undecodable provider reply is `request_rejected`, not `invalid_response`.**
+`createJsonResponseHandler` (`@ai-sdk/provider-utils/dist/index.js:3999-4015`) raises an
+`APICallError` carrying the **2xx** status with the decode failure as `cause`. `fromSdkError`'s
+status branch fires first and `statusReason(200)` falls through to `request_rejected` — which
+master §6.3 defines as "any non-`429` 4xx". `isProviderDecodeError`'s third disjunct requires
+`statusCode === undefined`, unreachable here; `InvalidResponseDataError` is streaming/batch only.
+**`invalid_response`, the member the owner added at round 17, is unreachable on the real path**,
+and `C4(i)`'s fixture is a shape the SDK does not build. Same harness:
+`{"system":"ai_provider","status":200,"retryable":false,"reason":"request_rejected",…}`; a 2xx that
+parses but fails the provider's schema behaves identically (`TypeValidationError` cause).
+
+**B2 + B3 repair, written and run before being recorded** (applied, 55/55 green in
+`src/lib/ai/`, `tsc --noEmit` clean, then reverted byte-identically): add `TypeValidationError` to
+`isProviderDecodeError`, accept a decode `cause` on a **2xx or absent** status, add
+`isSdkNetworkError` (`TypeError` ∪ `APICallError` with no status) → `transport`/`true`, and reorder
+`fromSdkError` to decode → abort/timeout → status → network → content-filter → `NoOutputGenerated`
+→ generic. The decode check must precede the status branch; restricting it to 2xx/absent preserves
+§17A.13's transport precedence. Rows: rewrite `C4(h)` and `C4(i)` to the real shapes, add a
+`TypeValidationError` row, and add a **4xx-with-decode-cause** row proving the repair does not
+relabel rejected requests.
+
+**S1 — the client's content-filter branch is unguarded.** Deleting the inner
+`if (error.finishReason === "content-filter")` from `generateStep`'s catch (`client.ts:162`) leaves
+all 55 tests in `src/lib/ai/` green. `C4(k)`'s row claims precedence over `C6(c)` — a `client.ts`
+claim tested only in `errors.test.ts`. Split `C4(k)`: keep the `fromSdkError` row, add a
+client-path row driving a content-filtered `NoObjectGeneratedError` through `generateStep`, with
+the deletion as its named mutation. `C4(q)`'s own clause applies verbatim.
+
+**S2 — `isNamedError`'s `instanceof Error` narrowing is unguarded.** Replacing it with a bare
+`name` read leaves all 55 green. `C4(m)` needs a non-`Error` value carrying a recognized name
+(`{ name: "TimeoutError" }` → generic DTO, no `reason`), with dropping the conjunct as its mutation.
+
+**S3 — `C2(b)` and `C2(d)` each rebuild the module listing and neither asserts it is non-empty;**
+both pass vacuously on a shrunken list. Folded into B1's `productionModules()`.
+
+**S4 — no row covers `config.ts`.** Master §6.5 states the contracts (`DEFAULT_RUN_BUDGETS` each a
+positive int; `AI_CALL_TIMEOUT_MS ≤ wallTimeMs`) and charter rule 13 requires asserting the
+contract. Add `C7(a)` with the over-`wallTimeMs` mutation.
+
+**S5 — one orphan test.** `errors.test.ts:124` traces to no row; fold into `C4(m)` or declare a
+candidate criterion.
+
+**Notes, routed.** N1 `statusReason` sends 3xx and >599 to `request_rejected` — acceptable MVP
+narrowing, unreachable through `fetch`, record and close. N2 only the `user` half of
+`AgentMessage` form 1 is proven (`C6(g)`); assistant text passes by identity and is type-safe —
+add the case. N3 `C5(d)`'s assertions are true by construction; reduce the ask, do not delete.
+N4 the barrel's negative surface (D22) has no row → phase 15 candidate. N5 `createAiClient`'s
+`!apiKey` guard is unreachable with a parsed env; record and close. N6 `npm run build` on `main`
+is broken pre-existing (`src/styles/globals.css:1` → deleted `tokens.css` at `f957f66`); not this
+phase's, correctly unrepaired, §9.1 rule 10 unobservable on this branch. N7 `C4(n)` would pass
+vacuously on an empty registry; assert nine members.
+
+**Owner card 1** (in the handoff, verbatim relay required): `C6(k)` maps a `length`-truncated step
+with no output to `invalid_response`. §17A.13's own boundary puts "text the model generated that we
+cannot use" outside integration failures, and the reply decoded perfectly. Recommendation: keep
+today's mapping as the phase-8 stopgap and route the shape question to phase 9's projection, where
+`model_output_invalid` and `MAX_OUTPUT_RETRIES` live; a tenth registry member is the branch to
+avoid. Gate holds on silence.
+
+**Verified correct, settled — do not re-verify on the fix round.** Perimeter exact and
+`.env.example` untouched. `C1(c)`'s directive is consumed by the model type alone (TS2578 at
+`client.test.ts(78,7)` when the string is replaced by the instance) and `C1(e)` genuinely closes
+the arity hole. `C4(p)`'s two directives are consumed by the `message` / `issues` excess properties
+(TS2578 at `errors.test.ts(115,5)` and `(117,5)`); its real instrument is an exact
+`constructorParameters` equality, so §9.1 rule 16's `expectTypeOf`-absence hazard does not apply
+here. `toMatchObject({ constructor })` genuinely discriminates the subclass. `fromSdkError`'s
+content-filter branch bites (`C4(k)` red alone). `maxRetries: 0` throws the original error rather
+than a `RetryError` (`provider-utils:3807`). Contracts preserved: `02` §3 (seven modules,
+`server-only` first line), `08` §3 (no `execute`), `04` §6 (generic DTO, `cause` unserialized),
+`10` §2 and §11. `C6(a)`'s getter instrument, the four usage rows, and the scripted fakes all hold.
+
+**Mutation-probe declaration.** All probe edits reverted; `client.ts`, `errors.ts`, `registry.ts`,
+`types.ts` and the three test files are byte-identical to their pre-probe digests (production
+digests match the implementer's declared values). One temporary file,
+`src/lib/ai/zz-review-probe.test.ts`, created and deleted. `tsconfig.tsbuildinfo` restored. Final
+`git status --porcelain` at `8fe3482` empty.
+
+Phase state → `CHANGES_REQUESTED`.
+
+### Coordinator fold of review round 1 — 2026-09-06
+
+Consumes `handoffs/reviewer/phase-08-review-round-1.handoff.reviewer.md`
+(`CHANGES_REQUESTED`; 3 blocking, 5 should-fix, 7 notes, 1 owner card). **Every blocking finding
+was re-derived on an independent harness before being folded**, because a finding can be right and
+its prescription wrong — this project has had four such rounds.
+
+**B2 and B3 reproduced independently and exactly.** I wrote my own probe driving the **real**
+`@ai-sdk/anthropic` provider and the **real** `generateText`, injecting only `fetch`, no network:
+
+```
+E1 (fetch rejects, ECONNREFUSED)  raw APICallError, no status →
+     IntegrationError, no reason, retryable:false        (should be transport/true)
+E2 (200 with an HTML body)        raw APICallError, status 200, cause JSONParseError →
+     AiProviderError request_rejected, status:200        (should be invalid_response/false)
+E3 (401 control)                  → unauthenticated_upstream/false, correct
+```
+
+Confirmed at the vendor source, not inferred: `handleFetchError` builds an `APICallError` with
+**no `statusCode`** and `isRetryable: true` from a `fetch` rejection
+(`@ai-sdk/provider-utils/dist/index.js:472`–`:513`), and `createJsonResponseHandler` throws an
+`APICallError` carrying `statusCode: response.status` — the **2xx** — with the decode failure as
+`cause` (`:3999`–`:4015`). Both vendor providers reach both paths through `postJsonToApi`. So
+`C4(h)` and `C4(i)` were written from the intention's prose and tested shapes the SDK never builds:
+**the network path had no classification at all and `invalid_response`, the member the owner
+ratified at round 17 for exactly this condition, was unreachable on the real path.** Every test was
+green throughout.
+
+**The prescription was applied and measured, then reverted.** With the reviewer's `errors.ts` in
+place: E1 → `transport`/`true`, E2 → `invalid_response`/`false`, E3 unchanged, all 48 tests green
+(45 phase + my 3 probes), `tsc --noEmit` clean. It works as written and the fix round may take it.
+One observation the fix round decides: under the repair E2's `details` no longer carries
+`status: 200`. Dropping it is defensible — a status on an `invalid_response` reads oddly — but
+keeping it aids diagnosis. Either is acceptable; the row does not turn on it.
+
+**S1 reproduced.** Deleting the inner content-filter branch from `generateStep`'s catch left the
+whole `src/lib/ai` suite green. A refused generation would have become `{ kind: "final", output:
+<the blocked text> }` — a candidate phase 9 pays to retry, for a request the provider has already
+refused. `C4(k)`'s stated outcome named a precedence living in `client.ts` and was tested only
+against `errors.ts`; new row `C4(t)` puts the test where the behavior is.
+
+**B1** is the coordinator's own P3, reproduced by the review with the repair verified in both
+directions. **S3** folds into it: one `productionModules()` helper that asserts its own listing.
+**S2**, **S4** and **S5** are accepted as written. All three files I probed were restored
+byte-identically (`client.ts` `4e3d90…`, `errors.ts` `2e9258…`), matching the implementer's and the
+reviewer's declared digests, and my probe file was deleted.
+
+**Table: 6 / 47 / 16 → 7 / 51 / 22**, derived by command. `C7` is new — `config.ts` was created by
+task 3 and guarded by nothing, while phase 9 computes `min(AI_CALL_TIMEOUT_MS, remaining wall time)`
+against those constants one phase from now. Project totals **105 / 612 / 182**.
+
+**Folded above this phase.** Intention §17A.13 gains a **precedence** paragraph (§23 round 18,
+editorial, gate stays closed): round 17 made the AI map total but not *decidable*, and B2/B3 are
+what that omission cost. It applies the transport-precedence principle the Proposales table has
+carried since round 12 — a non-2xx is classified by status whatever its body, a 2xx that will not
+decode is `invalid_response`, a failure with no status never reached the provider. Master §9.1 gains
+**rule 17** (a row proving an instrument names the shared symbol; a proof that builds its own copy
+proves the copy) and **rule 18** (a fixture for an upstream failure is the object the upstream
+library builds, located in its source — the row that passes with *zero* production causes is the
+worst guard this project has produced), plus two planner lints: every task produces at least one
+row, and a row whose outcome names two modules needs a test in each.
+
+**Owner card 1 answered:** the staged recommendation is confirmed — phase 8 keeps today's behavior
+and the semantics go to phase 9's projection. The owner's stated leaning names a branch the review
+did not recommend; it is recorded verbatim in master §12 and re-put at phase 9 rather than
+interpreted here. Nothing in phase 8 turns on it.
+
+Phase state → `CHANGES_REQUESTED`, fix round 2 dispatched at
+`prompts/implementer/phase-08-fix-round-2.implementer.md`. Under master §9.0.2 **no independent
+re-review follows**; the coordinator validates against the five preconditions and closes.
