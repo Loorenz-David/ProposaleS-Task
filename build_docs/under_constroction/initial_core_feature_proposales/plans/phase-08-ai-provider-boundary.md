@@ -1,7 +1,7 @@
 ---
 plan: 8
 phase: AI provider boundary (`@/lib/ai`)
-state: IMPLEMENTED
+state: REVIEWING
 date: 2026-09-06
 author: implementation-planner round 1; amended by the coordinator at the projection round-0 fold
 ---
@@ -390,3 +390,69 @@ Applicable contracts used: 02 §§3,8; 06 §5; 07 §§4,5,8,10; 08 §§3,7,8; 10
 12 runtime/integration/agent/dependency/testing sections; 13 §§1–3; and 14 §§8–9. No persistence,
 client, UI, or feature README was implicated. Documentation impact review found the root README
 and the new integration README were the authoritative updates required.
+
+### Coordinator consumption of implementer round 1 — 2026-09-06
+
+Consumes `handoffs/implementer/phase-08-round-1.implementer.md` at checkpoint `6441770`.
+Validated against the repository, not the report.
+
+**Perimeter exact.** `git diff --name-status be0a672 HEAD` is the twelve `src/lib/ai/` files,
+`package.json`, `package-lock.json`, the root `README.md` one-liner, this plan, the master plan,
+the handoff, and `tsconfig.tsbuildinfo` — nothing else, and `.env.example` is untouched. The
+handoff declares the same set and attributes the tsbuildinfo rewrite rather than absorbing it.
+
+**Closing stamp re-run by the coordinator on the checkpoint tree:** `npm test` **28 files /
+380 tests** green (baseline 24 / 335, so +4 files / +45 tests), `npm run typecheck` green,
+`npm run lint` green. All **47** acceptance row identifiers appear in executing test names across
+the four colocated files; no row is claimed by a comment alone.
+
+**Three independent coordinator probes, chosen as variation the implementer's sixteen did not run.**
+Two bit as intended and one exposed a defect:
+
+- **P1** — move the content-filter branch *after* the tool-call branch in `client.ts:mapResult`.
+  Exactly one test failed, `C4(j), C6(j)`, the precedence row. `client.ts` restored, SHA-256
+  `4e3d9071bf96cc7eed907a7317e551694040c084307e21056e6bdf11e1bc2826`, matching the implementer's
+  reported pre-probe digest.
+- **P2** — change the other-4xx fallback in `errors.ts:statusReason` from
+  `request_rejected`/`false` to `transport`/`true`. Exactly `C4(d)` and `C4(e)` failed — the two
+  rows the owner's round-17 ratification created. `errors.ts` restored, SHA-256
+  `2e9258dd0e4052fa604487ce95997002a2705c8500554d29284cbcbb425bc8c2`, matching.
+- **P3 — a finding.** `C2(b)` and `C2(c)` each declare their **own copy** of the forbidden-form
+  regex. Weakening only `C2(b)`'s copy to `/AI_SDK_DEFAULT_PROVIDER/`, so it no longer detects
+  `@ai-sdk/gateway` in any form or a `gateway(` call, left the whole file **9/9 green** — including
+  `C2(c)`, the row whose entire purpose is to prove that instrument fires for all four forms.
+  `C2(c)` proves a copy of the guard, not the guard. Restored.
+
+**P3 is this plan's defect before it is the implementation's.** The C2(c) row as written says "run
+the scanner's predicate over four synthetic source strings" without requiring it to be *the same
+predicate object* C2(b) uses. Rule 16 exists to stop exactly this and the row still shipped with the
+hole. Routed to the reviewer as a named probe rather than repaired here, on the phase-7 precedent:
+the coordinator does not quietly fix what the review exists to judge.
+
+**One open semantic question, not a defect.** `C6(k)` — a step that finishes with `length`, no tool
+calls, and a throwing output getter — is mapped to `invalid_response`. That member means "the
+provider's reply cannot be decoded as its own protocol" (§17A.13). A length-truncated generation is
+a reply that decoded perfectly and simply carries nothing usable. The nine-member table has no
+member for it, which is a gap in the total table folded at round 17, not an implementer error; the
+implementer picked the least-wrong member of a closed set. It is nonretryable either way, so nothing
+unsafe ships. Routed to the reviewer to determine whether this belongs in `AiProviderFailureReason`
+at all or is phase 9's `model_output_invalid` territory.
+
+**Verified against the tree, not the report:** `DOMException` does extend `Error` in Node 22 and
+`AbortSignal.timeout`'s real rejection reason is a `DOMException` named `TimeoutError`, so
+`errors.ts:isNamedError`'s `instanceof Error` test genuinely catches the production signal — the
+C4(f)/C4(g) fixtures use real `DOMException`s. `ai` stayed at **7.0.92**, so every SDK fact this
+plan cites still holds; `@ai-sdk/openai` resolved **4.0.60**, one patch above the 4.0.59 master
+§10.1 recorded from `npm view`, and §10.1 is folded.
+
+**Two handoff blemishes, neither substantive.** Its "Implementation status" and the line closing the
+coverage map still say the mutation ledger and versions are *pending* — stale working text left
+above the sections that actually deliver both. And the build failure is cited as
+`src/app/globals.css`; the real file is `src/styles/globals.css:1`, whose `@import "./tokens.css"`
+cannot resolve because `src/styles/tokens.css` was deliberately deleted at `f957f66` by the frontend
+work. `src/styles/` is untouched by this phase, so the diagnosis "pre-existing, not ours, not
+repaired here" is correct and correctly handled. **`npm run build` therefore yields no signal on
+`main` today**; the extra stamp this phase's prompt authorized was written on the assumption that it
+would, and that assumption was wrong.
+
+Phase state → `REVIEWING`. Review prompt: `prompts/reviewer/phase-08-review-round-1.reviewer.md`.
