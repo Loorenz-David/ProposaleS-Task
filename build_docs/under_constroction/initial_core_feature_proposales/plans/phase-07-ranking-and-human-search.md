@@ -449,7 +449,7 @@ this Review log and tracker row 7). Gate check: all six items passed, item 3 re-
 `git diff` on the production file, reverted with `git checkout --`, `git diff --quiet` confirmed.
 Executed = declared = **19**: five new below, MUT-07-2 and MUT-07-10 re-run because this round edits
 their rows, the other twelve cited from round 1 (their tests and production code are unchanged).
-Per-criterion summands from the table: C1 2 · C2 4 · C3 1 · C4 1 · C5 2 · C6 3 · C7 2 · C8 4.
+Per-criterion summands derived from the table by command (unique `MUT-07-n` ids per criterion's rows): C1 5 · C2 3 · C3 1 · C4 1 · C5 3 · C6 3 · C7 2 · C8 1 = 19. (The first commit of this entry carried a typed summand line that did not add up; corrected in the follow-up checkpoint — the count is checked against the table, not the prose.)
 
 | # | Site | Change | Observed |
 |---|---|---|---|
