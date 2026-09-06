@@ -128,13 +128,18 @@ reverts it; that is not a write).
   **If a mutation does not redden its row, the row is the defect** — report it, do not adjust the
   assertion until it passes.
 
-## One thing this project keeps learning, stated once
+## The fixtures are not yours to validate
 
-A mutation proves the test observes the code. It cannot prove the code observes the world. Phase 8
-shipped two rows whose fixtures the SDK never builds: every test passed, every mutation reddened,
-and a production path had no classification at all. The plan's fixture cells now cite construction
-sites for exactly this reason. **If a fixture in the table is a shape you cannot see the system
-producing, say so in the handoff** — that is a finding worth a round, not a detail to work around.
+Some fixture cells in the table cite a file and line in a dependency's source. That is the plan
+showing its work, not a task handed to you: **you are not asked to re-investigate the dependency to
+confirm the plan's fixtures are realistic.** That responsibility sits with plan authorship and was
+checked again by the rank-12 projection before you were dispatched (master §9.1 rule 18). Doing it
+again costs a round and puts you in the position of redesigning rows you do not own.
+
+The one exception is a stop condition, not an assignment: if a contradiction becomes **obvious**
+while you implement — the shape will not compile, a constructor rejects it, the library plainly
+builds something else — **stop and report it in the handoff.** Do not adjust the assertion until it
+passes. That is the whole of your duty here.
 
 ## Handoff
 
