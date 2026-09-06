@@ -19,14 +19,14 @@ Expected branch: `proposal-copilot-frontend`
 Run every command from that worktree root. **Never enter or modify the sibling backend worktree**
 `/Users/davidloorenz/Desktop/Developer/Proposales`.
 
-| Authority | Path |
-|---|---|
-| Primary implementation authority (shared skeleton, tracker, standing rules, environment) | `build_docs/under_constroction/frontend_core/master-plan.md` |
-| Ratified product intention (semantics, ledger F1–F30, mechanism contracts §12A.1–§12A.23) | `build_docs/under_constroction/frontend_core/intention/frontend-core-intention.md` |
-| Architecture routing authority | `architectural_contracts/01-implementation-contract-guide.md`, reached through `AGENTS.md` → `agent-skills/policy/architecture-context-policy.md` |
-| Phase plans (the task list and acceptance criteria of each phase) | `build_docs/under_constroction/frontend_core/plans/phase-0{2,3,4,5}-*.md` |
-| Design specifications (visual, layout, interaction truth) | `build_docs/under_constroction/frontend_core/ui_design/`, read `10-design-integration-guide.md` first |
-| Pipeline doctrine (how every session in this pipeline works) | §0 below — read before anything else |
+| Authority                                                                                 | Path                                                                                                                                              |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primary implementation authority (shared skeleton, tracker, standing rules, environment)  | `build_docs/under_constroction/frontend_core/master-plan.md`                                                                                      |
+| Ratified product intention (semantics, ledger F1–F30, mechanism contracts §12A.1–§12A.23) | `build_docs/under_constroction/frontend_core/intention/frontend-core-intention.md`                                                                |
+| Architecture routing authority                                                            | `architectural_contracts/01-implementation-contract-guide.md`, reached through `AGENTS.md` → `agent-skills/policy/architecture-context-policy.md` |
+| Phase plans (the task list and acceptance criteria of each phase)                         | `build_docs/under_constroction/frontend_core/plans/phase-0{2,3,4,5}-*.md`                                                                         |
+| Design specifications (visual, layout, interaction truth)                                 | `build_docs/under_constroction/frontend_core/ui_design/`, read `10-design-integration-guide.md` first                                             |
+| Pipeline doctrine (how every session in this pipeline works)                              | §0 below — read before anything else                                                                                                              |
 
 Relative paths in this document resolve from `build_docs/under_constroction/frontend_core/`
 unless they start with `src/`, `e2e/`, `architectural_contracts/`, `agent-skills/` or a root
@@ -206,17 +206,17 @@ Do not interpret this as permission to redesign the workflow.
 Gate on content the work itself will change and nothing else will. **Never gate on a commit SHA,
 on whether the working tree is clean, or on a file count** (coordinator doctrine).
 
-| # | Check | Where | Passes when |
-|---|---|---|---|
-| 1 | Worktree and branch | `git rev-parse --show-toplevel`, `git branch --show-current` | the frontend worktree above; branch `proposal-copilot-frontend` |
-| 2 | Intention ratified | intention status table | the **Status** value begins `RATIFIED` |
-| 3 | Phase 01 approved | `master-plan.md` §4 row `01` | the **State** cell reads `APPROVED` |
-| 4 | The plan agrees | `plans/phase-01-baseline-and-visual-foundation.md` header | its **State** row reads `APPROVED` |
-| 5 | Phase 01's closeout ritual ran | `handoffs/implementer/`, `handoffs/reviewer/` | no phase-01 handoff row remains in either table; the phase-01 archive folder under `archive/` holds the phase's prompts and handoffs |
-| 6 | Phase 01's output exists | the tree | `src/styles/theme.css` exists |
-| 7 | Phase 02 is genuinely outstanding | `plans/phase-02-workspace-shell.md` header; `master-plan.md` §4 row `02` | both **State** values read `NOT_STARTED` |
-| 8 | This window's authorization is recorded | `master-plan.md` §3A and §11.1 | both entries from §4 above exist (write them first if they do not; then re-check) |
-| 9 | Doctrine reachable | the five absolute paths in §0 | every file reads |
+| #   | Check                                   | Where                                                                    | Passes when                                                                                                                          |
+| --- | --------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Worktree and branch                     | `git rev-parse --show-toplevel`, `git branch --show-current`             | the frontend worktree above; branch `proposal-copilot-frontend`                                                                      |
+| 2   | Intention ratified                      | intention status table                                                   | the **Status** value begins `RATIFIED`                                                                                               |
+| 3   | Phase 01 approved                       | `master-plan.md` §4 row `01`                                             | the **State** cell reads `APPROVED`                                                                                                  |
+| 4   | The plan agrees                         | `plans/phase-01-baseline-and-visual-foundation.md` header                | its **State** row reads `APPROVED`                                                                                                   |
+| 5   | Phase 01's closeout ritual ran          | `handoffs/implementer/`, `handoffs/reviewer/`                            | no phase-01 handoff row remains in either table; the phase-01 archive folder under `archive/` holds the phase's prompts and handoffs |
+| 6   | Phase 01's output exists                | the tree                                                                 | `src/styles/theme.css` exists                                                                                                        |
+| 7   | Phase 02 is genuinely outstanding       | `plans/phase-02-workspace-shell.md` header; `master-plan.md` §4 row `02` | both **State** values read `NOT_STARTED`                                                                                             |
+| 8   | This window's authorization is recorded | `master-plan.md` §3A and §11.1                                           | both entries from §4 above exist (write them first if they do not; then re-check)                                                    |
+| 9   | Doctrine reachable                      | the five absolute paths in §0                                            | every file reads                                                                                                                     |
 
 Also record, in the window's opening note, `git status --porcelain` with every entry attributed.
 Expected: the untracked directory `build_docs/future_implementations/`, which is **not this
@@ -435,12 +435,12 @@ for a dependency the plan and the contracts already justify.
 
 **Enumerated for this window (derived from the four plans and master plan §6.1):**
 
-| Phase | Package | Justifying widget | Recorded where |
-|---|---|---|---|
-| 02 | none | — | — |
-| 03 | `@radix-ui/react-tabs` | the session tab strip's tablist mechanics (master plan §6.1) | phase 03 Review log with the resolved version (contract 15 §5, contract 13 §5); root `README.md` tech-stack rows for Radix and Lucide (master plan §11.3 follow-up 6) |
-| 04 | none | — | — |
-| 05 | none — the confirmation dialog is the **native `<dialog>` with `showModal()`** (master plan §6.1) | — | — |
+| Phase | Package                                                                                           | Justifying widget                                            | Recorded where                                                                                                                                                        |
+| ----- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 02    | none                                                                                              | —                                                            | —                                                                                                                                                                     |
+| 03    | `@radix-ui/react-tabs`                                                                            | the session tab strip's tablist mechanics (master plan §6.1) | phase 03 Review log with the resolved version (contract 15 §5, contract 13 §5); root `README.md` tech-stack rows for Radix and Lucide (master plan §11.3 follow-up 6) |
+| 04    | none                                                                                              | —                                                            | —                                                                                                                                                                     |
+| 05    | none — the confirmation dialog is the **native `<dialog>` with `showModal()`** (master plan §6.1) | —                                                            | —                                                                                                                                                                     |
 
 Rules: install only what the active phase's criteria need; never a later phase's package early
 (`@radix-ui/react-popover` is phase 11's); prefer native mechanisms where the contracts say they
@@ -736,3 +736,34 @@ This goal succeeds when:
 
 Begin by reading the doctrine files (§0), then the master plan, then recording the window's
 authorization (§4), then running the starting gate (§5).
+
+KNOWN EXECUTION-ENVIRONMENT REQUIREMENT
+
+This repository is a linked Git worktree.
+
+The frontend working tree is:
+
+/Users/davidloorenz/Desktop/Developer/Proposales-frontend
+
+Its writable Git metadata is located at:
+
+/Users/davidloorenz/Desktop/Developer/Proposales/.git/worktrees/Proposales-frontend
+
+Normal local-user access to both locations has already been verified:
+`git update-index --refresh` succeeds and the worktree metadata/index are owned by the current user.
+
+Playwright has also already been verified outside the Codex sandbox:
+`npm run test:e2e` → 27/27 passed.
+
+Therefore, failures writing the linked-worktree Git metadata or launching Playwright/Chromium
+should initially be classified as Astra execution-environment permission restrictions, not as
+repository or application defects.
+
+Astra must use an execution scope that can access the common parent:
+
+/Users/davidloorenz/Desktop/Developer
+
+and can launch the repository's normal child processes/browser runner.
+
+Do not modify Git ownership, use sudo Git, weaken Playwright coverage, or change repository
+configuration to work around a sandbox restriction.
