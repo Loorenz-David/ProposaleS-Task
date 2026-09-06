@@ -240,13 +240,22 @@ on whether the working tree is clean, or on a file count** (coordinator doctrine
 | 1 | Worktree and branch | `git rev-parse --show-toplevel`, `git branch --show-current` | the backend worktree above; branch `main` |
 | 2 | Intention ratified | intention status header | the **Status** value reads `RATIFIED` |
 | 3 | Predecessors approved | `master-plan.md` §4 rows 1–7 | every **State** cell reads `APPROVED` |
-| 4 | The plans agree | each of `plans/phase-0{1..7}-*.md` headers | each `state:` reads `APPROVED` |
+| 4 | The plans agree | each of `plans/phase-0{1..7}-*.md` header `state:`, and the same plan's Review log | each header reads `APPROVED` **and** that plan's Review log records an approval verdict. **The tracker is the state authority; the header is a mirror of it.** A header that disagrees with a tracker row of `APPROVED` whose Review log records the approval is stale bookkeeping: **repair the header, record the repair in the window's opening note, and continue — this is a fold, not a stop.** Only a disagreement the Review log does not settle is a stop (§15) |
 | 5 | Phase 07's closeout ritual ran | `handoffs/*/`, `archive/plan_7/` | no phase-07 row remains in any handoff table; `archive/plan_7/` holds its four prompt/handoff pairs |
 | 6 | Phase 07's output exists | the tree | `src/features/proposal-preparation/server/domain/rank-candidates.ts` and `services/search-content-for-human.ts` exist |
 | 7 | Phase 08 is genuinely outstanding | `plans/phase-08-ai-provider-boundary.md` header; `master-plan.md` §4 row 8 | both **State** values read `NOT_STARTED`; `src/lib/ai/` does not exist; `@ai-sdk/anthropic` and `@ai-sdk/openai` are absent from `package.json` |
 | 8 | The phase-08 projection is already dispatched | `prompts/reviewer/` | `phase-08-projection-round-0.reviewer.md` is present and unconsumed (no matching handoff) — **this is the prompt you run for phase 08's projection; do not recompile it** |
 | 9 | This window's authorization is recorded | `master-plan.md` §3A and the §11 gate log | both entries from §4 above exist (write them first if they do not; then re-check) |
 | 10 | Doctrine reachable | the six absolute paths in §0 | every file reads |
+
+**Already repaired for you (2026-09-06, coordinator).** The `state:` frontmatter of plans 01–07
+was never advanced past dispatch — phase 1 read `IMPLEMENTED`, phases 3 and 7 `PROMPT_READY`, and
+2, 4, 5, 6 still read `NOT_STARTED` — while master plan §4 recorded all seven `APPROVED` and every
+one of those plans' Review logs recorded its approval verdict. The seven headers were brought in
+line with the tracker. **This window is what makes the header a maintained field**: §6 requires
+every transition to be written in both places, so the mirror stays true from phase 08 onward.
+Verify the repair rather than assuming it; if a header still disagrees, apply gate row 4's fold
+rule.
 
 Also record, in the window's opening note, `git status --porcelain` with every entry attributed.
 **Expected and pre-attributed: `tsconfig.tsbuildinfo`**, which is tracked although
@@ -813,7 +822,12 @@ BLOCKER / DECISION
 Do NOT stop for: implementation decisions the contracts already govern; installing the two
 justified phase-08 packages; the unresolved `AI_MODEL` value (§8 — carry it, don't guess it, don't
 block on it); test failures you can diagnose and fix; routine type or lint errors; a lint or
-projection finding that is a plan-local amendment.
+projection finding that is a plan-local amendment; **bookkeeping drift between the tracker and a
+plan header that the plan's own Review log settles** (gate row 4 — repair, record, continue).
+
+The distinction: **stop when the artifacts disagree about something no artifact settles.** Repair
+and record when they disagree about something one of them already settles and the other merely
+failed to mirror. Say which of the two you concluded, and why, in every report.
 
 ────────────────────────────────────────────────────────────
 16. END-OF-WINDOW HANDOFF

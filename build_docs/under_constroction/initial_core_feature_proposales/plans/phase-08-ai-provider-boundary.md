@@ -28,7 +28,7 @@ Phase 7 `APPROVED`.
 
 ## Files expected to change
 
-`package.json`, `package-lock.json` (add `@ai-sdk/anthropic`, `@ai-sdk/openai`) · `src/lib/ai/index.ts`, `types.ts`, `config.ts`, `registry.ts`, `registry.test.ts`, `client.ts`, `client.test.ts`, `errors.ts`, `errors.test.ts`, `scripted.ts`, `scripted.test.ts`, `README.md` · `.env.example` unchanged (phase 1 listed the variables) — 14 paths.
+`package.json`, `package-lock.json` (existing; add `@ai-sdk/anthropic`, `@ai-sdk/openai`) · `src/lib/ai/index.ts`, `types.ts`, `config.ts`, `registry.ts`, `registry.test.ts`, `client.ts`, `client.test.ts`, `errors.ts`, `errors.test.ts`, `scripted.ts`, `scripted.test.ts`, `README.md` (all twelve new, under `src/lib/ai/`) · `.env.example` unchanged (phase 1 listed the variables) — 14 implementation paths. Pipeline writes additionally include this plan's state and Review log, master-plan tracker/state and §10.1 resolved vendor versions, and the session handoff; each is declared in the session perimeter.
 
 ## Implementation tasks (ordered)
 
@@ -52,10 +52,10 @@ Phase 7 `APPROVED`.
 | C1(c) | string is unrepresentable at the call site | a `// @ts-expect-error` line in `client.test.ts` calling the internal `callModel("claude-3", …)` | `npm run typecheck` passes (the directive is consumed) | MUT-08-1 `client.ts` · internal signature · widen to `LanguageModel` and pass `env.AI_MODEL` → typecheck fails on the unused directive **and** C1(d) red | M16, §17A.15 |
 | C1(d) | the SDK receives an instance | spy `generateText` | `typeof spy.calls[0].model === "object"`; `spy.calls[0].model.modelId === env.AI_MODEL` | (MUT-08-1) | M16 |
 | C2(a) | global provider untouched | after `createAiClient` and one `generateStep` | `globalThis.AI_SDK_DEFAULT_PROVIDER === undefined` | MUT-08-2 `registry.ts` · `resolveModel` · assign `globalThis.AI_SDK_DEFAULT_PROVIDER = gateway` → C2(a) red | M16, §17A.15 |
-| C2(b) | no gateway in source | read every `src/lib/ai/*.ts` | none contains `AI_SDK_DEFAULT_PROVIDER`, `@ai-sdk/gateway`, or `gateway(` | — | M16 |
+| C2(b) | no gateway in source | read every production `src/lib/ai/*.ts`, excluding `*.test.ts` (the guard's own assertions necessarily name the forbidden forms) | none contains `AI_SDK_DEFAULT_PROVIDER`, `@ai-sdk/gateway`, or `gateway(` | — | M16 |
 | C3(a) | `not_configured` | a factory that throws | `AiProviderError` reason `not_configured`, generic message, `cause` set | — | M16, §17A.13 |
 | C3(b) | registry total | iterate the `AiProvider` enum | a factory exists for each member (2) | — | §17A.15 |
-| C4(a–g) | error translation, one row per reason | SDK errors: status 401, abort/timeout, status 429, status 503, `TypeError` network, finish reason `content-filter`, factory throw | `reason` ∈ {`unauthenticated_upstream`, `timeout`, `rate_limited_upstream`, `server_error`, `transport`, `content_filtered`, `not_configured`}; `retryable` true only for timeout/429/5xx/transport; `system === "ai_provider"` | — | §17A.13, M6, crit 9 |
+| C4(a–g) | error translation, one row per reason | SDK errors: (a) status 401, (b) abort/timeout, (c) status 429, (d) status 503, (e) `TypeError` network, (f) finish reason `content-filter`, (g) factory throw | exact `(reason, retryable)` by row: (a) `(unauthenticated_upstream, false)`, (b) `(timeout, true)`, (c) `(rate_limited_upstream, true)`, (d) `(server_error, true)`, (e) `(transport, true)`, (f) `(content_filtered, false)`, (g) `(not_configured, false)`; every row `system === "ai_provider"` | — | §17A.13, M6, crit 9 |
 | C4(h) | provider message never crosses | SDK error message `PROVIDER-MSG-SENTINEL` | absent from `err.message` and `JSON.stringify(toErrorDto(err))`; present in `String(err.cause)` | MUT-08-3 `errors.ts` · `fromSdkError` · `message: err.message` → C4(h) red | §17A.13, M6 |
 | C5(a) | report identity | env `AI_PROVIDER=openai`, `AI_MODEL=x` | `client.provider === "openai"`, `client.model === "x"` | — | M15, crit 14 |
 | C5(b) | usage mapped | spy returns `usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 }` | `result.usage` deep-equals it | — | M15 |
@@ -79,3 +79,38 @@ Criteria: 6 (C1–C6), 26 rows (a table line is one row; a lettered span counts 
 ## Review log
 
 *(append-only)*
+
+### Coordinator opening and pre-flight — 2026-09-06
+
+Astra window 01: coordinated, projected, implemented and reviewed by Codex Astra sub-contexts.
+Only coordinator pre-flight has run; phase state remains `NOT_STARTED`.
+
+The owner resolved the starting-gate blocker with seven header-only edits and a revised window
+prompt. `git status --porcelain` at resume contained exactly those eight supplied documentation
+paths (plans 01–07 and the Astra window prompt); all are attributed to that resolution. No code,
+dependency, config or `tsconfig.tsbuildinfo` delta was present. Each predecessor Review log and
+tracker agree on approval. The prior blocker handoff/card is consumed per master §3A.
+
+Routing: 02 §§3,5,8–9; 03 §§3–4; 04 §6; 06 §§5,7; 07 §§4–5,8,10;
+08 §§7–10; 10 §§1–2,6–7,11; 11 §§2–5; 12 runtime/server/data/integrations/agents/
+documentation/structure; 13 §§1,3–5,7; 14 §§3–4,8–9. No UI or persistence work; R4
+specializes the provider interface to `generateStep`. Feature README is absent, with feature
+closeout still phase 15. No contract conflict identified in this pre-flight.
+
+Node filesystem/regex checks re-derived **6 criteria / 26 rows / 4 mutations**; rows by criterion
+`C1 4 + C2 2 + C3 2 + C4 8 + C5 5 + C6 5 = 26`; mutations
+`C1 1 + C2 1 + C3 0 + C4 1 + C5 1 + C6 0 = 4`. Master summands match.
+Read-first paths, installed SDK symbols (`LanguageModel`, `generateText`, `Output`, `tool`,
+`jsonSchema`, `APICallError`, `NoObjectGeneratedError`), M6/M7/M15/M16 and §17A.13–15 traces
+resolve. New phase symbols/files are explicitly future outputs. Source scans found no prior
+occurrence-count guard targeting this new module perimeter; existing environment/lint tripwires
+remain applicable. There is no deletion task. Master phase-08 references and predecessor
+approval log were read, including rules 15–16 and the type-only/dynamic-import instrument hazards.
+
+Lint folds before projection: C2(b) explicitly scans production files so its own test text cannot
+violate its claim; C4(a–g) assigns one exact reason/retryable pair per fixture; the twelve new
+module paths and pipeline version-write perimeter are explicit. No criterion/mutation count
+changed. The future timeout observable, message shape, internal signature test seam and unlisted
+SDK failure shapes remain for the fresh projection's derivation; this lint is not semantic proof.
+No test run or L4 spent. Projection remains mandatory; the existing prompt content is unchanged,
+with only the prescribed `.prompt.` filename correction before launch.

@@ -1,7 +1,7 @@
 ---
 plan: 7
 phase: Content ranking domain and human search
-state: PROMPT_READY
+state: APPROVED
 date: 2026-09-06
 author: implementation-planner round 1; amended by the coordinator 2026-09-06 (projection round-0 fold, 33 ledger rows)
 ---

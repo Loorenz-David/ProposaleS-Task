@@ -82,6 +82,16 @@ workflow; each entry's state and evidence identify which roles have actually com
 The standing arrangement and §9.0.1 staffing split resume unchanged at phase 11 without a
 further decision. This window stops before phase 11.
 
+**Opening-gate resolution (2026-09-06, owner confirmed):** the supplied changes reconcile
+phase-01 through phase-07 header states to their existing tracker approvals; each Review log
+records the corresponding approval, with its existing caveats preserved. The tracker is the
+state authority and each plan header mirrors it. A stale header settled by the tracker and
+Review log is repaired and recorded, not an owner gate; an unsettled disagreement still stops
+the window. Write every phase-08 through phase-10 state transition to both locations.
+The initial blocker report at `handoffs/coordinator/astra-window-01-round-1.handoff.coordinator.md`
+is consumed and its owner card resolved by the owner's “this has been resolved” message and
+the supplied header/prompt patch. That historical report is not rewritten.
+
 ## 4. Progress tracker
 
 One row per phase. Agents update only their own row; findings go to the phase plan's Review log.

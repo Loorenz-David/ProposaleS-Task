@@ -1,7 +1,7 @@
 ---
 plan: 6
 phase: Information items, clarification, workflow state, identity
-state: NOT_STARTED
+state: APPROVED
 date: 2026-09-05
 author: implementation-planner round 1
 ---

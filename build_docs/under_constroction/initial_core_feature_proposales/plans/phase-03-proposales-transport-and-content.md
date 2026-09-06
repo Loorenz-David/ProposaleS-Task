@@ -1,7 +1,7 @@
 ---
 plan: 3
 phase: Proposales adapter — transport, error translation, content read
-state: PROMPT_READY
+state: APPROVED
 date: 2026-09-05
 author: implementation-planner round 1
 ---

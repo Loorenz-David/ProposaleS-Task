@@ -1,7 +1,7 @@
 ---
 plan: 5
 phase: Proposition schema and structural provenance
-state: NOT_STARTED
+state: APPROVED
 date: 2026-09-05
 author: implementation-planner round 1
 ---
