@@ -62,7 +62,7 @@ describe("information item approvability", () => {
     const items = registry.initialItems();
     for (const item of Object.values(items)) item.resolution = "supplied";
     items.title.resolution = "unresolved";
-    items.language.resolution = "unresolved";
-    expect(domain.evaluateApprovability(items)).toEqual({ approvable: false, itemKeys: ["language", "title"] });
+    items.block_selection.resolution = "unresolved";
+    expect(domain.evaluateApprovability(items)).toEqual({ approvable: false, itemKeys: ["block_selection", "title"] });
   });
 });

@@ -1,11 +1,22 @@
 import "server-only";
 
+import type { z } from "zod";
+
 import { ValidationError } from "@/lib/errors/app-error";
 
 import type { ClarificationAnswersInput, ClarificationQuestion } from "../../schemas/clarification";
+import {
+  informationItemAskPolicySchema,
+  informationItemCreatePolicySchema,
+} from "../../schemas/information-items";
 import type { InformationItemKey, InformationItems } from "../../schemas/information-items";
 
-export const INFORMATION_REGISTRY: Record<InformationItemKey, { askPolicy: "ask_if_underivable" | "do_not_ask"; createPolicy: "required_to_create" | "not_required" }> = {
+type InformationItemPolicy = {
+  askPolicy: z.infer<typeof informationItemAskPolicySchema>;
+  createPolicy: z.infer<typeof informationItemCreatePolicySchema>;
+};
+
+export const INFORMATION_REGISTRY: Record<InformationItemKey, InformationItemPolicy> = {
   language: { askPolicy: "ask_if_underivable", createPolicy: "required_to_create" },
   title: { askPolicy: "do_not_ask", createPolicy: "required_to_create" },
   block_selection: { askPolicy: "do_not_ask", createPolicy: "required_to_create" },

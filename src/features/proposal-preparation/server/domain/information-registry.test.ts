@@ -81,12 +81,12 @@ describe("information item registry", () => {
     }
   });
 
-  it("C3(f) reports unknown before duplicate when both entries use an unknown id", async () => {
+  it("C3(f) reports the first invalid entry by index", async () => {
     const { registry, clarification } = await modules();
     try {
-      registry.applyAnswers(registry.initialItems(), [], clarification.clarificationAnswersInputSchema.parse({ answers: [
+      registry.applyAnswers(registry.initialItems(), [{ questionId, itemKey: "language", text: "Which language?" }], clarification.clarificationAnswersInputSchema.parse({ answers: [
         { questionId: otherQuestionId, answer: { kind: "skip" } },
-        { questionId: otherQuestionId, answer: { kind: "skip" } },
+        { questionId, answer: { kind: "answer", text: "Anna" } },
       ] }));
       throw new Error("expected ValidationError");
     } catch (error: any) {

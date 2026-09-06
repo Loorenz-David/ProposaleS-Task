@@ -4,6 +4,7 @@ async function modules() {
   return {
     domain: await import("./bump-version"),
     fixtures: await import("../../fixtures/states"),
+    propositions: await import("../../fixtures/propositions"),
   };
 }
 
@@ -24,8 +25,11 @@ describe("proposal version", () => {
   });
 
   it("C8(c) increments the current proposition version exactly once", async () => {
-    const { domain, fixtures } = await modules();
-    expect(domain.nextVersion(fixtures.validState({ currentProposition: { version: 4 } }) as never)).toBe(5);
+    const { domain, fixtures, propositions } = await modules();
+    const { propositionSchema } = await import("../../schemas/proposition");
+    const currentProposition = propositions.validProposition({ version: 4 });
+    expect(propositionSchema.parse(currentProposition)).toEqual(currentProposition);
+    expect(domain.nextVersion(fixtures.validState({ currentProposition }) as never)).toBe(5);
   });
 
   it("C8(d) accepts only the caller-held state argument", async () => {

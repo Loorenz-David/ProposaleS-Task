@@ -9,6 +9,7 @@ async function modules() {
     workflow: await import("./workflow-state"),
     clarification: await import("./clarification"),
     fixtures: await import("../fixtures/states"),
+    propositions: await import("../fixtures/propositions"),
   };
 }
 
@@ -61,8 +62,16 @@ describe("proposal workflow state", () => {
   });
 
   it("C5(e) preserves a state through a JSON round trip", async () => {
-    const { workflow, fixtures } = await modules();
-    const state = fixtures.validState({ items: { ...fixtures.validState().items, language: { resolution: "unresolved" } } });
+    const { workflow, fixtures, propositions } = await modules();
+    const preparedProposition = propositions.validProposition();
+    preparedProposition.recipient = { known: false };
+    preparedProposition.blocks[0].quantity = { known: false };
+    preparedProposition.title = { known: false };
+    const currentProposition = propositions.validProposition({ version: 2 });
+    currentProposition.recipient = { known: false };
+    currentProposition.blocks[0].optional = { known: false };
+    currentProposition.agentRationale = { known: false };
+    const state = fixtures.validState({ preparedProposition, currentProposition });
     expect(workflow.parseProposalWorkflowState(JSON.parse(JSON.stringify(state)), TEST_EDITOR_ORIGIN)).toEqual(state);
   });
 
