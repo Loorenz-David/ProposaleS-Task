@@ -83,6 +83,7 @@ Criteria: 6 (C1–C6), 25 rows (a table line is one row; a lettered span counts 
 - For human-added blocks (`contentId.source === "human"`), the proposition carries no strength; the seed records `strong`/`SCORE_MAX` because the human chose it — that value is display material in the record and is never written back to a proposition leaf.
 - `renderAssistantTurn` is cut, not rejected, at the cap because it is application output; human turn text is rejected at the cap because it is input (phase 12 parses `instruction` with `MAX_INSTRUCTION_CHARS ≤ MAX_TURN_TEXT_CHARS`).
 - `labeledBlock`'s delimiter is a constant in `build-messages.ts`; the prompt (phase 11) explains the delimiter to the model. A user text containing the delimiter is escaped (`>>>` → `> > >`) — C4(d)'s regex tolerates that.
+- **Phase 6 review N2 carry-forward:** `maximalConformingProposition()` must fill both `MAX_BLOCKS` and `MAX_ALTERNATIVES_PER_BLOCK`, as well as every bounded text. When it exists, the workflow-state bound check uses two such propositions; its 1 MiB comparison remains phase 6 behavior, but this factory owns the complete cardinality fixture.
 - Projection gate: mandatory (new mechanism: caller-held context; rule 6).
 
 ## Review log
