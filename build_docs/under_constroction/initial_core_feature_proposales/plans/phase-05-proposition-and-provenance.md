@@ -298,3 +298,17 @@ stamp was `npm test`: 15 files / 224 tests green, failure-ID delta ∅→∅, at
 `tsconfig.tsbuildinfo`/probe restoration. Documentation-impact review found no authoritative
 current-state document false or incomplete; no README change was required. No architecture graph
 exists.
+
+**Coordinator validation and approval (2026-09-06, Codex; owner-authorized no independent
+re-review).** Consumed the round-2 handoff against checkpoint `b84dd10` and verified the exact
+five-file repair perimeter: `shared.ts`, `shared.test.ts`, `proposition.test.ts`,
+`provenance-projection.test.ts`, and `fixtures/propositions.ts`; no frontend, integration,
+workflow-state, persistence, pricing, or `tsconfig.tsbuildinfo` drift entered the checkpoint.
+The 61-row / 21-mutation arithmetic and the three correction probes reconcile with the plan and
+handoff. Current-tree `npm test` passed (15 files / 224 tests). As a fresh coordinator variation,
+changing numeric path-segment comparison to a no-op made C8(b)'s 96-path ordered assertion fail;
+the projector was restored byte-identically to SHA-256
+`ad89ee732618bb9624b549b605758de127a71044e13d4bb7312e4eb476571e0e`. S1–S3 and N2–N5 are
+therefore closed. N1 remains master-plan follow-up 10 for phase-13 projection; N6 remains phase
+7 C7(d). Phase 5 is approved without a second independent review by the owner's recorded
+direction.
