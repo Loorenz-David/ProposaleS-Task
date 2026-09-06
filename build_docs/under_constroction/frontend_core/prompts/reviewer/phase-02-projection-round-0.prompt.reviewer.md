@@ -58,7 +58,7 @@ Do not gate on a commit SHA, on whether the working tree is clean, or on any fil
    §5, `03-feature-architecture.md` §1–§4, `05-client-architecture.md` §2, §5, §7,
    `15-ui-styling-and-component-system.md` §1, §3, `12-anti-patterns.md` "Components and
    client" and "Structure and abstraction", `11-testing-principles.md` §2–§3.
-5. Additionally read master plan **§3A** (this window's authorization), **§6.5A** (the theme
+5. Additionally read master plan **§6.5A** (the theme
    layer's closed name set), **§7.4** (the trace-cell vocabulary, which is what makes a trace
    cell admissible), **§10.3** and **§10.3A** (which runner can measure which subject — this
    decides where every criterion row of this phase can live), and **§11.2**, **§11.3**.
@@ -133,7 +133,7 @@ decide a criterion, run it and record the line "narrower evidence insufficient b
 
 Deposit `handoffs/reviewer/phase-02-projection-round-0.handoff.reviewer.md` with the charter
 row schema in its frontmatter (`plan`, `role: projection`, `round: 0`, `date`, `verdict`,
-`actor: projection (Fable window 01)`), containing, in order:
+`actor: projection`), containing, in order:
 
 1. **The verdict** — `PROJECTED_CLEAN` (empty ledger) or `AMENDMENTS_REQUIRED`.
 2. **An owner-readable opening**, 3–5 sentences, no citations and no jargon: what the

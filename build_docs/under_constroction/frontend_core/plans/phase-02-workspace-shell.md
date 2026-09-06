@@ -4,7 +4,7 @@
 |---|---|
 | **State** | `NOT_STARTED` |
 | **Criteria** | 6 |
-| **Projection** | **not waived** — mandatory in Fable window 01 (master plan §3A consequence 1; §7.2 lists 02 as waivable outside the window) |
+| **Projection** | **not waived** — mandatory: C5 makes open-universe absence claims, a charter rule 6 silent-failure mechanism. Master plan §7.2, which moved 02 to its mandatory list on 2026-09-06 |
 | **Serves** | F30 · F26 · F29 (A row 4) · F24 · F6 |
 
 ## Goal
@@ -155,9 +155,10 @@ planner's "4" omitted C4's probe. Re-derive at dispatch.
 
 ## Review log
 
-**2026-09-06 — coordinator (Fable window 01), pre-dispatch plan lint, before projection.**
-Fable window 01: coordinated, projected, implemented and reviewed by Claude Fable 5.1 sub-contexts
-(master plan §3A). Five manifest properties checked at source; four folds applied to this plan,
+**2026-09-06 — coordinator (Claude Fable 5.1), pre-dispatch plan lint, before projection.**
+Written while the Fable window 01 authorization stood; the window was withdrawn unexecuted the
+same day (master plan §3A) and this lint survives it unchanged, as normal-route coordinator work.
+Five manifest properties checked at source; four folds applied to this plan,
 none changing product semantics:
 
 1. **Count.** The named-mutation total read "4" while the criteria table carries five: C4's own
@@ -186,3 +187,23 @@ plan claims; every trace cell carries a `F`/`§12A` anchor. The V1 floor and the
 width of `NARROW_WIDTH_TEST_SET` are **not numerically fixed by any authority** (design 02 §3.3
 states the two thresholds only) — left for the projection to classify rather than pre-empted here.
 Sizing: 6 criteria, within the charter's target.
+
+**2026-09-06 — coordinator, after the Fable window 01 withdrawal.** The owner withdrew the
+autonomous window for phases 02–05 before any part of it ran, on cost grounds, and returned
+phases 02–05 to the normal per-phase route (master plan §3A "Withdrawal", gate log §11.1). Three
+edits to this plan, none touching product semantics, criteria, rows or mutations:
+
+1. The **Projection** header cell no longer derives from the window. The gate stays **not
+   waived**, now on this phase's own property: C5 asserts what the shell does not contain over an
+   open name universe, which charter rule 6 classifies as a silent-failure mechanism. Master plan
+   §7.2 was corrected accordingly — 02 moved from its waivable list to its mandatory one — rather
+   than this plan carrying a local exception.
+2. The pre-dispatch lint entry above keeps its actor, which is who really wrote it, and loses the
+   window's forward-looking actorship sentence: no session in this phase is coordinated,
+   implemented or reviewed by a window sub-context.
+3. Nothing else in the lint is disturbed. Its four folds are route-independent; fold 4 in
+   particular (every open-universe absence row names allowlist or denylist) is the phase-01 lesson
+   and is exactly why this phase's gate is mandatory.
+
+The compiled projection prompt at `prompts/reviewer/phase-02-projection-round-0.prompt.reviewer.md`
+survives with the same correction and is the owner's to run.

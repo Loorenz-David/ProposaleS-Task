@@ -171,10 +171,14 @@ CHANGES_REQUESTED (→ IMPLEMENTING) → APPROVED`
   consumes, never a cherry-pick and never against a phase plan's proposed shape. Every
   merge is recorded in the gate log (§11).
 
-### 3A. Fable window 01 (owner authorization, 2026-09-06)
+### 3A. Fable window 01 (authorized 2026-09-06; **withdrawn 2026-09-06, unexecuted**)
 
-**What this is.** The owner authorized, in
-`prompts/astra_prompts/astra-window-01-phases-02-05.prompt.coordinator.md`, one controlled
+> **Read the withdrawal at the end of this section before anything above it.** The window was
+> withdrawn before any phase ran under it. Nothing this section withdraws from §3 ever took
+> effect. It is kept because two surviving artifacts were produced under its authority.
+
+**What this is.** The owner authorized, in the prompt now archived at
+`archive/astra_prompts_frontend/astra-window-01-phases-02-05.prompt.coordinator.md`, one controlled
 autonomous implementation window covering **phases 02 through 05 only**. The prompt was written
 for a Codex Astra session; the owner then assigned the same window, unchanged, to a **Claude
 Fable 5.1** session, and instructed that the repository record the actor that really executed the
@@ -218,8 +222,30 @@ sub-contexts". Handoff `actor` cells name the role and the window (for example
 `implementer (Fable window 01)`). The window's own closing report is deposited at
 `handoffs/coordinator/fable-window-01-round-1.handoff.coordinator.md`.
 
-**Resumption.** The standing instruction ("the coordinator orchestrates; the owner runs the
-sessions") and the standing split resume unchanged at phase 06, with no further decision.
+**Withdrawal (owner instruction, 2026-09-06).** The owner withdrew this window before any
+phase of it executed: *"so i won't be continuing with the astra prompt plan batch implementation
+approach ( it consume a lot of credit ). i will continue with my agentic flow."* Phases 02–05 run
+on the normal per-phase route. Neither withdrawal above ever took effect: the standing instruction
+("the coordinator orchestrates; the owner runs the sessions") and the standing staffing split were
+never suspended in practice, and both are in force from phase 02 onward with no further decision.
+The window prompt is archived unexecuted at
+`archive/astra_prompts_frontend/astra-window-01-phases-02-05.prompt.coordinator.md`; no live
+artifact routes through it.
+
+**What survives.** Two artifacts were produced under this window's authority before it was
+withdrawn, and both are route-independent coordinator work the normal route would have produced
+identically: the **phase-02 pre-dispatch plan lint** (four folds, recorded in that plan's Review
+log) and the compiled **phase-02 projection prompt**. Both stand, re-attributed to the normal
+route. Their `Fable window 01` actor labels are corrected to plain role names; the actorship rule
+above binds nothing going forward, and no handoff, tracker note or Review log entry written from
+phase 02 onward carries the window's name.
+
+**What lapses.** Consequences 2 and 3 were premised on one model filling every role; the normal
+route restores the cross-family property, so they lapse with the window. Consequence 1 does **not**
+lapse by argument: phase 02's projection gate stays **not waived**, on its own reason, folded into
+§7.2 — this phase makes open-universe absence claims (C5), which charter rule 6 classifies as a
+silent-failure mechanism, so §7.2's own rule makes it mandatory and its waivable list was wrong to
+carry 02.
 
 ---
 
@@ -562,10 +588,16 @@ and an era-marked adapter, and says so.
 
 Mandatory (the phase touches a silent-failure mechanism — charter rule 6: derivations,
 reconciliation rules, ordering, money, identity, destructive guards, absence claims):
-**03, 04, 05, 08, 09, 10, 11, 12, 14, 15.**
+**02, 03, 04, 05, 08, 09, 10, 11, 12, 14, 15.**
 
-Waivable by the coordinator with a recorded one-line justification: **01, 02, 06, 07, 13,
-16, 17.**
+Waivable by the coordinator with a recorded one-line justification: **01, 06, 07, 13, 16, 17.**
+
+**2026-09-06 — 02 moved to mandatory, and why the first list was wrong.** Phase 02's C5 asserts
+what the shell does *not* contain over an open name universe, which is an absence claim: rule 6's
+own text made it mandatory all along, and its place on the waivable list was a classification
+error, not a judgement. Phase 01 earned the same lesson from the other end — four of its review
+findings were one absence guard instrumented as a denylist. Any later phase found to make an
+absence claim moves lists here rather than being waived case by case.
 
 Two consecutive empty projection ledgers demote the gate to optional for this project; the
 demotion is recorded here when it happens.
@@ -980,6 +1012,7 @@ This section absorbs the project README, which is now a one-screen pointer to th
 | Owner decision 13 (theme-layer scope) | 2026-09-06 — **the flat base set**, no semantic or component-level layer. Resolves the projection's card 1 and the §5.9-versus-contract-15-§2 conflict it surfaced. Recorded in §6.5A |
 | Owner card 1 (handover round 1) resolved | 2026-09-06 — the owner confirmed the split and recorded that Codex sessions are exhausted: phase 01 is implemented by a **Claude Sonnet 5** session and reviewed by a **Claude Opus 5** session. Recorded as a substitution in §3, with what it keeps and what it spends |
 | Fable window 01 authorized (phases 02–05) | 2026-09-06 — the owner authorized one autonomous implementation window for phases 02–05, originally addressed to a Codex Astra session and executed by a Claude Fable 5.1 session under the same terms. Recorded in §3A: withdraws, for this window only, the owner-runs-the-sessions instruction and the staffing split; keeps everything else; the projection gate is never waived in this window. Standing instruction and split resume at phase 06 |
+| **Fable window 01 withdrawn (unexecuted)** | 2026-09-06 — the owner withdrew the window on cost grounds before any phase ran under it: *"i won't be continuing with the astra prompt plan batch implementation approach ( it consume a lot of credit ). i will continue with my agentic flow."* Phases 02–05 run the normal per-phase route; neither §3 withdrawal ever took effect. Surviving from the window: the phase-02 pre-dispatch lint and the compiled phase-02 projection prompt, re-attributed to the normal route. Consequence 1 was re-derived on its own reason and folded into §7.2, which now lists **02 as mandatory** because its C5 makes absence claims. Recorded in §3A |
 | Backend phases merged from `main` | 1 (topology and environment), 2 (errors, logger, shared value shapes), 3 (Proposales adapter: transport, error translation, content read) — all `APPROVED`. Backend phases 4–15 `NOT_STARTED` |
 
 Every future `main` merge is recorded here with its date and the backend phases it brought.
