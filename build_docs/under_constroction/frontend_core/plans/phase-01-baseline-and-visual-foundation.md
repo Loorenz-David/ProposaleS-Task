@@ -488,3 +488,68 @@ and removed, listed separately per the doctrine): `src/lib/__mutation-probe-c1c.
 implementation; the closing L4+ stamp (five full commands, §7 budget item 2, taken once,
 re-taken after the incidental build-artifact revert made no further tree change). No package
 installed; no dependency added.
+
+**2026-09-06 — coordinator, consuming implementer round 1 (`IMPLEMENTED`).**
+
+*Reconciliation, before anything was trusted.* Checkpoint `d30ef8f` touches **14 files** and its
+file list matches this plan's declared perimeter exactly. `package.json` and `package-lock.json`
+are unchanged; nothing under `src/app/` moved; no landmark, no product surface, no package
+installed; the root README's tech-stack table is untouched (that is phase 03). The master-plan
+diff is tracker row 01 and nothing else. The working tree is clean apart from the pre-attributed
+untracked directory, so **no mutation probe was left behind**. Arithmetic reconciles in both
+directions: unit 118 → 137 (+19 = 2 sentinels + 17 in `theme.test.ts`, and 11 → 14 files);
+end-to-end 2 → 26 (16 C3 rows + 6 C7(a) corrections + 2 C2 rows + title + renders-clean).
+Mutations 11 declared, 11 executed, summands stated and correct. Evidence budget: task-1 baseline
+plus one closing stamp, re-taken once after an incidental build-artifact revert — declared, and
+within the charter's re-take rule. **No finding against the session**, and the self-caught false
+green on probe 10 (re-sited from a "button" name that is legitimately ramp vocabulary) is the
+doctrine's required behaviour done exactly right.
+
+*Five named probes routed to the reviewer.* These are discrepancies the coordinator observed in
+the shipped code, carried into the review prompt as named probes rather than as trusted claims or
+as coordinator repairs. **The reviewer adjudicates each; none is a settled finding.**
+
+- **P1 — disjunction where an exact count belongs, four sites, ordered by severity.**
+  `e2e/bootstrap.spec.ts:107` guards the C3(a) enumeration with `referenced.length > 0`; if the
+  derivation regex or the file read ever yields one property instead of sixteen, fifteen rows
+  vanish silently and the suite stays green — on the criterion this phase exists to close.
+  `src/styles/theme.test.ts:176` (C1(e)) plants **three** distinct forms — hex, radius and `px` —
+  and asserts `positive.length > 0`, so a scanner that silently stopped catching two of the three
+  keeps the row green; charter rule 2's companion asks the fixture to make its own predicate the
+  only reason the outcome holds. `theme.test.ts:384` (C8(b)) asserts `rows.length >= 2` where the
+  criterion says *both* rows. `theme.test.ts:247` (C4(f)) uses `> 0` where C4's own contract is
+  *exactly one*; least severe, since the following `every(... === "node")` carries the assertion.
+- **P2 — C7(b)'s instrument may not catch the taxonomy owner decision 13 declined.** The guard is
+  a nine-fragment denylist that **deliberately excludes** `tab`, `panel`, `dot`, `button` and
+  `badge`, on the documented and not-unreasonable ground that design 01's own tables use those as
+  usage-context descriptors for base-ramp rows. The consequence to adjudicate: those five are the
+  product's own component nouns, so a genuine component-level value such as
+  `--color-tab-active-bg` — precisely what §6.5A forbids — passes this guard. C5(d) records its
+  name-list limit in the criterion; C7(b) records no equivalent limit.
+- **P3 — C4(d) is self-declared weaker.** The implementer's own coverage map marks it
+  "joint/incidental, not a dedicated new test": it is discharged by C4(a) plus the pre-existing
+  `test/setup/node.test.ts`. Declaring it was correct; whether the row is met is the reviewer's
+  call.
+- **P4 — C5(d)'s probe proved the checker, not the shipped wiring.** The probe pointed the
+  function at a `/tmp` fixture through a temporary test, both since removed. That is what this
+  plan prescribed, because the phase may not edit `package.json`. What no probe demonstrated is
+  that the **shipped** C5(d) test passes `package.json` to that function — a one-line check the
+  reviewer can settle.
+- **P5 — C4(g)'s mutation is not achievable as this plan words it.** "Place a test file outside
+  every include glob" cannot be done under the §10.3 partition, which is total by construction:
+  any `*.test.ts(x)` under `src/` or `test/` is claimed. The implementer narrowed the jsdom
+  globs and planted a file, observed the red, and reverted both — declared, and arguably a
+  stronger probe than the wording asks for, since it exercises C4(a)'s own discovery set. **The
+  plan wording is deliberately not amended before the review**, so the reviewer judges the
+  substitute independently rather than against a criterion retro-fitted to the implementation.
+  If the reviewer agrees, the wording folds at closeout.
+
+*The implementer's candidate finding is routed, and refused for this phase.* Two stale statements
+outside the declared perimeter — the root README's "integrations under `src/lib/**` … neither
+exists yet" and the contracts README's "No frontend implementation plan exists yet" Known-conflicts
+row — both predate this phase and neither belongs to conflict C-4. They are recorded as master
+plan §11.3 follow-up 10 rather than absorbed here: widening a phase's perimeter after its
+implementation to cover documents it was never asked to patch is how a phase stops closing green
+on its own. **Declining them is the reason C8(a) must not be read as "every false sentence is
+gone"** — its criterion already records that it catches the named artefacts and not every future
+false statement.
