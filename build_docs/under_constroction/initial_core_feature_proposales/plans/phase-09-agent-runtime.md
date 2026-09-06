@@ -187,3 +187,78 @@ Documentation impact review under contract 14 §8 found no current-state README 
 feature README does not yet exist, and the implementation plan/master registry remain the
 authoritative project documents. The generated `tsconfig.tsbuildinfo` rewrite from typecheck is
 attributed in the handoff and is not part of the intended production perimeter.
+
+### Coordinator validation of round 1 — 2026-09-07
+
+State stays **IMPLEMENTED**; the phase is **not** approved. Every claim below was produced by a
+command in this session, not read from the handoff.
+
+**Confirmed.** Closing L4 re-run independently: `npm test` → **31 files / 416 tests** green,
+`npm run typecheck` exit 0, `npm run lint` exit 0. Write perimeter exact: `git diff --stat
+49108b6 9712b2d` is 16 files — the 13 declared implementation paths plus this plan, the master
+tracker row, and the handoff; nothing else. All four restoration digests recomputed and matched
+(`run.ts`, `agent-boundary-scan.ts`, `search-content.tool.ts`, and the phase-7
+`domain/rank-candidates.ts` MUT-09-10 touched). Table counts derived by command: 7 criteria /
+34 rows / 13 mutations. `hasForbiddenForm` is imported once and shared by C2(d) and C2(e)
+(rule 17 satisfied). `script_exhausted` in `RunFailureReason` and the unbuilt `approval.ts` are
+the recorded exclusions, not omissions.
+
+**Rule 18 — one fixture re-grounded, and the plan's stated reason was wrong.** C5(b)'s cell
+claimed a schema-valid-but-Zod-invalid object is "producible because `z.toJSONSchema` drops
+`.refine()`". Driven forward through the real `@ai-sdk/anthropic` provider with only `fetch`
+injected, the truth is broader and simpler: **`Output.object({ schema: jsonSchema(<raw JSON
+Schema>) })` does not validate against that schema at all.** A reply whose JSON is
+`{"items":[{"answer":5}]}` returns from `generateText` as `result.output` with no throw, against a
+schema requiring `answer: string`. The fixture is therefore realistic — more realistic than the
+plan argued — and no refinement is needed to reach it. A truncated reply was confirmed separately
+to throw `NoObjectGeneratedError` with `.text` carrying the raw partial string, grounding C5(a).
+Recorded in master §6.6.
+
+**Six coordinator probes, all forward mutations of production against the full suite.** Five came
+back green — meaning the named behaviour can be deleted with all 416 tests passing.
+
+| Probe | Edit | Suite | Finding |
+|---|---|---|---|
+| P1 | `run.ts` `issue.path.map(String)` → `issue.path as string[]` | green | C5(b) cannot fail |
+| P1b | `define-tool.ts` `issue.path.map(String)` → `issue.path as string[]` | green | C1(a) cannot fail |
+| P4 | delete `outputJsonSchema` from the `generateStep` request | green | no row covers it (D11) |
+| P5 | `timeoutMs` → constant `1` | green | C3(f) cannot fail |
+| P6 | drop the `AI_CALL_TIMEOUT_MS` cap from the `min` | green | half of C3(f) untested |
+| P8 | delete the `agent.run.step` log call | green | no row covers it |
+| P7 | drop `traceId` from `agent.run.start` (control) | **red** | C7(d) has teeth |
+
+**These are plan-authorship defects, not implementer defects (§9.1 rule 18's ladder).** Each
+implementation matches its row exactly as written; the rows are what cannot fail.
+
+- **F1 · C3(f)** asks for `stepOptions[n].timeoutMs <= 500 && >= 1`. Any constant in that range
+  satisfies it, so the row proves no relationship between the timeout and the remaining wall time,
+  and never exercises the `AI_CALL_TIMEOUT_MS` half of the `min`.
+- **F2 · `outputJsonSchema` has no row.** Plan step 2 names it as load-bearing — "or `generateText`
+  falls back to its text spec and every final arrives as a string, making C5 trivially true"
+  (D11) — and the acceptance table never asserts it. The scripted fake already records it on
+  `ai.calls[n]`, so the row is one line.
+- **F3 · C1(a) and C5(b)** both require `path` to be `string[]` over flat fixtures whose paths are
+  already `["query"]` / `["answer"]`. C5(b)'s cell reasons from Zod's *type* (`PropertyKey[]`) to
+  conclude "this is a real guard"; the *runtime value* is all strings, so it is not. The real
+  production shape verified above yields `["items", 0, "answer"]` — a number at index 1 — which is
+  what the coercion exists for.
+- **F4 · `agent.run.step` has no row.** Plan step 2 names four events (`start/step/tool/end`); the
+  acceptance table (C7(d)) requires two; three were built and `agent.run.tool` was never built.
+  The table is binding, so the implementation is compliant — the plan's narrative is not.
+- **F5 · `assertReadOnlyToolSet` exists twice**, byte-identical, in `run.ts` (private) and
+  `tools/index.ts` (exported). Master §6.6 places one symbol in `tools/index.ts` and has `run`
+  gate on it, which `run.ts` cannot do: `src/lib` may not import from a feature (contract 03), the
+  same rule that forced the handoff's five test imports to become dynamic. The duplication is
+  forced and both copies are covered (C2(a)/C2(b) the exported one, C2(c) via MUT-09-1 the private
+  one) — but the master registry now describes a single symbol that is two, and the handoff
+  reported "no plan defect."
+- **F6 (low) · the system prompt is never asserted to reach the model.** Replacing
+  `system: options.system` with `system: ""` leaves the suite green.
+
+**Process deviation, self-reported and accepted.** No pre-production full-suite baseline was
+captured; the honest captured baseline was the targeted phase command at 3 failed suites / 0
+tests. The perimeter and digest checks above substitute for it, and the phase-8 comparator
+(28 files / 383 tests) plus this phase's 31 / 416 reconcile: +3 files, +33 tests.
+
+Phase state stays `IMPLEMENTED`. Review round 1 prompt:
+`prompts/reviewer/phase-09-review-round-1.prompt.reviewer.md`.

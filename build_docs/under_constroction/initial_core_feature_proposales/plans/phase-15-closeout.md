@@ -75,6 +75,17 @@ From phase 8 review round 1 (coordinator, 2026-09-06).
 
 5. **The phase-7 purity guard is a §9.1 rule-17 defect and was deliberately left alone** (phase-9 projection, routed here 2026-09-07). `rank-candidates.test.ts:63`–`:83` carries eight inline regex literals inside one `it()`, with no row proving the instrument fires — the shape rule 17 was written against, and the same shape phase 8 shipped and had to repair. Phase 9 is not the place to fix it: phase 7 is approved and its test file lies outside phase 9's perimeter, so extracting the predicate across both would widen a phase perimeter into a closed phase. Adopt phase 9's shared `test/helpers/agent-boundary-scan.ts` symbol here, where the isolation scans already live, and give the adoption a planted-form proof row.
 
+6. **`assertReadOnlyToolSet` ships as two byte-identical copies** (coordinator validation of phase 9
+   round 1, routed here 2026-09-07). `src/lib/agent/run.ts` keeps a private copy and
+   `src/features/proposal-preparation/server/tools/index.ts` exports another, because `src/lib` may
+   not import from a feature (contract 03) — the same rule that forced phase 9's `src/lib` tests
+   onto dynamic imports. Both copies are covered today (C2(a)/C2(b) the exported one, C2(c) via
+   MUT-09-1 the private one), so this is not a hole; it is a divergence risk, and master §6.6
+   previously described one symbol in one place, which was unbuildable. The repair is to lift the
+   predicate into `src/lib/agent` — where `run` may import it — and have `tools/index.ts` re-export
+   it, so both call sites name the same object per §9.1 rule 17. Not done in phase 9: it would
+   restate an approved master row mid-implementation for no behavioural gain.
+
 ## Notes
 
 - C3 is automated and opt-in (intention §16.3's closing paragraph); it is the only criterion family not run by the closing L4 stamp. The Review log records the last live run's date and tree identity when one is made.
