@@ -78,6 +78,32 @@ the excluded work lives, with its reason.
 **Split.** Codex implements. Claude reviews. A reviewer session runs on a model at least as
 capable as the session that implemented the phase (backend master plan §9.0.1).
 
+**Substitution in force from 2026-09-06, owner decision, phase 01 onward until withdrawn.**
+Codex sessions are exhausted, so the implementer for phase 01 is a **Claude Sonnet 5** session
+and the reviewer is a **Claude Opus 5** session. The owner took this decision on the
+coordinator's card 1 (handover round 1) after the cross-family reason was stated. What the
+substitution keeps and what it spends, recorded so no session mistakes one for the other:
+
+- **Kept — the capability rule.** Opus reviewing Sonnet satisfies "at least as capable as the
+  session that implemented the phase" verbatim. This is the half that catches an implementer
+  reasoning past its depth.
+- **Spent — the cross-family property.** Implementer and reviewer are now the same model
+  family, so a failure mode common to that family is not caught by the split. Two consequences
+  bind while the substitution is in force: (1) the projection gate is **not** waived for any
+  phase on the grounds that the plan looks clear, because projection is now the only
+  independent read of a plan before code exists; (2) a reviewer finding that turns on
+  "the implementer and I read this the same way" is recorded as such in the Review log rather
+  than treated as agreement.
+
+The substitution is a staffing fact, not a change to the split. When Codex is available again
+the standing split resumes with no further decision.
+
+**Sonnet-implementer addendum, and it is a real one.** An implementer prompt compiled while
+this substitution is in force states its scope fences and its named mutations
+**enumeratively**, never by reference to judgment: "the eight probes are these eight", not
+"plant a probe for each guard". This costs the coordinator prompt length and buys back the
+determinacy the plan lint and the projection are there to establish.
+
 **Positional state.** A row's state is its folder, never a column. Live prompts sit in
 `prompts/<role>/`; unconsumed reports sit in `handoffs/<role>/`; closed rows move to
 `archive/plan_<n>/` at the coordinator's closeout ritual. A state transition is a file
@@ -714,6 +740,7 @@ This section absorbs the project README, which is now a one-screen pointer to th
 | Pipeline documentation commit | `a9d9fc0`, 2026-09-06 — the plan set, the ratified intention amendments (inventory rounds 1–2, owner decisions 7–12; the owner confirmed on 2026-09-06 that this is the content the plan set was written against), the reduced README, and the `archive/pre_plan/` move. Committed before phase 01 was dispatched so the phase's checkpoint diff carries only its own work |
 | Coordinator handover round 1 | 2026-09-06 — the coordinator role moved from a Codex session to a Claude session. The charter's role split is unchanged: coordinator and reviewer are Claude-side, the implementer is Codex. §7.4 amended by the pre-dispatch plan lint (phase 01 C6) |
 | Phase 01 projection gate | **not waived**, 2026-09-06 — see the tracker note and §7.2 |
+| Owner card 1 (handover round 1) resolved | 2026-09-06 — the owner confirmed the split and recorded that Codex sessions are exhausted: phase 01 is implemented by a **Claude Sonnet 5** session and reviewed by a **Claude Opus 5** session. Recorded as a substitution in §3, with what it keeps and what it spends |
 | Backend phases merged from `main` | 1 (topology and environment), 2 (errors, logger, shared value shapes), 3 (Proposales adapter: transport, error translation, content read) — all `APPROVED`. Backend phases 4–15 `NOT_STARTED` |
 
 Every future `main` merge is recorded here with its date and the backend phases it brought.
