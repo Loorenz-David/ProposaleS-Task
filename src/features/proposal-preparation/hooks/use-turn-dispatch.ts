@@ -37,7 +37,7 @@ export function useTurnDispatch(): {
     useWorkspaceSessionStore
       .getState()
       .startTurn(originSessionId, toInFlightTurn(input, turnId), humanEntry);
-    if (input.kind === "brief") {
+    if (input.kind === "brief" || input.kind === "revision") {
       useWorkspaceSessionStore.getState().clearComposerDraft(originSessionId);
     }
 

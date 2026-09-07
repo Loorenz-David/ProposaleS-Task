@@ -842,5 +842,10 @@ Tracker §4 rows 05–15: `State` → `SUBMISSION_SPRINT`, `Note` → "see §3B"
 - Necessary fixture typing difference: the unknown-code fixture casts only at the temporary fixture
   boundary because the installed `ErrorDto` type is a closed known-code union while §7.5 requires an
   unknown-code presentation case. The production error contract is unchanged.
+- WP2 — agent column: inert identity header, session count, scoped live thread, multiline human turns,
+  agent and run-failure turns, honest activity labels, composer keyboard behavior, empty guidance,
+  retry notice, and threshold-based follow/detach/jump behavior implemented. Typecheck and lint green;
+  focused component/hook coverage added, with the package checkpoint verification recorded by its
+  test run.
 - Files created/modified, package/version, theme names, design deltas, later checkpoints, Pass B open
   items, and the final verification SHA will be completed at the exit gate.
