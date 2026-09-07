@@ -19,8 +19,8 @@ export type PreparationMessageInput = {
 };
 
 export function labeledBlock(name: string, text: string): string {
-  const safeText = text.replaceAll(">>>", "> > >");
-  return `<<<${name} (untrusted data)\n${safeText}\n>>>`;
+  const escape = (value: string) => value.replaceAll("<<<", "< < <").replaceAll(">>>", "> > >");
+  return `<<<${escape(name)} (untrusted data)\n${escape(text)}\n>>>`;
 }
 
 function userBlock(name: string, body: string): AgentMessage {

@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-type AnyRecord = Record<string, any>;
-
 async function modules() {
   return {
     domain: await import("./retrieval-record"),
@@ -40,6 +38,13 @@ describe("retrieval record", () => {
     const record = domain.emptyRetrievalRecord();
     expect(domain.hasRetrieved(record, "1")).toBe(false);
     expect(record.candidates.size).toBe(0);
+  });
+
+  it("C5(e) reports both retrieved and unseeded identities", async () => {
+    const { domain, fixtures } = await modules();
+    const record = domain.seedRetrievalRecord(fixtures.propositionWithAlternatives());
+    for (const variationId of ["1", "2", "3", "5"]) expect(domain.hasRetrieved(record, variationId)).toBe(true);
+    expect(domain.hasRetrieved(record, "99")).toBe(false);
   });
 
   it("C5(d) gives both human and Proposales blocks identity only", async () => {

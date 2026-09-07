@@ -1,8 +1,6 @@
-import { describe, expect, expectTypeOf, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { MAX_INSTRUCTION_CHARS } from "./shared";
-import type { ConversationTurn } from "./conversation";
-import type { RenderableResult } from "../server/domain/conversation";
 
 type AnyRecord = Record<string, any>;
 
@@ -61,6 +59,7 @@ describe("conversation schema", () => {
     const padded = fixtures.conversationWith(1);
     padded.turns[0].text = `  x  `;
     expect(conversation.conversationContextSchema.parse(padded).turns[0].text).toBe("x");
+
   });
 
   it("C1(e) rejects uppercase UUIDs and timestamps without milliseconds", async () => {
@@ -109,6 +108,20 @@ describe("conversation schema", () => {
     expect(conversation.MAX_TURN_TEXT_CHARS).toBeGreaterThanOrEqual(MAX_INSTRUCTION_CHARS);
   });
 
+  it("C1(h) bounds omittedTurns as a non-negative integer", async () => {
+    const { conversation } = await modules();
+    expect(conversation.conversationContextSchema.safeParse({ turns: [], omittedTurns: -1 }).success).toBe(false);
+    expect(conversation.conversationContextSchema.safeParse({ turns: [], omittedTurns: 1.5 }).success).toBe(false);
+    expect(conversation.conversationContextSchema.safeParse({ turns: [], omittedTurns: 0 }).success).toBe(true);
+  });
+
+  it("C1(i) accepts text exactly at MAX_TURN_TEXT_CHARS", async () => {
+    const { conversation, fixtures } = await modules();
+    const exact = fixtures.conversationWith(1);
+    exact.turns[0].text = "x".repeat(conversation.MAX_TURN_TEXT_CHARS);
+    expect(conversation.conversationContextSchema.safeParse(exact).success).toBe(true);
+  });
+
   it("C6(a) keeps conversation outside strict workflow state", async () => {
     const { states, workflow } = await modules();
     try {
@@ -128,8 +141,4 @@ describe("conversation schema", () => {
     expect({ code: issue.code, path: issue.path, keys: issue.keys }).toEqual({ code: "unrecognized_keys", path: [], keys: ["state"] });
   });
 
-  it("C3(f) keeps renderable statuses exactly aligned with assistant turn kinds", async () => {
-    type AssistantKind = Extract<ConversationTurn, { role: "assistant" }>["kind"];
-    expectTypeOf<RenderableResult["status"]>().toEqualTypeOf<AssistantKind>();
-  });
 });

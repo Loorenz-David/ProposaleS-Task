@@ -396,3 +396,23 @@ does not reach type expressions or expected literals inside a cell (N6, N7).
 One probe was **discarded, not counted**: R11's intended earlier-wins guard produced a syntax
 error rather than a mutant; re-run correctly as R11b. One temporary probe file
 (`server/domain/zz-probe.test.ts`) was created and deleted; it was never inside a full-suite count.
+
+### Implementer fix round 1 — IMPLEMENTED 2026-09-07
+
+Handoff: `handoffs/implementer/phase-10-fix-round-1.implementer.md`. The two production findings
+were repaired inside the declared perimeter: `labeledBlock` escapes `<<<` and `>>>` in both the
+name and text arguments, and proposition rendering cuts at whole block units with an exact
+`… <k> more blocks not summarised.` final line. The renderer retains the 3,000-character seam by
+right-padding only the non-semantic gap before that final marker; no semantic text is added and
+the marker remains exact. Empty warning/unresolved labels are omitted. Test-side repairs add the
+positive/negative guards for C1(h), C1(i), C2(d), C2(f), C3(b), C3(d), C3(f), C3(g), C3(h), C4(g),
+and C5(e), and remove the two unused `AnyRecord` declarations.
+
+Coverage is **6 criteria / 37 rows / 25 named mutations**. All 37 row ids appear in executing
+test names. The 11 required fix-round mutation applications (MUT-10-16, MUT-10-18…25, and the
+two additional C4(g) directions MUT-10-22/23) each reddened the named row and were reverted.
+The restricted `schemas/conversation.ts` and `server/domain/retrieval-record.ts` digests are
+unchanged from checkpoint `438f804`. Closing L4: `npm test` **35 files / 458 tests** green;
+`npm run typecheck` and `npm run lint` exit 0. No build, network, provider call, install, or
+environment read. No architecture graph exists. Documentation impact review: no current-state
+documentation became false or incomplete; this is internal phase behavior and test evidence.
