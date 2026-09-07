@@ -277,6 +277,14 @@ the structural frontend/backend merge (`f60b9c2`). The two phase plans remain hi
 material and are not edited. The sprint plan carries its own inventory, contract mapping, work
 packages, test matrix, exit gate and sprint log; the tracker rows below point at it.
 
+**Implemented 2026-09-07, not yet reviewed or approved.** WP1–WP7 ran in one session on
+`proposal-copilot-integration`, each closing with a `CHECKPOINT (not approved)` commit. The
+fixture-era turn adapter and `types/temporary-turn.ts` are gone and the browser reaches the real
+services through `server/actions.ts`. Nineteen of the exit gate's twenty rows hold on the
+implementation tree; row 15's live half (`LIVE_SMOKE=1 npm run test:e2e`) is the owner's to run,
+as is the Vercel configuration. The evidence, the tree-vs-plan differences adopted and the tests
+amended are in the sprint plan's §15.
+
 ---
 
 ## 4. Progress tracker
