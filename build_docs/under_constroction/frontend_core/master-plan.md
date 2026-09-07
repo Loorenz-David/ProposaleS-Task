@@ -268,6 +268,15 @@ era-marked demo latency constant, `TEMPORARY_FIXTURE_TURN_LATENCY_MS`, represent
 progress; deleted at integration. 24: the design fonts are loaded through `next/font/google` in
 `src/app/layout.tsx`.
 
+
+### 3C. Integration sprint (planned 2026-09-07)
+
+Phases 16 and 17 are superseded as executable process by one collapsed integration sprint,
+`plans/sprint-integration-backend-frontend.md`, planned on `proposal-copilot-integration` after
+the structural frontend/backend merge (`f60b9c2`). The two phase plans remain historical source
+material and are not edited. The sprint plan carries its own inventory, contract mapping, work
+packages, test matrix, exit gate and sprint log; the tracker rows below point at it.
+
 ---
 
 ## 4. Progress tracker
@@ -292,8 +301,8 @@ derived from the tables, never typed forward: re-derive before any count-bearing
 | 13 | Failure taxonomy and recovery | `plans/phase-13-failure-taxonomy.md` | 7 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
 | 14 | Retained context and restoration on activation | `plans/phase-14-retained-context-and-restoration.md` | 8 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
 | 15 | Presentation boundary audit and fixture-era closure | `plans/phase-15-boundary-audit.md` | 7 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
-| 16 | Browser-to-server boundary | `plans/phase-16-transport-boundary.md` | 5 | `NOT_STARTED` | 2026-09-06 | planner | **gated on backend phases 11–14 `APPROVED` and merged** |
-| 17 | Seam replacement, critical flow, closeout | `plans/phase-17-seam-replacement-and-closeout.md` | 5 | `NOT_STARTED` | 2026-09-06 | planner | **gated on backend phases 5, 6, 10–14 `APPROVED` and merged** |
+| 16 | Browser-to-server boundary | `plans/phase-16-transport-boundary.md` | 5 | `NOT_STARTED` | 2026-09-06 | planner | **SUPERSEDED** 2026-09-07 by `plans/sprint-integration-backend-frontend.md` (§3C); the gate was historical — backend 11–15 shipped under `SUBMISSION_SPRINT` and are merged |
+| 17 | Seam replacement, critical flow, closeout | `plans/phase-17-seam-replacement-and-closeout.md` | 5 | `NOT_STARTED` | 2026-09-06 | planner | **SUPERSEDED** 2026-09-07 by `plans/sprint-integration-backend-frontend.md` (§3C) |
 
 Criteria total: **117** — re-derived on 2026-09-07 from this table's own `Criteria` column by
 command, not typed forward:
