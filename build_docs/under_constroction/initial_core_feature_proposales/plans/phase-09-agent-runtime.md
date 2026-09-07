@@ -1,7 +1,7 @@
 ---
 plan: 9
 phase: Agent runtime — tool definition, run loop, budgets, read tools
-state: CHANGES_REQUESTED
+state: APPROVED
 date: 2026-09-07
 author: implementation-planner round 1
 ---
@@ -545,3 +545,48 @@ phase 15. One test addition, no production change.
 `MAX_OUTPUT_RETRIES + 1`. Folded into the same round.
 
 Fix round 3 prompt: `prompts/implementer/phase-09-fix-round-3.implementer.md`.
+
+### Coordinator approval — 2026-09-07
+
+State → **APPROVED** at checkpoint `3bd5899`, under master §9.0.2, with **no independent
+re-review** by owner decision. All five preconditions were observed and each is recorded here.
+
+1. **Green closing stamp, re-run by the coordinator.** `npm test` → **31 files / 421 tests**;
+   `npm run typecheck` exit 0; `npm run lint` exit 0.
+2. **Every mutation ran, reddened, and reverted byte-identical.** MUT-09-38 and MUT-09-39 re-run
+   independently: deleting the failure-branch `agent.run.tool` call and flipping its `ok` to `true`
+   each redden exactly one test, and `run.ts` returns to
+   `f8fc4de0b36c2de823c901dc114c59b1f2960bbf8ec604835b99c5042d1607df`.
+3. **Perimeter exact by diff.** `git diff --stat eb8f9a2 HEAD` is two files — `run.test.ts` and the
+   handoff — and `git diff eb8f9a2 HEAD -- src/ test/ ':!*.test.ts'` is empty. This round shipped
+   no production byte, as scoped.
+4. **Five independent coordinator probes, all variations the round did not run, all red.** The
+   failure record's `name` and `toolCallId` each replaced by a constant; `durationMs` replaced by
+   the constant `0`; the two branch outcomes swapped so the success path logs `ok: false`. And the
+   one that mattered most: **MUT-09-12 re-run after N3's change**, to confirm that replacing
+   C5(c)'s hardcoded `2` with `MAX_OUTPUT_RETRIES + 1` had not made the row move with the code —
+   widening the retry bound still reddens it, now across three tests. Every probe was confirmed
+   applied before its result was read.
+5. **Every criterion traces to ratified authority**, and all **38** row ids appear in executing
+   test names, checked by iterating the table against the three phase test files.
+
+Final table: **7 criteria / 38 rows / 39 named mutations**, MUT-09-1 … MUT-09-39 contiguous, all
+derived by the counter.
+
+**What this phase cost and what it bought.** The projection found that a `run` discarding every
+tool result passed all 22 original rows. Review round 1 found that the entire outbound request —
+`system`, `initialMessages`, `tools`, `outputJsonSchema` — was deletable field by field with the
+suite green, and that no row proved `search_content` forwards the model's query or the resolved
+language to the ranker. **Both directions of the model boundary were blind, one round apart.**
+Production was wrong in exactly one place across three rounds: no log event carried a tool name or
+a duration, which contract `08` §10 requires. Everything else was a guard that could not fail.
+
+The table grew 6 / 22 / 4 → 7 / 34 / 13 → 7 / 38 / 39. Two rounds were spent on defects the
+coordinator introduced at a fold: C5(a)'s expected issue path, written by reasoning from a schema
+instead of running it, which blocked fix round 2 before a byte was edited; and C7(f)'s
+failure branch, which shipped asserted on the success path only. Both are recorded against §9.1
+rule 18, which now binds an expected value as tightly as a fixture.
+
+Carry-forwards, unchanged: N4 (`readOnly: false` needs a row) → phase 11, where a tool set is first
+instantiated with it. F5 (`assertReadOnlyToolSet`'s two forced copies) → phase-15 candidate 6. The
+phase-7 purity guard and the `@/lib/ai` barrel's negative surface → phase-15 candidates 4 and 5.
