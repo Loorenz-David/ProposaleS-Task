@@ -38,7 +38,7 @@ and one unstable test. None of the four is keyboard work.
 |---|---|---|---|
 | 1 | Intention ratified | `intention/frontend-core-intention.md`, status table | the **Status** value begins `RATIFIED` |
 | 2 | The phase awaits a fix | `master-plan.md` §4, row `03` | the **State** cell reads `CHANGES_REQUESTED` |
-| 3 | The plan agrees | `plans/phase-03-session-runtime-and-tabs.md`, header | **Criteria** reads `7`; the criteria table totals **47 rows** and **18 runnable named mutations** |
+| 3 | The plan agrees, **on state and on counts** | `plans/phase-03-session-runtime-and-tabs.md`, header and criteria table | its **State** row reads `CHANGES_REQUESTED` — the same value as check 2, and if the two disagree that is the defect, stop and report it — **Criteria** reads `7`, and the criteria table totals **47 rows** and **18 runnable named mutations** |
 | 4 | The round is outstanding | `handoffs/implementer/` | no `phase-03-fix-round-4` handoff exists |
 | 5 | The defect is still present | the tree | `agent-surface.tsx` still renders `<SessionTabStrip />` after the idle content |
 

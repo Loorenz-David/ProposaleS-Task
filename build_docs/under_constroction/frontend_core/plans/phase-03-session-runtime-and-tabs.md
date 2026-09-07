@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **State** | `IMPLEMENTED` |
+| **State** | `CHANGES_REQUESTED` |
 | **Criteria** | 7 |
 | **Projection** | **required** — ordering rules, focus destinations, identity separation |
 | **Serves** | F12 · F8 · F30 · F24 · F6 |
@@ -841,3 +841,32 @@ is deferred is protection against future regression, not a present defect. The p
 tables (close, reorder, landmark identity, the key map) do bite: the coordinator's three close
 mutations and the reviewer's eleven L1 mutants confirm it. The exposure is that a later phase can
 break one of these invariants and no guard will say so.
+
+### Fix round 4 halted at its gate; prompt repaired, round number kept — coordinator, 2026-09-07
+
+The session stopped before changing anything, correctly. The phase plan's header read
+`IMPLEMENTED` while master plan §4 read `CHANGES_REQUESTED`, and two artifacts disagreeing about
+one phase's state is exactly what a gate exists to catch. **No files or tests were changed**,
+confirmed against the tree.
+
+**Cause, and it is the coordinator's.** A phase's state is written in two places. When consuming
+round 2 the coordinator "synced" this plan's header to `IMPLEMENTED`; review round 3 then moved
+§4's tracker row to `CHANGES_REQUESTED` and correctly touched nothing else, since a role updates
+only its own row. Nothing in the pipeline compares the two cells. The coordinator's own gate
+self-test passed because it read the tracker — the cell that was right — and the prompt's row 3 was
+titled *"the plan agrees"* while asserting only counts, never agreement on state. A check named
+after a property it does not test is worth less than no check, because it is read as covering it.
+Registered as master plan §11.3 follow-up 21, with an interim rule in force now — whoever moves a
+phase's state moves both cells in the same edit, and a gate that reads state names both artifacts
+and treats disagreement as a stop condition — and a proposed durable fix (delete the header's
+`State` row, let §4 be the single source) held for an owner call because it touches all seventeen
+plans and every prompt template.
+
+**The round number is kept at 4, and here is the rule that decides it**, so the next occurrence is
+not improvised. Round 1 stopped and consumed its number because it *did work*: a baseline
+measurement and a dependency resolution that entered the record and re-authored a criterion, and
+its prompt was **superseded** — §3A stated something false. This session performed no work,
+produced no artifact, and its prompt was **repaired**, not re-authored: one gate row now names the
+state it was always meant to check, and every other word stands. **A session that halts at the gate
+with zero writes, against a prompt that is corrected rather than superseded, does not consume a
+round number.** Both prompt and plan are current; the same file is re-dispatched.
