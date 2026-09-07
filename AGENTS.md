@@ -10,6 +10,7 @@ The same capability is exposed as the project skill `.codex/skills/architecture-
 
 `AGENTS.md` guarantees the policy is considered on every run. `.codex/skills/architecture-context/SKILL.md` exposes it as a native skill. `agent-skills/policy/architecture-context-policy.md` owns the behavior. `architectural_contracts/01-implementation-contract-guide.md` routes to the contracts. See `agent-skills/README.md`.
 
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
