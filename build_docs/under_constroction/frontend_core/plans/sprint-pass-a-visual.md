@@ -847,5 +847,9 @@ Tracker §4 rows 05–15: `State` → `SUBMISSION_SPRINT`, `Note` → "see §3B"
   retry notice, and threshold-based follow/detach/jump behavior implemented. Typecheck and lint green;
   focused component/hook coverage added, with the package checkpoint verification recorded by its
   test run.
+- WP3 — pills: one compact attachment shell now renders disclosure, action, and external-link
+  semantics; thought payloads expose rationale/assumptions/warnings; question payloads preserve open,
+  answered, and skipped state and emit `reopen-questions`. Glyphs are decorative, new-tab behavior is
+  explicit in the accessible name, and fixture URLs pass through unchanged.
 - Files created/modified, package/version, theme names, design deltas, later checkpoints, Pass B open
   items, and the final verification SHA will be completed at the exit gate.

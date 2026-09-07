@@ -1,5 +1,6 @@
 import type { ThreadTurnViewModel } from "../../client/view-models/thread";
 import type { PillIntent } from "../../client/view-models/pill";
+import { InteractionPill } from "../pills/interaction-pill";
 
 export type AgentThreadTurnProps = {
   turn: ThreadTurnViewModel;
@@ -38,18 +39,7 @@ export function AgentThreadTurn({ turn, onPillIntent }: AgentThreadTurnProps) {
       <p className="text-pretty text-sm leading-loose text-[var(--color-fg-body)]">{turn.prose}</p>
       {turn.pills.length > 0 ? (
         <div className="mt-[10px] flex flex-col gap-1.5">
-          {turn.pills.map((pill) => (
-            <button
-              key={pill.id}
-              type="button"
-              onClick={() => {
-                if (pill.kind === "action") onPillIntent(pill.intent);
-              }}
-              className="min-h-[34px] truncate rounded-lg border border-[var(--color-border-control)] bg-[var(--color-bg-control)] px-3 text-left text-12-5 font-semibold text-[var(--color-fg-control)]"
-            >
-              {pill.label}
-            </button>
-          ))}
+          {turn.pills.map((pill) => <InteractionPill key={pill.id} onIntent={onPillIntent} viewModel={pill} />)}
         </div>
       ) : null}
     </article>
