@@ -7,6 +7,7 @@ import { createFakeProposalesClient } from "@/lib/proposales";
 import { BRIEFS } from "../../fixtures/briefs";
 import { FIXTURE_CATALOG } from "../../fixtures/catalog";
 import { emptyConversation } from "../domain/conversation";
+import { answerClarification } from "../services/answer-clarification";
 import { prepareFromBrief, type PrepareDeps } from "../services/prepare-from-brief";
 import { runPreparationAgent } from "./preparation.agent";
 
@@ -103,14 +104,49 @@ describeLive("preparation live evaluation", () => {
     expect(agent.language).toBe("en");
   });
 
-  it("L1 produces a proposition whose consequential facts all carry a real source", async () => {
+  it("L1 reaches a proposition whose consequential facts all carry a real source", async () => {
     const { proposales, deps } = liveDeps();
 
-    const turn = await prepareFromBrief({ brief: BRIEFS.englishSimple }, deps);
+    // A first turn may legitimately answer with a clarification: the model is told it may ask when
+    // something consequential cannot be derived, and this brief states no quantities. Demanding a
+    // proposition here would assert a behaviour the design deliberately does not guarantee. What is
+    // guaranteed is the round after it — `answerClarification` runs with clarification disallowed,
+    // so the model must commit. Driving both turns also exercises answer binding and the
+    // asks-once rule, which a single-turn assertion never reached.
+    const first = await prepareFromBrief({ brief: BRIEFS.englishSimple }, deps);
+    console.log(`  live eval first turn: ${first.result.status}`);
 
-    console.log(`  live eval result: ${turn.result.status}`);
+    let turn = first;
+    if (first.result.status === "clarification") {
+      const questions = first.result.questions;
+      console.log(`  live eval asked: ${questions.map((question) => `${question.itemKey} — ${question.text}`).join(" | ")}`);
+
+      turn = await answerClarification({
+        state: first.state,
+        conversation: first.conversation,
+        answers: questions.map((question) => ({
+          questionId: question.questionId,
+          answer: {
+            kind: "answer" as const,
+            text: "Northwind AB, contact Anna Berg (anna.berg@northwind.example). "
+              + "Include one consulting engagement and one training workshop, quantity 1 each.",
+          },
+        })),
+      }, deps);
+      console.log(`  live eval second turn: ${turn.result.status}`);
+    }
+
+    if (turn.result.status === "failed") {
+      console.log(`  live eval failure: ${JSON.stringify(turn.result.failure)}`);
+    }
     expect(turn.result.status).toBe("proposition");
     if (turn.result.status !== "proposition") return;
+
+    if (first.result.status === "clarification") {
+      // The round is closed: every question the model asked is recorded as answered, and the turn
+      // that followed could not ask again.
+      expect(turn.state.clarification?.answers).toHaveLength(first.result.questions.length);
+    }
 
     const proposition = turn.result.proposition;
     expect(proposition.blocks.length).toBeGreaterThan(0);

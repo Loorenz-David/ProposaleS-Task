@@ -909,9 +909,17 @@ The third is structural rather than cosmetic, and the live logs had already poin
 
 **Row Z1 was too weak, and this is why.** It asserted that `z.toJSONSchema(agentOutputSchemaFor(...))` does not throw. It does not throw — it produces a schema the configured provider rejects. "Converts without throwing" and "is acceptable to the provider" are different claims, and only the second one mattered. The opt-in live eval is what closed the gap, which is the argument for keeping it.
 
+### 13.3b Fourth live run: the pipeline works, and the eval was asserting the wrong thing
+
+With the wrapper in place OpenAI accepted the request and the agent ran the whole loop against `gpt-5.6-luna`: language derivation, two `search_content` calls, one `get_content`, then a valid structured answer, ~22k tokens, 16s. **The tool-use row passed.** The provider dialect work is done.
+
+The remaining failure was the evaluation's, not the model's. It asserted that a first turn yields a `proposition`; the model returned a `clarification`. Asking is exactly what §17A.7 permits when something consequential cannot be derived, and this brief states no quantities — so the assertion demanded a behaviour the design deliberately does not guarantee, and would have failed against a *well-behaved* model.
+
+The row now drives both turns: prepare, and if the answer is a clarification, answer every question and let `answerClarification` run with clarification disallowed, where a proposition **is** guaranteed. That is strictly more coverage than the original — it exercises answer binding and the asks-once rule, which a single-turn assertion never reached — so it is a correction, not a relaxation.
+
 ### 13.4 Known limitations at submission
 
 - No transport. `server/actions.ts` is owned by the frontend stream's phase 16; the backend is exercised through `server/index.ts` with plain arguments.
-- The live suites are opt-in. The owner ran both on 2026-09-07: the smoke passed and verified the editor origin (§13.3a); the eval found the strict-schema defect and has not been re-run since the fix.
+- The live suites are opt-in. The owner ran them four times on 2026-09-07. The smoke passed every time and verified the editor origin (§13.3a). The eval drove three real provider defects out of the OpenAI boundary and then one defect out of its own assertions (§13.3a, §13.3b); its two-turn form has not yet been run to completion.
 - The configured provider is OpenAI, and its constrained-decode mode is deliberately off (§13.3a). The model is therefore not forced to emit conforming JSON; it is checked afterwards and retried, so a weaker model may spend more retries reaching a valid proposition than the offline scripted suite suggests.
 - Deferred without commercial-safety impact: the phase-15 isolation extras (`console.log` scan, runtime-neutral-module scan, candidates 1–6), phase 14's attempt-counting row C7(e), phase 11's planted write tool C8(d), and the exhaustive edit-path and diff matrices.
