@@ -891,5 +891,9 @@ Tracker §4 rows 05–15: `State` → `SUBMISSION_SPRINT`, `Note` → "see §3B"
 - Planned design deltas applied: the created primary action uses `--color-fg` with
   `--color-fg-body` hover, and the attention medallion uses the authorized attention colour at 50%
   border opacity.
+- WP9 — dialog and strip badge: native modal confirmation with described loss, platform dialog
+  lifecycle, cancel/confirm actions, and opener-focus return coverage added without wiring future
+  discard behavior. Inactive unread counts now have explicit adapter coverage and remain appended only
+  to the tab's accessible name; the strip live region is unchanged.
 - Files created/modified, package/version, theme names, design deltas, later checkpoints, Pass B open
   items, and the final verification SHA will be completed at the exit gate.

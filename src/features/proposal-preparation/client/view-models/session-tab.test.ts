@@ -78,4 +78,10 @@ describe("tab view model", () => {
     expect(deriveTabStatus(record)).toBe("idle");
     expect(toTabViewModel(record).status).toBe("idle");
   });
+
+  it("adds unread text only for an inactive tab", () => {
+    const record = temporaryFixtureSessionRuntimeRecord({ unread: 3 });
+    expect(toTabViewModel(record).unreadText).toBe("3 unread");
+    expect(toTabViewModel(record, true).unreadText).toBeNull();
+  });
 });
