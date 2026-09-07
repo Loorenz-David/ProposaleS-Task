@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **State** | `PROMPT_READY` |
+| **State** | `IMPLEMENTED` |
 | **Criteria** | 7 |
 | **Projection** | **required** — ordering rules, focus destinations, identity separation |
 | **Serves** | F12 · F8 · F30 · F24 · F6 |
@@ -664,3 +664,98 @@ the inherited suite's product assertions remain green. The declared mutation led
 all red observations were reverted. The pre-code coverage map remains 42 runnable rows covered in
 this phase and 4 structurally held rows routed to their named later-phase triggers; no row was
 silently dropped. No architecture graph exists in this repository, so there is no graph delta.
+
+### Round 2 consumed — coordinator, 2026-09-07
+
+`handoffs/implementer/phase-03-round-2.handoff.implementer.md`, state `IMPLEMENTED`, actor Codex,
+checkpoint `5f34897`.
+
+**Reconciliation, all clean.** Write perimeter matches the checkpoint exactly — sixteen files, every
+one declared, nothing undeclared. Coverage map lists **46 rows** with **4** marked held, matching the
+plan. Mutation arithmetic states 16 and lists 16. Test growth 154 → **183** unit and 66 → **69**
+end-to-end. README carries follow-up 6's rows (Radix Tabs 1.1.21, Roving Focus 1.1.19, Lucide). The
+tracker row was moved by the implementer and by nobody else. The closing stamp was **not** re-run:
+tree identity matches the checkpoint, so it is cited.
+
+**Real work worth naming before the findings.** C4(c), C4(d) and C4(e) ship as genuine
+`ts.createSourceFile` member-access **allowlists** with a subject assertion — rules 17 and 18 met in
+the shape they were written for, and the first time in this project an absence row has been
+instrumented this way without being asked twice. C1(b)'s construction-site allowlist is an AST call
+enumeration asserted with `toEqual`, not a grep. C4(a)'s reveal arithmetic asserts the named
+constant's contract rather than `8`. The frozen elision row's `data-elided` marker is on the title
+span, as C5(g) requires.
+
+**Two blocking findings, both established by mutation rather than by reading, and both of shapes the
+round's own ledger did not use.**
+
+**B1 — C5(c)'s named mutation reddens a string, not a behaviour, and the configuration it certifies
+is inert.** `session-tab-strip.test.tsx:139–140` ends the C5(c) test with
+`expect(readFileSync(__dirname + "/session-tab-strip.tsx")).toContain("loop={false}")`. Ledger row 13
+("removed explicit `loop={false}` — configuration assertion red") is therefore true and misleading:
+what reddened was a grep of the component's own source. Verified by planting exactly that mutation —
+the **only** failure is `AssertionError: expected '"use client";…' to contain 'loop={false}'`, and
+every behavioural assertion in the same test (`ArrowLeft` on the first tab, `ArrowRight` to the next,
+`ArrowDown` inert, `End`/`PageUp`/`PageDown`) **passes with the configuration removed**. The reason is
+structural: the trigger's own `onKeyDown` handles `ArrowLeft`/`ArrowRight`/`Home`/`PageUp`/`End`/
+`PageDown`, clamps with `Math.max(0, index - 1)` and `Math.min(sessionIds.length - 1, index + 1)`, and
+calls `stopPropagation()`, so `RovingFocusGroup` never sees the key and `loop` never participates.
+Non-wrapping *is* behaviourally asserted by the same test and is not at risk; what is missing is the
+thing standing rule 19 requires — a mutation proving the explicit configuration is load-bearing. As
+shipped, the row certifies a string that could be a comment. **This is rule 19's own defect,
+reproduced in the row rule 19 was written for.**
+
+**B2 — C3(i)'s gate guard is an occurrence-count proxy, and a second close path passes it.**
+`use-workspace-session-store.test.ts:111–118` asserts
+`strip.match(/\bcloseSession\(/g)).toHaveLength(1)` plus
+`toContain("closeSessionAtGate(sessionId)")`, over `session-tab-strip.tsx` **only**. Charter rule 15
+names this exact anti-pattern — "an allowlist that pinned an occurrence count as a proxy … which a
+local `def` plus its call site satisfies exactly". Verified by planting a genuine bypass: an alias
+(`const dropSession = useWorkspaceSessionStore.getState().closeSession`) called through a second
+function. The `\bcloseSession\(` count stays at 1 because the call site spells `dropSession(`, and
+**C3(i) stays green**. Its companion assertion is broken independently:
+`expect(strip).toMatch(/function|const\s+closeSessionAtGate/)` alternates as `function` **or**
+`const closeSessionAtGate`, so it is satisfied by any file containing the word `function` — proven
+with `/function|const\s+closeSessionAtGate/.test("export function anything() {}") === true`. The
+row's own text requires **enumerating the call sites that remove a session and finding that set equal
+to the single permitted gate**, over an open universe; a count in one file is neither. This row exists
+so phase 05 inserts one guard rather than rewriting four, and as shipped it cannot detect the second
+path it was written to forbid.
+
+**Should-fix, routed to the review round rather than adjudicated here.**
+
+- **S1 — the mandated primitive's keyboard mechanics are replaced, not composed on, and the
+  deviation is undeclared.** Task 3 requires the tablist mechanics to be built on the foundation, with
+  the explicit branch "if the primitive distorts any of them, use native elements for that part **and
+  record why**". The strip sets `activationMode="manual"`, re-implements activation-follows-focus with
+  its own `onFocus`, hand-rolls the whole key map, and stops propagation. Behaviourally this appears
+  correct — but the handoff describes it as "Used Radix Tabs as the composite foundation, explicitly
+  setting `activationMode="manual"` and `loop={false}`", which reads as configuring the primitive's
+  mechanics rather than superseding them. §3A's grounded facts about the foundation are, as a result,
+  largely moot for this implementation, and no reason is recorded.
+- **S2 — the evidence budget was exceeded without the authorization line.** The handoff describes a
+  baseline, an intermediate unit run, a first post-correction full end-to-end run, a second full
+  end-to-end run, and the closing stamp. Two L4 measurements were authorized. The charter requires one
+  line written **before** any additional L4 run; none is quoted. Recorded like any other finding.
+- **S3 — the frozen spec gained readiness waits, which is a change in kind the plan did not
+  authorize.** §4 permitted the five instances to be **re-baselined to the tab order this phase
+  creates, and nothing else**. Three of them also gained
+  `await expect(page.getByRole("tab").first()).toBeVisible()`. It is defensible — the initial session
+  is created after mount, so the strip's tab stops do not exist until hydration — but it encodes a
+  real product fact that no criterion states: **the shell's keyboard order is incomplete until the
+  client has hydrated**. Either that belongs in a row, or the wait belongs in the handoff as a
+  declared deviation. The re-baselined counts also assume exactly one session exists.
+- **S4 — three criterion rows share one test.** `e2e/session-tabs.spec.ts` fuses C5(e), C5(f) and
+  C5(g) into `C5(e,f,g)`, and covers C4(b)'s five operations in a single test. Sequential assertions
+  short-circuit (charter rule 12) and rule 2 wants one exact outcome per row, so a failure in the
+  first masks the rest. Three new end-to-end tests for five browser-resident rows is the arithmetic
+  that surfaced it.
+
+**Note for the reviewer, not a finding.** The initial session is created in an effect after mount,
+guarded against Strict Mode's double invocation. First paint therefore renders a strip with no tabs.
+Nothing in the plan forbids it and no frozen row catches it, but it is worth a deliberate look
+against §12A.23's landmark-identity claims and against the idle state's honesty.
+
+**Not re-verified here, and left to the review round:** C2's eight reorder rows, C3(a)–(h)'s close
+and focus table, C6's landmark sequence, and every Playwright row. The coordinator's probes were
+spent on the two guards above and on the instrument shapes; the behavioural tables were read, not
+attacked.
