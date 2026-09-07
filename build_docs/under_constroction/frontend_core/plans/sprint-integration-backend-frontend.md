@@ -585,3 +585,18 @@ Tests amended, and why (no test was deleted):
 | `use-workspace-session-store.test.ts` C7 | Record literal gains `conversation: null` | The record gained the field. |
 | store and dispatch tests | Outcomes from `turn-outcome.fixture.ts`; seam renamed to `setTurnTransportForTests` | The fixture adapter is gone. |
 | `src/lib/ai/{client,registry}.test.ts` | (WP2) `COPILOT_LIVE_MUTATIONS` added to explicit env | See §15.3. |
+
+### 15.5 WP4 — conversational turns wired and proven offline
+
+`workflow-ui.test.tsx` (new, jsdom). A1, A2, B1 and the jsdom `server-only` alias were applied in WP3, because the typecheck and the jsdom suites needed them there; §15.4 records both. `npm test` 885 green, typecheck and lint green.
+
+The slice types a real brief into the real components and follows it through the real transport, the real Server Action functions and the real services, with only `defaultDeps` replaced. Rows: **T-INT-1** clarification round trip · **T-INT-2** proposition rendered by the unchanged review components · **T-INT-3** human edit, no model in the path, the server's value on screen and flagged "Set by you" · **T-INT-3b** a mistyped quantity refused at its own leaf with the proposition untouched · **T-INT-4** scoped revision with its badge · **T-INT-5** the conversation grows on brief/answers/revision and not on an edit · **T-INT-5b** the composer means revision after a proposition, and a first brief carries no state · **T-DISP-3** the generation id is the injected one and no payload contains the session id.
+
+Adopted while implementing:
+
+- **`fireEvent`, not `@testing-library/user-event`.** The library is not a dependency of this repository and the sprint adds none, so the slice drives the UI the way every existing component test does.
+- **A local `selectOfferedAlternative()` script instead of the shared `selectSecondAlternative()`.** The shared script names content "3", which exists only after an `add_block` turn (its `workflow.test.ts` flow adds one). This flow edits the title instead, so "3" was never retrieved and the backend refused it with `model_output_invalid` at `blocks.0.contentId` — the provenance rule working exactly as intended. The local script picks variation "2", the alternative the proposition actually offers. `fixtures/scripts.ts` was not modified.
+- **A `ResizeObserver` stub**, matching `ask-agent-popover.test.tsx`: the popover positions itself with a Radix hook that requires one, and jsdom has none.
+- **One assertion added beyond the plan:** the human's title survives the following model revision. The revision turn was the first place that could have silently undone a human edit, and it does not.
+
+No component changed in this work package. No test was amended or deleted.
