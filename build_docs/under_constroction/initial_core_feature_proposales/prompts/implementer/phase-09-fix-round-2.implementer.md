@@ -53,6 +53,26 @@ time, first thing: `npm test` on the entry tree, and record the printed file and
 entry tree is green at **31 files / 418 tests**; if your run disagrees, stop and report before
 editing.
 
+## Re-dispatch — what changed since the blocked attempt
+
+The previous attempt stopped before editing anything and reported that C5(a) mandated a truncated
+raw string while expecting the issue path `["answer"]`. **That was correct and the plan was wrong.**
+A truncated string fails the flat output schema at the **root**, so the serialized value is
+`[{"path":[]}]`. The row is corrected, and the correction is recorded in the plan's Review log.
+
+- **Re-read C5(a) before you touch it.** It now carries **two** cases: the truncated string with its
+  true empty root path, and a nested object failure serializing to
+  `[{"path":["items","0","answer"]}]`. Both values are printed output, not reasoned.
+- **`FIXTURE_CATALOG` was read before re-dispatch so this does not repeat.** Item `7` has an
+  `en`-only title; item `8` carries **blank** `sv` and `no` titles. C6(a)'s Swedish case, C6(b)'s
+  present-but-blank sub-branch and C6(d) are all fixture-backed — you need no new fixture. Review
+  N1's claim that the catalog has no blank title is false and the cell says so.
+- Nothing else changed. The ledger is still `MUT-09-25` … `MUT-09-37`; the table is still 7 / 38 / 37.
+
+**Stopping was the right call and the ladder worked.** Keep doing it: if a row and the runtime
+contradict each other, stop and report — never adjust the assertion until it passes, and never
+re-investigate the dependency to repair the plan yourself.
+
 ## The six production edits — plan tasks 6 through 11
 
 Read the plan's "Fix round 1 tasks" section for each one in full; this is the index, not the spec.
