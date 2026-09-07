@@ -1,4 +1,11 @@
 import type { SessionRuntimeRecord } from "../../types/session";
+import type { TemporaryClarification } from "../../types/temporary-turn";
+
+export type ClarificationDraft = {
+  questionId: string;
+  state: "answered" | "skipped" | "untouched";
+  text: string;
+};
 
 export type QuestionViewModel = {
   questionId: string;
@@ -12,6 +19,28 @@ export type ClarificationPanelViewModel = {
   openCount: number;
   isOpen: boolean;
 };
+
+export function toClarificationAnswersInput(
+  drafts: ClarificationDraft[],
+  receivedQuestionIds: string[],
+): { answers: TemporaryClarification["answers"] } {
+  const draftById = new Map(drafts.map((draft) => [draft.questionId, draft]));
+  return {
+    answers: receivedQuestionIds.flatMap((questionId) => {
+      const draft = draftById.get(questionId);
+      if (!draft) return [];
+      if (draft.state === "untouched" || (draft.state === "answered" && draft.text === "")) {
+        return [];
+      }
+      return [{
+        questionId,
+        answer: draft.state === "skipped"
+          ? ({ kind: "skip" } as const)
+          : ({ kind: "answer", text: draft.text } as const),
+      }];
+    }),
+  };
+}
 
 function itemLabel(itemKey: string) {
   return itemKey

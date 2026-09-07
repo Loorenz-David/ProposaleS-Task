@@ -48,4 +48,17 @@ describe("ClarificationPanel", () => {
     fireEvent.keyDown(screen.getByRole("region", { name: "Agent questions" }), { key: "Escape" });
     expect(onDismiss).toHaveBeenCalledOnce();
   });
+
+  it("R4.6: skip all preserves an explicitly answered draft", () => {
+    const onSubmit = vi.fn();
+    render(<ClarificationPanel onDismiss={vi.fn()} onSubmit={onSubmit} submitState={{ status: "idle" }} viewModel={batch} />);
+    fireEvent.change(screen.getByRole("textbox", { name: "How many chairs?" }), { target: { value: "Six" } });
+    fireEvent.click(screen.getByRole("button", { name: "Skip all" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send 3 answers" }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.arrayContaining([
+      expect.objectContaining({ questionId: "q1", state: "answered", text: "Six" }),
+      expect.objectContaining({ questionId: "q2", state: "skipped" }),
+      expect.objectContaining({ questionId: "q3", state: "skipped" }),
+    ]));
+  });
 });

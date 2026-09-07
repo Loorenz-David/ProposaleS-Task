@@ -772,3 +772,17 @@ focus-order row is not evidence (master plan §11.1, follow-up 18). Free the por
   `SessionTabStrip`, and `MainApplicationSurface`, because one shared guard instance must
   serve tab close and review discard while `ProposalWorkspace` owns the dialog.
 - Checkpoint stamp: `npm test` — 54 files / 304 tests green.
+
+### WP4 checkpoint
+
+- Added the pure `toClarificationAnswersInput` submission mapper. It emits only explicit answer
+  and skip decisions for received question ids, preserves typed characters byte-for-byte, follows
+  received-question order, and leaves untouched or empty drafts omitted. Skip-all now marks only
+  untouched drafts, preserving answered drafts. Agent submission uses this mapper and the matched
+  result path continues to dismiss the panel without touching the draft.
+- Acceptance evidence: clarification view-model and panel tests cover R4.1–R4.9, including foreign
+  ids, distinctive ordering, literal characters, and skip-all preservation.
+- Mutation ledger: M5 changed the mapper to submit `skip` for empty/untouched drafts and reddened
+  the omission assertions R4.3/R4.4/R4.5; reverted. Mutation file was
+  `client/view-models/clarification.ts`, applied and reverted before commit.
+- Checkpoint stamp: `npm test` — 54 files / 307 tests green.

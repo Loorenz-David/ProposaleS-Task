@@ -3,7 +3,10 @@
 import { useRef } from "react";
 import { flushSync } from "react-dom";
 
-import { toClarificationPanelViewModel } from "../../client/view-models/clarification";
+import {
+  toClarificationAnswersInput,
+  toClarificationPanelViewModel,
+} from "../../client/view-models/clarification";
 import { toCallFailureViewModel } from "../../client/view-models/failure";
 import type { PillIntent } from "../../client/view-models/pill";
 import { toThreadViewModel, toWorkingLabel } from "../../client/view-models/thread";
@@ -64,21 +67,13 @@ export function AgentSurface({ closeGuard }: { closeGuard?: CloseGuardController
     composerRef.current?.focus();
   };
   const submitAnswers = (drafts: ClarificationDraft[]) => {
+    if (!panel) return;
     void dispatch(activeSessionId, {
       kind: "answers",
-      answers: drafts.flatMap((draft) =>
-        draft.state === "untouched"
-          ? []
-          : [
-              {
-                questionId: draft.questionId,
-                answer:
-                  draft.state === "skipped"
-                    ? ({ kind: "skip" } as const)
-                    : ({ kind: "answer", text: draft.text } as const),
-              },
-            ],
-      ),
+      answers: toClarificationAnswersInput(
+        drafts,
+        panel.questions.map((question) => question.questionId),
+      ).answers,
     });
   };
 

@@ -2,15 +2,11 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
-import type { ClarificationPanelViewModel } from "../../client/view-models/clarification";
+import type { ClarificationPanelViewModel, ClarificationDraft } from "../../client/view-models/clarification";
 import { ClarificationQuestion } from "./clarification-question";
 import { ClarificationStepProgress } from "./clarification-step-progress";
 
-export type ClarificationDraft = {
-  questionId: string;
-  state: "answered" | "skipped" | "untouched";
-  text: string;
-};
+export type { ClarificationDraft };
 export type ClarificationPanelProps = {
   viewModel: ClarificationPanelViewModel;
   submitState: { status: "idle" } | { status: "submitting" } | { status: "failed"; message: string };
@@ -105,7 +101,7 @@ export function ClarificationPanel({ viewModel, submitState, onSubmit, onDismiss
             <button type="button" disabled={currentIndex === viewModel.questions.length - 1} onClick={() => setCurrentIndex((index) => index + 1)} className="rounded-md px-3 py-2 text-12 font-semibold disabled:opacity-40">Next</button>
             <button
               type="button"
-              onClick={() => setDrafts((current) => current.map((item, index) => viewModel.questions[index]?.state === "open" ? { ...item, state: "skipped", text: "" } : item))}
+              onClick={() => setDrafts((current) => current.map((item) => item.state === "untouched" ? { ...item, state: "skipped", text: "" } : item))}
               className="rounded-md px-3 py-2 text-12 font-semibold text-[var(--color-fg-secondary)]"
             >
               Skip all
