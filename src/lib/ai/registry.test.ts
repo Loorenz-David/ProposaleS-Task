@@ -16,6 +16,7 @@ const PRODUCTION_MODULES = [
   "config.ts",
   "errors.ts",
   "index.ts",
+  "openai-schema.ts",
   "registry.ts",
   "scripted.ts",
   "types.ts",

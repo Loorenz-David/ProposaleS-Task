@@ -11,6 +11,7 @@ import type { ModelMessage, Tool, LanguageModelUsage } from "ai";
 
 import { serverEnv, type ServerEnv } from "@/lib/env/server";
 import { AiProviderError, fromSdkError } from "@/lib/ai/errors";
+import { outputSchemaForProvider } from "@/lib/ai/openai-schema";
 import type {
   AiClient,
   AgentMessage,
@@ -168,7 +169,9 @@ export function createAiClient(env: ServerEnv = serverEnv, deps: AiClientDeps = 
         ...(input.outputJsonSchema === undefined
           ? {}
           : {
-              output: Output.object({ schema: jsonSchema(asJsonSchema(input.outputJsonSchema)) }),
+              output: Output.object({
+                schema: jsonSchema(asJsonSchema(outputSchemaForProvider(env.AI_PROVIDER, input.outputJsonSchema))),
+              }),
               providerOptions: OPENAI_PROVIDER_OPTIONS,
             }),
         abortSignal: AbortSignal.timeout(options.timeoutMs),
