@@ -84,3 +84,55 @@ export function agentClarificationOutput(itemKey = "recipient_identity", text = 
 export function keepCallingTools(count: number, query = "consulting"): GenerateStepResult[] {
   return Array.from({ length: count }, (_, index) => searchStep(query, `call-loop-${index + 1}`));
 }
+
+export const STRONG_QUERY = "consulting training workshop";
+
+export function clarifyRecipient(): GenerateStepResult[] {
+  return [languageStep("en"), finalStep(agentClarificationOutput())];
+}
+
+export function proposeStrong(): GenerateStepResult[] {
+  return [languageStep("en"), searchStep(STRONG_QUERY), finalStep(agentPropositionOutput())];
+}
+
+export function proposeWithoutRecipient(): GenerateStepResult[] {
+  return [
+    languageStep("en"),
+    searchStep(STRONG_QUERY),
+    finalStep(agentPropositionOutput({ recipient: { known: false } })),
+  ];
+}
+
+export function proposeWithHumanEmail(questionId: string): GenerateStepResult[] {
+  const output = agentPropositionOutput();
+  const recipient = structuredClone(output.recipient) as Record<string, any>;
+  recipient.value.email = { known: true, value: "anna@example.se", source: "human", ref: { questionId } };
+  return [languageStep("en"), searchStep(STRONG_QUERY), finalStep({ ...output, recipient })];
+}
+
+export function proposeWithSekNote(): GenerateStepResult[] {
+  return [
+    languageStep("en"),
+    searchStep(STRONG_QUERY),
+    finalStep(agentPropositionOutput({
+      commercialNotes: [{
+        text: { value: "The brief states around 120 000 SEK.", source: "brief", ref: { quote: "around 120 000 SEK" } },
+        amount: { known: false },
+        currency: { known: true, value: "SEK", source: "brief", ref: { quote: "120 000 SEK" } },
+        taxBasis: { value: "including_tax", source: "brief", ref: { quote: "including tax" } },
+      }],
+    })),
+  ];
+}
+
+export function selectSecondAlternative(): GenerateStepResult[] {
+  const output = agentPropositionOutput();
+  const blocks = structuredClone(output.blocks) as Array<Record<string, any>>;
+  blocks[0] = { ...blocks[0], contentId: { value: "3", source: "proposales_content", ref: { variationId: "3" } }, alternatives: [] };
+  return [finalStep({ ...output, blocks })];
+}
+
+export function selectPrevious(): GenerateStepResult[] {
+  const output = agentPropositionOutput();
+  return [finalStep({ ...output, blocks: [{ ...(output.blocks as Array<Record<string, unknown>>)[0], alternatives: [] }] })];
+}

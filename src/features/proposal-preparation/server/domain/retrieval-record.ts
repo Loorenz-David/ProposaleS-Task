@@ -7,6 +7,9 @@ export type RetrievedCandidate = {
   variationId: string;
   productId: string;
   title: string;
+  description?: string;
+  truncated?: boolean;
+  reason?: string;
   matchStrength?: ContentCandidate["matchStrength"];
   score?: number;
 };
@@ -40,7 +43,7 @@ export function seedRetrievalRecord(proposition: Proposition): RetrievalRecord {
   return { candidates };
 }
 
-export function extendRetrievalRecord(record: RetrievalRecord, candidates: ReadonlyArray<ContentCandidate>): RetrievalRecord {
+export function extendRetrievalRecord(record: RetrievalRecord, candidates: ReadonlyArray<RetrievedCandidate>): RetrievalRecord {
   const next = new Map(record.candidates);
   for (const candidate of candidates) {
     next.set(candidate.variationId, {
