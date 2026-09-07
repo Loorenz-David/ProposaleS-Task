@@ -1,5 +1,7 @@
 import "server-only";
 
+import { comparePaths } from "@/lib/values/path";
+
 import type { PropositionSource } from "../../schemas/shared";
 import type { Proposition as PropositionValue } from "../../schemas/proposition";
 
@@ -12,22 +14,6 @@ export type ProvenanceProjectionEntry = {
 function add(entries: ProvenanceProjectionEntry[], path: string[], leaf: any) {
   if (leaf?.known === false || typeof leaf?.source !== "string") return;
   entries.push({ path, source: leaf.source, ...(leaf.ref ? { ref: leaf.ref } : {}) });
-}
-
-function compareSegments(left: string, right: string): number {
-  const leftIndex = /^\d+$/.test(left);
-  const rightIndex = /^\d+$/.test(right);
-  if (leftIndex && rightIndex) return Number(left) - Number(right);
-  return left < right ? -1 : left > right ? 1 : 0;
-}
-
-function comparePaths(left: string[], right: string[]): number {
-  const length = Math.min(left.length, right.length);
-  for (let index = 0; index < length; index += 1) {
-    const comparison = compareSegments(left[index], right[index]);
-    if (comparison !== 0) return comparison;
-  }
-  return left.length - right.length;
 }
 
 export function projectProvenance(proposition: PropositionValue): ProvenanceProjectionEntry[] {

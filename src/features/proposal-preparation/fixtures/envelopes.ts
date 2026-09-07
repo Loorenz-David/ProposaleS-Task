@@ -13,10 +13,11 @@ type AnyRecord = Record<string, any>;
  * follows a proposition turn, and the prepared side is what the diff is computed against.
  */
 export function validEnvelope(overrides: Record<string, unknown> = {}): AnyRecord {
-  const prepared = validProposition();
+  // Three independent copies: a caller that edits the approved proposition must not thereby edit
+  // the state's record of what was prepared.
   return {
-    state: validState({ preparedProposition: prepared, currentProposition: prepared }),
-    proposition: prepared,
+    state: validState({ preparedProposition: validProposition(), currentProposition: validProposition() }),
+    proposition: validProposition(),
     pricingAcknowledgment: { acknowledged: true, statement: LIBRARY_PRICING_STATEMENT_ID },
     ...overrides,
   };
@@ -27,10 +28,9 @@ export function validEnvelope(overrides: Record<string, unknown> = {}): AnyRecor
  * edit: the diff is non-empty and the approved side is the edited proposition.
  */
 export function editedEnvelope(edit: (proposition: Proposition) => Proposition): AnyRecord {
-  const prepared = validProposition();
-  const current = edit(structuredClone(prepared));
+  const current = edit(validProposition());
   return {
-    state: validState({ preparedProposition: prepared, currentProposition: current }),
+    state: validState({ preparedProposition: validProposition(), currentProposition: structuredClone(current) }),
     proposition: current,
     pricingAcknowledgment: { acknowledged: true, statement: LIBRARY_PRICING_STATEMENT_ID },
   };

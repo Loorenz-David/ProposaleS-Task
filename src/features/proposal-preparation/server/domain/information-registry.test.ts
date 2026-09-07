@@ -4,6 +4,7 @@ type AnyRecord = Record<string, any>;
 
 async function modules() {
   return {
+    fixtures: await import("../../fixtures/propositions"),
     registry: await import("./information-registry"),
     schemas: await import("../../schemas/information-items"),
     clarification: await import("../../schemas/clarification"),
@@ -112,5 +113,90 @@ describe("information item registry", () => {
     expect(result.language).toEqual({ resolution: "supplied" });
     expect(result.title).toEqual(before.title);
     expect(original).toEqual(before);
+  });
+});
+
+describe("derived item resolutions", () => {
+  it("A7(a) reads each item off the proposition the human is looking at", async () => {
+    const { registry, fixtures } = await modules();
+    const derived = registry.deriveItemResolutions(registry.initialItems(), fixtures.validProposition());
+
+    expect(derived).toEqual({
+      language: { resolution: "supplied" },
+      title: { resolution: "supplied" },
+      block_selection: { resolution: "supplied" },
+      sold_scope: { resolution: "supplied" },
+      recipient_identity: { resolution: "supplied" },
+      quantities: { resolution: "supplied" },
+      recipient_contact_detail: { resolution: "supplied" },
+      description_narrative: { resolution: "supplied" },
+      block_comments: { resolution: "supplied" },
+      deadline_and_terms_notes: { resolution: "supplied" },
+    });
+  });
+
+  it("A7(b) never reads a value out of an absent leaf", async () => {
+    const { registry, fixtures } = await modules();
+    const proposition = structuredClone(fixtures.validProposition()) as Record<string, any>;
+    proposition.language = { known: false };
+    proposition.title = { known: false };
+    proposition.descriptionNarrative = { known: false };
+    proposition.blocks[0].quantity = { known: false };
+    proposition.blocks[0].reviewerComment = { known: false };
+
+    const derived = registry.deriveItemResolutions(registry.initialItems(), proposition as never);
+    expect(derived.language).toEqual({ resolution: "unresolved" });
+    expect(derived.title).toEqual({ resolution: "unresolved" });
+    expect(derived.description_narrative).toEqual({ resolution: "unresolved" });
+    expect(derived.quantities).toEqual({ resolution: "unresolved" });
+    expect(derived.block_comments).toEqual({ resolution: "unresolved" });
+  });
+
+  it("A7(c) is authoritative, so a hand-edited record cannot claim an item is supplied", async () => {
+    const { registry, fixtures } = await modules();
+    const proposition = structuredClone(fixtures.validProposition()) as Record<string, any>;
+    proposition.language = { known: false };
+
+    const claimed = registry.initialItems();
+    for (const item of Object.values(claimed)) item.resolution = "supplied";
+
+    // The join with the fixed registry is what stops a stale or hand-edited payload relaxing a
+    // required-to-create rule, so the derivation must demote as well as promote.
+    expect(registry.deriveItemResolutions(claimed, proposition as never).language).toEqual({ resolution: "unresolved" });
+  });
+
+  it("A7(d) keeps a deferral rather than reverting it to unresolved", async () => {
+    const { registry, fixtures } = await modules();
+    const proposition = structuredClone(fixtures.validProposition()) as Record<string, any>;
+    proposition.recipient = { known: false };
+
+    const items = registry.initialItems();
+    items.recipient_identity.resolution = "deferred_by_user";
+
+    // A skip is a recorded human decision, not an absence.
+    expect(registry.deriveItemResolutions(items, proposition as never).recipient_identity)
+      .toEqual({ resolution: "deferred_by_user" });
+
+    // A value appearing later supersedes the deferral.
+    expect(registry.deriveItemResolutions(items, fixtures.validProposition()).recipient_identity)
+      .toEqual({ resolution: "supplied" });
+  });
+
+  it("A7(e) satisfies block selection by either disjunct and never vacuously", async () => {
+    const { registry, fixtures } = await modules();
+    const empty = structuredClone(fixtures.validProposition()) as Record<string, any>;
+    empty.blocks = [];
+    empty.emptyDraftConfirmation = { known: false };
+
+    const derived = registry.deriveItemResolutions(registry.initialItems(), empty as never);
+    expect(derived.block_selection).toEqual({ resolution: "unresolved" });
+    expect(derived.sold_scope).toEqual({ resolution: "unresolved" });
+    // "Every block has a quantity" over zero blocks would claim quantities were settled.
+    expect(derived.quantities).toEqual({ resolution: "unresolved" });
+
+    const confirmed = structuredClone(empty);
+    confirmed.emptyDraftConfirmation = { known: true, value: true, source: "human", ref: { editTurn: 1 } };
+    expect(registry.deriveItemResolutions(registry.initialItems(), confirmed as never).block_selection)
+      .toEqual({ resolution: "supplied" });
   });
 });

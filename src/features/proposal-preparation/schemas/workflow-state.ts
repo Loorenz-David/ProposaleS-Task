@@ -44,6 +44,7 @@ export function proposalWorkflowStateSchemaFor(editorOrigin: string) {
 }
 
 export type ProposalWorkflowState = z.infer<ReturnType<typeof proposalWorkflowStateSchemaFor>>;
+export type DraftReference = z.infer<ReturnType<typeof draftReferenceSchemaFor>>;
 
 function serializationError(): ValidationError {
   return new ValidationError({
