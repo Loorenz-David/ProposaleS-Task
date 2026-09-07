@@ -6,9 +6,9 @@ import { propositionSchema, type Proposition } from "../../schemas/proposition";
  * production path imports this module (guarded by T-RET-2).
  *
  * The Studio North content is kept from the fixture era so the string assertions that were written
- * against it still mean the same thing. What changed is everything the real schema requires and
- * the temporary type could not express: uuid v4 generation ids, positive int64 content ids,
- * `productId`, `pricing`, sourced titles and reasons, and `preparedAt`.
+ * against it still mean the same thing. What changed is everything the real schema requires and the
+ * hand-written stand-in shapes could not express: uuid v4 generation ids, positive int64 content
+ * ids, `productId`, `pricing`, sourced titles and reasons, and `preparedAt`.
  */
 const GENERATION_ID = "123e4567-e89b-42d3-a456-426614174000";
 const PREPARED_AT = "2026-09-07T13:00:00.000Z";

@@ -611,3 +611,18 @@ Adopted while implementing:
 
 - **`RecoveredProposalSummary.url`, not `editorUrl`** — the recovery fixture had to use the field the type declares.
 - **The terminal-session assertion states what B1 actually does.** `AgentComposer` realizes `isSubmitting` on its send control, not on the textarea. B1 passes the flag; how the composer spends it is that component's existing behaviour, and changing it would be a third component file — a stop condition for no gain. The row asserts the send control is disabled *and* that an Enter attempt starts no turn, which is the property that matters: the hook refuses a dispatch on a terminal record however the attempt is made.
+
+### 15.7 WP6 — fixture-era retirement and end-to-end rebinding
+
+`retirement.test.ts` (new) · `playwright.config.ts` · `e2e/proposal-flow.spec.ts` (rewritten) · `e2e/proposal-flow.live.spec.ts` (new). `npm test` 905 green; `npm run test:e2e` 72 passed offline; typecheck and lint green.
+
+`grep -rn "Temporary\|temporary" src/ e2e/` returns nothing — the one remaining comment was reworded, so the marker survives nowhere, not even in prose. **T-RET-1..4** each run twice: over the real tree, and over a planted source that must trip them, so a guard that has stopped guarding fails rather than passing quietly. **T-RET-4b** additionally pins `client/turn-transport.ts` as the only browser file that imports `server/actions` at all.
+
+Adopted while implementing:
+
+- **`fixtures/` is excluded from the "production" set** the guards scan. Fixture modules carry no `.test.` in their names but exist only for tests and import each other; the property that matters is that nothing shipping reaches them, which is exactly what T-RET-2 proves. Without the exclusion the guard reported `workflow-state.fixture.ts` for importing the backend's `fixtures/states.ts`, which is the reuse §5 asks for.
+- **A closing row asserts the guards ran against a non-empty file list.** A guard over zero files passes for the wrong reason.
+- **`PROPOSALES_EDITOR_ORIGIN` reaches the live spec as a typed project option** (`CopilotTestOptions` in `playwright.config.ts`), so the config reads the environment and the spec does not — the plan's requirement, and it keeps the spec inside the `process.env` lint zone without an exemption.
+- **The offline placeholder env is restated in `playwright.config.ts`** rather than imported from `test/setup/node.ts`: importing that module would install the offline fetch guard into the Playwright process.
+
+Coverage change recorded (plan §12's known risk, now realized): the offline Playwright spec keeps the three rows that need no backend result — the close-guard flow on composer text, reload losing the workspace, and the new **T-E2E-1**, which proves the real Server Action transport over HTTP by having the service's own schema reject an over-long brief and rendering the returned `ErrorDto`. The rows that needed a proposition (review, editing, approval, retained context, reduced motion, narrow-width containment, the unread-origin row) are now in `proposal-flow.live.spec.ts`, and their logic remains covered offline by `workflow-ui.test.tsx` and the store and hook suites.
