@@ -1,3 +1,5 @@
+import { IntroProvider } from "@/features/proposal-preparation/components/onboarding/intro-context";
+import { ProposalCopilotIntro } from "@/features/proposal-preparation/components/onboarding/proposal-copilot-intro";
 import { ProposalWorkspace } from "@/features/proposal-preparation/components/workspace/proposal-workspace";
 
 /**
@@ -10,5 +12,10 @@ import { ProposalWorkspace } from "@/features/proposal-preparation/components/wo
 export const maxDuration = 120;
 
 export default function Home() {
-    return <ProposalWorkspace />;
+    return (
+        <IntroProvider>
+            <ProposalWorkspace />
+            <ProposalCopilotIntro />
+        </IntroProvider>
+    );
 }
