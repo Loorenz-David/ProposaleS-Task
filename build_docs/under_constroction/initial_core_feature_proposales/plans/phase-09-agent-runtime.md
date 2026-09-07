@@ -122,17 +122,17 @@ rewritten: their fixtures were shapes `createAiClient` cannot emit.
 | C7(c) | a bad tool **output** ends the run | a test tool whose `execute` returns a value failing its output schema | `failed`, `reason === "tool_output_invalid"`; no further model call | MUT-09-8 `run.ts` · tool-failure dispatch · swap the two dispositions → C7(c) red | master §6.3 `RunFailureReason`, D04 |
 | C7(d) | the operational record carries ids, not content | a run with an injected logger and model text `MODEL-TEXT-SENTINEL`; **plus** a second run over a real tool | `agent.run.start` and `agent.run.end` are emitted carrying `runId` and `traceId`; `agent.run.step` is emitted **once per provider call** (asserted by count, not by presence — the whole call was deletable with the suite green, coordinator probe / review F4); `agent.run.end` carries `toolCallCount === 1` on the tool run, so the count is proved by a **non-zero** value; and **no** emitted record contains the sentinel | MUT-09-11 `run.ts` · logging · include the model text → C7(d) red · MUT-09-23 · delete the `agent.run.step` call → C7(d) red · MUT-09-24 · report `toolCallCount` as the constant `0` → C7(d) red | 08 §10, 10 §7, §9.1 rule 3, D18 |
 | C7(e) | **the request the model receives is the request the caller supplied** | a run with `system: "SYSTEM-PROMPT-SENTINEL"`, one seeded `initialMessages` entry, one tool, and the phase's output schema; read `ai.calls[0]` | `request.system`, `request.messages`, `request.tools` and `request.outputJsonSchema` each **deep-equal** what the caller passed (`tools` equals `[tool.descriptor()]`, `outputJsonSchema` equals `z.toJSONSchema(outputSchema, { io: "input" })`). All four fields had zero rows and **all four were individually deletable with the full suite green** — a loop offering the model no system prompt, no history, no tools and no schema passed the entire original table. `outputJsonSchema` is the load-bearing one: without it `generateText` falls back to its text spec, every `final` arrives as a string, and C5 becomes trivially true (D11, named in task 2 and never asserted) | MUT-09-17 `run.ts` · request assembly · delete `outputJsonSchema` → C7(e) red · MUT-09-18 · `system: options.system` → `system: ""` → C7(e) red · MUT-09-19 · `tools` → `[]` → C7(e) red · MUT-09-20 · drop `initialMessages` from the seeded message list → C7(e) red | D11, 08 §7, review F2 and F6 |
-| C7(f) | the run logs a tool name and a duration | a run with an injected logger over one real tool invocation | an `agent.run.tool` event is emitted **per invocation** carrying `{ runId, traceId, toolCallId, name, ok, durationMs }`, and `agent.run.end` carries `durationMs`. Contract `08` §10 requires every run to log "`runId`, `traceId`, **tool names**, **durations**, token counts, and outcomes" and `10` §7 names `durationMs` in the event shape; **no emitted event carried either** (review B1). `agent.run.tool` was named in task 2 and never built, and the table never asked for it — the narrative was right and the binding artifact silently narrowed it. Ids and names only: `08` §10 forbids arguments, and C7(d)'s sentinel assertion already guards content. Durations come from `deps.now()`, the injected clock — never `Date` | MUT-09-31 `run.ts` · logging · delete the `agent.run.tool` event → C7(f) red · MUT-09-32 · drop `durationMs` from `agent.run.end` → C7(f) red | 08 §10, 10 §7, review B1 |
+| C7(f) | the run logs a tool name and a duration | a run with an injected logger over one real tool invocation | an `agent.run.tool` event is emitted **per invocation** carrying `{ runId, traceId, toolCallId, name, ok, durationMs }`, and `agent.run.end` carries `durationMs`. Contract `08` §10 requires every run to log "`runId`, `traceId`, **tool names**, **durations**, token counts, and outcomes" and `10` §7 names `durationMs` in the event shape; **no emitted event carried either** (review B1). `agent.run.tool` was named in task 2 and never built, and the table never asked for it — the narrative was right and the binding artifact silently narrowed it. Ids and names only: `08` §10 forbids arguments, and C7(d)'s sentinel assertion already guards content. Durations come from `deps.now()`, the injected clock — never `Date`. **Both branches are asserted, not only the success one.** Fix round 2 shipped a full `toEqual` over the success record and nothing at all over the failure record, so deleting the failure-branch event, or reporting its `ok` as `true`, left all 421 tests green (coordinator probes P-G and P-E). That branch is the one that matters most: an `unknown_tool` result takes it, and owner card 1's whole motivation was that a model repeatedly reaching for an absent tool left no trace of which tool it was. A row that discharges `08` §10's "outcomes" clause on the success path only does not discharge it | MUT-09-31 `run.ts` · logging · delete the `agent.run.tool` event on the **success** path → C7(f) red · MUT-09-32 · drop `durationMs` from `agent.run.end` → C7(f) red · MUT-09-38 · delete the event on the **failure** path → C7(f) red · MUT-09-39 · the failure path's `ok: false` → `ok: true` → C7(f) red | 08 §10, 10 §7, review B1 |
 | C7(g) | a tool the run was never given is answered **truthfully** | a step naming `search_proposals`, a tool absent from the run's set | the loop appends `{ error: { code: "unknown_tool", name: "search_proposals" } }` as that call's result and continues; the run does **not** end, and the code is **not** `invalid_arguments`. **Owner card 1, answered 2026-09-07: add `unknown_tool`.** The shipped loop synthesized `invalid_arguments` for a dispatch miss, so a closed 3-member registry meant two different things and the model was told to rewrite arguments that were never the problem — it would keep asking for the same missing tool until the budget paid for the lie. `ToolErrorCode` goes to **4 members, still closed** (master §6.3); `ToolInvokeResult` gains a fourth failure arm produced **only by `run`'s dispatch miss**, never by `invoke` (master §6.4). The disposition was undeclared in every task and criterion and drove eight rows (review S8); C3(a) and C4(a) are re-pointed at a **real** tool so those budget and usage rows measure tool dispatch rather than this fallback | MUT-09-33 `run.ts` · dispatch miss · return `invalid_arguments` instead of `unknown_tool` → C7(g) red | master §6.3, §6.4, 08 §3, owner card 1, review S8 |
 
 Criteria: **7** (C1–C7). Rows: **38** — `C1 4 + C2 5 + C3 9 + C4 4 + C5 4 + C6 5 + C7 7`. Named
-mutations: **37 distinct** — MUT-09-1 … MUT-09-37, contiguous. Every number on this line is printed
+mutations: **39 distinct** — MUT-09-1 … MUT-09-39, contiguous. Every number on this line is printed
 output from the counter run over this table, not a typed summand.
 
 Review round 1 grew the table from 7 / 34 / 13. Eleven of the new mutations
 (MUT-09-14 … MUT-09-24) are already discharged: the review applied those repairs test-side inside
-its own round and the tree carries them. The remaining thirteen (MUT-09-25 … MUT-09-37) belong to
-fix round 1. **The additions are concentrated where a row asserted a range, a substring, a
+its own round and the tree carries them. MUT-09-25 … MUT-09-37 were discharged by fix round 2;
+MUT-09-38 and MUT-09-39 belong to fix round 3. **The additions are concentrated where a row asserted a range, a substring, a
 presence, or a type instead of a value** — C3(f) was satisfied by the constant `1`, C5(a) by the
 retry template's own prose, C1(a)/C5(b) by a fixture whose path was already `string[]`, C3(a) by an
 empty array, and the entire outbound request surface (`system`, `initialMessages`, `tools`,
@@ -491,3 +491,57 @@ correction. No other cell in the fold names a literal value that the implementer
 The stop was correct behaviour under rule 18's ladder: an obvious contradiction, reported without
 investigation and without adjusting the assertion until it passed. Nothing else in the round
 changes; the ledger is still MUT-09-25 … MUT-09-37 and the table is still 7 / 38 / 37.
+
+### Coordinator fold of fix round 2 — 2026-09-07
+
+State stays **CHANGES_REQUESTED**; fix round 3 is dispatched, scoped to one test addition.
+
+**Verified against the tree, not read from the handoff.** Closing L4 re-run: `npm test` → **31
+files / 421 tests** green, typecheck and lint exit 0. Write perimeter exact: `git diff --stat
+17e076d HEAD` is 8 files — the 7 declared paths plus the handoff. All five restoration digests
+recomputed and matched. All six production tasks are present and correct: `agent.run.tool` with
+`durationMs` from the injected clock; `durationMs` on `agent.run.end`; `unknown_tool` carrying
+`call.name`, with `ToolErrorCode` at four members and `ToolInvokeResult` at four arms; the
+duplicate budget check at the old `run.ts:131` deleted; the `Math.max(1, …)` floor retained; and
+`toContentDetail` extracted to `server/domain/` with `get-content.tool.ts`'s `execute` reduced to
+a single call holding no business rule. Table counts by the counter: 7 / 38 / 39.
+
+**Ten independent coordinator probes, all variations the ledger did not run. Eight reddened.**
+
+| Probe | Edit | Suite |
+|---|---|---|
+| P-A | plant `src/lib/agent/probe_a.ts` containing `Date.now()` | **red** |
+| P-B | plant `server/tools/probe_b.ts` containing `process.env` | **red** |
+| P-C | `unknown_tool`'s `name: call.name` → a constant | **red** |
+| P-D | `agent.run.tool`'s `durationMs` → the constant `0` | **red** |
+| P-F | `agent.run.end`'s `durationMs` → the constant `0` | **red** |
+| P-H | `agent.run.tool`'s `toolCallId` → a constant | **red** |
+| P-I | `toContentDetail`'s `truncated` flag → always `false` | **red** (2 tests) |
+| P-J | `get_content` ignores its `variationId` argument | **red** |
+| **P-E** | the **failure** branch's `ok: false` → `ok: true` | **green** |
+| **P-G** | delete the **failure** branch's `agent.run.tool` event entirely | **green** |
+
+P-A and P-B are the point of S4's repair and they pass on a form and a directory the fix round did
+not plant: the scan is now genuinely derived, not enumerated.
+
+**A correction against my own probe, recorded because a probe that does not apply is not
+evidence.** P-I first came back green and I nearly reported the truncation flag as unguarded. BSD
+`sed` does not support `\s`, so the substitution silently matched nothing. Re-run through Python
+with the applied-line count printed, it reddens two tests. Every probe in the table above was
+confirmed applied before its result was read.
+
+**One real gap, and it is in a row I authored (C7(f)).** The shipped test asserts a full `toEqual`
+over the **success** record and nothing whatever over the **failure** record. Contract `08` §10
+requires outcomes; an `unknown_tool` result takes the failure branch; and owner card 1's whole
+motivation was that a model repeatedly reaching for an absent tool left no trace of which tool it
+was. So the branch that motivated the blocking finding is the one branch with no guard. Production
+is **correct** — the code logs `ok: false` — but nothing would notice if it stopped. C7(f) is
+amended and MUT-09-38 and MUT-09-39 are added.
+
+**Owner decision, 2026-09-07:** a minimal fix round 3 rather than approving with the gap routed to
+phase 15. One test addition, no production change.
+
+**Also carried:** N3 was not done — C5(c) still hardcodes `2` where the row says
+`MAX_OUTPUT_RETRIES + 1`. Folded into the same round.
+
+Fix round 3 prompt: `prompts/implementer/phase-09-fix-round-3.implementer.md`.
