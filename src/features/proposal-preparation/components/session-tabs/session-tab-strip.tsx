@@ -149,14 +149,17 @@ export function SessionTabStrip() {
       activationMode="manual"
       className="min-w-0"
     >
-      <div className="flex min-w-0 items-end gap-2 border-b border-[var(--color-border)] bg-[var(--color-bg-agent-pane)] px-2 pb-0 pl-3">
+      {/* Design 04 §2: strip container — padding 0 8px 0 12px, align-items flex-end, gap 2px,
+          background #08090a (the one surface that recedes below the pane it belongs to),
+          border-bottom 1px #1c1d20. */}
+      <div className="flex min-w-0 items-end gap-0.5 border-b border-[var(--color-border-hairline)] bg-[var(--color-bg-tab-strip)] px-2 pb-0 pl-3">
         <Tabs.List
           ref={scrollRegionRef}
           aria-label="Agent sessions"
           aria-orientation="horizontal"
           tabIndex={-1}
           loop={false}
-          className="flex min-w-0 flex-1 items-end gap-px overflow-x-auto px-2"
+          className="flex min-w-0 flex-1 items-end gap-px overflow-x-auto"
           data-session-tab-scroll-region
         >
             {sessionIds.map((sessionId, index) => {
@@ -165,7 +168,7 @@ export function SessionTabStrip() {
               return (
                 <div
                   key={sessionId}
-                  className="flex min-w-[112px] max-w-[200px] flex-[1_1_132px] items-center"
+                  className="flex h-[30px] min-w-[112px] max-w-[200px] flex-[1_1_132px] items-center gap-[7px] rounded-t-lg pr-1 pl-[9px] hover:bg-[var(--color-bg-card)] has-[[data-state=active]]:bg-[var(--color-bg-control-strong)] has-[[data-state=active]]:shadow-active-tab has-[[data-state=active]]:hover:bg-[var(--color-bg-agent-pane)]"
                   draggable
                   data-session-tab-wrapper
                   data-session-id={sessionId}
@@ -196,7 +199,7 @@ export function SessionTabStrip() {
                     value={sessionId}
                     aria-controls={tabPanelId(sessionId)}
                     tabIndex={sessionId === activeSessionId ? 0 : -1}
-                    className="flex h-[30px] min-w-0 flex-1 items-center gap-2 rounded-t-lg px-2 py-0 text-left text-xs font-semibold text-[var(--color-fg-secondary)] outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] data-[state=active]:bg-[var(--color-bg-agent-pane)] data-[state=active]:text-[var(--color-fg)]"
+                    className="flex h-full min-w-0 flex-1 items-center gap-[7px] rounded-t-lg py-0 text-left text-12 font-semibold text-[var(--color-fg-muted)] focus-visible:z-10 focus-visible:-outline-offset-2 data-[state=active]:text-[var(--color-fg)]"
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => {
                       activateSession(sessionId);
@@ -239,7 +242,9 @@ export function SessionTabStrip() {
                       }
                     }}
                   >
-                    <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-[var(--color-fg-muted)]" />
+                    {/* Design 04 §3.1: 7px circle, flex 0 0 7px. Its per-status colour is
+                        design 04 §3.3 and belongs to the phase that derives status. */}
+                    <span aria-hidden="true" className="h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--color-fg-muted)]" />
                     <span data-elided data-horizontal-scroll aria-label={session.title} className="min-w-0 flex-1 truncate">
                       {session.title}
                     </span>
@@ -248,14 +253,14 @@ export function SessionTabStrip() {
                     type="button"
                     aria-label={`Close session ${session.title}`}
                     data-session-close
-                    className="mr-1 inline-flex min-h-6 min-w-6 shrink-0 items-center justify-center rounded-full text-xs text-[var(--color-fg-muted)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
+                    className="inline-flex min-h-6 min-w-6 shrink-0 items-center justify-center rounded-full text-10 text-[var(--color-fg-quiet)] focus-visible:-outline-offset-2 hover:bg-[var(--color-border-control-raised)] hover:text-[var(--color-fg)]"
                     onMouseDown={(event) => event.stopPropagation()}
                     onClick={(event) => {
                       event.stopPropagation();
                       closeSessionAtGate(sessionId);
                     }}
                   >
-                    ×
+                    ✕
                   </button>
                 </div>
               );
@@ -266,7 +271,7 @@ export function SessionTabStrip() {
           aria-label="New session"
           title="New parallel session"
           data-new-session
-          className="mb-0.5 inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-lg leading-none text-[var(--color-fg-secondary)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
+          className="mb-0.5 inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-lg leading-none text-[var(--color-fg-muted)] hover:bg-[var(--color-bg-control-hover)] hover:text-[var(--color-fg)]"
           onClick={handleCreate}
         >
           +

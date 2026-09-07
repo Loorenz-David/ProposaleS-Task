@@ -9,115 +9,128 @@
  * design 10 §4. Reported, not resolved, here.
  */
 
-/* Base reset: the minimum needed for predictable layout. */
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
+/*
+ * The base rules below live in Tailwind's `base` layer, not unlayered, so that a component's
+ * own utility classes win over them. Unlayered rules beat every layered rule regardless of
+ * specificity, which silently defeated `text-*`, `font-*`, `text-[color]` and `outline-none`
+ * on every `button`/`input`/`select`/`textarea` in the app (`font: inherit; color: inherit`)
+ * and on every focused element (`:focus-visible { outline: ... }`). Contract 15 §1 makes the
+ * component file the readable definition of its own look; that only holds if utilities win.
+ *
+ * The reduced-motion block below stays unlayered on purpose: it is an accessibility floor
+ * that must beat component styling, not lose to it.
+ */
+@layer base {
+    /* Base reset: the minimum needed for predictable layout. */
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
 
-html {
-    -webkit-text-size-adjust: 100%;
-    /* Design 01 §1.1: the production UI is a dark application; no light mode exists in V1. */
-    color-scheme: dark;
-}
+    html {
+        -webkit-text-size-adjust: 100%;
+        /* Design 01 §1.1: the production UI is a dark application; no light mode exists in V1. */
+        color-scheme: dark;
+    }
 
-body {
-    margin: 0;
-    min-height: 100dvh;
-    background: var(--color-bg);
-    color: var(--color-fg);
-    font-family: var(--font-sans);
-    font-size: var(--text-base);
-    line-height: var(--leading-normal);
-    -webkit-font-smoothing: antialiased;
-}
+    body {
+        margin: 0;
+        min-height: 100dvh;
+        background: var(--color-bg);
+        color: var(--color-fg);
+        font-family: var(--font-sans);
+        font-size: var(--text-base);
+        line-height: var(--leading-normal);
+        -webkit-font-smoothing: antialiased;
+    }
 
-/* Typography hierarchy */
-h1,
-h2,
-h3 {
-    margin: 0;
-    line-height: var(--leading-tight);
-    font-weight: 600;
-    letter-spacing: -0.01em;
-}
+    /* Typography hierarchy */
+    h1,
+    h2,
+    h3 {
+        margin: 0;
+        line-height: var(--leading-tight);
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
 
-h1 {
-    font-size: var(--text-2xl);
-}
+    h1 {
+        font-size: var(--text-2xl);
+    }
 
-h2 {
-    font-size: var(--text-xl);
-}
+    h2 {
+        font-size: var(--text-xl);
+    }
 
-h3 {
-    font-size: var(--text-lg);
-}
+    h3 {
+        font-size: var(--text-lg);
+    }
 
-p {
-    margin: 0;
-}
+    p {
+        margin: 0;
+    }
 
-*+p,
-*+h2,
-*+h3 {
-    margin-top: var(--space-4);
-}
+    *+p,
+    *+h2,
+    *+h3 {
+        margin-top: var(--space-4);
+    }
 
-*+h2 {
-    margin-top: var(--space-8);
-}
+    *+h2 {
+        margin-top: var(--space-8);
+    }
 
-small {
-    font-size: var(--text-sm);
-    color: var(--color-fg-muted);
-}
+    small {
+        font-size: var(--text-sm);
+        color: var(--color-fg-muted);
+    }
 
-a {
-    /* Design 01 §5 correction 4: never the accent as text on a dark surface; use the
-       corrected ink-on-dark value, which the prototype already uses for links. */
-    color: var(--color-accent-ink-on-dark);
-    text-underline-offset: 0.15em;
-}
+    a {
+        /* Design 01 §5 correction 4: never the accent as text on a dark surface; use the
+           corrected ink-on-dark value, which the prototype already uses for links. */
+        color: var(--color-accent-ink-on-dark);
+        text-underline-offset: 0.15em;
+    }
 
-code,
-pre {
-    font-family: var(--font-mono);
-    font-size: 0.9em;
-}
+    code,
+    pre {
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+    }
 
-/* Form controls inherit typography instead of the user-agent defaults. */
-button,
-input,
-select,
-textarea {
-    font: inherit;
-    color: inherit;
-    margin: 0;
-}
+    /* Form controls inherit typography instead of the user-agent defaults. */
+    button,
+    input,
+    select,
+    textarea {
+        font: inherit;
+        color: inherit;
+        margin: 0;
+    }
 
-button {
-    cursor: pointer;
-}
+    button {
+        cursor: pointer;
+    }
 
-button:disabled {
-    cursor: not-allowed;
-}
+    button:disabled {
+        cursor: not-allowed;
+    }
 
-label {
-    display: inline-block;
-    font-weight: 500;
-}
+    label {
+        display: inline-block;
+        font-weight: 500;
+    }
 
-/* Focus: visible for keyboard users, quiet for pointer users. */
-:focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: 2px;
-}
+    /* Focus: visible for keyboard users, quiet for pointer users. */
+    :focus-visible {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
+    }
 
-:focus:not(:focus-visible) {
-    outline: none;
+    :focus:not(:focus-visible) {
+        outline: none;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
