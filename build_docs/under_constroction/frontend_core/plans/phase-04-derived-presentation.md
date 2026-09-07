@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **State** | `PROMPT_READY` |
+| **State** | `IMPLEMENTED` |
 | **Criteria** | 5 |
 | **Projection** | **required** — derivations are a silent-failure family. Round 0 run 2026-09-07, `AMENDMENTS_REQUIRED`, all 24 rows routed |
 | **Serves** | F10 · F14 · F6 · F30 |
@@ -302,3 +302,31 @@ register's closure claim (held for phase 15), the reduced-motion pulse (held for
 correction itself shipped), and the badge/dot legibility at the strip's minimum width (§11.3 follow-up
 23 — dropped rather than moved, because none of the three reasons it was unwritable is fixed by
 changing phase).
+
+### Implementation round 1 — Codex, 2026-09-07
+
+Implemented the six-row tab-status precedence function and its seven overlap cases, the
+era-1 temporary session runtime fixture, `TabViewModel`/adapter, the module-level
+`DERIVATION_REGISTER`, the tab dot and accessible status name, and the mounted Agent Status
+Line. The session factory now initializes exactly the five status inputs. The navigation
+denylist was widened for `window.location.href`, and the explicit Playwright no-preference
+context declaration was restored as the two one-line follow-up tasks require.
+
+Judgment calls recorded for review: the tab trigger carries the complete accessible name via
+`aria-label`; the visible title span retains its own label for the existing elision assertion.
+The status line uses the approved padding and border with the same status text as both its
+visible status text and phase label; no status note was added. `TabViewModel` contains the
+title, six-member status, status text, and dot class, while `deriveTabStatus` is exported so
+both presentations call the same pure function. The backend result-kind union remains an
+explicitly temporary era-1 type and the fixture is explicitly marked temporary. No theme
+property or design file was changed.
+
+All 24 rows were transcribed into executable cases: 22 measurable rows pass, C3(b) remains
+held for phase 05's first reachable working session, and C6(a)'s closure half remains held
+for phase 15. All five named mutations were run at their specified sites, reddened the named
+row, and were reverted; the complete ledger and evidence are in the implementer handoff.
+The new test files were confirmed in `npx vitest list` under their intended projects.
+
+Documentation impact review: the module map, both phase state cells, and this Review log were
+updated. The feature README remains intentionally deferred to phase 17, and no other
+authoritative documentation became false or incomplete.

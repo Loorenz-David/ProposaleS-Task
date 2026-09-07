@@ -97,7 +97,7 @@ describe("C5: source-level containment perimeter", () => {
       .join("\n");
     expect(source).toContain("ProposalWorkspace");
     expect(source).not.toMatch(/next\/(?:navigation|link)|useRouter|usePathname|useSearchParams/);
-    expect(source).not.toMatch(/history\.(?:pushState|replaceState)|(?:window\.)?location(?:\.hash)?\s*=/);
+    expect(source).not.toMatch(/history\.(?:pushState|replaceState)|(?:window\.)?location(?:\.(?:hash|href))?\s*=/);
   });
 
   it("C5(b): has no surface registry or extension mechanism", () => {

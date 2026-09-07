@@ -214,6 +214,7 @@ test.describe("phase 01 evidence relocated from bootstrap", () => {
       });
     });
 
+    test.use({ contextOptions: { reducedMotion: "no-preference" } });
     test("correction 6: no-preference preserves a non-none animation duration", async ({ page }) => {
       await page.goto("/");
       await page.evaluate(() => {

@@ -7,6 +7,7 @@ import {
   useWorkspaceSessionStore,
   type WorkspaceSessionId,
 } from "../../hooks/use-workspace-session-store";
+import { toTabViewModel } from "../../client/view-models/session-tab";
 import { ACTIVE_TAB_REVEAL_MARGIN_PX } from "./session-tabs-constants";
 import { revealActiveTabScrollLeft } from "./reveal-active-tab";
 
@@ -165,6 +166,7 @@ export function SessionTabStrip() {
             {sessionIds.map((sessionId, index) => {
               const session = sessions[sessionId];
               if (!session) return null;
+              const tabViewModel = toTabViewModel(session);
               return (
                 <div
                   key={sessionId}
@@ -198,6 +200,7 @@ export function SessionTabStrip() {
                     }}
                     value={sessionId}
                     aria-controls={tabPanelId(sessionId)}
+                    aria-label={`${tabViewModel.title} — ${tabViewModel.statusText}`}
                     tabIndex={sessionId === activeSessionId ? 0 : -1}
                     className="flex h-full min-w-0 flex-1 items-center gap-[7px] rounded-t-lg py-0 text-left text-12 font-semibold text-[var(--color-fg-muted)] focus-visible:z-10 focus-visible:-outline-offset-2 data-[state=active]:text-[var(--color-fg)]"
                     onMouseDown={(event) => event.preventDefault()}
@@ -244,8 +247,19 @@ export function SessionTabStrip() {
                   >
                     {/* Design 04 §3.1: 7px circle, flex 0 0 7px. Its per-status colour is
                         design 04 §3.3 and belongs to the phase that derives status. */}
-                    <span aria-hidden="true" className="h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--color-fg-muted)]" />
-                    <span data-elided data-horizontal-scroll aria-label={session.title} className="min-w-0 flex-1 truncate">
+                    <span
+                      aria-hidden="true"
+                      data-testid="session-status-dot"
+                      data-session-status-dot
+                      data-status={tabViewModel.status}
+                      className={`h-[7px] w-[7px] shrink-0 rounded-full ${tabViewModel.dotClassName}`}
+                    />
+                    <span
+                      data-elided
+                      data-horizontal-scroll
+                      aria-label={session.title}
+                      className="min-w-0 flex-1 truncate"
+                    >
                       {session.title}
                     </span>
                   </Tabs.Trigger>

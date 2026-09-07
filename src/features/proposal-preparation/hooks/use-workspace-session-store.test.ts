@@ -126,6 +126,14 @@ describe("new session", () => {
     expect(state.sessionIds).toEqual([first, second]);
     expect(state.activeSessionId).toBe(second);
     expect(state.sessions[second]).not.toBe(state.sessions[first]);
-    expect(state.sessions[second]).toEqual({ id: second, title: "New proposal session" });
+    expect(state.sessions[second]).toEqual({
+      id: second,
+      title: "New proposal session",
+      isTurnInFlight: false,
+      hasDraftReference: false,
+      latestDomainResultKind: null,
+      hasCurrentProposition: false,
+      hasStartedTurn: false,
+    });
   });
 });

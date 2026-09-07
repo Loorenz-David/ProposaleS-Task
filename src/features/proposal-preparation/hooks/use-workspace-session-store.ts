@@ -21,7 +21,15 @@ function createSessionId(): WorkspaceSessionId {
 
 function createSessionRecord(): SessionRuntimeRecord {
   const id = createSessionId();
-  return { id, title: "New proposal session" };
+  return {
+    id,
+    title: "New proposal session",
+    isTurnInFlight: false,
+    hasDraftReference: false,
+    latestDomainResultKind: null,
+    hasCurrentProposition: false,
+    hasStartedTurn: false,
+  };
 }
 
 function createInitialSession(): Pick<WorkspaceSessionState, "activeSessionId" | "sessionIds" | "sessions"> {

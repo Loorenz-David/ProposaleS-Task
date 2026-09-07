@@ -1,4 +1,5 @@
 import { SessionTabStrip } from "../session-tabs/session-tab-strip";
+import { AgentStatusLine } from "../agent/agent-status-line";
 
 export function AgentSurface() {
   return (
@@ -7,6 +8,7 @@ export function AgentSurface() {
       className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-[var(--color-bg-agent-pane)]"
     >
       <SessionTabStrip />
+      <AgentStatusLine />
       <div className="min-w-0 px-6 pb-7 pt-7">
         <span
           aria-label="Proposal agent workspace"
