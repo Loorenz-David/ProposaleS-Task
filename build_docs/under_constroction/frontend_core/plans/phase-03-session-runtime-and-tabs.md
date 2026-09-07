@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **State** | `CHANGES_REQUESTED` |
+| **State** | `APPROVED` |
 | **Criteria** | 7 |
 | **Projection** | **required** — ordering rules, focus destinations, identity separation |
 | **Serves** | F12 · F8 · F30 · F24 · F6 |
@@ -965,3 +965,30 @@ failure. The repair is follow-up 18's, not phase 03's, and the assertion must no
 recover a green run. `devIndicators: false` is supported by the installed `next@16.3.4`
 (`node_modules/next/dist/server/config-schema.js` accepts `z.literal(false)`), and the repository has
 no `next.config` file at all today. Relayed to the owner as a decision.
+
+### Phase 03 `APPROVED` — coordinator, 2026-09-07
+
+Gate stamp on the handed-over tree plus `next.config.ts`: unit **184/184**, E2E **69/69**,
+typecheck, lint, build — all green. 47 rows (4 held), 18/18 named mutations executed and reverted
+across rounds 2 and 4.
+
+**Approved after a real review.** Phases 01 and 02 were approved without one; this phase had review
+round 3 in full, which is why its defect list was long and why the one behavioural defect in it —
+clicking a background session's close control switching the active session — was found before ship
+rather than by a user.
+
+**The coordinator's own verification, spent on variation rather than reproduction.** The
+focus-repair guard traced through every caller, confirming it suppresses no activation that is
+required. `C4(b)` re-measured at 4/4 where round 2 left it failing 3 of 4. The live tab order
+instrumented, proving the product's order correct and the dev-tools overlay at fault for `C2(a)`.
+And one probe the fix round did not use — making `focusTab` asynchronous so the repair flag clears
+before `onFocus` fires — **reddened four tests**, which is the evidence that the guard's correctness
+is asserted rather than incidental.
+
+**What this approval does not cover, stated plainly.** Nine measurement-instrument findings are
+deferred to master plan §11.3 follow-up 19 under owner decision 17, and one is re-assigned as
+follow-up 20. Every one of them is a guard that could be bypassed while sitting on top of code the
+review attacked directly and found correct, so what is deferred is protection against future
+regression, not a present defect. **B2 — the close-gate guard that an aliased second path passes —
+is the one with a downstream consequence, and it is pinned to phase 05's pre-dispatch lint**, which
+verifies the single close path by enumeration before the unsaved-work guard is inserted.
