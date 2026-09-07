@@ -168,6 +168,32 @@ describe("AI client", () => {
     expect(mapped.usage).toEqual({ inputTokens: 0, outputTokens: null, totalTokens: 7 });
   });
 
+  it("C5(h): reports the provider's cached-input and reasoning counters beside usage, and null when absent", async () => {
+    // These are operational counters, deliberately outside `Usage`: that shape is a stated
+    // three-field contract that crosses to the browser. A reported zero survives as zero, and a
+    // counter the provider omitted is null rather than 0, exactly as `Usage` treats absence.
+    const reported = makeClient(result({
+      usage: {
+        inputTokens: 10,
+        inputTokenDetails: { noCacheTokens: 2, cacheReadTokens: 8, cacheWriteTokens: 0 },
+        outputTokens: 5,
+        outputTokenDetails: { textTokens: 1, reasoningTokens: 4 },
+        totalTokens: 15,
+      },
+    }));
+    await expect(reported.client.generateStep(basicInput, { timeoutMs: 100 })).resolves.toMatchObject({
+      usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
+      usageDetail: { cachedInputTokens: 8, reasoningTokens: 4 },
+    });
+
+    const absent = makeClient(result({
+      usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 } as unknown as LanguageModelUsage,
+    }));
+    await expect(absent.client.generateStep(basicInput, { timeoutMs: 100 })).resolves.toMatchObject({
+      usageDetail: { cachedInputTokens: null, reasoningTokens: null },
+    });
+  });
+
   it("C5(d): switching configuration changes only identity, not client surface or result", async () => {
     const response = result({ output: { stable: true } });
     const first = makeClient(response, "anthropic").client;
@@ -199,6 +225,7 @@ describe("AI client", () => {
       kind: "tool_calls",
       calls: [{ toolCallId: "call-1", name: "search_content", input: { query: "x" } }],
       usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
+      usageDetail: { cachedInputTokens: 0, reasoningTokens: 0 },
     });
     expect(getterInvoked).toBe(false);
   });
@@ -218,6 +245,7 @@ describe("AI client", () => {
       kind: "invalid_output",
       reason: "provider_parse_failure",
       usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
+      usageDetail: { cachedInputTokens: 0, reasoningTokens: 0 },
     });
   });
 
@@ -286,7 +314,7 @@ describe("AI client", () => {
       { timeoutMs: 100 },
     );
 
-    expect(step).toEqual({ kind: "final", output: { kind: "proposition" }, usage: expect.anything() });
+    expect(step).toEqual({ kind: "final", output: { kind: "proposition" }, usage: expect.anything(), usageDetail: expect.anything() });
     expect(calls[0]?.output).toBeDefined();
   });
 

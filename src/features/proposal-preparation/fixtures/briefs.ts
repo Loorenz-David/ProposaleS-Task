@@ -17,6 +17,14 @@ export const BRIEFS = {
     "including tax. Recipient is Anna Berg, anna.berg@northwind.example.",
   vagueScope:
     "They want help with something around onboarding. Not sure exactly what yet.",
+  /** Spans three catalog domains, so a run has to search more than once to cover the scope. */
+  multiDomain:
+    "Northwind AB wants consulting, a training workshop for the new team, and the analytics " +
+    "dashboard for their operations group. Contact Anna Berg, anna.berg@northwind.example.",
+  /** Names nothing the fixture catalog sells, so the agent has to report an uncovered scope. */
+  noCatalogMatch:
+    "We need a proposal for offshore wind turbine maintenance and marine survey diving crews " +
+    "for the Baltic sites next spring.",
 } as const;
 
 export type BriefName = keyof typeof BRIEFS;

@@ -6,7 +6,7 @@ import { createScriptedAiClient } from "@/lib/ai/scripted";
 import type { GenerateStepResult } from "@/lib/ai/types";
 import { defineTool } from "@/lib/agent/define-tool";
 import { MAX_OUTPUT_RETRIES, run } from "@/lib/agent/run";
-import type { AgentMessage, RunBudgets, RunDeps, ToolContext } from "@/lib/agent/types";
+import type { AgentMessage, RunBudgets, RunDeps, RunIssue, ToolContext } from "@/lib/agent/types";
 
 const outputSchema = z.strictObject({ answer: z.string() });
 const output = { answer: "done" };
@@ -306,6 +306,98 @@ describe("agent run", () => {
     toolDeps.logger = withTool;
     await run({ system: "system", initialMessages: [], tools: [tool], outputSchema, toolContext: baseContext }, toolDeps);
     expect(withTool.info.mock.calls.find(([event]) => event === "agent.run.end")?.[1]).toMatchObject({ toolCallCount: 1 });
+  });
+
+  it("C8(a) lets a caller reject schema-valid output, and spends a bounded correction on it", async () => {
+    // Some output parses and is still wrong: an evidence selector naming an answer this turn does
+    // not carry, an identity no tool returned. That check needs the model's attention while the
+    // loop can still ask for a correction, so it reports issues exactly as a schema failure does.
+    const rejected: RunIssue[] = [{ path: ["blocks", "0"], message: "cites Q9, which names no answered question" }];
+    let attempts = 0;
+    const { result, dependencies } = await executeRun([final({ answer: "first" }), final({ answer: "second" })], {
+      refineOutput: (value: unknown) => {
+        attempts += 1;
+        const answer = (value as { answer: string }).answer;
+        return answer === "second"
+          ? { ok: true as const, value: { refined: answer } }
+          : { ok: false as const, issues: rejected };
+      },
+    });
+
+    expect(attempts).toBe(2);
+    expect(result).toMatchObject({ status: "output", output: { refined: "second" } });
+    const correction = dependencies.ai.calls[1].messages.at(-1);
+    expect(correction && "content" in correction ? correction.content : "").toContain("cites Q9");
+  });
+
+  it("C8(b) fails the run with the caller's own issues once the corrections are spent", async () => {
+    const issues: RunIssue[] = [{ path: ["recipient", "email"], message: "the quote does not appear in the brief" }];
+    const { result, dependencies } = await executeRun(
+      Array.from({ length: MAX_OUTPUT_RETRIES + 1 }, () => final(output)),
+      { refineOutput: () => ({ ok: false as const, issues }) },
+    );
+
+    expect(dependencies.ai.calls).toHaveLength(MAX_OUTPUT_RETRIES + 1);
+    expect(result).toMatchObject({ status: "failed", failure: { reason: "model_output_invalid", issues } });
+  });
+
+  it("C8(c) leaves a run without a refinement exactly as it was", async () => {
+    const { result } = await executeRun([final(output)]);
+    expect(result).toMatchObject({ status: "output", output });
+  });
+
+  it("C7(h) labels each step and logs the measurements a payload comparison needs", async () => {
+    let clock = 0;
+    const log = logger();
+    const detailed: GenerateStepResult = {
+      kind: "final",
+      output,
+      usage: usage(120, 30, 150),
+      usageDetail: { cachedInputTokens: 100, reasoningTokens: 12 },
+    };
+    const dependencies = deps([detailed], () => { clock += 7; return clock; });
+    dependencies.logger = log;
+    await run({ system: "system", initialMessages: [], tools: [], outputSchema, toolContext: baseContext, label: "proposition" }, dependencies);
+
+    const step = log.info.mock.calls.find(([event]) => event === "agent.run.step")?.[1] as Record<string, unknown>;
+    expect(step).toMatchObject({
+      label: "proposition",
+      kind: "final",
+      inputTokens: 120,
+      outputTokens: 30,
+      totalTokens: 150,
+      cachedInputTokens: 100,
+      reasoningTokens: 12,
+      outputRetries: 0,
+      schemaChars: JSON.stringify(z.toJSONSchema(outputSchema, { io: "input" })).length,
+    });
+    expect(typeof step.latencyMs).toBe("number");
+
+    // A provider that reports no detail logs null rather than a fabricated zero, and an unlabeled
+    // run carries no label key at all.
+    const plain = logger();
+    const plainDeps = deps([final(output)]);
+    plainDeps.logger = plain;
+    await run({ system: "system", initialMessages: [], tools: [], outputSchema, toolContext: baseContext }, plainDeps);
+    const plainStep = plain.info.mock.calls.find(([event]) => event === "agent.run.step")?.[1] as Record<string, unknown>;
+    expect(plainStep).toMatchObject({ cachedInputTokens: null, reasoningTokens: null });
+    expect(plainStep).not.toHaveProperty("label");
+  });
+
+  it("C7(i) serializes the run's output schema once, however many steps it takes", async () => {
+    // The schema is fixed for the whole run, so re-deriving it per step was repeated work whose
+    // only product was an identical string. Identity across the recorded calls is the proof: an
+    // equal-but-rebuilt object would fail this while passing a deep comparison.
+    const tool = defineTool({ name: "echo", description: "echo", kind: "read", input: z.strictObject({}), output: z.strictObject({ answer: z.string() }), execute: async () => ({ answer: "tool-value" }) });
+    const { dependencies } = await executeRun(
+      [calls({ toolCallId: "tc-1", name: "echo", input: {} }), final(output)],
+      { tools: [tool] },
+    );
+    const [first, second] = dependencies.ai.calls;
+    expect(dependencies.ai.calls).toHaveLength(2);
+    expect(first.outputJsonSchema).toBe(second.outputJsonSchema);
+    expect(first.tools).toBe(second.tools);
+    expect(first.outputJsonSchema).toEqual(z.toJSONSchema(outputSchema, { io: "input" }));
   });
 
   it("C7(f) logs each tool name and injected duration", async () => {

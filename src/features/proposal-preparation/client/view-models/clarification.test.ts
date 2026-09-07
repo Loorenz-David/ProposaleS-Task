@@ -32,6 +32,19 @@ describe("clarification view model", () => {
     expect(viewModel?.isOpen).toBe(false);
   });
 
+  it("takes the questions off screen while their answers are being sent", () => {
+    const sending = fixtureSessionRuntimeRecord({
+      latestResult: { status: "clarification", questions: fixtureClarificationBatch.questions },
+      workflow: fixtureWorkflowState({ clarification: fixtureClarificationBatch }),
+      clarificationPanel: "open",
+      inFlightTurn: { turnId: "turn-1", kind: "answers" },
+    });
+    expect(toClarificationPanelViewModel(sending)?.isOpen).toBe(false);
+    expect(
+      toClarificationPanelViewModel({ ...sending, inFlightTurn: { turnId: "turn-1", kind: "edit", path: [] } })?.isOpen,
+    ).toBe(true);
+  });
+
   it("R4.1–R4.8: maps only explicit answers and skips in received-question order", () => {
     const drafts = [
       { questionId: "q3", state: "answered" as const, text: "  1,25 / 2026-01-02 <literal>" },

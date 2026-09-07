@@ -10,14 +10,30 @@ export const MAX_OUTPUT_RETRIES = 2;
 const MAX_CORRECTION_CANDIDATE_CHARS = 20_000;
 const MAX_VALIDATION_MESSAGE_CHARS = 1_000;
 
-type RunOptions<O> = {
+type RunOptions<O, R> = {
   system: string;
   initialMessages: AgentMessage[];
   tools: readonly ToolDefinition<unknown, unknown>[];
   outputSchema: z.ZodType<O>;
+  /**
+   * Turns schema-valid output into what the caller actually wants, and may reject it.
+   *
+   * The loop's own contract stops at "this parses". A caller whose output has to be resolved
+   * against state the model cannot see — an evidence selector against the answers this turn
+   * carries, an identity against what a tool returned — needs that check inside the loop rather
+   * than after it, so a failure spends a bounded correction attempt with actionable feedback
+   * instead of ending the turn. Returning issues here is indistinguishable, from the loop's point
+   * of view, from failing the schema.
+   */
+  refineOutput?: (output: O) => { ok: true; value: R } | { ok: false; issues: RunIssue[] };
   toolContext: Omit<ToolContext, "remainingBudget">;
   budgets?: RunBudgets;
   readOnly?: boolean;
+  /**
+   * Names this run in the step log so a payload/latency measurement can attribute a call to the
+   * work it was doing. Operational only: it is a fixed application constant, never model text.
+   */
+  label?: string;
 };
 
 function addUsage(current: Usage, next: Usage): Usage {
@@ -106,10 +122,10 @@ function remainingBudget(budgets: RunBudgets, elapsed: number, toolCalls: number
   };
 }
 
-export async function run<O>(
-  options: RunOptions<O>,
+export async function run<O, R = O>(
+  options: RunOptions<O, R>,
   deps: RunDeps,
-): Promise<RunResult<O>> {
+): Promise<RunResult<R>> {
   const budgets = options.budgets ?? DEFAULT_RUN_BUDGETS;
   if (options.readOnly !== false) assertReadOnlyToolSet(options.tools);
 
@@ -122,7 +138,7 @@ export async function run<O>(
 
   deps.logger.info("agent.run.start", { runId: options.toolContext.runId, traceId: options.toolContext.traceId, toolCount: options.tools.length });
 
-  const finish = (result: RunResult<O>): RunResult<O> => {
+  const finish = (result: RunResult<R>): RunResult<R> => {
     deps.logger.info("agent.run.end", {
       runId: options.toolContext.runId,
       traceId: options.toolContext.traceId,
@@ -133,7 +149,7 @@ export async function run<O>(
     return result;
   };
 
-  const failure = (reason: "budget_exhausted" | "model_output_invalid" | "tool_output_invalid", budget?: "wall_time" | "tool_calls" | "tokens", issues?: RunIssue[]): RunResult<O> =>
+  const failure = (reason: "budget_exhausted" | "model_output_invalid" | "tool_output_invalid", budget?: "wall_time" | "tool_calls" | "tokens", issues?: RunIssue[]): RunResult<R> =>
     finish({
       status: "failed",
       failure: { reason, ...(budget === undefined ? {} : { budget }), ...(issues === undefined ? {} : { issues }) },
@@ -141,7 +157,7 @@ export async function run<O>(
       toolCalls: recordedToolCalls,
     });
 
-  const budgetFailure = (): RunResult<O> | null => {
+  const budgetFailure = (): RunResult<R> | null => {
     const elapsed = deps.now() - startedAt;
     if (elapsed >= budgets.wallTimeMs) return failure("budget_exhausted", "wall_time");
     if (recordedToolCalls.length >= budgets.maxToolCalls) return failure("budget_exhausted", "tool_calls");
@@ -150,6 +166,13 @@ export async function run<O>(
   };
 
   const toolByName = new Map(options.tools.map((tool) => [tool.name, tool]));
+
+  // The output schema and the tool descriptors are fixed for the whole run. Serializing them once
+  // rather than on every iteration also gives the step log a stable `schemaChars`, which is the
+  // measurement the model-facing payload work is judged by.
+  const outputJsonSchema = z.toJSONSchema(options.outputSchema, { io: "input" }) as JsonSchema;
+  const toolDescriptors = options.tools.map((tool) => tool.descriptor());
+  const schemaChars = JSON.stringify(outputJsonSchema).length;
 
   while (true) {
     const exhausted = budgetFailure();
@@ -160,13 +183,28 @@ export async function run<O>(
     const request = {
       system: options.system,
       messages,
-      tools: options.tools.map((tool) => tool.descriptor()),
-      outputJsonSchema: z.toJSONSchema(options.outputSchema, { io: "input" }) as JsonSchema,
+      tools: toolDescriptors,
+      outputJsonSchema,
     };
+    const stepStartedAt = startedAt + elapsed;
     const step = await deps.ai.generateStep(request, { timeoutMs });
     reportedUsage = addUsage(reportedUsage, step.usage);
     numericTokens += step.usage.totalTokens ?? 0;
-    deps.logger.info("agent.run.step", { runId: options.toolContext.runId, traceId: options.toolContext.traceId, kind: step.kind, toolCallCount: step.kind === "tool_calls" ? step.calls.length : 0, totalTokens: step.usage.totalTokens });
+    deps.logger.info("agent.run.step", {
+      runId: options.toolContext.runId,
+      traceId: options.toolContext.traceId,
+      ...(options.label === undefined ? {} : { label: options.label }),
+      kind: step.kind,
+      toolCallCount: step.kind === "tool_calls" ? step.calls.length : 0,
+      totalTokens: step.usage.totalTokens,
+      inputTokens: step.usage.inputTokens,
+      outputTokens: step.usage.outputTokens,
+      cachedInputTokens: step.usageDetail?.cachedInputTokens ?? null,
+      reasoningTokens: step.usageDetail?.reasoningTokens ?? null,
+      schemaChars,
+      latencyMs: deps.now() - stepStartedAt,
+      outputRetries,
+    });
 
     if (step.kind === "invalid_output") {
       const issues: RunIssue[] = [{
@@ -196,7 +234,19 @@ export async function run<O>(
           parsed = options.outputSchema.safeParse(candidate);
         }
       }
-      if (parsed.success) return finish({ status: "output", output: parsed.data, usage: reportedUsage, toolCalls: recordedToolCalls });
+      if (parsed.success) {
+        const refined = options.refineOutput === undefined
+          ? { ok: true as const, value: parsed.data as unknown as R }
+          : options.refineOutput(parsed.data);
+        if (refined.ok) return finish({ status: "output", output: refined.value, usage: reportedUsage, toolCalls: recordedToolCalls });
+
+        if (outputRetries < MAX_OUTPUT_RETRIES) {
+          outputRetries += 1;
+          messages.push({ role: "user", content: correctionMessage(refined.issues, candidate) });
+          continue;
+        }
+        return failure("model_output_invalid", undefined, refined.issues);
+      }
 
       const issues = validationIssues(parsed.error.issues);
       if (outputRetries < MAX_OUTPUT_RETRIES) {

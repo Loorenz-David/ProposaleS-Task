@@ -78,6 +78,51 @@ function wrapRoot(schema: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
+/**
+ * Why an output schema could not be sent under OpenAI's constrained-decode ("strict") mode.
+ *
+ * Strict mode accepts a subset of JSON Schema and rejects the whole request with one error at a
+ * time, so finding its restrictions live costs one round trip each. These are the four this
+ * repository has actually hit, checked here instead: a root that is not a plain object, a root
+ * combinator, `propertyNames`, and any object property missing from `required` — strict mode has
+ * no notion of an optional key, only of a required one that may be null.
+ *
+ * An empty result means "nothing known blocks it", not "the provider will certainly accept it":
+ * only a live call establishes that, which is why enabling strict mode is a separately verified
+ * step rather than a consequence of this function returning nothing.
+ */
+export function strictBlockers(schema: JsonSchema): string[] {
+  const blockers: string[] = [];
+  const root = schema as Record<string, unknown>;
+  if (root.type !== "object") blockers.push("root: must be type object");
+  for (const keyword of TOP_LEVEL_COMBINATORS) {
+    if (root[keyword] !== undefined) blockers.push(`root: carries ${keyword}`);
+  }
+
+  const walk = (value: unknown, path: string): void => {
+    if (Array.isArray(value)) {
+      value.forEach((entry, index) => walk(entry, `${path}/${index}`));
+      return;
+    }
+    if (!isNode(value)) return;
+
+    if (value.propertyNames !== undefined) blockers.push(`${path}: propertyNames is not permitted`);
+    if (value.patternProperties !== undefined) blockers.push(`${path}: patternProperties is not permitted`);
+
+    if (isNode(value.properties)) {
+      const declared = Object.keys(value.properties);
+      const required = new Set(Array.isArray(value.required) ? value.required.map(String) : []);
+      const missing = declared.filter((key) => !required.has(key));
+      if (missing.length > 0) blockers.push(`${path}: optional properties must be required and nullable (${missing.join(", ")})`);
+      if (value.additionalProperties !== false) blockers.push(`${path}: additionalProperties must be false`);
+    }
+
+    for (const [key, nested] of Object.entries(value)) walk(nested, `${path}/${key}`);
+  };
+  walk(schema, "#");
+  return blockers;
+}
+
 export type OutputAdapter = {
   /** The schema to send to the provider. */
   schema: JsonSchema;

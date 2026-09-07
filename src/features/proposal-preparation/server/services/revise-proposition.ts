@@ -93,6 +93,13 @@ export async function reviseProposition(input: unknown, deps: ReviseDeps = defau
   const instructionTurnId = deps.newTurnId();
   const at = formatIsoTimestamp(new Date(deps.now()));
   const [catalog, company] = await Promise.all([deps.proposales.listContent(), deps.proposales.getCompany()]);
+  const languages = catalogLanguages(catalog);
+  // A revision starts from the proposition's own language; a proposition whose language leaf is
+  // absent falls back to the code derived earlier in this workflow, re-checked against this
+  // catalog, rather than spending another inference to derive the same answer again.
+  const carried = state.derivedLanguage;
+  const startingLanguage = knownString(state.currentProposition.language)
+    ?? (carried !== undefined && languages.includes(carried) ? carried : null);
   const agent = await runPreparationAgent({
     mode: "revise",
     brief: state.brief.text,
@@ -101,11 +108,15 @@ export async function reviseProposition(input: unknown, deps: ReviseDeps = defau
     instruction: { turnId: instructionTurnId, text: parsed.data.instruction },
     catalog,
     companyId: company.companyId,
-    language: knownString(state.currentProposition.language),
+    language: startingLanguage,
     allowClarification: false,
     budgets: deps.budgets,
+    ...(deps.outputContract === undefined ? {} : { outputContract: deps.outputContract }),
   }, deps);
   const report: RunReport = { provider: deps.ai.provider, model: deps.ai.model, usage: agent.usage };
+  const learned = agent.language !== null && languages.includes(agent.language)
+    ? { derivedLanguage: agent.language }
+    : {};
 
   if (agent.run.status === "failed") {
     return withTurns({
@@ -142,7 +153,7 @@ export async function reviseProposition(input: unknown, deps: ReviseDeps = defau
   }
 
   const candidateLanguage = knownString(validated.output.language) ?? agent.language;
-  const language = resolveLanguage(candidateLanguage, catalogLanguages(catalog));
+  const language = resolveLanguage(candidateLanguage, languages);
   const assembled = assembleProposition(validated.output, {
     generationId: state.generationId,
     version: nextVersion(state),
@@ -164,7 +175,7 @@ export async function reviseProposition(input: unknown, deps: ReviseDeps = defau
       ...initiallyMerged.unresolvedItems.filter((item) => item.itemKey === "sold_scope"),
     ].filter((item, index, all) => all.findIndex((candidate) => candidate.itemKey === item.itemKey) === index),
   });
-  const nextState = { ...state, items, preparedProposition: merged, currentProposition: merged };
+  const nextState = { ...state, ...learned, items, preparedProposition: merged, currentProposition: merged };
   const result: Extract<DomainResult, { status: "proposition" }> = { status: "proposition", proposition: merged };
   return withTurns({
     state: nextState,

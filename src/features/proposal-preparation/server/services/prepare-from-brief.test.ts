@@ -7,7 +7,7 @@ import { createFakeProposalesClient } from "@/lib/proposales";
 import { BRIEFS } from "../../fixtures/briefs";
 import { FIXTURE_CATALOG } from "../../fixtures/catalog";
 import { conversationWith } from "../../fixtures/conversations";
-import { agentClarificationOutput, agentPropositionOutput, finalStep, getContentStep, keepCallingTools, languageStep, proposeStrong, proposeWithSekNote, searchStep } from "../../fixtures/scripts";
+import { agentClarificationOutput, briefRecipient, finalStep, getContentStep, keepCallingTools, languageStep, modelBlock, modelPropositionOutput, proposeStrong, proposeWithSekNote, searchStep } from "../../fixtures/scripts";
 import { validProposition } from "../../fixtures/propositions";
 import { validState } from "../../fixtures/states";
 import { renderAssistantTurn } from "../domain/conversation";
@@ -47,11 +47,7 @@ function harness(steps: Parameters<typeof createScriptedAiClient>[0], state?: { 
 }
 
 function unknownContentOutput(id: string) {
-  const output = agentPropositionOutput();
-  return {
-    ...output,
-    blocks: [{ ...(output.blocks as AnyRecord[])[0], contentId: { value: id, source: "proposales_content", ref: { variationId: id } }, alternatives: [] }],
-  };
+  return modelPropositionOutput({ blocks: [modelBlock({ variationId: id, alternatives: [] })] });
 }
 
 describe("prepareFromBrief", () => {
@@ -63,7 +59,7 @@ describe("prepareFromBrief", () => {
     expect(result.state.generationId).toBe(GENERATION_ID);
     expect(result.state.currentProposition?.generationId).toBe(GENERATION_ID);
 
-    const next = harness([searchStep("consulting training workshop"), finalStep(agentPropositionOutput())]);
+    const next = harness([searchStep("consulting training workshop"), finalStep(modelPropositionOutput())]);
     const reused = await prepareFromBrief({ brief: BRIEFS.englishSimple, state: result.state }, next.deps);
     expect(next.deps.newGenerationId).not.toHaveBeenCalled();
     expect(reused.state.generationId).toBe(GENERATION_ID);
@@ -102,19 +98,21 @@ describe("prepareFromBrief", () => {
   });
 
   it("P5 rejects an unread content identity and accepts it after get_content records it", async () => {
-    const rejected = harness([languageStep("en"), finalStep(unknownContentOutput("7"))]);
+    // An identity no tool returned is refused where the model can still do something about it: the
+    // resolution step reports it as an issue, the run spends its bounded corrections re-asking, and
+    // only then does the turn fail. The message names the remedy rather than the rule it broke.
+    const rejected = harness([languageStep("en"), ...Array.from({ length: 3 }, () => finalStep(unknownContentOutput("7")))]);
     const failure = await prepareFromBrief({ brief: BRIEFS.englishSimple }, rejected.deps);
-    expect(failure.result).toEqual({
+    expect(failure.result).toMatchObject({
       status: "failed",
-      failure: {
-        reason: "model_output_invalid",
-        code: "validation_error",
-        issues: [{
-          path: ["blocks", "0", "contentId"],
-          message: "Content provenance does not reference catalog content retrieved in this run.",
-        }],
-      },
+      failure: { reason: "model_output_invalid", code: "validation_error" },
     });
+    expect((failure.result as AnyRecord).failure.issues).toEqual([{
+      path: ["blocks", "0", "variationId"],
+      message: "content 7 was not returned by any tool in this run; search for it or use one that was",
+    }]);
+    // The correction went back to the model rather than ending the turn on the first attempt.
+    expect(rejected.ai.calls).toHaveLength(4);
 
     const accepted = harness([languageStep("en"), getContentStep("7"), finalStep(unknownContentOutput("7"))]);
     const result = await prepareFromBrief({ brief: BRIEFS.englishSimple }, accepted.deps);
@@ -152,7 +150,7 @@ describe("prepareFromBrief", () => {
     const carried = validProposition({ language: { known: false } });
     const afterRound = validState({ clarification: { questions: [], answers: [] }, preparedProposition: carried, currentProposition: carried });
     const output = unknownContentOutput("188485") as AnyRecord;
-    output.language = { known: true, value: "de", source: "brief" };
+    output.language = { value: "de", evidence: { kind: "inferred" } };
     const later = harness([languageStep("de"), finalStep(output)]);
     const unresolved = await prepareFromBrief({ brief: BRIEFS.englishSimple, state: afterRound }, later.deps);
     expect(unresolved.state.currentProposition?.language).toEqual({ known: false });

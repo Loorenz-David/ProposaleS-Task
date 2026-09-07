@@ -7,7 +7,7 @@ import { uuidV4Schema } from "@/lib/values/uuid";
 
 import { clarificationSchema } from "./clarification";
 import { informationItemsRecordSchema } from "./information-items";
-import { propositionSchema } from "./proposition";
+import { languageCodeSchema, propositionSchema } from "./proposition";
 import { MAX_BRIEF_CHARS, boundedText } from "./shared";
 
 export const MAX_WORKFLOW_STATE_BYTES = 1048576;
@@ -36,6 +36,15 @@ export function proposalWorkflowStateSchemaFor(editorOrigin: string) {
     generationId: uuidV4Schema,
     brief: briefSchema,
     items: informationItemsRecordSchema,
+    /**
+     * The proposal language the model derived on an earlier turn of this workflow. It exists so a
+     * later turn need not spend another inference re-deriving it, and it is workflow state rather
+     * than conversation because it is a consequential input: it gates the read tools and selects
+     * the catalog language. It is never authority on its own — every turn re-validates it against
+     * the catalog actually read that turn, a human answer about language overrides it, and the
+     * proposition's own `language` leaf still carries its own source.
+     */
+    derivedLanguage: languageCodeSchema.optional(),
     clarification: clarificationSchema.optional(),
     preparedProposition: propositionSchema.optional(),
     currentProposition: propositionSchema.optional(),

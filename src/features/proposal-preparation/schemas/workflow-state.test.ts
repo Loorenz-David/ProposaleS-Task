@@ -103,6 +103,17 @@ describe("proposal workflow state", () => {
     expect(workflow.parseProposalWorkflowState(state, TEST_EDITOR_ORIGIN).clarification).toEqual(state.clarification);
   });
 
+  it("C5(j) carries a derived language and rejects one that is not a language code", async () => {
+    const { workflow, fixtures } = await modules();
+    const carried = fixtures.validState({ derivedLanguage: "sv" });
+    expect(workflow.parseProposalWorkflowState(carried, TEST_EDITOR_ORIGIN).derivedLanguage).toBe("sv");
+    // Absent is a real state: a workflow whose language was never derived carries no key.
+    expect(workflow.parseProposalWorkflowState(fixtures.validState(), TEST_EDITOR_ORIGIN)).not.toHaveProperty("derivedLanguage");
+    for (const invalid of ["EN", "eng", "e", ""]) {
+      expect(issuePaths(capture(() => workflow.parseProposalWorkflowState(fixtures.validState({ derivedLanguage: invalid }), TEST_EDITOR_ORIGIN)))).toEqual([["derivedLanguage"]]);
+    }
+  });
+
   it("C6(a) accepts a valid HTTPS draft reference at the configured origin", async () => {
     const { workflow, fixtures } = await modules();
     expect(workflow.parseProposalWorkflowState(fixtures.validState({ draftReference: draftReference() }), TEST_EDITOR_ORIGIN).draftReference).toEqual(draftReference());

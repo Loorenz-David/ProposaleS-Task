@@ -5,15 +5,24 @@ import type { AgentMessage } from "@/lib/ai";
 import type { ClarificationAnswer } from "../../schemas/clarification";
 import type { Proposition } from "../../schemas/proposition";
 import type { ConversationContext } from "../../schemas/conversation";
+import type { ModelPropositionView } from "../domain/model-view";
 
 export type PreparationAnswer = ClarificationAnswer & { itemKey: string };
+
+/**
+ * An answer as the model sees it. `label` is how the answer is named in the block, and therefore
+ * how the model must refer back to it: a short per-round alias under the evidence-citing contract,
+ * the question's own id under the older one, which asked the model to repeat that id verbatim.
+ */
+export type RenderedAnswer = PreparationAnswer & { label?: string };
 
 export type PreparationMessageInput = {
   brief: string;
   catalogLanguages: ReadonlyArray<string>;
   language: string | null;
-  answers?: ReadonlyArray<PreparationAnswer>;
-  currentProposition?: Proposition;
+  answers?: ReadonlyArray<RenderedAnswer>;
+  /** The proposition under revision, in whichever vocabulary the run's output contract uses. */
+  currentProposition?: Proposition | ModelPropositionView;
   conversation: ConversationContext;
   instruction?: { turnId: string; text: string };
 };
@@ -33,10 +42,10 @@ function renderCatalogLanguages(languages: ReadonlyArray<string>, language: stri
   return lines.join("\n");
 }
 
-function renderAnswers(answers: ReadonlyArray<PreparationAnswer>): string {
-  return answers.map(({ questionId, itemKey, answer }) => {
+function renderAnswers(answers: ReadonlyArray<RenderedAnswer>): string {
+  return answers.map(({ questionId, itemKey, answer, label }) => {
     const value = answer.kind === "skip" ? "skipped" : answer.text;
-    return `[${questionId}] ${itemKey}: ${value}`;
+    return `[${label ?? questionId}] ${itemKey}: ${value}`;
   }).join("\n");
 }
 

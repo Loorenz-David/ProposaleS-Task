@@ -18,7 +18,7 @@ import { propositionSchema, type Proposition } from "../../schemas/proposition";
 import { MAX_BRIEF_CHARS, boundedText } from "../../schemas/shared";
 import type { DomainResult, RenderableStatus, RunReport, TurnResult } from "../../schemas/turn-result";
 import { parseProposalWorkflowState, type ProposalWorkflowState } from "../../schemas/workflow-state";
-import { runPreparationAgent } from "../agent/preparation.agent";
+import { runPreparationAgent, type OutputContract } from "../agent/preparation.agent";
 import type { PreparationAnswer } from "../agent/build-messages";
 import { assembleProposition } from "../domain/assemble-proposition";
 import { nextVersion } from "../domain/bump-version";
@@ -60,6 +60,11 @@ export type PrepareDeps = {
   logger: Logger;
   editorOrigin: string;
   budgets?: RunBudgets;
+  /**
+   * Which contract the model answers in. Absent means the one in use; the measurement suite sets
+   * it explicitly so the same scenarios can be run against both and compared.
+   */
+  outputContract?: OutputContract;
 };
 
 type CompleteInput = {
@@ -132,8 +137,36 @@ function appendAssistant(
   return { state, conversation: appendTurns(conversation, [turn]), result, run };
 }
 
+/**
+ * The language this turn starts from, in precedence order: the proposition under revision, then a
+ * language derived on an earlier turn, then nothing — in which case the agent derives one.
+ *
+ * Two rules keep the carried value honest. A human answer about language this turn outranks it, so
+ * answering the language question is never ignored in favour of an earlier guess. And a carried
+ * code that the catalog read this turn does not offer is discarded rather than used, so a changed
+ * catalog re-derives instead of silently proposing in an unavailable language.
+ */
+function startingLanguageFor(input: CompleteInput, languages: string[]): string | null {
+  const fromProposition = knownString(input.state.currentProposition?.language);
+  if (fromProposition !== null) return fromProposition;
+
+  const answeredLanguage = (input.answers ?? []).some(
+    (answer) => answer.itemKey === "language" && answer.answer.kind === "answer",
+  );
+  if (answeredLanguage) return null;
+
+  const carried = input.state.derivedLanguage;
+  return carried !== undefined && languages.includes(carried) ? carried : null;
+}
+
+/** What to persist for the next turn, once a language has been derived and is catalog-supported. */
+function learnedLanguage(language: string | null, languages: string[]): { derivedLanguage?: string } {
+  return language !== null && languages.includes(language) ? { derivedLanguage: language } : {};
+}
+
 export async function completePreparationTurn(input: CompleteInput, deps: PrepareDeps): Promise<TurnResult> {
-  const startingLanguage = knownString(input.state.currentProposition?.language);
+  const languages = catalogLanguages(input.catalog);
+  const startingLanguage = startingLanguageFor(input, languages);
   const agent = await runPreparationAgent({
     mode: "prepare",
     brief: input.state.brief.text,
@@ -145,8 +178,10 @@ export async function completePreparationTurn(input: CompleteInput, deps: Prepar
     language: startingLanguage,
     allowClarification: input.allowClarification,
     budgets: deps.budgets,
+    ...(deps.outputContract === undefined ? {} : { outputContract: deps.outputContract }),
   }, deps);
   const report: RunReport = { provider: deps.ai.provider, model: deps.ai.model, usage: agent.usage };
+  const learned = learnedLanguage(agent.language, languages);
 
   if (agent.run.status === "failed") {
     if (agent.run.failure.reason === "budget_exhausted") {
@@ -154,7 +189,7 @@ export async function completePreparationTurn(input: CompleteInput, deps: Prepar
       if (open.length > 0) {
         const questions = questionsFor(open, deps);
         const result: DomainResult = { status: "clarification", questions, budgetExhausted: { budget: agent.run.failure.budget! } };
-        return appendAssistant({ ...input.state, clarification: { questions, answers: [] } }, input.conversation, result, report, deps);
+        return appendAssistant({ ...input.state, ...learned, clarification: { questions, answers: [] } }, input.conversation, result, report, deps);
       }
     }
     return appendAssistant(input.state, input.conversation, failureResult(agent.run.failure), report, deps);
@@ -171,14 +206,14 @@ export async function completePreparationTurn(input: CompleteInput, deps: Prepar
   }
 
   const outputLanguage = validated.output.kind === "proposition" ? knownString(validated.output.language) : null;
-  const language = resolveLanguage(outputLanguage ?? agent.language, catalogLanguages(input.catalog));
+  const language = resolveLanguage(outputLanguage ?? agent.language, languages);
 
   if (validated.output.kind === "clarification" || (language.kind === "ask" && input.allowClarification)) {
     const requested = validated.output.kind === "clarification" ? modelQuestions(validated.output) : [];
     const merged = language.kind === "ask" ? mergeLanguageQuestion(requested) : requested;
     const questions = questionsFor(merged, deps);
     const result: DomainResult = { status: "clarification", questions };
-    return appendAssistant({ ...input.state, clarification: { questions, answers: [] } }, input.conversation, result, report, deps);
+    return appendAssistant({ ...input.state, ...learned, clarification: { questions, answers: [] } }, input.conversation, result, report, deps);
   }
 
   if (validated.output.kind !== "proposition") {
@@ -206,7 +241,7 @@ export async function completePreparationTurn(input: CompleteInput, deps: Prepar
       ...assembled.unresolvedItems.filter((item) => item.itemKey === "sold_scope"),
     ].filter((item, index, all) => all.findIndex((candidate) => candidate.itemKey === item.itemKey) === index),
   });
-  const state = { ...input.state, items, preparedProposition: proposition, currentProposition: proposition };
+  const state = { ...input.state, ...learned, items, preparedProposition: proposition, currentProposition: proposition };
   const result: DomainResult = { status: "proposition", proposition };
   return appendAssistant(state, input.conversation, result, report, deps, proposition);
 }

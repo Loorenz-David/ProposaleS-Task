@@ -14,7 +14,7 @@ import { validateApproval } from "./server/domain/validate-approval";
 import { toMoneyDisplay } from "./client/view-models/money";
 import { BRIEFS } from "./fixtures/briefs";
 import { FIXTURE_CATALOG } from "./fixtures/catalog";
-import { agentPropositionOutput, clarifyRecipient, finalStep, proposeStrong } from "./fixtures/scripts";
+import { clarifyRecipient, finalStep, modelBlock, modelPropositionOutput, proposeStrong } from "./fixtures/scripts";
 
 /**
  * The offline vertical slice: a real brief typed into the real components reaches the real
@@ -91,14 +91,7 @@ const actions = await import("./server/actions");
  * the model may only choose from what it retrieved, and the backend refuses anything else.
  */
 function selectOfferedAlternative() {
-  const output = agentPropositionOutput();
-  const blocks = structuredClone(output.blocks) as Array<Record<string, unknown>>;
-  blocks[0] = {
-    ...blocks[0],
-    contentId: { value: "2", source: "proposales_content", ref: { variationId: "2" } },
-    alternatives: [],
-  };
-  return [finalStep({ ...output, blocks })];
+  return [finalStep(modelPropositionOutput({ blocks: [modelBlock({ variationId: "2", alternatives: [] })] }))];
 }
 
 function sequentialIds(prefix = 810) {
@@ -181,6 +174,9 @@ describe("proposal preparation, end to end offline", () => {
     const answer = screen.getByRole("textbox", { name: /Who should receive this proposal/ });
     fireEvent.change(answer, { target: { value: "Anna Berg, anna.berg@northwind.example" } });
     fireEvent.click(screen.getByRole("button", { name: /^Send/ }));
+    // Sending takes the questions off screen and hands the slot back to the composer.
+    expect(screen.queryByRole("region", { name: "Agent questions" })).not.toBeInTheDocument();
+    expect(composer()).toBeInTheDocument();
     await screen.findByRole("heading", { name: "Consulting and training proposal", level: 1 });
     const afterProposition = activeRecord();
     expect(afterProposition.latestResult?.status).toBe("proposition");

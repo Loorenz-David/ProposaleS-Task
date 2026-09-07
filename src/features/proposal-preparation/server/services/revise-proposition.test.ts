@@ -6,7 +6,7 @@ import { createFakeProposalesClient } from "@/lib/proposales";
 
 import { FIXTURE_CATALOG } from "../../fixtures/catalog";
 import { conversationWith, fullConversation } from "../../fixtures/conversations";
-import { agentPropositionOutput, finalStep, getContentStep, searchStep, selectPrevious, selectSecondAlternative } from "../../fixtures/scripts";
+import { finalStep, getContentStep, modelBlock, modelPropositionOutput, searchStep, selectPrevious, selectSecondAlternative } from "../../fixtures/scripts";
 import { propositionWithAlternatives } from "../../fixtures/propositions";
 import { validState } from "../../fixtures/states";
 import { MAX_CONVERSATION_TURNS } from "../../schemas/conversation";
@@ -43,15 +43,7 @@ function revisionState() {
 }
 
 function contentOutput(variationId: string) {
-  const output = agentPropositionOutput();
-  return {
-    ...output,
-    blocks: [{
-      ...(output.blocks as AnyRecord[])[0],
-      contentId: { value: variationId, source: "proposales_content", ref: { variationId } },
-      alternatives: [],
-    }],
-  };
+  return modelPropositionOutput({ blocks: [modelBlock({ variationId, alternatives: [] })] });
 }
 
 describe("reviseProposition", () => {
@@ -79,38 +71,74 @@ describe("reviseProposition", () => {
     expect(test.proposales.writes).toBe(0);
   });
 
-  it("R2 rejects an inferred consequential recipient override before merging", async () => {
-    const output = agentPropositionOutput({ requestedOverrides: [{ path: ["recipient", "value", "email"], reason: "change" }] });
-    const recipient = structuredClone(output.recipient) as AnyRecord;
-    recipient.value.email = { known: true, value: "invented@example.test", source: "inferred" };
-    const test = harness([
-      finalStep({ ...output, recipient }),
-      finalStep({ ...output, recipient }),
-      finalStep({ ...output, recipient }),
-    ]);
+  it("R2 rejects an invented consequential recipient value before merging", async () => {
+    // A recipient email the model made up cannot be smuggled in behind an override. Under this
+    // contract it cannot even be stated: a consequential leaf admits only evidence the human
+    // supplied, so "I inferred it" is not a value the schema can carry, and a model that tries
+    // spends its corrections and fails the turn rather than reaching the merge.
+    const invented = {
+      firstName: null,
+      lastName: null,
+      email: { value: "invented@example.test", evidence: { kind: "inferred" } },
+      phone: null,
+      companyName: null,
+    };
+    const output = modelPropositionOutput({
+      recipient: invented,
+      requestedOverrides: [{ path: ["recipient", "value", "email"], reason: "change" }],
+    });
+    const test = harness(Array.from({ length: 3 }, () => finalStep(output)));
     const result = await reviseProposition({ state: revisionState(), instruction: "change the email" }, test.deps);
     expect(result.result).toMatchObject({ status: "failed", failure: { reason: "model_output_invalid", code: "validation_error" } });
+    expect(result.state.currentProposition).toEqual(revisionState().currentProposition);
   });
 
   it("R3 refuses an unseen identity and accepts it after get_content", async () => {
-    const rejected = harness([finalStep(contentOutput("7"))]);
+    // As on a first turn, the identity is checked where a correction can still fix it, so the run
+    // re-asks before the turn fails.
+    const rejected = harness(Array.from({ length: 3 }, () => finalStep(contentOutput("7"))));
     const failure = await reviseProposition({ state: revisionState(), instruction: "use item seven" }, rejected.deps);
-    expect(failure.result).toEqual({
+    expect(failure.result).toMatchObject({
       status: "failed",
-      failure: {
-        reason: "model_output_invalid",
-        code: "validation_error",
-        issues: [{
-          path: ["blocks", "0", "contentId"],
-          message: "Content provenance does not reference catalog content retrieved in this run.",
-        }],
-      },
+      failure: { reason: "model_output_invalid", code: "validation_error" },
     });
+    expect((failure.result as AnyRecord).failure.issues).toEqual([{
+      path: ["blocks", "0", "variationId"],
+      message: "content 7 was not returned by any tool in this run; search for it or use one that was",
+    }]);
 
     const accepted = harness([getContentStep("7"), finalStep(contentOutput("7"))]);
     const result = await reviseProposition({ state: revisionState(), instruction: "use item seven" }, accepted.deps);
     expect(result.result.status).toBe("proposition");
     expect(result.state.currentProposition?.blocks[0].contentId.value).toBe("7");
+  });
+
+  it("R7 falls back to the carried language when the proposition states none", async () => {
+    // A proposition whose language leaf is absent used to cost a derivation call on every later
+    // revision. The code derived earlier in this workflow answers it, re-checked against this
+    // catalog first, so the turn goes straight to the main run.
+    const proposition = propositionWithAlternatives();
+    const withoutLanguage = { ...proposition, language: { known: false as const } };
+    const state = validState({
+      preparedProposition: withoutLanguage,
+      currentProposition: withoutLanguage,
+      derivedLanguage: "en",
+    });
+    const test = harness(selectSecondAlternative());
+    const result = await reviseProposition({ state, instruction: "use the second option" }, test.deps);
+
+    expect(result.result.status).toBe("proposition");
+    expect(test.ai.calls[0].tools).toHaveLength(2);
+    expect(test.ai.calls[0].messages.some((message) => "content" in message && message.content.includes("proposal language: en"))).toBe(true);
+
+    // A carried code the catalog does not offer is not usable, so that turn derives instead.
+    const stale = harness([finalStep({ language: "en" }), ...selectSecondAlternative()]);
+    const staleResult = await reviseProposition(
+      { state: validState({ preparedProposition: withoutLanguage, currentProposition: withoutLanguage, derivedLanguage: "de" }), instruction: "use the second option" },
+      stale.deps,
+    );
+    expect(staleResult.result.status).toBe("proposition");
+    expect(stale.ai.calls[0].tools).toHaveLength(0);
   });
 
   it("R5 enforces the conversation window and records failed turns without changing state", async () => {

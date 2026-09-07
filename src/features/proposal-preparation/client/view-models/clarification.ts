@@ -17,6 +17,7 @@ export type ClarificationPanelViewModel = {
   mode: "single" | "batch";
   questions: QuestionViewModel[];
   openCount: number;
+  /** Whether the questions are on screen: unanswered, not dismissed, and not being sent. */
   isOpen: boolean;
 };
 
@@ -73,6 +74,8 @@ export function toClarificationPanelViewModel(
     mode: openCount <= 1 ? "single" : "batch",
     questions,
     openCount,
-    isOpen: record.clarificationPanel === "open",
+    // Sending the answers takes the questions off screen: the turn is now the agent's, and the
+    // panel comes back only if it fails, which is the state that still needs the human.
+    isOpen: record.clarificationPanel === "open" && record.inFlightTurn?.kind !== "answers",
   };
 }

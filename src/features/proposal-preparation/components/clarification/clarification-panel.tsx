@@ -55,6 +55,10 @@ export function ClarificationPanel({ viewModel, submitState, onSubmit, onDismiss
   };
   const question = viewModel.questions[currentIndex];
   const draft = question ? drafts.find((item) => item.questionId === question.questionId) : null;
+  // The primary slot advances while questions remain and sends on the last one, so there is never
+  // a "Next" and a "Send" competing for the same click.
+  const onLastQuestion = currentIndex >= viewModel.questions.length - 1;
+  const primaryIsNext = viewModel.mode === "batch" && !onLastQuestion;
 
   return (
     <section
@@ -98,7 +102,6 @@ export function ClarificationPanel({ viewModel, submitState, onSubmit, onDismiss
         {viewModel.mode === "batch" ? (
           <>
             <button type="button" disabled={currentIndex === 0} onClick={() => setCurrentIndex((index) => index - 1)} className="rounded-md px-3 py-2 text-12 font-semibold disabled:opacity-40">Back</button>
-            <button type="button" disabled={currentIndex === viewModel.questions.length - 1} onClick={() => setCurrentIndex((index) => index + 1)} className="rounded-md px-3 py-2 text-12 font-semibold disabled:opacity-40">Next</button>
             <button
               type="button"
               onClick={() => setDrafts((current) => current.map((item) => item.state === "untouched" ? { ...item, state: "skipped", text: "" } : item))}
@@ -108,14 +111,25 @@ export function ClarificationPanel({ viewModel, submitState, onSubmit, onDismiss
             </button>
           </>
         ) : null}
-        <button
-          type="button"
-          disabled={completedCount === 0 || isSubmitting}
-          onClick={submit}
-          className="ml-auto rounded-lg bg-[var(--color-accent)] px-4 py-2 text-12 font-semibold text-[var(--color-bg)] disabled:opacity-50"
-        >
-          {viewModel.mode === "single" ? "Send answer" : `Send ${completedCount} answers`}
-        </button>
+        {primaryIsNext ? (
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={() => setCurrentIndex((index) => index + 1)}
+            className="ml-auto rounded-lg bg-[var(--color-accent)] px-4 py-2 text-12 font-semibold text-[var(--color-bg)] disabled:opacity-50"
+          >
+            Next
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={completedCount === 0 || isSubmitting}
+            onClick={submit}
+            className="ml-auto rounded-lg bg-[var(--color-accent)] px-4 py-2 text-12 font-semibold text-[var(--color-bg)] disabled:opacity-50"
+          >
+            {viewModel.mode === "single" ? "Send answer" : `Send ${completedCount} answers`}
+          </button>
+        )}
       </footer>
     </section>
   );

@@ -68,6 +68,9 @@ export function AgentSurface({ closeGuard }: { closeGuard?: CloseGuardController
   if (!record || !activeSessionId) return null;
   const thread = toThreadViewModel(record);
   const panel = toClarificationPanelViewModel(record);
+  // The panel stays mounted while it is off screen so a dismissed round keeps its drafts; the
+  // composer takes the slot it vacates, which is the surface the human is left with.
+  const questionsOnScreen = panel?.isOpen === true;
   const failure = record.callFailure?.site.kind === "agent"
     ? toCallFailureViewModel(record.callFailure)
     : null;
@@ -105,7 +108,7 @@ export function AgentSurface({ closeGuard }: { closeGuard?: CloseGuardController
           key={activeSessionId}
           isWorking={record.inFlightTurn !== null}
           onPillIntent={onPillIntent}
-          suppressFollow={record.clarificationPanel === "open"}
+          suppressFollow={questionsOnScreen}
           viewModel={thread}
           workingLabel={record.inFlightTurn ? toWorkingLabel(record.inFlightTurn) : ""}
         />
@@ -132,7 +135,7 @@ export function AgentSurface({ closeGuard }: { closeGuard?: CloseGuardController
           viewModel={panel}
         />
       ) : null}
-      {!panel ? (
+      {!questionsOnScreen ? (
         <AgentComposer
           ref={composerRef}
           hint={record.workflow?.currentProposition ? "Ask for a revision, or edit a field in the review." : "Enter to send · Shift+Enter for a new line"}

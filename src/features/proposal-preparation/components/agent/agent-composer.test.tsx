@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { AgentComposer } from "./agent-composer";
+import { AgentComposer, COMPOSER_MAX_ROWS, composerHeightPx } from "./agent-composer";
 
 describe("AgentComposer", () => {
   it("disables empty and submitting sends", () => {
@@ -28,5 +28,21 @@ describe("AgentComposer", () => {
     expect(onSubmit).toHaveBeenCalledOnce();
     fireEvent.keyDown(textarea, { key: "Escape" });
     expect(textarea).not.toHaveFocus();
+  });
+
+  it("grows with the content and stops at six rows", () => {
+    const rows = (count: number) =>
+      composerHeightPx({ scrollHeight: count * 21 + 8, lineHeight: 21, verticalPadding: 8 });
+    expect(COMPOSER_MAX_ROWS).toBe(6);
+    expect(rows(1)).toBe(29);
+    expect(rows(3)).toBe(71);
+    expect(rows(6)).toBe(134);
+    // Past the cap the height holds and the field scrolls instead.
+    expect(rows(7)).toBe(134);
+    expect(rows(40)).toBe(134);
+  });
+
+  it("falls back to the content height when the line height is not measurable", () => {
+    expect(composerHeightPx({ scrollHeight: 96, lineHeight: Number.NaN, verticalPadding: 8 })).toBe(96);
   });
 });

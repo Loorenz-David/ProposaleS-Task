@@ -21,6 +21,7 @@ import type {
   LanguageModelInstance,
   ToolDescriptor,
   Usage,
+  UsageDetail,
 } from "@/lib/ai/types";
 import { resolveModel } from "@/lib/ai/registry";
 
@@ -75,6 +76,14 @@ function toUsage(usage: LanguageModelUsage | undefined): Usage {
     inputTokens: usage?.inputTokens ?? null,
     outputTokens: usage?.outputTokens ?? null,
     totalTokens: usage?.totalTokens ?? null,
+  };
+}
+
+/** Operational counters only; see `UsageDetail`. Absent detail stays `null` rather than 0. */
+function toUsageDetail(usage: LanguageModelUsage | undefined): UsageDetail {
+  return {
+    cachedInputTokens: usage?.inputTokenDetails?.cacheReadTokens ?? null,
+    reasoningTokens: usage?.outputTokenDetails?.reasoningTokens ?? null,
   };
 }
 
@@ -140,10 +149,11 @@ function mapResult(result: AiSdkResult): GenerateStepResult {
         input: call.input,
       })),
       usage: toUsage(result.usage),
+      usageDetail: toUsageDetail(result.usage),
     };
   }
 
-  return { kind: "final", output: result.output, usage: toUsage(result.usage) };
+  return { kind: "final", output: result.output, usage: toUsage(result.usage), usageDetail: toUsageDetail(result.usage) };
 }
 
 export async function callModel(model: LanguageModelInstance, request: Omit<GenerateTextRequest, "model" | "maxRetries">, runGenerateText: GenerateTextDependency = defaultDeps.generateText): Promise<AiSdkResult> {
@@ -192,6 +202,7 @@ export function createAiClient(env: ServerEnv = serverEnv, deps: AiClientDeps = 
             kind: "invalid_output",
             reason: "provider_parse_failure",
             usage: toUsage(error.usage),
+            usageDetail: toUsageDetail(error.usage),
           };
         }
 

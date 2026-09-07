@@ -26,6 +26,34 @@ describe("ClarificationPanel", () => {
     expect(screen.getByRole("button", { name: "Back" })).toBeEnabled();
   });
 
+  it("advances until the last question, where the primary action sends instead", () => {
+    const onSubmit = vi.fn();
+    render(<ClarificationPanel onDismiss={vi.fn()} onSubmit={onSubmit} submitState={{ status: "idle" }} viewModel={batch} />);
+    expect(screen.queryByRole("button", { name: /^Send/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByRole("textbox", { name: "When is delivery?" })).toHaveFocus();
+    expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send 0 answers" })).toBeDisabled();
+    fireEvent.change(screen.getByRole("textbox", { name: "When is delivery?" }), { target: { value: "March" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send 1 answers" }));
+    expect(onSubmit).toHaveBeenCalledOnce();
+  });
+
+  it("offers a single open question its send action with no navigation", () => {
+    render(
+      <ClarificationPanel
+        onDismiss={vi.fn()}
+        onSubmit={vi.fn()}
+        submitState={{ status: "idle" }}
+        viewModel={{ ...batch, mode: "single", openCount: 1, questions: [batch.questions[0]] }}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Back" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send answer" })).toBeInTheDocument();
+  });
+
   it("emits answered and skipped drafts with Ctrl+Enter", () => {
     const onSubmit = vi.fn();
     render(<ClarificationPanel onDismiss={vi.fn()} onSubmit={onSubmit} submitState={{ status: "idle" }} viewModel={batch} />);
@@ -54,6 +82,8 @@ describe("ClarificationPanel", () => {
     render(<ClarificationPanel onDismiss={vi.fn()} onSubmit={onSubmit} submitState={{ status: "idle" }} viewModel={batch} />);
     fireEvent.change(screen.getByRole("textbox", { name: "How many chairs?" }), { target: { value: "Six" } });
     fireEvent.click(screen.getByRole("button", { name: "Skip all" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
     fireEvent.click(screen.getByRole("button", { name: "Send 3 answers" }));
     expect(onSubmit).toHaveBeenCalledWith(expect.arrayContaining([
       expect.objectContaining({ questionId: "q1", state: "answered", text: "Six" }),
