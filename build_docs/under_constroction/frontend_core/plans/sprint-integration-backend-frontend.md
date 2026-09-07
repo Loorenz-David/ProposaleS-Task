@@ -600,3 +600,14 @@ Adopted while implementing:
 - **One assertion added beyond the plan:** the human's title survives the following model revision. The revision turn was the first place that could have silently undone a human edit, and it does not.
 
 No component changed in this work package. No test was amended or deleted.
+
+### 15.6 WP5 — approval and execution
+
+`workflow-ui.test.tsx` extended with six approval rows; `client/view-models/created.test.ts` and `failure.test.ts` gained rows for the unavailable reasons, both notice kinds, the block-currency warning, the omitted optional flag, every run-failure reason, an absent `issues` list, and a forbidden deployment. `npm test` 898 green, typecheck and lint green. No component changed.
+
+Rows: **T-INT-6** one write, whose request deep-equals `toCreateProposalRequest(toCreateDraftInput(approved))` for the `approved` obtained by re-validating the exact envelope the browser sent, with a failing AI client installed for the turn so "no model after approval" is proven rather than assumed · **T-INT-7** the uuid and the link rendered verbatim, `target="_blank" rel="noopener noreferrer"` · **T-INT-7b** a seeded existing draft recovers with `writes === 0` · **T-INT-8** Applied Pricing from the read-back through `toMoneyDisplay` · **T-INT-8b** a failed read-back renders "Applied pricing unavailable" with no amount anywhere in the DOM · **T-INT-9** a 503 create keeps the proposition, puts "Back to review" first, offers "Try again", and the retry creates exactly once · **T-INT-9b** `COPILOT_LIVE_MUTATIONS=disabled` refuses before the service with no retry offered · **T-INT-9c** approving a state that already carries a draft conflicts and names the existing one, with no second write.
+
+Adopted while implementing:
+
+- **`RecoveredProposalSummary.url`, not `editorUrl`** — the recovery fixture had to use the field the type declares.
+- **The terminal-session assertion states what B1 actually does.** `AgentComposer` realizes `isSubmitting` on its send control, not on the textarea. B1 passes the flag; how the composer spends it is that component's existing behaviour, and changing it would be a third component file — a stop condition for no gain. The row asserts the send control is disabled *and* that an Enter attempt starts no turn, which is the property that matters: the hook refuses a dispatch on a terminal record however the attempt is made.

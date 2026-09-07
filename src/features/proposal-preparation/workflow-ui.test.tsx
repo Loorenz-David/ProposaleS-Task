@@ -2,11 +2,16 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createFailingAiClient, createScriptedAiClient } from "@/lib/ai";
+import { ProposalesError } from "@/lib/proposales/errors";
 import { createLogger } from "@/lib/logger";
 import { createFakeProposalesClient } from "@/lib/proposales";
-import { toProposalReadback } from "@/lib/proposales/mappers";
+import { toCreateProposalRequest, toProposalReadback } from "@/lib/proposales/mappers";
 import { proposalReadbackSchema } from "@/lib/proposales/schemas";
 
+import { LIBRARY_PRICING_STATEMENT_ID } from "./schemas/approval";
+import { toCreateDraftInput } from "./server/domain/to-create-draft-input";
+import { validateApproval } from "./server/domain/validate-approval";
+import { toMoneyDisplay } from "./client/view-models/money";
 import { BRIEFS } from "./fixtures/briefs";
 import { FIXTURE_CATALOG } from "./fixtures/catalog";
 import { agentPropositionOutput, clarifyRecipient, finalStep, proposeStrong } from "./fixtures/scripts";
@@ -60,9 +65,20 @@ vi.mock("@/features/proposal-preparation/server/services/default-deps", () => ({
   },
 }));
 
+/** Read at call time so one file can construct both deployment postures explicitly. */
+const deployment = { COPILOT_LIVE_MUTATIONS: "enabled" as "enabled" | "disabled" };
+
 vi.mock("@/lib/env/server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/env/server")>();
-  return { ...actual, serverEnv: { ...actual.serverEnv, COPILOT_LIVE_MUTATIONS: "enabled" } };
+  return {
+    ...actual,
+    serverEnv: {
+      ...actual.serverEnv,
+      get COPILOT_LIVE_MUTATIONS() {
+        return deployment.COPILOT_LIVE_MUTATIONS;
+      },
+    },
+  };
 });
 
 const { ProposalWorkspace } = await import("./components/workspace/proposal-workspace");
@@ -120,6 +136,7 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
+  deployment.COPILOT_LIVE_MUTATIONS = "enabled";
   useWorkspaceSessionStore.setState(createWorkspaceSessionState());
   holder.proposales = newFake();
   holder.ai = createScriptedAiClient(clarifyRecipient());
@@ -251,5 +268,160 @@ describe("proposal preparation, end to end offline", () => {
       instruction: "use the second one",
       state: expect.objectContaining({ generationId: GENERATION_ID }),
     });
+  });
+  /** Drives a fresh session to a rendered review surface, ready to approve. */
+  async function reachReview() {
+    holder.ai = createScriptedAiClient(proposeStrong());
+    render(<ProposalWorkspace />);
+    submit(BRIEFS.englishSimple);
+    await screen.findByRole("heading", { name: "Consulting and training proposal", level: 1 });
+    // No model may run after approval; a client that throws on use proves it never does.
+    holder.ai = createFailingAiClient();
+  }
+
+  const approve = () => fireEvent.click(screen.getByRole("button", { name: "Approve and create draft" }));
+
+  it("T-INT-6, T-INT-7, T-INT-8: approval executes the reviewed payload exactly, once", async () => {
+    const approveSpy = vi.spyOn(actions, "approveProposalAction");
+    await reachReview();
+    const reviewed = activeRecord().workflow?.currentProposition;
+
+    approve();
+    await screen.findByRole("heading", { name: "Draft created in Proposales", level: 1 });
+
+    // T-INT-6 — exactly one write, and its request is the one the approved payload maps to.
+    expect(holder.proposales.writes).toBe(1);
+    const create = holder.proposales.calls.find((call) => call.op === "createProposalDraft");
+    const envelope = approveSpy.mock.calls[0][0];
+    const { approved } = validateApproval(envelope, {
+      editorOrigin: EDITOR_ORIGIN,
+      now: () => NOW,
+      logger: createLogger({ sink: () => undefined }),
+    });
+    expect(create).toMatchObject({
+      request: toCreateProposalRequest(toCreateDraftInput(approved), {
+        companyId: holder.proposales.company.companyId,
+        now: () => NOW,
+      }),
+    });
+    // The envelope the browser sent carried the reviewed proposition and the acknowledgment, and
+    // no conversation: approval is not something the model is told about.
+    expect(envelope).toMatchObject({
+      proposition: reviewed,
+      pricingAcknowledgment: { acknowledged: true, statement: LIBRARY_PRICING_STATEMENT_ID },
+    });
+    expect(Object.keys(envelope as object)).not.toContain("conversation");
+
+    // T-INT-7 — the identity and the link are the backend's, rendered verbatim.
+    const draft = activeRecord().latestResult;
+    if (draft?.status !== "created") throw new Error("expected a created result");
+    expect(screen.getByText(draft.draft.proposalUuid)).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: "Open in Proposales (opens in a new tab)" });
+    expect(link).toHaveAttribute("href", draft.draft.editorUrl);
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+
+    // T-INT-8 — Applied Pricing comes from the read-back, formatted by toMoneyDisplay only.
+    const pricing = draft.draft.appliedPricing;
+    if (!pricing.available) throw new Error("expected available pricing");
+    expect(screen.getByRole("heading", { name: "Applied pricing" })).toBeInTheDocument();
+    // The same total appears as a line value and as the total; both come from the read-back.
+    expect(screen.getAllByText(toMoneyDisplay(pricing.totalWithTax)).length).toBeGreaterThan(0);
+
+    // The session is terminal: the composer offers no further turn. `AgentComposer` realizes
+    // `isSubmitting` on its send control, which is where B1 takes effect; the hook refuses a
+    // dispatch on a terminal record regardless of how the attempt is made.
+    expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
+    fireEvent.change(composer(), { target: { value: "one more thing" } });
+    fireEvent.keyDown(composer(), { key: "Enter" });
+    expect(activeRecord().inFlightTurn).toBeNull();
+  });
+
+  it("T-INT-7b: an existing draft for this generation is recovered, with no second write", async () => {
+    await reachReview();
+    const generationId = activeRecord().workflow?.generationId;
+    if (!generationId) throw new Error("no generation id");
+
+    // The create response was lost, not the create: the draft is already there to be found.
+    holder.proposales = newFake({
+      proposals: [{ proposalUuid: CREATED_UUID, generationId, url: `${EDITOR_ORIGIN}/proposals/${CREATED_UUID}/edit` }],
+      proposalReadbacks: { [CREATED_UUID]: readback },
+    });
+
+    approve();
+    await screen.findByRole("heading", { name: "Draft recovered in Proposales", level: 1 });
+    expect(holder.proposales.writes).toBe(0);
+  });
+
+  it("T-INT-8b: an unreadable read-back renders no amount at all, rather than a zero", async () => {
+    await reachReview();
+    holder.proposales.failNext("getProposal", new ProposalesError({ operation: "getProposal", retryable: true, message: "timed out" }));
+
+    approve();
+    await screen.findByRole("heading", { name: "Draft created in Proposales", level: 1 });
+
+    expect(screen.getByRole("heading", { name: "Applied pricing unavailable" })).toBeInTheDocument();
+    // No money anywhere: the unavailable arm of the schema declares no amount to render.
+    expect(document.body.textContent).not.toMatch(/\d[\d\s,.]*\s?(kr|SEK|€|EUR)/);
+  });
+
+  it("T-INT-9: a failed create keeps the proposition, offers retry, and the retry creates once", async () => {
+    await reachReview();
+    const before = activeRecord().workflow?.currentProposition;
+    holder.proposales.failNext("createProposalDraft", new ProposalesError({
+      operation: "createProposalDraft",
+      status: 503,
+      retryable: true,
+      message: "Proposales could not be reached.",
+    }));
+
+    approve();
+    await screen.findByRole("heading", { name: "Could not create the draft", level: 1 });
+
+    // R6.5 over real shapes: nothing was sent, and the reviewed proposition is intact.
+    expect(activeRecord().workflow?.currentProposition).toEqual(before);
+    expect(activeRecord().workflow?.draftReference).toBeUndefined();
+    const buttons = screen.getAllByRole("button", { name: /Back to review|Try again/ });
+    expect(buttons[0]).toHaveAccessibleName("Back to review");
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+
+    // The failed create stored nothing, so the retry is the first successful write.
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await screen.findByRole("heading", { name: "Draft created in Proposales", level: 1 });
+    expect(holder.proposales.writes).toBe(1);
+  });
+
+  it("T-INT-9b: a deployment with mutations disabled refuses before the service, with no retry", async () => {
+    await reachReview();
+    deployment.COPILOT_LIVE_MUTATIONS = "disabled";
+
+    approve();
+    await screen.findByRole("heading", { name: "Could not create the draft", level: 1 });
+
+    expect(screen.getByText("Draft creation is disabled on this deployment.")).toBeInTheDocument();
+    // Not retryable: nothing about trying again changes a deployment decision.
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+    expect(holder.proposales.writes).toBe(0);
+    expect(holder.proposales.calls).toHaveLength(2);
+  });
+
+  it("T-INT-9c: approving a state that already has a draft conflicts, and names the existing one", async () => {
+    await reachReview();
+    approve();
+    await screen.findByRole("heading", { name: "Draft created in Proposales", level: 1 });
+    const created = activeRecord().workflow?.draftReference;
+    if (!created) throw new Error("no draft reference");
+
+    // The terminal state is refused before any search or write, by the service, not the UI.
+    const refused = await actions.approveProposalAction({
+      state: activeRecord().workflow,
+      proposition: activeRecord().workflow?.currentProposition,
+      pricingAcknowledgment: { acknowledged: true, statement: LIBRARY_PRICING_STATEMENT_ID },
+    });
+    expect(refused).toMatchObject({
+      ok: false,
+      error: { code: "conflict", details: { reason: "draft_already_exists", proposalUuid: created.proposalUuid } },
+    });
+    expect(holder.proposales.writes).toBe(1);
   });
 });

@@ -43,4 +43,29 @@ describe("failure adapters", () => {
   it("maps all production run-failure reasons", () => {
     expect(["budget_exhausted", "model_output_invalid", "tool_output_invalid"].map((reason) => toRunFailureTurn(fixtureRunFailure(reason as Parameters<typeof fixtureRunFailure>[0])).headline)).toHaveLength(3);
   });
+
+  it("renders every run failure reason, including one with no reported paths", () => {
+    expect(toRunFailureTurn(fixtureRunFailure("budget_exhausted"))).toMatchObject({
+      headline: "The agent reached its working limit",
+      issuePaths: [],
+    });
+    expect(toRunFailureTurn(fixtureRunFailure("model_output_invalid")).issuePaths).toEqual(["title"]);
+    // `script_exhausted` reads like `tool_output_invalid`: the run could not use what it was given.
+    for (const reason of ["tool_output_invalid", "script_exhausted"] as const) {
+      expect(toRunFailureTurn(fixtureRunFailure(reason))).toMatchObject({
+        headline: "A catalog result could not be used",
+        issuePaths: [],
+      });
+    }
+  });
+
+  it("an absent issues list is no paths, not a crash", () => {
+    const withoutIssues = { reason: "model_output_invalid" as const, code: "validation_error" as const };
+    expect(toRunFailureTurn(withoutIssues).issuePaths).toEqual([]);
+  });
+
+  it("a forbidden deployment offers no retry, whatever the flag says", () => {
+    expect(toCallFailureViewModel(failure("forbidden", { details: { retryable: false } })).canRetry).toBe(false);
+    expect(toCreationFailureViewModel(failure("forbidden")).existingDraft).toBeNull();
+  });
 });
