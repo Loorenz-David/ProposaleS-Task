@@ -1,3 +1,5 @@
+import { IntroReplayButton } from "../onboarding/intro-replay-button";
+
 export type AgentHeaderProps = { sessionCount: number };
 
 export function AgentHeader({ sessionCount }: AgentHeaderProps) {
@@ -10,7 +12,8 @@ export function AgentHeader({ sessionCount }: AgentHeaderProps) {
         ✦
       </span>
       <span className="text-sm font-bold text-[var(--color-fg)]">Proposal Copilot</span>
-      <span className="ml-auto font-mono text-10 uppercase tracking-label text-[var(--color-fg-quiet)]">
+      <span className="ml-auto"><IntroReplayButton /></span>
+      <span className="font-mono text-10 uppercase tracking-label text-[var(--color-fg-quiet)]">
         {sessionCount} {sessionCount === 1 ? "session" : "sessions"}
       </span>
     </header>
