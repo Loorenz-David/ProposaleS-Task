@@ -522,3 +522,24 @@ The sprint is complete when every row holds on one tree, stamped in §15 with th
 ## 15. Sprint log
 
 *(append-only; the implementer fills this in — gate check, tree-vs-plan differences adopted, per-WP checkpoint SHAs, component changes with classification, tests amended and why, dependencies added (expected: none), live-run records, stamp)*
+
+### 15.1 Gate check (WP1, 2026-09-07)
+
+| Gate | Result |
+|---|---|
+| Branch | `proposal-copilot-integration` ✓ |
+| `git status --porcelain` | **not empty**: one untracked file, `build_docs/under_constroction/frontend_core/prompts/implementer/sprint-integration-backend-frontend.md` — the implementer prompt for this session. No source file, no tracked modification. Proceeded and recorded rather than stopping: the gate's subject is the source tree. |
+| `npm test` | green — 107 files, 837 tests, at `1160eb8` |
+| `server/actions.ts` | does not exist ✓ |
+| §1 inventory | resolves; differences below |
+
+### 15.2 Tree-vs-plan differences adopted (WP1)
+
+**D1 — absence-capable leaves infer as `unknown`, not as a union (material; affects §5 and WP3).**
+`schemas/shared.ts` `sourcedOrAbsent()` ends in `as z.ZodTypeAny`, which erases the leaf's type. So on `Proposition`, every leaf that may be absent — `title`, `language`, `descriptionNarrative`, `agentRationale`, `emptyDraftConfirmation`, `block.{description,quantity,optional,reviewerComment}`, `recipient.value.*`, `commercialNote.{amount,currency}` — infers as `unknown`. Leaves that are always present keep their types (`block.title` is `Sourced<string,"proposales_content">`, likewise `block.contentId`, `alternative.reason`, `commercialNote.{text,taxBasis}`, `commercialAssumption.statedValue`, `warning.text`, `assumption.note`).
+
+The plan's WP3 step 5 anticipated only the always-present case (`sourcedToLeaf`). Adopted: `client/view-models/leaf.ts` adds `readLeaf(value: unknown)`, which narrows to `{ known: true; value; source; ref? } | { known: false }` and throws on any other shape — the value was already validated by the server's own schema, so a third shape is a programming error (contract 06 §3). The leaf types are composed from `PropositionSource` and `Ref`, both exported by `schemas/shared.ts`, so no schema shape is hand-copied (05 §8). Schemas are not edited.
+
+**D2 — `commercialNoteSchema` carries a `currency` leaf** that §1.2 does not list. Not rendered in V1; the note's `amount` is a `Money`, which carries its own currency. Added to §5's "deliberately not rendered" set.
+
+**D3 — everything else in §1.1 and §1.2 resolves as written.** Verified directly: the five service signatures and their strict input schemas; `approveProposition(input: { envelope: unknown })`; `domainResultSchema`'s five members with `questions` and `draft` (not `clarification`/`draftResult`); `approvalResultSchemaFor` with no conversation; `editOperationSchema` with no `replace_block`; `apply-edits.ts` materializing the recipient at `["recipient","value",key]` and appending `add_block`; `LIBRARY_PRICING_STATEMENT_ID`/`_TEXT` exported from `schemas/approval.ts`; `test/isolation-scan.ts` `SERVER_ONLY_FIRST` admitting no directive; the jsdom vitest project carrying no `server-only` alias; `serverEnvSchema` at seven names; `next.config.ts` at `devIndicators` only.
