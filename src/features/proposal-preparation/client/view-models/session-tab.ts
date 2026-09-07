@@ -23,23 +23,25 @@ export type TabViewModel = {
   status: TabStatus;
   statusText: string;
   dotClassName: string;
+  unreadText: string | null;
 };
 
 export function deriveTabStatus(record: SessionRuntimeRecord): TabStatus {
-  if (record.isTurnInFlight) return "working";
-  if (record.hasDraftReference) return "created";
-  if (record.latestDomainResultKind === "clarification") return "questions";
-  if (record.hasCurrentProposition) return "ready";
+  if (record.inFlightTurn !== null) return "working";
+  if (record.workflow?.draftReference) return "created";
+  if (record.latestResult?.status === "clarification") return "questions";
+  if (record.workflow?.currentProposition) return "ready";
   if (record.hasStartedTurn) return "idle";
   return "empty";
 }
 
-export function toTabViewModel(record: SessionRuntimeRecord): TabViewModel {
+export function toTabViewModel(record: SessionRuntimeRecord, isActive = false): TabViewModel {
   const status = deriveTabStatus(record);
   return {
     title: record.title,
     status,
     statusText: STATUS_TEXT[status],
     dotClassName: STATUS_DOT_CLASS_NAME[status],
+    unreadText: record.unread > 0 && !isActive ? `${record.unread} unread` : null,
   };
 }

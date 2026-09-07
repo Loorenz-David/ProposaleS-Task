@@ -7,11 +7,16 @@ export function temporaryFixtureSessionRuntimeRecord(
   return {
     id,
     title: "New proposal session",
-    isTurnInFlight: false,
-    hasDraftReference: false,
-    latestDomainResultKind: null,
-    hasCurrentProposition: false,
+    thread: [],
+    latestResult: null,
+    workflow: null,
+    inFlightTurn: null,
     hasStartedTurn: false,
+    unread: 0,
+    composerDraft: "",
+    retained: { workSurface: "fields", openedBlockContentId: null },
+    clarificationPanel: "dismissed",
+    callFailure: null,
     ...overrides,
   };
 }

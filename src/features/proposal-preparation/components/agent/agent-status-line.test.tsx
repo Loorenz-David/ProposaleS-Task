@@ -4,6 +4,8 @@ import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { temporaryFixtureSessionRuntimeRecord } from "../../client/fixtures/session-runtime.temporary-fixture";
+import { temporaryFixtureDraftResultCreated } from "../../client/fixtures/draft-result.temporary-fixture";
+import { temporaryFixturePropositionV1 } from "../../client/fixtures/proposition.temporary-fixture";
 import { useWorkspaceSessionStore } from "../../hooks/use-workspace-session-store";
 import { AgentStatusLine } from "./agent-status-line";
 import { AgentSurface } from "../workspace/agent-surface";
@@ -68,10 +70,16 @@ describe("AgentStatusLine", () => {
     const main = screen.getByRole("main");
     const record = activeRecord();
     const statuses = [
-      { isTurnInFlight: true },
-      { hasDraftReference: true },
-      { latestDomainResultKind: "clarification" as const },
-      { hasCurrentProposition: true },
+      { inFlightTurn: { turnId: "turn", kind: "brief" as const } },
+      {
+        latestResult: { status: "created" as const, draftResult: temporaryFixtureDraftResultCreated },
+        workflow: {
+          currentProposition: temporaryFixturePropositionV1,
+          draftReference: { proposalUuid: "proposal", editorUrl: "https://example.invalid" },
+        },
+      },
+      { latestResult: { status: "clarification" as const, clarification: { questions: [], answers: [] } } },
+      { workflow: { currentProposition: temporaryFixturePropositionV1 } },
       { hasStartedTurn: true },
       {},
     ];

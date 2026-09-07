@@ -123,8 +123,8 @@
      custom-property character. Line-heights are not paired per size: design 01's own line-height
      table (below) is contextual, not a fixed per-size mapping, so pairing one to each size would
      invent a coupling the source design does not state. ---- */
-  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: var(--font-sans-loaded), system-ui, sans-serif;
+  --font-mono: var(--font-mono-loaded), ui-monospace, SFMono-Regular, monospace;
 
   --text-9-5: 9.5px;
   --text-10: 10px;

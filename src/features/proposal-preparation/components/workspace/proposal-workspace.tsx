@@ -51,7 +51,7 @@ export function ProposalWorkspace() {
         isResizing={isResizing}
         width={width}
       />
-      <MainApplicationSurface state="idle" />
+      <MainApplicationSurface />
       <span aria-live="polite" className="sr-only" data-divider-announcement>
         {announcementKey > 0
           ? `Agent panel reset to default width${"\u200b".repeat(announcementKey)}`

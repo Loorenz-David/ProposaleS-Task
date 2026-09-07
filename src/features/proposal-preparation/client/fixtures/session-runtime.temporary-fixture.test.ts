@@ -8,11 +8,16 @@ describe("temporary session runtime fixture", () => {
     const record = temporaryFixtureSessionRuntimeRecord();
     expect(record).toMatchObject({
       title: "New proposal session",
-      isTurnInFlight: false,
-      hasDraftReference: false,
-      latestDomainResultKind: null,
-      hasCurrentProposition: false,
+      thread: [],
+      latestResult: null,
+      workflow: null,
+      inFlightTurn: null,
       hasStartedTurn: false,
+      unread: 0,
+      composerDraft: "",
+      retained: { workSurface: "fields", openedBlockContentId: null },
+      clarificationPanel: "dismissed",
+      callFailure: null,
     });
     expect(toTabViewModel(record).status).toBe("empty");
   });

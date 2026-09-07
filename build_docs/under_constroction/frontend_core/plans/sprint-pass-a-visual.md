@@ -822,5 +822,25 @@ Tracker §4 rows 05–15: `State` → `SUBMISSION_SPRINT`, `Note` → "see §3B"
 
 ## 16. Sprint log
 
-*(empty — the Pass A session fills this in: gate result, checkpoints, tests amended, theme names added,
-package added, design deltas, font verification, name differences from this plan, open items for Pass B, stamp SHA)*
+- Gate: PASS at starting SHA `24abcc07b9d95c5fb18c478ca68bb54557f91ec3`; branch
+  `proposal-copilot-frontend`; clean tree; intention `RATIFIED`; frontend phase 04 baseline present;
+  port 3000 free; baseline typecheck, lint, and 205 tests green.
+- Sprint authorization amendment committed first as `2653b68` (`docs: authorize frontend submission
+  sprint`).
+- WP1 — spine: temporary contracts, fixtures, adapter, expanded session record/store actions,
+  origin-safe dispatch, primary presentation adapters, main-surface derivation, container switching, and
+  temporary brief form implemented. Typecheck, lint, and 205 tests green. The live browser service
+  exposed no available browser instance; manual browser verification remains open for the exit gate.
+- Approved tests amended (plan §4): the session record equality literal and session fixture shape;
+  session-tab and status-line setup overrides migrated from legacy booleans/empty casts to the new
+  record fields and real proposition/created fixtures. Assertions were not weakened.
+- Font verification: `Plus_Jakarta_Sans` and `IBM_Plex_Mono` are loaded through `next/font/google` in
+  `src/app/layout.tsx`; the theme families consume their generated CSS variables.
+- Fixture latency: `TEMPORARY_FIXTURE_TURN_LATENCY_MS = 700`; it represents one honest waiting state.
+- Necessary signature difference: `applyTurnResult` carries `retryInput` as its fourth argument, using
+  the plan §6.2 allowance to preserve the retry payload without deriving or parsing it in the store.
+- Necessary fixture typing difference: the unknown-code fixture casts only at the temporary fixture
+  boundary because the installed `ErrorDto` type is a closed known-code union while §7.5 requires an
+  unknown-code presentation case. The production error contract is unchanged.
+- Files created/modified, package/version, theme names, design deltas, later checkpoints, Pass B open
+  items, and the final verification SHA will be completed at the exit gate.

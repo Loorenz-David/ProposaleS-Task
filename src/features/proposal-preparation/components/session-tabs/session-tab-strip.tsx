@@ -166,7 +166,7 @@ export function SessionTabStrip() {
             {sessionIds.map((sessionId, index) => {
               const session = sessions[sessionId];
               if (!session) return null;
-              const tabViewModel = toTabViewModel(session);
+              const tabViewModel = toTabViewModel(session, sessionId === activeSessionId);
               return (
                 <div
                   key={sessionId}
@@ -200,7 +200,7 @@ export function SessionTabStrip() {
                     }}
                     value={sessionId}
                     aria-controls={tabPanelId(sessionId)}
-                    aria-label={`${tabViewModel.title} — ${tabViewModel.statusText}`}
+                    aria-label={`${tabViewModel.title} — ${tabViewModel.statusText}${tabViewModel.unreadText ? `, ${tabViewModel.unreadText}` : ""}`}
                     tabIndex={sessionId === activeSessionId ? 0 : -1}
                     className="flex h-full min-w-0 flex-1 items-center gap-[7px] rounded-t-lg py-0 text-left text-12 font-semibold text-[var(--color-fg-muted)] focus-visible:z-10 focus-visible:-outline-offset-2 data-[state=active]:text-[var(--color-fg)]"
                     onMouseDown={(event) => event.preventDefault()}
