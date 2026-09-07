@@ -71,6 +71,7 @@ No production edit has been made at this point.
 Closing L4 stamp: `npm test` — **35 files / 458 tests passed**; `npm run typecheck` exit 0;
 `npm run lint` exit 0. The required pre-edit baseline was 35 files / 451 tests passed with zero
 failures. No `npm run build` was run, per the prompt's pre-existing-failure instruction.
+Checkpoint commit: `32f5469` (`fix phase 10 conversation context review findings`).
 
 Restricted-file digest evidence, SHA-256 (checkpoint `438f804` → current after restoration):
 
