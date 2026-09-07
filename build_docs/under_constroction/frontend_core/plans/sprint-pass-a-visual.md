@@ -895,5 +895,35 @@ Tracker §4 rows 05–15: `State` → `SUBMISSION_SPRINT`, `Note` → "see §3B"
   lifecycle, cancel/confirm actions, and opener-focus return coverage added without wiring future
   discard behavior. Inactive unread counts now have explicit adapter coverage and remain appended only
   to the tab's accessible name; the strip live region is unchanged.
-- Files created/modified, package/version, theme names, design deltas, later checkpoints, Pass B open
-  items, and the final verification SHA will be completed at the exit gate.
+- Approved E2E tests amended at WP10: three phase-04 focus checks no longer assume the pre-sprint
+  number of tab stops. The focus-ring probe is focused directly with keyboard-focus indication, while
+  divider reachability walks the real tab sequence with a finite bound. This preserves both invariants
+  after the planned composer and starter controls made the prior fixed counts stale.
+- Approved E2E overflow check amended at WP10: visually-hidden accessible labels are excluded from
+  intrinsic-width offenders (their standard 1px clipping intentionally produces `scrollWidth >
+  clientWidth` but cannot create visible pane overflow); offender diagnostics now name the node. The
+  visible overflow invariant is unchanged.
+- WP10 integration correction: the client workspace defers only the random-ID agent subtree until
+  hydration via `useSyncExternalStore`, preventing the server and browser from independently generating
+  different initial session IDs. The main landmark, divider, and live region remain continuously
+  available through hydration; session and entry IDs remain `crypto.randomUUID()` values as required.
+- WP10 — sweep, tests, and exit gate: fixture-shape tests exist beside all five fixture modules; main-
+  surface, failure-notice, and store ownership/staleness coverage was added; the scripted empty-to-
+  created flow, focus-review intent, real working latency, reduced motion, link safety, and the
+  1440/1100/780 divider-min/max matrix run in Chromium. Typecheck, lint, 52 test files / 279 tests,
+  74 Playwright tests, production build, and production-source fixture/temporary-contract audits are
+  green before the final clean-tree verification.
+- Browser verification: the real Playwright Chromium sweep covered the end-to-end flow, overflow,
+  keyboard focus, reduced motion, and responsive matrix. The host in-app browser service was retried
+  after starting a fresh development server and again reported `No browser is available`, so a separate
+  manual in-app-browser inspection could not be performed in this session.
+- Open Pass B items: durable unread activation/clearing semantics; concurrency, stale-result,
+  de-duplication, and retry machinery beyond Pass A's origin/turn guard; complete validation and
+  failure routing; discard-dialog wiring; retained-context action correctness; and deeper behavioural
+  invariants. Persistence, backend integration, and phases 16–17 remain outside both this pass and these
+  open items.
+- Checkpoints: WP1 `fafdfbb`; WP2 `ff25668`; WP3 `4a539b2`; WP4 `4d3ee54`; WP5 `1cebbae`;
+  WP6 `e34ceab`; WP7 `cea0ee0`; WP8 `5638ce4`; WP9 `97a2154`; WP10 and the final verification SHA
+  are recorded after their commits.
+- The final file inventory and verification SHA are recorded after the WP10 checkpoint so the stamp
+  names the exact clean implementation tree that was verified.

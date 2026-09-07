@@ -97,12 +97,9 @@ test.describe("phase 01 evidence relocated from bootstrap", () => {
       probe.textContent = "focus probe";
       document.body.appendChild(probe);
     });
-    await page.keyboard.press("Tab");
-    await page.keyboard.press("Tab");
-    await page.keyboard.press("Tab");
-    await page.keyboard.press("Tab");
-    await page.keyboard.press("Tab");
-    await page.keyboard.press("Tab");
+    await page.locator("#__c2a-focus-probe").evaluate((element) =>
+      (element as HTMLElement).focus({ focusVisible: true }),
+    );
     const outline = await page.locator("#__c2a-focus-probe").evaluate((element) => {
       const style = getComputedStyle(element);
       return { style: style.outlineStyle, width: style.outlineWidth, color: style.outlineColor, offset: style.outlineOffset };
@@ -374,11 +371,10 @@ test("C2(d): reset announces once and drag announces nothing", async ({ page }) 
 
 test("C2(e): divider is reachable from the document start", async ({ page }) => {
   await page.goto("/");
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
+  for (let step = 0; step < 12; step += 1) {
+    if (await page.getByRole("separator").evaluate((element) => element === document.activeElement)) break;
+    await page.keyboard.press("Tab");
+  }
   await expect(page.getByRole("separator")).toBeFocused();
 });
 
@@ -418,16 +414,24 @@ test.describe("C4: narrow-width conditions", () => {
         const overflowNodes = await pane.evaluate((element) => {
           const nodes = [element as HTMLElement, ...element.querySelectorAll<HTMLElement>("*")];
           return nodes.map((node) => ({
+            tag: node.tagName,
+            className: node.className,
+            text: node.textContent?.slice(0, 60),
             scrollWidth: node.scrollWidth,
             clientWidth: node.clientWidth,
             authoredHorizontalScroll:
+              node.classList.contains("sr-only") ||
               node.classList.contains("overflow-x-auto") ||
               node.classList.contains("overflow-x-scroll") ||
               ["auto", "scroll"].includes(node.style.overflowX) ||
               node.hasAttribute("data-horizontal-scroll"),
           }));
         });
-        expect(overflowNodes.every((node) => node.scrollWidth <= node.clientWidth || node.authoredHorizontalScroll)).toBe(true);
+        expect(
+          overflowNodes.filter(
+            (node) => node.scrollWidth > node.clientWidth && !node.authoredHorizontalScroll,
+          ),
+        ).toEqual([]);
       }
       for (const pane of [page.getByRole("complementary"), page.getByRole("main")]) {
         const dimensions = await Promise.all([
@@ -443,10 +447,10 @@ test.describe("C4: narrow-width conditions", () => {
       await page.goto("/");
       await page.keyboard.press("Tab");
       await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
-      await page.keyboard.press("Tab");
-      await page.keyboard.press("Tab");
-      await page.keyboard.press("Tab");
-      await page.keyboard.press("Tab");
+      for (let step = 0; step < 12; step += 1) {
+        if (await page.getByRole("separator").evaluate((element) => element === document.activeElement)) break;
+        await page.keyboard.press("Tab");
+      }
       await expect(page.getByRole("separator")).toBeFocused();
     });
 

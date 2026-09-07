@@ -48,7 +48,7 @@ export function ProposalReviewSurface({ viewModel, clientPreview, openedBlock = 
           </>
         ) : clientPreview ? <ClientPreviewSurface viewModel={clientPreview} /> : null}
         {!isTerminal ? (
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(240px,360px)] sm:items-start">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(240px,360px)] lg:items-start">
             <button type="button" onClick={onDiscard} className="rounded-xl border border-[var(--color-border-control-raised)] px-5 py-3 text-sm font-semibold text-[var(--color-fg-secondary)]">Discard proposition</button>
             <ApprovalAction acknowledgment={viewModel.acknowledgment} isPending={false} onApprove={onApprove} unresolvedSummary={unresolvedSummary} />
           </div>

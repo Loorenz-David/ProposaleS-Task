@@ -22,7 +22,7 @@ export function AgentEmptyState({ onStarterSelect }: AgentEmptyStateProps) {
             key={starter}
             type="button"
             onClick={() => onStarterSelect(starter)}
-            className="rounded-lg border border-[var(--color-border-control)] bg-[var(--color-bg-control)] px-[13px] py-[9px] text-left text-12-5 font-semibold text-[var(--color-fg-control)] hover:border-[var(--color-accent)] hover:text-[var(--color-fg)]"
+            className="max-w-full break-words rounded-lg border border-[var(--color-border-control)] bg-[var(--color-bg-control)] px-[13px] py-[9px] text-left text-12-5 font-semibold text-[var(--color-fg-control)] hover:border-[var(--color-accent)] hover:text-[var(--color-fg)]"
           >
             {starter}
           </button>

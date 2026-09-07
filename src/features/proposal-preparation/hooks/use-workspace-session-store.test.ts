@@ -8,6 +8,8 @@ import {
   createWorkspaceSessionState,
   useWorkspaceSessionStore,
 } from "./use-workspace-session-store";
+import { temporaryFixtureErrorDto } from "../client/fixtures/failures.temporary-fixture";
+import { temporaryFixtureTurnAdapter } from "../client/fixtures/turns.temporary-fixture";
 import type { WorkspaceSessionId } from "../types/session";
 
 const SOURCE = readFileSync(path.join(__dirname, "use-workspace-session-store.ts"), "utf8");
@@ -139,6 +141,63 @@ describe("new session", () => {
       retained: { workSurface: "fields", openedBlockContentId: null },
       clarificationPanel: "dismissed",
       callFailure: null,
+    });
+  });
+});
+
+describe("turn result ownership", () => {
+  it("applies a matching turn to its origin session even after another session activates", async () => {
+    const originSessionId = useWorkspaceSessionStore.getState().activeSessionId as WorkspaceSessionId;
+    const turn = { turnId: "turn-origin", kind: "brief" as const };
+    const input = { kind: "brief" as const, text: "Messy brief" };
+    useWorkspaceSessionStore.getState().startTurn(originSessionId, turn, {
+      text: input.text,
+      scope: null,
+    });
+    useWorkspaceSessionStore.getState().createSession();
+
+    const outcome = await temporaryFixtureTurnAdapter.run(input, 0, () => Promise.resolve());
+    useWorkspaceSessionStore.getState().applyTurnResult(originSessionId, turn.turnId, outcome, input);
+
+    const state = useWorkspaceSessionStore.getState();
+    expect(state.sessions[originSessionId]?.latestResult).toEqual(outcome.ok ? outcome.result : null);
+    expect(state.sessions[state.activeSessionId as WorkspaceSessionId]?.latestResult).toBeNull();
+  });
+
+  it("ignores a stale turn id without disturbing the current in-flight turn", async () => {
+    const sessionId = useWorkspaceSessionStore.getState().activeSessionId as WorkspaceSessionId;
+    const input = { kind: "brief" as const, text: "Messy brief" };
+    useWorkspaceSessionStore.getState().startTurn(sessionId, {
+      turnId: "turn-current",
+      kind: "brief",
+    });
+    const outcome = await temporaryFixtureTurnAdapter.run(input, 0, () => Promise.resolve());
+    useWorkspaceSessionStore.getState().applyTurnResult(sessionId, "turn-stale", outcome, input);
+
+    expect(useWorkspaceSessionStore.getState().sessions[sessionId]?.inFlightTurn?.turnId).toBe(
+      "turn-current",
+    );
+    expect(useWorkspaceSessionStore.getState().sessions[sessionId]?.latestResult).toBeNull();
+  });
+
+  it("retains the exact retry input and maps the failure site without commercial reasoning", () => {
+    const sessionId = useWorkspaceSessionStore.getState().activeSessionId as WorkspaceSessionId;
+    const input = { kind: "revision" as const, instruction: "Make this clearer", scope: "Title" };
+    useWorkspaceSessionStore.getState().startTurn(sessionId, {
+      turnId: "turn-failed",
+      kind: "revision",
+    });
+    useWorkspaceSessionStore.getState().applyTurnResult(
+      sessionId,
+      "turn-failed",
+      { ok: false, error: temporaryFixtureErrorDto("integration_error") },
+      input,
+    );
+
+    expect(useWorkspaceSessionStore.getState().sessions[sessionId]?.callFailure).toEqual({
+      site: { kind: "ask", fieldLabel: "Title" },
+      error: temporaryFixtureErrorDto("integration_error"),
+      retry: input,
     });
   });
 });

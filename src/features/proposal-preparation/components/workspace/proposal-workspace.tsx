@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 
 import { AgentSurface } from "./agent-surface";
@@ -8,7 +8,10 @@ import { MainApplicationSurface } from "./main-application-surface";
 import { WorkspaceDivider } from "./workspace-divider";
 import { useDividerWidth } from "../../hooks/use-divider-width";
 
+const subscribeToHydration = () => () => {};
+
 export function ProposalWorkspace() {
+  const isHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
   const rootRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [isResizing, setIsResizing] = useState(false);
@@ -28,7 +31,7 @@ export function ProposalWorkspace() {
     });
     observer.observe(root);
     return () => observer.disconnect();
-  }, []);
+  }, [isHydrated]);
 
   return (
     <div
@@ -39,7 +42,14 @@ export function ProposalWorkspace() {
       data-workspace-root
     >
       <div className="flex min-w-0 shrink-0" style={{ width }}>
-        <AgentSurface />
+        {isHydrated ? (
+          <AgentSurface />
+        ) : (
+          <aside
+            aria-label="Proposal agent"
+            className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--color-bg-agent-pane)]"
+          />
+        )}
       </div>
       <WorkspaceDivider
         effectiveMax={effectiveMax}

@@ -63,7 +63,7 @@ export function InlineEditableValue({ leaf, isEditing, canEdit, onStartEdit, onC
             setDraft(leaf.isAbsent ? "" : leaf.display);
             onStartEdit();
           }}
-          className={`break-words text-left text-sm underline decoration-dashed underline-offset-4 disabled:no-underline ${leaf.isAbsent ? "italic text-[var(--color-fg-muted)]" : "text-[var(--color-fg-body)]"}`}
+          className={`max-w-full break-words text-left text-sm underline decoration-dashed underline-offset-4 disabled:no-underline ${leaf.isAbsent ? "italic text-[var(--color-fg-muted)]" : "text-[var(--color-fg-body)]"}`}
         >
           {leaf.display}
         </button>
