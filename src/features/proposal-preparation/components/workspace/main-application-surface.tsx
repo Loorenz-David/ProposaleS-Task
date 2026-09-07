@@ -5,6 +5,9 @@ import { toMainSurfaceViewModel } from "../../client/view-models/main-surface";
 import { toPreviewViewModel } from "../../client/view-models/preview";
 import { useWorkspaceSessionStore } from "../../hooks/use-workspace-session-store";
 import { useTurnDispatch } from "../../hooks/use-turn-dispatch";
+import { CreatedSurface } from "../creation/created-surface";
+import { CreatingSurface } from "../creation/creating-surface";
+import { CreationFailureSurface } from "../creation/creation-failure-surface";
 import { ProposalPreparationIdleSurface } from "../idle/proposal-preparation-idle-surface";
 import { ProposalReviewSurface } from "../review/proposal-review-surface";
 
@@ -16,6 +19,7 @@ export function MainApplicationSurface({ state }: { state?: MainSurfaceState }) 
   const setWorkSurface = useWorkspaceSessionStore((store) => store.setWorkSurface);
   const setOpenedBlock = useWorkspaceSessionStore((store) => store.setOpenedBlock);
   const dismissCallFailure = useWorkspaceSessionStore((store) => store.dismissCallFailure);
+  const createSession = useWorkspaceSessionStore((store) => store.createSession);
   const { dispatch } = useTurnDispatch();
   const derived = record ? toMainSurfaceViewModel(record) : { kind: "idle" as const };
   const surface = state === "idle" ? { kind: "idle" as const } : derived;
@@ -29,7 +33,14 @@ export function MainApplicationSurface({ state }: { state?: MainSurfaceState }) 
       className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-[var(--color-bg)]"
     >
       {surface.kind === "idle" ? <ProposalPreparationIdleSurface /> : null}
-      {surface.kind === "review" && activeSessionId && record ? (
+      {surface.kind === "review" && activeSessionId && record && surface.creationFailure ? (
+        <CreationFailureSurface
+          onBackToReview={() => dismissCallFailure(activeSessionId)}
+          onRetry={() => void dispatch(activeSessionId, record.callFailure!.retry)}
+          viewModel={surface.creationFailure}
+        />
+      ) : null}
+      {surface.kind === "review" && activeSessionId && record && !surface.creationFailure ? (
         <ProposalReviewSurface
           clientPreview={toPreviewViewModel(record.workflow!.currentProposition!)}
           isEditSubmitting={record.inFlightTurn?.kind === "edit"}
@@ -58,13 +69,8 @@ export function MainApplicationSurface({ state }: { state?: MainSurfaceState }) 
           workSurface={surface.workSurface}
         />
       ) : null}
-      {surface.kind !== "idle" && surface.kind !== "review" ? (
-        <div className="grid min-h-full place-items-center p-8 text-[var(--color-fg-secondary)]">
-          {surface.kind === "creating"
-              ? surface.label
-              : "Draft created"}
-        </div>
-      ) : null}
+      {surface.kind === "creating" ? <CreatingSurface label={surface.label} /> : null}
+      {surface.kind === "created" ? <CreatedSurface onDraftAnother={createSession} viewModel={surface.created} /> : null}
     </main>
   );
 }

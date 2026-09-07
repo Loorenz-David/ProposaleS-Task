@@ -56,7 +56,10 @@ export function toCallFailureViewModel(failure: CallFailure): CallFailureViewMod
     : "unknown";
   return {
     key,
-    message: failure.error.message || "An unexpected error occurred.",
+    message:
+      key === "unknown" && !failure.error.message
+        ? "An unexpected error occurred."
+        : failure.error.message,
     canRetry: failure.error.details?.retryable === true && key !== "validation_error",
     detail: detailText(failure.error.details),
   };

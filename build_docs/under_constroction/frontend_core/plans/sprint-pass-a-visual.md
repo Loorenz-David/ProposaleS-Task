@@ -883,5 +883,13 @@ Tracker §4 rows 05–15: `State` → `SUBMISSION_SPRINT`, `Note` → "see §3B"
   `openedBlock` and `isEditSubmitting` presentation inputs. The fixed main-surface model already owns
   the opened block, but the stated surface props otherwise provide no path to render that planned
   replacement state.
+- WP8 — creation states and failures: focused creating status, created/recovered card, returned applied
+  pricing, unavailable-pricing reason, notices, exact editor link, Draft another, read-only reviewed
+  proposition, and focused creation alert are implemented. Retry is DTO-controlled and Back to review
+  is first. Tests prove inconsistent returned totals are displayed unchanged and unknown/known error
+  copy follows the treatment contract.
+- Planned design deltas applied: the created primary action uses `--color-fg` with
+  `--color-fg-body` hover, and the attention medallion uses the authorized attention colour at 50%
+  border opacity.
 - Files created/modified, package/version, theme names, design deltas, later checkpoints, Pass B open
   items, and the final verification SHA will be completed at the exit gate.

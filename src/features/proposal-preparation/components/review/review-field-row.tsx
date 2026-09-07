@@ -23,7 +23,7 @@ export function ReviewFieldRow({ field, isEditing, canEdit, onStartEdit, onCommi
             <InlineEditableValue canEdit={canEdit} isEditing={isEditing} leaf={field.leaf} onCancel={onCancel} onCommit={onCommit} onStartEdit={onStartEdit} />
           </div>
           <ProvenanceFlag provenance={field.leaf.provenance} />
-          {field.canAsk ? <AskAgentPopover fieldLabel={field.leaf.label} onSubmit={(text) => onAskAgent({ fieldLabel: field.leaf.label, text })} state={{ status: "idle" }} /> : null}
+          {field.canAsk && canEdit ? <AskAgentPopover fieldLabel={field.leaf.label} onSubmit={(text) => onAskAgent({ fieldLabel: field.leaf.label, text })} state={{ status: "idle" }} /> : null}
         </div>
       </dd>
     </div>
