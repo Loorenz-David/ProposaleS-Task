@@ -19,6 +19,10 @@ export const serverEnvSchema = z
     AI_MODEL: z.string().min(1),
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
     OPENAI_API_KEY: z.string().min(1).optional(),
+    // Required with no default: whether this deployment may create real Proposales drafts is a
+    // decision each deployment states, and a default would let one be inherited by accident.
+    // Read only by `server/actions.ts`, and only for the approval action.
+    COPILOT_LIVE_MUTATIONS: z.enum(["enabled", "disabled"]),
   })
   .superRefine((env, context) => {
     if (env.AI_PROVIDER === "anthropic" && !env.ANTHROPIC_API_KEY) {

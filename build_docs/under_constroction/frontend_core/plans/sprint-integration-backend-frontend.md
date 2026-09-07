@@ -543,3 +543,18 @@ The plan's WP3 step 5 anticipated only the always-present case (`sourcedToLeaf`)
 **D2 — `commercialNoteSchema` carries a `currency` leaf** that §1.2 does not list. Not rendered in V1; the note's `amount` is a `Money`, which carries its own currency. Added to §5's "deliberately not rendered" set.
 
 **D3 — everything else in §1.1 and §1.2 resolves as written.** Verified directly: the five service signatures and their strict input schemas; `approveProposition(input: { envelope: unknown })`; `domainResultSchema`'s five members with `questions` and `draft` (not `clarification`/`draftResult`); `approvalResultSchemaFor` with no conversation; `editOperationSchema` with no `replace_block`; `apply-edits.ts` materializing the recipient at `["recipient","value",key]` and appending `add_block`; `LIBRARY_PRICING_STATEMENT_ID`/`_TEXT` exported from `schemas/approval.ts`; `test/isolation-scan.ts` `SERVER_ONLY_FIRST` admitting no directive; the jsdom vitest project carrying no `server-only` alias; `serverEnvSchema` at seven names; `next.config.ts` at `devIndicators` only.
+
+### 15.3 WP2 — thin validated server boundary
+
+`src/lib/errors/action-result.ts` (+test) · `server/actions.ts` (+test) · `src/lib/env/server.ts` (+test) · `.env.example` · `test/setup/node.ts` (+test) · `test/isolation-scan.ts` · `test/isolation.test.ts` · `next.config.ts`. `npm test` 852 green (837 + 15), typecheck and lint green.
+
+Adopted while implementing:
+
+- **T-BOUND-1 needs no injected deps.** The plan's parenthetical ("use the real `prepareFromBrief` with a fake deps object") assumes the action can be given deps; it cannot, and giving it that seam would put a test affordance on a public endpoint. The row's intent is met exactly as written otherwise: the action is called with malformed input, the real service's strict schema is the one that rejects it, and no client is constructed because `default-deps` builds every collaborator through a getter and parsing fails first. Added **T-BOUND-1b** (an unknown key is rejected) so "strict" is proven, not assumed.
+- **One spy layer instead of two mock strategies.** `vi.mock("./index")` spreads `importOriginal()` and wraps each service in `vi.fn(actual.…)`. Rows that assert transport behaviour override an implementation; rows that assert the boundary adds no parse of its own let the real service run through the same spy. This is the plan's "mocked service module for rows a–c, the real service for row d" in one file, which is what the plan asked for.
+- **T-BOUND-5 calls the services directly**, not through the actions, because the serialization property is about the service results and the fakes must be injected. `A1(a)` already proves the action returns `data` unchanged.
+- **`logFailure` omits absent fields** rather than passing `undefined`. The first run showed `"reason":"[unserializable]"` in the log: the logger's redactor renders `undefined` that way, which reads as a defect. Fields are now built only when the `AppError` carries them.
+
+Tests amended (two files, same reason): `src/lib/ai/client.test.ts` and `src/lib/ai/registry.test.ts` construct a complete server environment explicitly and so had to gain `COPILOT_LIVE_MUTATIONS: "disabled"`. Contract 11 §5 requires tests to construct configuration explicitly, so the fix belongs in them, not in a default on the schema. No assertion changed.
+
+Planted-defect rows verified by running them: removing the exposure check reddens T-BOUND-4 (confirmed, then restored); `test/isolation.test.ts` gains a row where `"use server";` without the `server-only` import is still a violation, and one where the directive before the import is admitted.

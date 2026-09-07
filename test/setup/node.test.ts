@@ -11,6 +11,7 @@ const PLACEHOLDERS = {
   AI_MODEL: "test-placeholder-model",
   ANTHROPIC_API_KEY: "test-placeholder-not-a-key",
   OPENAI_API_KEY: "test-placeholder-not-a-key",
+  COPILOT_LIVE_MUTATIONS: "disabled",
 } as const;
 
 describe("node test setup", () => {
@@ -27,7 +28,7 @@ describe("node test setup", () => {
   it("C4(d): installs the declared placeholder for every schema name", () => {
     const schemaNames = Object.keys(serverEnvSchema.shape) as Array<keyof typeof PLACEHOLDERS>;
 
-    expect(schemaNames).toHaveLength(7);
+    expect(schemaNames).toHaveLength(8);
     expect(new Set(schemaNames)).toEqual(new Set(Object.keys(PLACEHOLDERS)));
 
     for (const name of schemaNames) {

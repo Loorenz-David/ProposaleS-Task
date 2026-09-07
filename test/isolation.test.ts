@@ -34,4 +34,25 @@ describe("repository isolation", () => {
   it("I1 catches a server module without server-only as its first statement", () => {
     planted("src/features/probe/server/service.ts", "export const unsafe = true;\n", "server-only-first");
   });
+
+  it('I1 catches a "use server" file that omits the server-only import', () => {
+    planted(
+      "src/features/probe/server/actions.ts",
+      '"use server";\n\nexport async function act() {}\n',
+      "server-only-first",
+    );
+  });
+
+  it('I1 admits "use server" before the server-only import', () => {
+    const root = mkdtempSync(join(tmpdir(), "proposales-isolation-"));
+    try {
+      const path = "src/features/probe/server/actions.ts";
+      const absolute = join(root, path);
+      mkdirSync(dirname(absolute), { recursive: true });
+      writeFileSync(absolute, '"use server";\n\nimport "server-only";\n\nexport async function act() {}\n');
+      expect(scanIsolation(root)).toEqual([]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });

@@ -48,6 +48,8 @@ function envFor(provider: "anthropic" | "openai", model = "configured-model") {
     AI_MODEL: model,
     ANTHROPIC_API_KEY: provider === "anthropic" ? "anthropic-key" : undefined,
     OPENAI_API_KEY: provider === "openai" ? "openai-key" : undefined,
+    // Unrelated to the AI client; present because the schema requires every deployment to state it.
+    COPILOT_LIVE_MUTATIONS: "disabled",
   });
 }
 

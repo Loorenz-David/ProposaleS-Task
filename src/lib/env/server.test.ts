@@ -17,6 +17,7 @@ function validEnv(): Record<string, string> {
     AI_PROVIDER: "anthropic",
     AI_MODEL: "test-placeholder-model",
     ANTHROPIC_API_KEY: "test-placeholder-not-a-key",
+    COPILOT_LIVE_MUTATIONS: "disabled",
   };
 }
 
@@ -199,7 +200,7 @@ describe("environment inventory", () => {
   it("C5(b): keeps every .env.example value empty", () => {
     const entries = envExampleEntries();
 
-    expect(entries).toHaveLength(7);
+    expect(entries).toHaveLength(8);
     for (const { value } of entries) {
       expect(value).toBe("");
     }

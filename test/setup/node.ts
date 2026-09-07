@@ -12,6 +12,7 @@ process.env.AI_PROVIDER = "anthropic";
 process.env.AI_MODEL = "test-placeholder-model";
 process.env.ANTHROPIC_API_KEY = "test-placeholder-not-a-key";
 process.env.OPENAI_API_KEY = "test-placeholder-not-a-key";
+process.env.COPILOT_LIVE_MUTATIONS = "disabled";
 
 export function installOfflineFetchGuard() {
   globalThis.fetch = async () => {

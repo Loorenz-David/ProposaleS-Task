@@ -6,7 +6,15 @@ export type IsolationViolation = { rule: IsolationRule; path: string };
 
 const VENDOR_AI_IMPORT = /(?:\bfrom\s+|\bimport\s*(?:\(\s*)?)["'](?:ai|@ai-sdk\/[^"']+)["']/;
 const FETCH_CALL = /\bfetch\s*\(/;
-const SERVER_ONLY_FIRST = /^(?:\uFEFF|\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*import\s+["']server-only["'];/;
+const PROLOGUE = String.raw`(?:\uFEFF|\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*`;
+/**
+ * `import "server-only";` must be the first *import*, but Next requires `"use server";` to be the
+ * first *statement* of an actions file, so one directive may precede it. Nothing else may: a
+ * server module that opens with `"use server";` and no `server-only` import is still a violation.
+ */
+const SERVER_ONLY_FIRST = new RegExp(
+  `^${PROLOGUE}(?:["']use server["'];${PROLOGUE})?import\\s+["']server-only["'];`,
+);
 
 function sourceFiles(directory: string): string[] {
   const files: string[] = [];
