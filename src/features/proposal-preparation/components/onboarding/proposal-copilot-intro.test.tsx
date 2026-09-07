@@ -5,6 +5,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IntroProvider } from "./intro-context";
+import type { IntroSlide as IntroSlideModel } from "./intro-content";
+import { IntroSlide } from "./intro-slide";
 import { ProposalCopilotIntro } from "./proposal-copilot-intro";
 import { ProposalWorkspace } from "../workspace/proposal-workspace";
 
@@ -44,6 +46,16 @@ beforeEach(() => {
   });
 });
 
+/** The six steps, in the order the product story requires them. */
+const SLIDE_HEADINGS = [
+  "From messy brief to proposal draft.",
+  "The agent prepares. You decide.",
+  "Try a deliberately incomplete brief.",
+  "Watch the boundaries, not just the AI.",
+  "One workspace. Multiple proposal sessions.",
+  "Ready to try it?",
+];
+
 /** The exact brief slide 3 must present, written out independently of the source constant. */
 const DEMO_BRIEF_LITERAL =
   "We’re organizing a two-day strategy offsite in Stockholm for 24 people in October. " +
@@ -79,27 +91,63 @@ describe("ProposalCopilotIntro", () => {
     expect(screen.getByRole("heading", { name: "From messy brief to proposal draft." })).toBeInTheDocument();
   });
 
-  it("holds both boundaries: Back is unavailable first, and the last slide starts instead of advancing", async () => {
+  it("traverses all six steps in order, forwards and back", () => {
+    renderIntro();
+    for (const heading of SLIDE_HEADINGS.slice(1)) {
+      fireEvent.click(next());
+      expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument();
+    }
+    for (const heading of [...SLIDE_HEADINGS].reverse().slice(1)) {
+      fireEvent.click(back());
+      expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument();
+    }
+    expect(screen.getByRole("heading", { name: SLIDE_HEADINGS[0] })).toBeInTheDocument();
+  });
+
+  it("offers six progress controls, one per step", () => {
+    renderIntro();
+    SLIDE_HEADINGS.forEach((heading, index) => {
+      expect(
+        screen.getByRole("button", { name: `Slide ${index + 1} of 6: ${heading}` }),
+      ).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("button", { name: /^Slide 7 of/ })).not.toBeInTheDocument();
+  });
+
+  it("holds both boundaries: Back is unavailable first, and the last step starts instead of advancing", async () => {
     const { dialog } = renderIntro();
     expect(back()).toBeDisabled();
 
-    fireEvent.click(next());
-    fireEvent.click(next());
-    fireEvent.click(next());
-    fireEvent.click(next());
+    // The primary control stays "Next" for every step but the last.
+    for (let step = 0; step < SLIDE_HEADINGS.length - 1; step += 1) {
+      expect(screen.queryByRole("button", { name: "Start exploring" })).not.toBeInTheDocument();
+      fireEvent.click(next());
+    }
 
     expect(screen.getByRole("heading", { name: "Ready to try it?" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
+    expect(back()).toBeEnabled();
 
     fireEvent.click(screen.getByRole("button", { name: "Start exploring" }));
     await waitFor(() => expect(dialog).not.toHaveAttribute("open"));
   });
 
+  it("places the session step immediately before the final step", () => {
+    renderIntro();
+    const sessionIndex = SLIDE_HEADINGS.indexOf("One workspace. Multiple proposal sessions.");
+    expect(sessionIndex).toBe(SLIDE_HEADINGS.length - 2);
+
+    for (let step = 0; step < sessionIndex; step += 1) fireEvent.click(next());
+    expect(screen.getByRole("heading", { name: SLIDE_HEADINGS[sessionIndex] })).toBeInTheDocument();
+    fireEvent.click(next());
+    expect(screen.getByRole("heading", { name: "Ready to try it?" })).toBeInTheDocument();
+  });
+
   it("jumps directly to a slide from the progress control", () => {
     renderIntro();
-    fireEvent.click(screen.getByRole("button", { name: /^Slide 4 of 5:/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Slide 4 of 6:/ }));
     expect(screen.getByRole("heading", { name: "Watch the boundaries, not just the AI." })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^Slide 4 of 5:/ })).toHaveAttribute("aria-current", "step");
+    expect(screen.getByRole("button", { name: /^Slide 4 of 6:/ })).toHaveAttribute("aria-current", "step");
   });
 
   it("closes on Skip intro", async () => {
@@ -116,13 +164,13 @@ describe("ProposalCopilotIntro", () => {
 
   it("renders the demo brief exactly", () => {
     renderIntro();
-    fireEvent.click(screen.getByRole("button", { name: /^Slide 3 of 5:/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Slide 3 of 6:/ }));
     expect(screen.getByText(DEMO_BRIEF_LITERAL)).toBeInTheDocument();
   });
 
   it("copies the demo brief and confirms it", async () => {
     renderIntro();
-    fireEvent.click(screen.getByRole("button", { name: /^Slide 3 of 5:/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Slide 3 of 6:/ }));
     fireEvent.click(screen.getByRole("button", { name: "Copy prompt" }));
 
     expect(writeText).toHaveBeenCalledWith(DEMO_BRIEF_LITERAL);
@@ -132,7 +180,7 @@ describe("ProposalCopilotIntro", () => {
   it("reports a failed copy without disrupting the tour", async () => {
     writeText.mockRejectedValue(new Error("denied"));
     const { dialog } = renderIntro();
-    fireEvent.click(screen.getByRole("button", { name: /^Slide 3 of 5:/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Slide 3 of 6:/ }));
     fireEvent.click(screen.getByRole("button", { name: "Copy prompt" }));
 
     expect(await screen.findByText(/Copy failed/)).toBeInTheDocument();
@@ -143,9 +191,9 @@ describe("ProposalCopilotIntro", () => {
   it("announces the current slide politely and labels progress accessibly", () => {
     const { dialog } = renderIntro();
     const live = dialog.querySelector('[aria-live="polite"].sr-only');
-    expect(live).toHaveTextContent("Slide 1 of 5: From messy brief to proposal draft.");
+    expect(live).toHaveTextContent("Slide 1 of 6: From messy brief to proposal draft.");
     fireEvent.click(next());
-    expect(live).toHaveTextContent("Slide 2 of 5: The agent prepares. You decide.");
+    expect(live).toHaveTextContent("Slide 2 of 6: The agent prepares. You decide.");
   });
 
   it("names itself as a dialog, and renames itself as the reviewer advances", () => {
@@ -179,7 +227,7 @@ describe("ProposalCopilotIntro", () => {
     })) as unknown as typeof window.matchMedia;
 
     const { dialog } = renderIntro();
-    for (let step = 0; step < 5; step += 1) {
+    for (let step = 0; step < SLIDE_HEADINGS.length; step += 1) {
       const wrapper = dialog.querySelector<HTMLElement>(".transition")!;
       for (const className of wrapper.className.split(/\s+/)) {
         if (/^(opacity-0|invisible|hidden|translate-y-)/.test(className)) {
@@ -188,9 +236,107 @@ describe("ProposalCopilotIntro", () => {
       }
       expect(within(dialog).getAllByRole("heading").length).toBeGreaterThan(0);
       expect(screen.getByRole("button", { name: "Skip intro" })).toBeVisible();
-      if (step < 4) fireEvent.click(next());
+      if (step < SLIDE_HEADINGS.length - 1) fireEvent.click(next());
     }
     expect(screen.getByRole("button", { name: "Start exploring" })).toBeVisible();
+  });
+});
+
+describe("ProposalCopilotIntro session step", () => {
+  function goToSessionStep() {
+    renderIntro();
+    fireEvent.click(screen.getByRole("button", { name: /^Slide 5 of 6:/ }));
+  }
+
+  it("illustrates the strip without building a second tab system", () => {
+    goToSessionStep();
+    const figure = screen.getByRole("figure");
+
+    // Readable, not operable: nothing in the illustration is a control or a tab.
+    expect(within(figure).queryAllByRole("button")).toHaveLength(0);
+    expect(within(figure).queryAllByRole("tab")).toHaveLength(0);
+    expect(within(figure).queryAllByRole("tablist")).toHaveLength(0);
+    expect(figure.querySelectorAll("[data-session-tab-wrapper], [data-new-session]")).toHaveLength(0);
+  });
+
+  it("carries each session's state as text, never as the dot colour alone", () => {
+    goToSessionStep();
+    const figure = screen.getByRole("figure");
+    for (const statusText of ["Ready", "Needs you", "Working"]) {
+      expect(within(figure).getByText(statusText)).toBeInTheDocument();
+    }
+    expect(figure).toHaveTextContent(/selected/);
+  });
+
+  it("explains separate context, switching and starting another session", () => {
+    goToSessionStep();
+    for (const callout of ["Separate context", "Switch tasks", "Start another"]) {
+      expect(screen.getByText(callout)).toBeInTheDocument();
+    }
+  });
+
+  it("claims only page-lifetime sessions, never persistence", () => {
+    goToSessionStep();
+    const dialog = document.querySelector("[data-intro-dialog]")!;
+    expect(dialog).toHaveTextContent(/page lifetime/i);
+    expect(dialog).toHaveTextContent(/refreshing the page clears the workspace/i);
+    expect(dialog.textContent).not.toMatch(/saved|stored|persist|history|sync|across devices/i);
+  });
+});
+
+describe("ProposalCopilotIntro slide regions", () => {
+  it("renders an image slide's media region with its alt text", () => {
+    const slide = {
+      id: "probe",
+      heading: "Probe",
+      description: "Probe description",
+      media: { kind: "image", src: "/probe.png", alt: "A labelled probe", width: 640, height: 360 },
+      body: { kind: "flow", stages: ["One", "Two"] },
+    } satisfies IntroSlideModel;
+    render(<IntroSlide descriptionId="d" headingId="h" slide={slide} />);
+    expect(screen.getByRole("img", { name: "A labelled probe" })).toBeInTheDocument();
+  });
+
+  it("renders a video slide's media region with an accessible name, controls and no autoplay", () => {
+    const slide = {
+      id: "probe",
+      heading: "Probe",
+      description: "Probe description",
+      media: { kind: "video", src: "/probe.mp4", title: "A labelled clip" },
+      body: { kind: "flow", stages: ["One", "Two"] },
+    } satisfies IntroSlideModel;
+    const { container } = render(<IntroSlide descriptionId="d" headingId="h" slide={slide} />);
+    const video = container.querySelector("video")!;
+    expect(video).toHaveAttribute("aria-label", "A labelled clip");
+    expect(video).toHaveAttribute("controls");
+    expect(video).not.toHaveAttribute("autoplay");
+    expect(video).toHaveAttribute("preload", "none");
+  });
+
+  it("omits the media region when a slide declares none", () => {
+    const { container } = render(
+      <IntroSlide
+        descriptionId="d"
+        headingId="h"
+        slide={{ id: "probe", heading: "Probe", description: "d", body: { kind: "flow", stages: ["One"] } }}
+      />,
+    );
+    expect(container.querySelector("img, video")).toBeNull();
+  });
+
+  it("shows a slide's own action only on that slide", () => {
+    renderIntro();
+    expect(screen.queryByRole("button", { name: "Copy demo prompt" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^Slide 6 of 6:/ }));
+    expect(screen.getByRole("button", { name: "Copy demo prompt" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^Slide 5 of 6:/ }));
+    expect(screen.queryByRole("button", { name: "Copy demo prompt" })).not.toBeInTheDocument();
+  });
+
+  it("states the approval boundary on the workflow step", () => {
+    renderIntro();
+    fireEvent.click(screen.getByRole("button", { name: /^Slide 2 of 6:/ }));
+    expect(screen.getByText(/Human approval authorizes creation/)).toBeInTheDocument();
   });
 });
 

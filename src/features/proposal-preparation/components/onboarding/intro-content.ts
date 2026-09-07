@@ -2,14 +2,13 @@
  * Copy and structure for the Proposal Copilot reviewer intro.
  *
  * This is data, not a tour engine: `ProposalCopilotIntro` walks this array and knows nothing
- * about any individual slide, so changing copy, reordering slides, or adding a slide with a
- * new body shape never touches navigation logic.
+ * about any individual slide, so changing copy, reordering slides, adding media, or adding a
+ * slide with a new body shape never touches navigation logic.
  *
- * Deliberately NOT modelled here: an optional `image`/`video` field. No slide uses one, and
- * contract 13 §1 (question 8) and 12 "Structure and abstraction" prohibit an abstraction whose
- * only justification is anticipated reuse. Adding media later is a new `IntroSlideBody`
- * variant plus one arm in `intro-slide.tsx` — the property the data-driven shape exists to
- * protect — not a rewrite.
+ * The six slides tell one deliberate story — what it is, how it works, what to type, what to
+ * watch, how work is organised, and how to start — so slides differ in internal composition
+ * on purpose. Each `IntroSlideBody` variant is its own editorial layout, not a shared card
+ * template with different text poured into it.
  */
 
 /** The demo brief a reviewer is invited to paste. Intentionally incomplete. */
@@ -18,11 +17,40 @@ export const DEMO_BRIEF =
   "Everyone needs somewhere to stay, we need a room to work from during the day, lunch both " +
   "days and probably airport transfers. A few people may stay an extra night.";
 
+/**
+ * Optional media for a slide. Rendered by `intro-media.tsx` between the description and the
+ * body, so a slide can gain a still or a clip without changing its body variant.
+ */
+export type IntroMedia =
+  | { kind: "image"; src: string; alt: string; width: number; height: number }
+  | { kind: "video"; src: string; title: string; poster?: string };
+
+/**
+ * A slide-specific secondary action, rendered in the footer beside the primary control.
+ * A closed union rather than a callback: the intro owns the small set of things a slide may
+ * offer, and adding one is a deliberate edit here.
+ */
+export type IntroSlideAction = { kind: "copy-demo-prompt"; label: string };
+
+/** The status vocabulary the real session tab strip derives (`client/view-models/session-tab.ts`). */
+export type IntroTabStatus = "working" | "questions" | "ready";
+
 export type IntroSlideBody =
   | { kind: "flow"; stages: string[] }
-  | { kind: "steps"; steps: { ordinal: string; title: string; detail: string }[] }
+  | {
+      kind: "steps";
+      steps: { ordinal: string; title: string; detail: string }[];
+      boundary?: { label: string; detail: string };
+    }
   | { kind: "demo-prompt" }
   | { kind: "proof-points"; points: { label: string; detail: string }[] }
+  | {
+      kind: "session-tabs";
+      tabs: { title: string; status: IntroTabStatus; statusText: string; isActive: boolean }[];
+      newSessionLabel: string;
+      caption: string;
+      callouts: { title: string; detail: string }[];
+    }
   | { kind: "checklist"; items: string[]; note: string };
 
 export type IntroSlide = {
@@ -30,8 +58,10 @@ export type IntroSlide = {
   eyebrow?: string;
   heading: string;
   description: string;
-  supporting?: string;
+  media?: IntroMedia;
   body: IntroSlideBody;
+  supporting?: string;
+  action?: IntroSlideAction;
 };
 
 export const INTRO_SLIDES: readonly IntroSlide[] = [
@@ -41,9 +71,9 @@ export const INTRO_SLIDES: readonly IntroSlide[] = [
     heading: "From messy brief to proposal draft.",
     description:
       "Proposal Copilot is an agentic interaction layer over the Proposales API. Give it incomplete commercial intent and it helps turn that intent into a structured proposal ready for human review.",
+    body: { kind: "flow", stages: ["Brief", "Agent", "Review", "Proposales"] },
     supporting:
       "This demo uses a fictional hotel chain, Nordhaven Hotels, backed by real Content Library items in Proposales.",
-    body: { kind: "flow", stages: ["Brief", "Agent", "Review", "Proposales"] },
   },
   {
     id: "how-it-works",
@@ -53,80 +83,69 @@ export const INTRO_SLIDES: readonly IntroSlide[] = [
     body: {
       kind: "steps",
       steps: [
-        {
-          ordinal: "01",
-          title: "Describe the opportunity",
-          detail: "Write naturally. The brief can be incomplete or messy.",
-        },
-        {
-          ordinal: "02",
-          title: "Let the agent reason",
-          detail:
-            "It searches the available Proposales content and identifies what is missing.",
-        },
-        {
-          ordinal: "03",
-          title: "Clarify when needed",
-          detail:
-            "Consequential unknowns become questions instead of silent assumptions.",
-        },
-        {
-          ordinal: "04",
-          title: "Review and approve",
-          detail:
-            "Edit the proposition or ask for a revision before approving anything.",
-        },
-        {
-          ordinal: "05",
-          title: "Create the draft",
-          detail:
-            "Only after approval does Proposal Copilot create the Proposales draft.",
-        },
+        { ordinal: "01", title: "Describe", detail: "Write naturally. The brief can be incomplete or messy." },
+        { ordinal: "02", title: "Reason", detail: "The agent searches the available Proposales content." },
+        { ordinal: "03", title: "Clarify", detail: "Consequential unknowns become questions, not assumptions." },
+        { ordinal: "04", title: "Review", detail: "Inspect the proposition, edit it, or ask for a revision." },
+        { ordinal: "05", title: "Approve", detail: "Nothing is created until you explicitly approve." },
+        { ordinal: "06", title: "Create draft", detail: "The approved payload is executed as a Proposales draft." },
       ],
+      boundary: {
+        label: "The boundary",
+        detail: "The agent prepares the action. Human approval authorizes creation.",
+      },
     },
   },
   {
-    id: "what-to-test",
+    id: "try-it",
     heading: "Try a deliberately incomplete brief.",
     description:
       "Paste this into the composer on the left. It is missing several facts a real proposal would need.",
-    supporting:
-      "A useful agent should recognise the hotel context and find relevant Nordhaven content — and it should also recognise the ambiguity rather than inventing the missing commercial facts.",
     body: { kind: "demo-prompt" },
+    supporting:
+      "The ambiguity is intentional. A useful agent should recognise the hotel context and find relevant Nordhaven content — and it should also ask about the missing commercial facts rather than inventing them.",
   },
   {
-    id: "what-to-look-for",
+    id: "what-to-watch",
     heading: "Watch the boundaries, not just the AI.",
     description:
       "The interesting part of this demo is not simply whether a language model can write proposal text.",
     body: {
       kind: "proof-points",
       points: [
-        {
-          label: "Clarification",
-          detail: "The agent should ask when consequential information is missing.",
-        },
-        {
-          label: "Real content",
-          detail:
-            "Selected services come from the configured Proposales Content Library.",
-        },
-        {
-          label: "Human approval",
-          detail:
-            "The proposition can be reviewed and corrected before any draft is created.",
-        },
-        {
-          label: "Applied pricing",
-          detail:
-            "Proposal Copilot does not invent library prices. Proposales applies its configured pricing, and the result is read back after creation.",
-        },
-        {
-          label: "Draft, not send",
-          detail: "The final action creates a draft. Sending stays in Proposales.",
-        },
+        { label: "Clarification", detail: "Important unknowns become questions rather than silent assumptions." },
+        { label: "Real content", detail: "Services come from the configured Proposales Content Library." },
+        { label: "Human approval", detail: "The proposition can be reviewed and corrected before creation." },
+        { label: "Applied pricing", detail: "Proposales remains authoritative for configured library pricing." },
+        { label: "Draft, not send", detail: "Proposal Copilot creates a draft. Sending stays in Proposales." },
       ],
     },
+  },
+  {
+    id: "sessions",
+    heading: "One workspace. Multiple proposal sessions.",
+    description:
+      "Proposal Copilot is not one global chat. Each tab is a separate piece of proposal work with its own brief, questions and proposition, so different commercial contexts stay apart.",
+    body: {
+      kind: "session-tabs",
+      // Titles are what the application actually renders today: every session is created as
+      // "New proposal session" and nothing renames it. What distinguishes tabs on screen is
+      // the status dot, so that is what this illustration distinguishes them by.
+      tabs: [
+        { title: "New proposal session", status: "ready", statusText: "Ready", isActive: true },
+        { title: "New proposal session", status: "questions", statusText: "Needs you", isActive: false },
+        { title: "New proposal session", status: "working", statusText: "Working", isActive: false },
+      ],
+      newSessionLabel: "New session",
+      caption: "Each tab carries its own workflow context. The dot is its state.",
+      callouts: [
+        { title: "Separate context", detail: "A brief, its questions and its proposition belong to one session." },
+        { title: "Switch tasks", detail: "Move between sessions without restarting a conversation." },
+        { title: "Start another", detail: "Open a new session for an unrelated proposal." },
+      ],
+    },
+    supporting:
+      "Sessions last for the current page lifetime. A session keeps running its turn while you work in another tab and flags the result when it lands, but refreshing the page clears the workspace and starts fresh.",
   },
   {
     id: "start",
@@ -135,14 +154,16 @@ export const INTRO_SLIDES: readonly IntroSlide[] = [
     body: {
       kind: "checklist",
       items: [
-        "Paste the demo brief.",
-        "Answer any clarification the agent asks for.",
-        "Review the proposition, or ask for a revision.",
+        "Paste the brief.",
+        "Answer the clarification.",
+        "Review the proposition.",
         "Approve it.",
-        "Open the resulting draft in Proposales.",
+        "Create the draft.",
+        "Open it in Proposales.",
       ],
       note:
-        "This is an intentionally scoped take-home MVP. Workspace state is page-lifetime only, so refreshing the page starts a fresh session.",
+        "This is an intentionally scoped take-home MVP. Workspace state is page-lifetime only, so refreshing the page starts a fresh workspace.",
     },
+    action: { kind: "copy-demo-prompt", label: "Copy demo prompt" },
   },
 ];

@@ -116,7 +116,7 @@ export function ProposalCopilotIntro() {
           <div className="order-last w-full sm:order-none sm:mx-auto sm:w-auto">
             <IntroProgress currentIndex={index} onSelect={setIndex} slides={INTRO_SLIDES} />
           </div>
-          {isLast ? <IntroCopyPromptButton label="Copy demo prompt" /> : null}
+          {slide.action ? <IntroCopyPromptButton label={slide.action.label} /> : null}
           <button
             ref={primaryRef}
             type="button"
