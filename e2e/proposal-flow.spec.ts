@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { dismissIntro, openWorkspace } from "./support/workspace";
+
 /**
  * The offline flow rows. CI has no secrets, and this project injects placeholders, so nothing here
  * may depend on a backend result. What it can prove — and does — is that the browser reaches the
@@ -13,7 +15,7 @@ import { expect, test } from "@playwright/test";
 const OVERLONG_BRIEF = "x".repeat(8001);
 
 test("T-E2E-1: an over-long brief is refused by the server and reported in the thread", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   const composer = page.getByRole("textbox", { name: "Message Proposal Copilot" });
   await composer.fill(OVERLONG_BRIEF);
   await composer.press("Enter");
@@ -28,7 +30,7 @@ test("T-E2E-1: an over-long brief is refused by the server and reported in the t
 });
 
 test("typed draft close confirms, cancels, and restores focus to the neighbour", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   const composer = page.getByRole("textbox", { name: "Message Proposal Copilot" });
   await composer.fill("Keep this draft in the session until I confirm close.");
   await page.getByRole("button", { name: "New session" }).click();
@@ -50,13 +52,15 @@ test("typed draft close confirms, cancels, and restores focus to the neighbour",
 });
 
 test("reload starts one empty session without restoring the previous workspace", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   const composer = page.getByRole("textbox", { name: "Message Proposal Copilot" });
   await composer.fill("Work that a reload is expected to lose.");
   await page.getByRole("button", { name: "New session" }).click();
   await expect(page.getByRole("tab")).toHaveCount(2);
 
   await page.reload();
+  // The intro is page-lifetime too, so a reload brings it back; dismiss it as a reviewer would.
+  await dismissIntro(page);
 
   // The session model is page-lifetime by decision: a reload destroys it, visibly.
   await expect(page.getByRole("tab")).toHaveCount(1);

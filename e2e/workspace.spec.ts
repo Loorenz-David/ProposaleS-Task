@@ -3,6 +3,8 @@ import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { openWorkspace } from "./support/workspace";
+
 import {
   AGENT_PANE_DEFAULT_PX,
   AGENT_PANE_MAX_PX,
@@ -90,7 +92,7 @@ async function stopAnnouncementCounter(page: Page) {
 
 test.describe("phase 01 evidence relocated from bootstrap", () => {
   test("C2(a): :focus-visible produces a visible indicator on an injected native control", async ({ page }) => {
-    await page.goto("/");
+    await openWorkspace(page);
     await page.evaluate(() => {
       const probe = document.createElement("button");
       probe.id = "__c2a-focus-probe";
@@ -112,7 +114,7 @@ test.describe("phase 01 evidence relocated from bootstrap", () => {
     test.use({ contextOptions: { reducedMotion: "reduce" } });
 
     test("C2(b): reduced motion collapses transition and animation durations", async ({ page }) => {
-    await page.goto("/");
+    await openWorkspace(page);
     await page.evaluate(() => {
       const probe = document.createElement("div");
       probe.id = "__c2b-motion-probe";
@@ -146,19 +148,19 @@ test.describe("phase 01 evidence relocated from bootstrap", () => {
 
   for (const property of referenced) {
     test(`C3(a): ${property} resolves`, async ({ page }) => {
-      await page.goto("/");
+      await openWorkspace(page);
       await expect.poll(() => page.evaluate((name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim(), property)).not.toBe("");
     });
   }
 
   test.describe("C7(a): design corrections remain landed", () => {
     test("correction 1: muted ink is lightened", async ({ page }) => {
-      await page.goto("/");
+      await openWorkspace(page);
       await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--color-fg-quiet").trim().toLowerCase())).toBe("#84868c");
     });
 
     test("correction 2: unreadable ask-glyph ink is not exposed", async ({ page }) => {
-      await page.goto("/");
+      await openWorkspace(page);
       const names = [...THEME_CSS.matchAll(/(--color-fg-[\w-]+)\s*:/g)].map((match) => match[1]);
       expect(names.length).toBeGreaterThan(0);
       const values = await page.evaluate((properties) => properties.map((name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim().toLowerCase()), names);
@@ -166,12 +168,12 @@ test.describe("phase 01 evidence relocated from bootstrap", () => {
     });
 
     test("correction 3: no darkened accent value was introduced", async ({ page }) => {
-      await page.goto("/");
+      await openWorkspace(page);
       await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--color-accent").trim().toLowerCase())).toBe("#3b82f6");
     });
 
     test("correction 4: accent is not rendered as text on dark surfaces", async ({ page }) => {
-      await page.goto("/");
+      await openWorkspace(page);
       await page.evaluate(() => {
         const link = document.createElement("a");
         link.href = "#";
@@ -183,7 +185,7 @@ test.describe("phase 01 evidence relocated from bootstrap", () => {
     });
 
     test("correction 5: global focus ring uses the corrected colour", async ({ page }) => {
-      await page.goto("/");
+      await openWorkspace(page);
       await page.evaluate(() => {
         const probe = document.createElement("button");
         probe.id = "__c7a-focus-probe";
@@ -198,7 +200,7 @@ test.describe("phase 01 evidence relocated from bootstrap", () => {
       test.use({ contextOptions: { reducedMotion: "reduce" } });
 
       test("correction 6: reduced motion collapses a non-none animation", async ({ page }) => {
-      await page.goto("/");
+      await openWorkspace(page);
       await page.evaluate(() => {
         const probe = document.createElement("div");
         probe.id = "__c7a-motion-probe";
@@ -213,7 +215,7 @@ test.describe("phase 01 evidence relocated from bootstrap", () => {
 
     test.use({ contextOptions: { reducedMotion: "no-preference" } });
     test("correction 6: no-preference preserves a non-none animation duration", async ({ page }) => {
-      await page.goto("/");
+      await openWorkspace(page);
       await page.evaluate(() => {
         const probe = document.createElement("div");
         probe.id = "__c7a-motion-probe-no-preference";
@@ -230,14 +232,14 @@ test.describe("phase 01 evidence relocated from bootstrap", () => {
 test("inherited phase 01 evidence: renders the document title with no client or server error", async ({ page }) => {
   const pageErrors: Error[] = [];
   page.on("pageerror", (error) => pageErrors.push(error));
-  const response = await page.goto("/");
+  const response = await openWorkspace(page);
   expect(response?.ok()).toBe(true);
   await expect(page).toHaveTitle("Proposal Copilot");
   expect(pageErrors).toEqual([]);
 });
 
 test("C1(d): the skip link is the first tab stop and becomes visible", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   const skipLink = page.getByRole("link", { name: "Skip to main content" });
   await page.keyboard.press("Tab");
   await expect(skipLink).toBeFocused();
@@ -245,14 +247,14 @@ test("C1(d): the skip link is the first tab stop and becomes visible", async ({ 
 });
 
 test("C1(e): activating the skip link moves focus into main", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   await page.keyboard.press("Tab");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("main")).toBeFocused();
 });
 
 test("C1(a): exactly one named complementary region", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   const regions = page.getByRole("complementary");
   await expect(regions).toHaveCount(1);
   await expect(regions).toHaveAccessibleName("Proposal agent");
@@ -260,12 +262,12 @@ test("C1(a): exactly one named complementary region", async ({ page }) => {
 });
 
 test("C1(b): exactly one main", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   await expect(page.getByRole("main")).toHaveCount(1);
 });
 
 test("C1(f): landmarks retain node identity after a keyboard resize", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   const divider = page.getByRole("separator");
   const beforeWidth = await divider.getAttribute("aria-valuenow");
   const beforeComplementary = await page.evaluateHandle(() => document.querySelector("aside"));
@@ -284,7 +286,7 @@ test("C1(f): landmarks retain node identity after a keyboard resize", async ({ p
 });
 
 test("C2(a): divider exposes separator semantics and values", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   const divider = page.getByRole("separator");
   await expect(divider).toHaveAttribute("aria-orientation", "vertical");
   await expect(divider).toHaveAccessibleName("Resize agent panel");
@@ -307,7 +309,7 @@ test("C2(b): effective maximum changes with the viewport", async ({ page }) => {
   const settled = [];
   for (const width of widths) {
     await page.setViewportSize({ width, height: 800 });
-    await page.goto("/");
+    await openWorkspace(page);
     const divider = page.getByRole("separator");
     await expect.poll(() => divider.getAttribute("aria-valuemax")).not.toBe(String(preObserverMax));
     const value = Number(await divider.getAttribute("aria-valuemax"));
@@ -331,7 +333,7 @@ const keyboardRows = [
 for (const [label, key, shiftKey, requested] of keyboardRows) {
   test(`C2(c): ${label} changes width and retains focus`, async ({ page }) => {
     await page.setViewportSize({ width: 1100, height: 800 });
-    await page.goto("/");
+    await openWorkspace(page);
     const divider = page.getByRole("separator");
     await expect(divider).toHaveAttribute("aria-valuemax", String(getEffectiveDividerMax(1100)));
     await divider.focus();
@@ -346,7 +348,7 @@ for (const [label, key, shiftKey, requested] of keyboardRows) {
 }
 
 test("C2(d): reset announces once and drag announces nothing", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   const divider = page.getByRole("separator");
   const live = page.locator("[data-divider-announcement]");
   await expect(live).toHaveText("");
@@ -370,7 +372,7 @@ test("C2(d): reset announces once and drag announces nothing", async ({ page }) 
 });
 
 test("C2(e): divider is reachable from the document start", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   for (let step = 0; step < 12; step += 1) {
     if (await page.getByRole("separator").evaluate((element) => element === document.activeElement)) break;
     await page.keyboard.press("Tab");
@@ -379,7 +381,7 @@ test("C2(e): divider is reachable from the document start", async ({ page }) => 
 });
 
 test("C2(f): double-click resets and announces once", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   const divider = page.getByRole("separator");
   await installAnnouncementCounter(page);
   await divider.dblclick();
@@ -389,7 +391,7 @@ test("C2(f): double-click resets and announces once", async ({ page }) => {
 });
 
 test("C2(g): two consecutive resets produce two announcements", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   const divider = page.getByRole("separator");
   await installAnnouncementCounter(page);
   await divider.focus();
@@ -403,13 +405,13 @@ test.describe("C4: narrow-width conditions", () => {
   for (const width of NARROW_WIDTH_TEST_SET) {
     test(`C4(${width}-1): document has no horizontal overflow`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
-      await page.goto("/");
+      await openWorkspace(page);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     });
 
     test(`C4(${width}-2): panes have no undeclared horizontal overflow`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
-      await page.goto("/");
+      await openWorkspace(page);
       for (const pane of [page.getByRole("complementary"), page.getByRole("main")]) {
         const overflowNodes = await pane.evaluate((element) => {
           const nodes = [element as HTMLElement, ...element.querySelectorAll<HTMLElement>("*")];
@@ -444,7 +446,7 @@ test.describe("C4: narrow-width conditions", () => {
 
     test(`C4(${width}-3): every phase control is keyboard reachable`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
-      await page.goto("/");
+      await openWorkspace(page);
       await page.keyboard.press("Tab");
       await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
       for (let step = 0; step < 12; step += 1) {
@@ -456,7 +458,7 @@ test.describe("C4: narrow-width conditions", () => {
 
     test(`C4(${width}-4): text is rendered and elided names retain their full value`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
-      await page.goto("/");
+      await openWorkspace(page);
       const elided = page.locator("[data-elided]");
       const subjects = await elided.evaluateAll((elements) => elements.map((element, index) => ({
         index,
@@ -481,7 +483,7 @@ test.describe("C4: narrow-width conditions", () => {
 
     test(`C4(${width}-5): agent pane stays above its minimum`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
-      await page.goto("/");
+      await openWorkspace(page);
       await page.getByRole("separator").focus();
       await page.keyboard.press("ArrowLeft");
       const agent = page.getByRole("complementary");
@@ -491,29 +493,29 @@ test.describe("C4: narrow-width conditions", () => {
 });
 
 test("C6(a): idle subtree contains no proposition, list, statistics, or navigation", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   const idle = page.getByTestId("proposal-preparation-idle");
   expect(await accessibleRoles(page, '[data-testid="proposal-preparation-idle"]')).toEqual(["heading"]);
   await expect(idle.getByRole("heading")).toHaveCount(1);
 });
 
 test("C6(b): idle content is inside the one main", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   await expect(page.getByRole("main").getByTestId("proposal-preparation-idle")).toBeVisible();
 });
 
 test("C6(c): idle subtree has no navigation affordance", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   const idle = page.getByTestId("proposal-preparation-idle");
   await expect(idle.locator("a[href]")).toHaveCount(0);
 });
 
 test("C6(d): idle first render moves no focus into itself", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   expect(await page.getByTestId("proposal-preparation-idle").evaluate((node) => node.contains(document.activeElement))).toBe(false);
 });
 
 test("C6(e): idle first render carries no live announcement", async ({ page }) => {
-  await page.goto("/");
+  await openWorkspace(page);
   await expect(page.getByTestId("proposal-preparation-idle").locator("[aria-live], [role=status], [role=alert]")).toHaveCount(0);
 });

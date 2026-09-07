@@ -2,6 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { ACTIVE_TAB_REVEAL_MARGIN_PX } from "@/features/proposal-preparation/components/session-tabs/session-tabs-constants";
 
+import { openWorkspace } from "./support/workspace";
+
 async function expectActiveTabVisible(page: Page) {
   const region = page.locator("[data-session-tab-scroll-region]");
   const active = page.locator('[role="tab"][aria-selected="true"]');
@@ -34,7 +36,7 @@ async function expectActiveTabVisible(page: Page) {
 
 test.describe("session tabs", () => {
   test("C4(b): keeps the active tab inside the visible strip after every movement operation", async ({ page }) => {
-    await page.goto("/");
+    await openWorkspace(page);
     const add = page.locator("button[data-new-session]");
     for (let index = 0; index < 7; index += 1) await add.click();
     await expectActiveTabVisible(page);
@@ -57,7 +59,7 @@ test.describe("session tabs", () => {
   });
 
   test("C5(e,f,g): exposes focus indicators, a usable close target and the full elided title", async ({ page }) => {
-    await page.goto("/");
+    await openWorkspace(page);
     const add = page.locator("button[data-new-session]");
     for (let index = 0; index < 5; index += 1) await add.click();
     const tab = page.locator('[role="tab"]').first();
@@ -78,7 +80,7 @@ test.describe("session tabs", () => {
   });
 
   test("C6(c): session operations do not change URL or history", async ({ page }) => {
-    await page.goto("/");
+    await openWorkspace(page);
     const before = { url: page.url(), history: await page.evaluate(() => history.length) };
     const add = page.locator("button[data-new-session]");
     await add.click();

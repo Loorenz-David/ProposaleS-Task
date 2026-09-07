@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import type { CopilotTestOptions } from "../playwright.config";
+import { openWorkspace } from "./support/workspace";
 
 /**
  * T-E2E-2 — the critical flow against the real backend. Collected only when `LIVE_SMOKE=1`, and
@@ -35,7 +36,7 @@ test("T-E2E-2: a real brief becomes a real draft in Proposales", async ({ page }
   const { editorOrigin } = test.info().project.use as CopilotTestOptions;
   expect(editorOrigin, "PROPOSALES_EDITOR_ORIGIN must be set for the live run").toBeTruthy();
 
-  await page.goto("/");
+  await openWorkspace(page);
   const composer = page.getByRole("textbox", { name: "Message Proposal Copilot" });
   await composer.fill(BRIEF);
   await composer.press("Enter");
