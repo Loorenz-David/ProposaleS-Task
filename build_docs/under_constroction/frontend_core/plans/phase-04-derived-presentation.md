@@ -114,7 +114,14 @@ to touch. Found by the pre-dispatch collision check (2026-09-07), not by the pro
    its negation — so the chain is total by construction and **needs no undeclared `else`**. If you find
    yourself writing one, the chain is wrong.
 3. **Render the status twice from the same function**: the tab's dot and the agent surface's status
-   line and phase label. Neither stores a value, so they cannot disagree — this settles design 03's open
+   line. **Amended 2026-09-07 after round 1 (finding B2).** §12A.3 counts *two* presentations — the
+   dot, and "the agent surface's status line and phase label" as one. Design 03 §3.2 gives that line
+   two slots, but only the right one (the phase label) is derived from status; the left slot held the
+   **status note**, which owner decision 19 removed. The task as first written did not say what the
+   left slot carries once the note is gone, and round 1 filled it with the status text — so the line
+   renders the same word twice ("Ready" beside "READY") while satisfying every criterion. **The status
+   line carries the phase label and nothing else**; the left slot is removed, not filled. Rendering any
+   value twice inside one line is a finding. Neither stores a value, so they cannot disagree — this settles design 03's open
    question 6 structurally, and the phase records that it did so rather than adding a synchronisation
    rule. `AgentStatusLine` is mounted by `agent-surface.tsx`; a component authored and never mounted
    makes C3(c) and C6(b) unobservable in the application.
@@ -163,7 +170,7 @@ to touch. Found by the pre-dispatch collision check (2026-09-07), not by the pro
 | **C1** | The six precedence rows, enumerated. One row per §12A.3 row: a session runtime record in that condition renders exactly that status and exactly that status text. (a) in flight → `working` / "Working". (b) draft reference present → `created` / "Created". (c) latest result kind `clarification` → `questions` / "Needs you". (d) current proposition present → `ready` / "Ready". (e) a turn has been started, and none of rows 1–4 matches → `idle` / "Open". (f) no turn ever started → `empty` / "Empty". Each row's record satisfies **only** that row's predicate, so the row cannot pass for a second reason. **Runner:** Vitest `node` (the view model's own project). | 6 | F10 · §12A.3 |
 | **C2** | The seven §12A.3 overlap-table rows, enumerated, because six of them are rows a first-match-wins chain gets wrong silently. (a) in flight **and** a draft reference → `working`. (b) in flight **and** latest result `clarification` → `working`. (c) draft reference **and** a current proposition → `created`. (d) draft reference **and** latest result `clarification` → `created`. (e) latest result `clarification` **and** a current proposition → `questions`. (f) latest result `failed` **and** a current proposition → `ready`. (g) latest result `failed` **and** no proposition → `idle`; this is the one row of the seven where only a single chain row matches, so what it asserts is **"`failed` is not a seventh status"**, not an ordering — labelled as such in §12A.3 on 2026-09-07 and kept for that reason. Each row is its own test, so no assertion short-circuits another (charter rule 12). (h) **Named mutation:** swap rows 2 and 3 of the precedence chain in `client/view-models/session-tab.ts`, at the chain's definition; row (d) must redden and rows (b), C1(b) and C1(c) must stay green; revert. **Runner:** Vitest `node`. | 8 | F10 · §12A.3 |
 | **C3** | Status is never colour-only and never stored. (a) The tab's accessible name contains the session title and the status text of its matched row — **which is also what makes `ready` and `created` distinguishable**, since their status texts differ ("Ready" / "Created"); the separate row asserting that was merged here at the pre-dispatch lint. There is no status note (owner decision 19). (b) **STRUCTURALLY HELD** — master plan §7.5, trigger **"phase 05 creates a session that can be working"**. Under reduced motion the working dot does not animate and **holds at full opacity** rather than settling dimmed. The correction ships in this phase (task 5) and is **not** held; only its proof is. §10.3A: jsdom applies no `@media` block and resolves no `var()`, so this is a Playwright subject, and Playwright has no reachable working dot until turn dispatch exists. Owner decision 21. (c) The agent surface's status line and the tab's dot are two renderings of one call on one record — asserted by mutating the record and observing both change with no intervening write. **Runner:** Vitest `jsdom`. (d) No `{status, note, unread}` record is written by any handler — **named mutation:** in `client/view-models/session-tab.ts`, store the computed status on the record, and in `components/agent/agent-status-line.tsx` **only** read that stored field instead of calling the function; row (c) must redden. Naming both the store site and the single read site is required: if *both* renderings read the stored field they still agree and (c) stays green, which is the family charter rule 15 exists for. Revert both. (e) A status derived from thread content, a string test, or elapsed time appears nowhere — a **plain check** under standing rule 18A, guarding design 10 §7's fake status engine (standing rule 2), which is a closed named set rather than an open universe. Per rule 18 it asserts that its scan had a subject. | 5 (1 held) | F10 · F6 · §12A.3 · §12A.7 |
-| **C6** | The derivation register is closed, and every existing row is a function. (a) The register enumerates exactly §12A.7's rows, each with its one source. **The closure half — "a value not in it is either server-returned, or one of the two stored presentation values, or it does not exist" — is STRUCTURALLY HELD**, master plan §7.5, trigger **"phase 15's boundary audit"**: it is an absence claim over an open name universe, standing rule 18A leaves that class unrelaxed, and this phase has no instrument for it. What (a) asserts is the enumeration. (b) For every register row whose surface exists in this phase — tab status and phase label — mutating the source changes the rendered value with no intervening write. **The "session count in the header" row is not among them**: no agent header exists and none is in this perimeter; §6.2 homes `AgentHeader` in phase 06, which §7.3 already lists under F14. **Runner:** this row spans both Vitest projects — the register module is `node`, the rendered value is `jsdom`; confirm collection per standing rule 13. (c) **Named mutation:** in `components/agent/agent-status-line.tsx`, store a formatted derived value beside its source and render the stored field; row (b) must redden; revert. **Three rows merged away at the pre-dispatch lint under owner decision 18**, each recorded rather than silently dropped: "no module writes a register row's value into state" is what (c)'s probe already proves; "rows whose surfaces arrive later are declared with their one source and the asserting phase" is a completeness property of the register **document**, and is in the Notes below as an authoring obligation; and "the unread counter is the only stored presentation counter" moved to phase 05 with owner decision 20. | 3 (1 half held) | F14 · §12A.7 |
+| **C6** | The derivation register is closed, and every existing row is a function. (a) The register enumerates exactly §12A.7's rows, each with its one source. **The closure half — "a value not in it is either server-returned, or one of the two stored presentation values, or it does not exist" — is STRUCTURALLY HELD**, master plan §7.5, trigger **"phase 15's boundary audit"**: it is an absence claim over an open name universe, standing rule 18A leaves that class unrelaxed, and this phase has no instrument for it. What (a) asserts is the enumeration. (b) For every register row whose surface exists in this phase — tab status and phase label — mutating the source changes the rendered value with no intervening write. **Each named surface is asserted on its own element, not on a container that any one of them satisfies** (amended 2026-09-07 after round 1 finding B1: the row named two surfaces, the test asserted text content on the enclosing status line, and severing the phase label from its source entirely left 205 tests green — C6(c)'s own mutation reddened through the neighbouring span, so the ledger read complete while half the row was unmeasured). **The "session count in the header" row is not among them**: no agent header exists and none is in this perimeter; §6.2 homes `AgentHeader` in phase 06, which §7.3 already lists under F14. **Runner:** this row spans both Vitest projects — the register module is `node`, the rendered value is `jsdom`; confirm collection per standing rule 13. (c) **Named mutation:** in `components/agent/agent-status-line.tsx`, store a formatted derived value beside its source and render the stored field; row (b) must redden; revert. **Three rows merged away at the pre-dispatch lint under owner decision 18**, each recorded rather than silently dropped: "no module writes a register row's value into state" is what (c)'s probe already proves; "rows whose surfaces arrive later are declared with their one source and the asserting phase" is a completeness property of the register **document**, and is in the Notes below as an authoring obligation; and "the unread counter is the only stored presentation counter" moved to phase 05 with owner decision 20. | 3 (1 half held) | F14 · §12A.7 |
 | **C7** | The shell does not become a function of what a session is doing. (a) Across every status the six-row table produces, the Agent Surface renders exactly one `complementary` and exactly one `main`, and they are the **same elements** throughout; no URL, route, or history entry changes. **Named mutation:** make the landmark element or its role depend on the status — render a different wrapper when the status is `working`; (a) must redden; revert. This **converts phase 03's held C6(d)**, whose trigger in master plan §7.5 is "phase 04 introduces derived tab status": in phase 03 the row had a degenerate subject because sessions differed only by identity and title. **Runner:** Vitest `jsdom`. (b) The navigation denylist in `workspace.test.tsx` matches assignment to `window.location.href`. **Named mutation (this is §11.3 follow-up 20's own probe):** plant `window.location.href = "/x"` in `src/app/page.tsx`; the row must redden; revert. Before task 7 it does not, which is the defect. | 2 | F30 · §12A.23 |
 
 **Derived totals for this phase** (re-derived at source by the projection fold, 2026-09-07;
@@ -330,3 +337,83 @@ The new test files were confirmed in `npx vitest list` under their intended proj
 Documentation impact review: the module map, both phase state cells, and this Review log were
 updated. The feature README remains intentionally deferred to phase 17, and no other
 authoritative documentation became false or incomplete.
+
+### Implementation round 1 consumed — coordinator, 2026-09-07
+
+Perimeter reconciled **against the tree and against this plan's tasks**, not only against the
+handoff's own declaration. Exactly the eighteen files the handoff declares, and tasks 7 and 8 are
+**one line each** as written. All seven inherited tripwires held, checked individually: no `Registry`
+substring anywhere under `src/features`, `types/presentation.ts` and `src/styles/` untouched, one
+`<main>`, phase 03's two source guards intact (`loop={false}` present, `closeSession(` exactly once),
+and **no focusable element added or removed** in the strip. `DERIVATION_REGISTER` enumerates exactly
+§12A.7's nine rows, in order, with matching sources. Every dot colour is one of the ramp entries task
+4 names, `idle` included; `motion-reduce:animate-none` is present on the working dot. The precedence
+chain is total by construction — `return "empty"` is reached exactly when `!hasStartedTurn`, which is
+row 6's own predicate, so there is no undeclared `else`.
+
+**Evidence.** The handoff's stamp is identified by `HEAD 0cc02d8` plus a working-tree digest that
+cannot be recomputed, and the checkpoint commit came after it — so its identity does not match any
+tree an auditor can reconstruct. One authorized run, the line written before it: *narrower evidence
+insufficient because the stamp's identity is unreconstructable, the commit postdates it, and this
+phase changed the accessible name of every tab, which is the exact surface the end-to-end suite
+queries by role and name.* Result on the committed tree `3bc43d3`, clean: **E2E 69/69**. The unit
+count was corroborated at 205 tests / 23 files by the coordinator's own mutation runs rather than by
+a dedicated re-run.
+
+**Four coordinator mutations, none of a shape the round's ledger used.**
+
+| # | Mutation | Expected | Observed |
+|---|---|---|---|
+| A | delete `if (record.hasStartedTurn) return "idle";` from the chain | C1(e) reddens | **C1(e) and C2(g)** both red — the `idle` row and the "`failed` is not a seventh status" row each genuinely bite |
+| B | point the `idle` dot at `--color-border`, a property declared **nowhere** | ? | **205/205 green** — see N1 |
+| C | drop the status text from the tab's `aria-label` | C3(a) reddens | C3(a) **and** C3(c) red |
+| D | hard-code the phase label to the literal `Ready`, severing it from its source | C6(b) reddens | **205/205 green** — see B1 |
+
+**Findings.**
+
+- **B1 — C6(b) names two surfaces and instruments one.** The row reads "for every register row whose
+  surface exists in this phase — **tab status and phase label** — mutating the source changes the
+  rendered value". Mutation D severs the phase label from the record completely and the whole suite
+  stays green, because the test asserts `toHaveTextContent` on the status line's **container**, which
+  the neighbouring status-text span satisfies alone. C6(c)'s own named mutation reddened through that
+  same span, so the ledger reads complete while half the row is unmeasured. This is charter rule 15's
+  family reached through an assertion's scope rather than through its instrument. One line fixes it:
+  assert `[data-agent-phase-label]` specifically.
+- **B2 — the status line renders the same word twice, and this is a defect in this plan, not in the
+  round.** `agent-status-line.tsx` renders `{statusText}` in both spans, so the user sees "Ready"
+  beside "READY". Task 3 says "render the status twice from the same function: the tab's dot and the
+  agent surface's status line and phase label" — which was written when design 03 §3.2's left slot
+  held the **status note**. Owner decision 19 removed the note and nothing said what the left slot
+  carries instead, so the round filled it with the only value available and satisfied every criterion
+  doing so. **Routed to the plan, and it needs a product answer** (owner card, below).
+- **S1 — follow-up 17's repair is placed at describe scope, not on its sibling.** The inserted
+  `test.use({ contextOptions: { reducedMotion: "no-preference" } })` sits at `e2e/workspace.spec.ts`
+  line 217, immediately above its intended test but **inside** the `C7(a): design corrections remain
+  landed` describe. Grounded rather than assumed: `test.use()` pushes onto the *current suite*
+  (`node_modules/playwright/lib/common/index.js:2424-2428`) and `_buildPoolForTest` applies every
+  parent suite's `_use` regardless of position within the block (`:1902-1910`). So corrections 1–5
+  now inherit a motion declaration they never asked for. **Nothing breaks today** — the default is
+  no-preference and the nested `reduce` describe still wins for its own tests — but the follow-up
+  exists precisely to survive a default change, and as placed it reads to a future editor as
+  test-scoped when it is block-scoped. The correct shape mirrors the `reduce` sibling: a nested
+  describe wrapping only that test. The plan warned that no criterion row could assert this, which is
+  why placement had to be read.
+- **N1 — the undeclared-custom-property class reaches this phase's new code.** Mutation B replaced the
+  `idle` dot's colour with a property declared nowhere; it renders `currentColor` and **205 tests pass**.
+  Nothing shipped is wrong — all six bindings were verified against the ramp — but phase 04 adds six
+  colour bindings with no instrument behind them. This is §11.3 follow-up 24 demonstrated on new code
+  rather than inferred from phase 03's, and it raises its priority.
+- **N2 — seen in passing, pre-existing:** the dev server logs a React hydration mismatch on session
+  ids during the end-to-end run. The ids come from `crypto.randomUUID()` at module scope in phase 03's
+  store, so server and client necessarily differ. Phase 03's `S11` territory, not this phase's, and
+  the suite is green.
+
+**Recorded plainly: the plan's perimeter did not list `use-workspace-session-store.test.ts`**, which
+the round had to edit because an exact-equality assertion on the record now sees five more fields.
+The edit is forced, correct and declared. The omission is mine — the perimeter listed the store but
+not its test.
+
+**What the round did well, recorded because it is the shape worth repeating.** C7(a) is the strongest
+row in the phase: it renders the whole workspace, iterates all six statuses, and asserts both the
+landmark **count** and the landmark **element identity** — a row that could easily have been written
+to pass on any render and was not.
