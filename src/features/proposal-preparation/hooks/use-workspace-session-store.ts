@@ -128,13 +128,19 @@ export const useWorkspaceSessionStore = create<WorkspaceSessionState>((set, get)
   ...initialSessionState,
   activateSession: (sessionId) => {
     if (!get().sessions[sessionId]) return;
-    set((state) => ({
-      activeSessionId: sessionId,
-      sessions: {
-        ...state.sessions,
-        [sessionId]: { ...state.sessions[sessionId], unread: 0 },
-      },
-    }));
+    set((state) => {
+      const record = state.sessions[sessionId];
+      if (state.activeSessionId === sessionId && record.unread === 0) {
+        return { activeSessionId: sessionId };
+      }
+      return {
+        activeSessionId: sessionId,
+        sessions: {
+          ...state.sessions,
+          [sessionId]: { ...record, unread: 0 },
+        },
+      };
+    });
   },
   createSession: () => {
     const record = createSessionRecord();
@@ -270,6 +276,7 @@ export const useWorkspaceSessionStore = create<WorkspaceSessionState>((set, get)
     );
   },
   setWorkSurface: (sessionId, workSurface) => {
+    if (workSurface !== "fields" && workSurface !== "preview") return;
     set((state) =>
       updateRecord(state, sessionId, (record) => ({
         ...record,

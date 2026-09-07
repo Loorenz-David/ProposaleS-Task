@@ -249,3 +249,48 @@ describe("unread ownership", () => {
     expect(SOURCE).not.toContain("attention:");
   });
 });
+
+describe("retained context", () => {
+  it("R8.4/R8.7: keeps each session's deliberate context across activation", () => {
+    const first = useWorkspaceSessionStore.getState().activeSessionId as WorkspaceSessionId;
+    const second = useWorkspaceSessionStore.getState().createSession();
+    useWorkspaceSessionStore.getState().setWorkSurface(first, "preview");
+    useWorkspaceSessionStore.getState().setOpenedBlock(first, "block-a");
+    useWorkspaceSessionStore.getState().setWorkSurface(second, "fields");
+    useWorkspaceSessionStore.getState().activateSession(first);
+    useWorkspaceSessionStore.getState().activateSession(second);
+    useWorkspaceSessionStore.getState().activateSession(first);
+    expect(useWorkspaceSessionStore.getState().sessions[first]?.retained).toEqual({ workSurface: "preview", openedBlockContentId: "block-a" });
+    expect(useWorkspaceSessionStore.getState().sessions[second]?.retained).toEqual({ workSurface: "fields", openedBlockContentId: null });
+  });
+
+  it("R8.5: result and failure application preserve retained object identity", () => {
+    const first = useWorkspaceSessionStore.getState().activeSessionId as WorkspaceSessionId;
+    const second = useWorkspaceSessionStore.getState().createSession();
+    useWorkspaceSessionStore.getState().setWorkSurface(first, "preview");
+    useWorkspaceSessionStore.getState().setWorkSurface(second, "preview");
+    const firstRetained = useWorkspaceSessionStore.getState().sessions[first]!.retained;
+    const secondRetained = useWorkspaceSessionStore.getState().sessions[second]!.retained;
+    useWorkspaceSessionStore.getState().startTurn(first, { turnId: "first", kind: "brief" });
+    useWorkspaceSessionStore.getState().applyTurnResult(first, "first", {
+      ok: true,
+      result: { status: "clarification", clarification: { questions: [], answers: [] } },
+      workflow: { clarification: { questions: [], answers: [] } },
+    }, { kind: "brief", text: "x" });
+    useWorkspaceSessionStore.getState().startTurn(second, { turnId: "second", kind: "brief" });
+    useWorkspaceSessionStore.getState().applyTurnFailure(second, "second", {
+      site: { kind: "agent" },
+      error: temporaryFixtureErrorDto("integration_error"),
+      retry: { kind: "brief", text: "x" },
+    });
+    expect(useWorkspaceSessionStore.getState().sessions[first]?.retained).toBe(firstRetained);
+    expect(useWorkspaceSessionStore.getState().sessions[second]?.retained).toBe(secondRetained);
+  });
+
+  it("R8.1: ignores a work-surface value outside the closed runtime domain", () => {
+    const id = useWorkspaceSessionStore.getState().activeSessionId as WorkspaceSessionId;
+    const before = useWorkspaceSessionStore.getState().sessions[id]?.retained;
+    useWorkspaceSessionStore.getState().setWorkSurface(id, "invalid" as never);
+    expect(useWorkspaceSessionStore.getState().sessions[id]?.retained).toBe(before);
+  });
+});

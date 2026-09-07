@@ -833,3 +833,19 @@ focus-order row is not evidence (master plan §11.1, follow-up 18). Free the por
 - Mutation ledger: M13 added stored `attention` and the strip-boundary assertion reddened on the
   forbidden stored axis; reverted. Mutation file was `use-workspace-session-store.ts`.
 - Checkpoint stamp: `npm test` — 57 files / 323 tests green.
+
+### WP8 checkpoint
+
+- Retained context remains exactly `workSurface` and `openedBlockContentId`, is written only by
+  deliberate surface actions, rejects invalid work-surface values at runtime, and remains
+  reference-identical through result/failure application. Main-surface derivation covers the
+  first-match creating/created/review/idle precedence and render-time reference resolution with
+  stated defaults.
+- Acceptance evidence: main-surface view-model and store tests cover R8.1–R8.7's precedence,
+  overlap, default, reference-not-value, session isolation, and identity rows. Existing activation
+  focus tests remain green for R8.8.
+- Mutation ledger: M14 copied retained context on result application and reddened R8.5 identity
+  assertions; reverted. M15 swapped creating/created precedence and reddened the creating-beats-
+  created overlap in R8.1/R8.2; reverted. Mutation file was `client/view-models/main-surface.ts`
+  for M15 and `use-workspace-session-store.ts` for M14.
+- Checkpoint stamp: `npm test` — 57 files / 328 tests green.
