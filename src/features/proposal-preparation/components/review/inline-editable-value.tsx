@@ -5,6 +5,13 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import type { EditableLeafViewModel } from "../../client/view-models/review";
 
+/**
+ * One box, worn by both states, so a value that can be edited looks like the control it becomes
+ * and the layout does not shift when it turns into one. A value that cannot be edited drops the
+ * box rather than offering a field that refuses input.
+ */
+const FIELD = "w-full min-w-0 break-words rounded-lg border bg-[var(--color-bg-control)] px-2.5 py-1.5 text-13 leading-normal";
+
 export type InlineEditableValueProps = {
   leaf: EditableLeafViewModel;
   isEditing: boolean;
@@ -47,7 +54,7 @@ export function InlineEditableValue({ leaf, isEditing, canEdit, onStartEdit, onC
         <input
           ref={inputRef}
           aria-label={`Edit ${leaf.label}`}
-          className="-my-2 min-w-0 w-full rounded-md border border-[var(--color-border-focus)] bg-[var(--color-bg-control)] px-2 py-2 text-sm text-[var(--color-fg)]"
+          className={`${FIELD} border-[var(--color-border-focus)] text-[var(--color-fg)]`}
           onBlur={() => onCommit(draft)}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={onKeyDown}
@@ -63,7 +70,7 @@ export function InlineEditableValue({ leaf, isEditing, canEdit, onStartEdit, onC
             setDraft(leaf.isAbsent ? "" : leaf.display);
             onStartEdit();
           }}
-          className={`max-w-full break-words text-left text-sm underline decoration-dashed underline-offset-4 disabled:no-underline ${leaf.isAbsent ? "italic text-[var(--color-fg-muted)]" : "text-[var(--color-fg-body)]"}`}
+          className={`${FIELD} border-[var(--color-border-control)] text-left hover:border-[var(--color-border-control-raised)] disabled:border-transparent disabled:bg-transparent disabled:px-0 ${leaf.isAbsent ? "italic text-[var(--color-fg-muted)]" : "text-[var(--color-fg-body)]"}`}
         >
           {leaf.display}
         </button>

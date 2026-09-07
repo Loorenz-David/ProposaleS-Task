@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 import type { CreatedViewModel } from "../../client/view-models/created";
+import { useBlockImages } from "../../hooks/use-block-images";
 import { ReviewBlocksCard } from "../review/review-blocks-card";
 import { ReviewFieldsCard } from "../review/review-fields-card";
 import { ReviewNotesCard } from "../review/review-notes-card";
@@ -15,6 +16,7 @@ const ignore = () => {};
 
 export function CreatedSurface({ viewModel, onDraftAnother }: CreatedSurfaceProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const blockImages = useBlockImages(viewModel.reviewed.blocks.map((block) => block.contentId));
   useEffect(() => headingRef.current?.focus(), []);
   return (
     <div className="mx-auto max-w-[1040px] px-5 py-8 lg:px-8">
@@ -39,7 +41,7 @@ export function CreatedSurface({ viewModel, onDraftAnother }: CreatedSurfaceProp
       <section aria-labelledby="reviewed-proposition-heading" className="mt-8 space-y-5">
         <div><p className="font-mono text-10 uppercase tracking-label text-[var(--color-fg-quiet)]">Read-only reference</p><h2 id="reviewed-proposition-heading" className="mt-2 text-xl font-semibold">Reviewed proposition</h2></div>
         <ReviewFieldsCard canEdit={false} editingPath={null} fields={viewModel.reviewed.fields} onAskAgent={ignore} onCancel={ignore} onCommit={ignore} onStartEdit={ignore} />
-        <ReviewBlocksCard blocks={viewModel.reviewed.blocks} canEdit={false} editingPath={null} isSubmitting={false} onCancel={ignore} onCloseBlock={ignore} onCommit={ignore} onOpenBlock={ignore} onRemoveBlock={ignore} onReplaceBlock={ignore} onStartEdit={ignore} openedBlock={null} />
+        <ReviewBlocksCard blocks={viewModel.reviewed.blocks} images={blockImages} canEdit={false} editingPath={null} isSubmitting={false} onCancel={ignore} onCloseBlock={ignore} onCommit={ignore} onOpenBlock={ignore} onRemoveBlock={ignore} onReplaceBlock={ignore} onStartEdit={ignore} openedBlock={null} />
         <ReviewNotesCard notes={viewModel.reviewed.notes} />
       </section>
     </div>

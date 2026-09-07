@@ -6,7 +6,11 @@
       "title": { "en": "Premium support", "sv": "Premiumsupport" },
       "description": { "en": "Priority help", "sv": "Prioriterad hjälp" },
       "created_at": 1757059200000,
-      "images": ["https://cdn.proposales.test/premium.png"],
+      "images": [
+        { "id": 9001, "uuid": "e2a4b1c0-0000-4000-8000-000000000001", "url": null, "mime_type": "image/png" },
+        { "id": 9002, "uuid": "e2a4b1c0-0000-4000-8000-000000000002", "url": "http://cdn.proposales.test/insecure.png" },
+        { "id": 9003, "uuid": "e2a4b1c0-0000-4000-8000-000000000003", "url": "https://cdn.proposales.test/premium.png", "width": 800, "height": 600 }
+      ],
       "integration_metadata": { "source": "crm" },
       "future_key": "ignore me"
     },

@@ -34,9 +34,9 @@ The feature owns the whole vertical slice, split by runtime:
 
 Two entry points, and they are layered.
 
-`server/actions.ts` is the browser's only way in. It carries `"use server"` and exports five thin actions, each `(input: unknown) => ActionResult<TurnResult | ApprovalResult>`: `prepareTurnAction`, `answerClarificationAction`, `editPropositionAction`, `revisePropositionAction`, `approveProposalAction`. An action adds no schema of its own — it hands the raw input to one service, which parses it — catches every `AppError` into an `ErrorDto`, and logs the failure once with codes and reasons only.
+`server/actions.ts` is the browser's only way in. It carries `"use server"` and exports six thin actions, each `(input: unknown) => ActionResult<…>`: `prepareTurnAction`, `answerClarificationAction`, `editPropositionAction`, `revisePropositionAction`, `approveProposalAction` — the five that carry a turn or an approval — and `blockImagesAction`, which carries neither and only reads the images of line items already on screen. An action adds no schema of its own — it hands the raw input to one service, which parses it — catches every `AppError` into an `ErrorDto`, and logs the failure once with codes and reasons only.
 
-`server/index.ts` is the service surface, callable with plain arguments and a fake Proposales client. It exports seven services, each taking `unknown` and validating it, plus a `deps` object defaulting to `server/services/default-deps.ts`.
+`server/index.ts` is the service surface, callable with plain arguments and a fake Proposales client. It exports eight services, each taking `unknown` and validating it, plus a `deps` object defaulting to `server/services/default-deps.ts`.
 
 | Service | What it does |
 |---|---|
@@ -45,15 +45,17 @@ Two entry points, and they are layered.
 | `editProposition` | Applies closed deterministic edits. No model, no Proposales. |
 | `reviseProposition` | Runs the agent over the current proposition with the conversation history and one human instruction. |
 | `searchContentForHuman` | Bounded ranked catalog candidates for a human-driven search. Not exposed in the UI. |
+| `getBlockImages` | The first catalog image of each named variation, for the review surface. One vendor read per variation, off the generation path. |
 | `approveProposition` | Validates the envelope in binding order, then executes. |
 | `executeApprovedProposal` | The deterministic half on its own: recovery search, one create, one read-back. |
 
 ## Client/server behaviour
 
-`client/turn-transport.ts` is the only browser module that imports `server/actions`, and it is the only place that knows both vocabularies. Components dispatch **intents** (`TurnInput`) — "the human approved", "the human replaced this line item" — and the transport composes the service envelope from the state the record held when the intent was dispatched. Two consequences worth knowing:
+`client/` holds the browser's only importers of `server/actions`: nothing under `components/` or `hooks/` calls an action itself. `client/turn-transport.ts` owns everything consequential and is the only place that knows both vocabularies; `client/block-images-transport.ts` sits beside it for line-item images, which decide nothing and therefore map nothing. Components dispatch **intents** (`TurnInput`) — "the human approved", "the human replaced this line item" — and the transport composes the service envelope from the state the record held when the intent was dispatched. Two consequences worth knowing:
 
 - **Approval is an intent, not a payload.** The component says the human approved; the transport builds `{ state, proposition, pricingAcknowledgment }` from the held state and the acknowledgment constants in `schemas/approval.ts`, so the wording on screen and the id in the envelope cannot drift apart.
 - **`replace_block` is a client intent with no backend counterpart.** The transport sends `remove_block` + `add_block` in one `edits` array, reading the candidate from the block's retained alternatives.
+- **Line-item images are presentational and arrive late.** Proposales returns content images only for a single-variation query, so they are absent from the catalog read the agent works from. `hooks/use-block-images.ts` asks for them once per variation *after* a proposition is on screen; they never enter the workflow state, the approval envelope, or any decision, and a failed request costs a thumbnail. Removing a line item is confirmed first, in the dialog `components/workspace/confirm-dialog.tsx` owns.
 
 Everything under `server/` starts with `import "server-only"`. `server/actions.ts` carries `"use server"` first and `server-only` second, which `test/isolation-scan.ts` admits explicitly and nothing else may.
 
@@ -132,7 +134,7 @@ Server Actions are public endpoints: every export of `server/actions.ts` should 
 - [`workflow.test.ts`](workflow.test.ts) is the same proof one layer down, server-side only.
 - [`server/actions.test.ts`](server/actions.test.ts) covers the boundary: malformed input, expected failures as data, one service call per action, the exposure switch, and a JSON round-trip of every result.
 - [`client/turn-transport.test.ts`](client/turn-transport.test.ts) covers envelope composition, including `replace_block` becoming two operations and approval carrying no conversation.
-- [`retirement.test.ts`](retirement.test.ts) holds the graph guards: no fixture on a shipping path, no privileged import in the browser graph, no persistence API, and the transport as the only browser importer of the actions. Each runs against a planted source that must trip it.
+- [`retirement.test.ts`](retirement.test.ts) holds the graph guards: no fixture on a shipping path, no privileged import in the browser graph, no persistence API, and the client transports as the only browser importers of the actions. Each runs against a planted source that must trip it.
 
 Two opt-in live suites sit behind `LIVE_SMOKE=1 npm run test:live`, and `LIVE_SMOKE=1 npm run test:e2e` adds the live critical flow. All three are excluded from the default suites; the Playwright one **creates a real draft**.
 

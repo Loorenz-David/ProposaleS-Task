@@ -20,6 +20,12 @@ evidence-backed constant in `http.ts`. The browser never receives either configu
   the application's four-digit UTC ISO timestamp shape before mapping.
 - The adapter keeps only the fields it consumes. Unknown response keys are stripped, and a
   missing content description maps to `{}`.
+- Content images are returned only for a single-variation query, never for a listing, so
+  `listContent` items never carry them and `getContent` items may. The vendor sends image
+  objects with a nullable `url`; the adapter exposes `images` as absolute https URLs only,
+  dropping anything else, because a feature can do nothing with a URL a browser will not
+  load. Images are read leniently on the wire so an unusable one costs a picture rather
+  than the content read.
 - Error responses use the vendor's `{ error: { message, issues? } }` shape. Public errors
   keep bounded messages and issue paths; raw body, headers, and URL are retained only in the
   error cause for server-side diagnosis.

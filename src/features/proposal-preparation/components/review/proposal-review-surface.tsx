@@ -1,6 +1,7 @@
 import type { ReviewSurfaceViewModel } from "../../client/view-models/review";
 import type { PreviewViewModel } from "../../client/view-models/preview";
 import type { WorkSurface } from "../../types/session";
+import { useBlockImages } from "../../hooks/use-block-images";
 import { useInlineEdit } from "../../hooks/use-inline-edit";
 import { ClientPreviewSurface } from "../preview/client-preview-surface";
 import { ApprovalAction } from "./approval-action";
@@ -33,6 +34,7 @@ export type ProposalReviewSurfaceProps = {
 
 export function ProposalReviewSurface({ viewModel, clientPreview, openedBlock = null, isEditSubmitting = false, isSubmitting = false, workSurface, isTerminal, onWorkSurfaceChange, onDiscard, onApprove, onCommitEdit, onCancelEdit, onReplaceBlock, onRemoveBlock, onOpenBlock, onCloseBlock, onAskAgent }: ProposalReviewSurfaceProps) {
   const inlineEdit = useInlineEdit(onCommitEdit, onCancelEdit, () => !isEditSubmitting);
+  const blockImages = useBlockImages(viewModel.blocks.map((block) => block.contentId));
   const unresolvedSummary = viewModel.readiness.unresolved || viewModel.readiness.deferred
     ? `${viewModel.readiness.unresolved} open, ${viewModel.readiness.deferred} deferred`
     : null;
@@ -44,7 +46,7 @@ export function ProposalReviewSurface({ viewModel, clientPreview, openedBlock = 
           <>
             {viewModel.surfaceErrors.length > 0 ? <div role="alert" className="rounded-xl border border-[var(--color-attention)]/50 bg-[var(--color-attention-wash)] p-4 text-13 text-[var(--color-fg-body)]">{viewModel.surfaceErrors.join(" ")}</div> : null}
             <ReviewFieldsCard canEdit={!isTerminal && !isEditSubmitting} editingPath={inlineEdit.editingPath} fields={viewModel.fields} onAskAgent={onAskAgent} onCancel={inlineEdit.cancel} onCommit={inlineEdit.commit} onStartEdit={inlineEdit.startEdit} />
-            <ReviewBlocksCard blocks={viewModel.blocks} canEdit={!isTerminal && !isEditSubmitting} editingPath={inlineEdit.editingPath} isSubmitting={isEditSubmitting} onCancel={inlineEdit.cancel} onCloseBlock={onCloseBlock} onCommit={inlineEdit.commit} onOpenBlock={onOpenBlock} onRemoveBlock={onRemoveBlock} onReplaceBlock={onReplaceBlock} onStartEdit={inlineEdit.startEdit} openedBlock={openedBlock} />
+            <ReviewBlocksCard blocks={viewModel.blocks} images={blockImages} canEdit={!isTerminal && !isEditSubmitting} editingPath={inlineEdit.editingPath} isSubmitting={isEditSubmitting} onCancel={inlineEdit.cancel} onCloseBlock={onCloseBlock} onCommit={inlineEdit.commit} onOpenBlock={onOpenBlock} onRemoveBlock={onRemoveBlock} onReplaceBlock={onReplaceBlock} onStartEdit={inlineEdit.startEdit} openedBlock={openedBlock} />
             <ReviewNotesCard notes={viewModel.notes} />
           </>
         ) : clientPreview ? <ClientPreviewSurface viewModel={clientPreview} /> : null}

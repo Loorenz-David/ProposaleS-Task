@@ -11,6 +11,10 @@ export type ContentItem = {
   title: Record<string, string>;
   description: Record<string, string>;
   createdAt: string;
+  /**
+   * Absolute https URLs, in the vendor's order. Present only on `getContent`: the vendor omits
+   * images from a listing, so a catalog read never carries them and no caller may assume it does.
+   */
   images?: string[];
 };
 

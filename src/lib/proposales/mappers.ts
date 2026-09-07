@@ -1,5 +1,7 @@
 import "server-only";
 
+import { z } from "zod";
+
 import { formatIsoTimestamp } from "@/lib/values/timestamp";
 import type { CompanyListResponse, ContentItemResponse, CreateProposalRequest, ProposalMutationResponse, ProposalReadbackResponse, ProposalSearchResponse } from "@/lib/proposales/schemas";
 import type { CompanyInfo, ContentItem, CreateProposalDraftInput, CreatedDraft, ProposalReadback, RecoveredProposalSummary } from "@/lib/proposales/index";
@@ -57,9 +59,25 @@ export function toCreateProposalRequest(input: CreateProposalDraftInput, ctx: { 
   };
 }
 
+/**
+ * An image the browser will be asked to load, so the adapter decides what is loadable: an https
+ * absolute URL and nothing else. Anything the vendor sends that is not one is dropped here, where
+ * the wire shape is still visible, rather than reaching a feature as an unusable string.
+ */
+const imageUrlSchema = z.url().refine((value) => new URL(value).protocol === "https:");
+
+function toImageUrls(images: ContentItemResponse["images"]): string[] {
+  return (images ?? []).flatMap((image) => {
+    if (image.url === undefined || image.url === null) return [];
+    const parsed = imageUrlSchema.safeParse(image.url);
+    return parsed.success ? [parsed.data] : [];
+  });
+}
+
 export function toContentItem(wire: ContentItemResponse): ContentItem {
   // Evidence §6 establishes that these vendor Unix timestamps are millisecond-scale.
   const createdAt = formatIsoTimestamp(new Date(wire.created_at));
+  const images = toImageUrls(wire.images);
 
   return {
     variationId: String(wire.variation_id),
@@ -67,7 +85,7 @@ export function toContentItem(wire: ContentItemResponse): ContentItem {
     title: wire.title,
     description: wire.description === undefined ? {} : wire.description,
     createdAt,
-    ...(wire.images === undefined ? {} : { images: wire.images }),
+    ...(images.length === 0 ? {} : { images }),
   };
 }
 

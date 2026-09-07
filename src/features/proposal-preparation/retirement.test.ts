@@ -123,12 +123,20 @@ describe("fixture-era retirement", () => {
     );
   });
 
-  it("T-RET-4b: the transport is the only browser file that imports the actions at all", () => {
-    const importers = browserFiles
-      .filter((file) => /from\s+["'][^"']*\/server\/actions["']/.test(file.source))
-      .map((file) => file.path);
+  it("T-RET-4b: only the client transports import the actions, and no component or hook does", () => {
+    const importsActions = (file: SourceFile) => /from\s+["'][^"']*\/server\/actions["']/.test(file.source);
 
-    expect(importers).toEqual(["src/features/proposal-preparation/client/turn-transport.ts"]);
+    // The seam is a whitelist, so a new one is added deliberately rather than by drifting into it.
+    expect(browserFiles.filter(importsActions).map((file) => file.path).sort()).toEqual([
+      "src/features/proposal-preparation/client/block-images-transport.ts",
+      "src/features/proposal-preparation/client/turn-transport.ts",
+    ]);
+    // The guarantee behind the whitelist: what renders and what orchestrates never call an action.
+    guard(
+      browserFiles.filter((file) => /\/(components|hooks)\//.test(file.path)),
+      importsActions,
+      { path: "planted.tsx", source: "import { prepareTurnAction } from '../server/actions';" },
+    );
   });
 
   it("the guards were run against a tree that actually contains browser files", () => {

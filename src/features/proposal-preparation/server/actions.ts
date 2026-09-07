@@ -7,11 +7,13 @@ import { toActionResult, type ActionResult } from "@/lib/errors/action-result";
 import { serverEnv } from "@/lib/env/server";
 import { createLogger } from "@/lib/logger";
 
+import type { BlockImages } from "../schemas/block-images";
 import type { ApprovalResult, TurnResult } from "../schemas/turn-result";
 import {
   answerClarification,
   approveProposition,
   editProposition,
+  getBlockImages,
   prepareFromBrief,
   reviseProposition,
 } from "./index";
@@ -55,6 +57,14 @@ export async function editPropositionAction(input: unknown): Promise<ActionResul
 
 export async function revisePropositionAction(input: unknown): Promise<ActionResult<TurnResult>> {
   return toActionResult(() => reviseProposition(input), (error) => logFailure("reviseProposition", error));
+}
+
+/**
+ * Presentational only: the review surface asks for the images of line items it is already showing.
+ * It decides nothing, so a failure here costs the human a thumbnail, not a turn.
+ */
+export async function blockImagesAction(input: unknown): Promise<ActionResult<BlockImages>> {
+  return toActionResult(() => getBlockImages(input), (error) => logFailure("blockImages", error));
 }
 
 /**

@@ -30,6 +30,17 @@ describe("Proposales response mappers", () => {
     expect(items[1].images).toBeUndefined();
   });
 
+  it("C5(a2) keeps only image URLs the browser can be asked to load", async () => {
+    // The vendor sends image objects whose `url` is nullable, and only for a single-variation
+    // query. A null one and a plain-http one are dropped here rather than reaching a feature as a
+    // string it cannot render.
+    const fixture = (await import("./fixtures/content-list.json")).default;
+    const [premium] = contentListResponseSchema.parse(fixture).data.map(toContentItem);
+
+    expect(fixture.data[0].images).toHaveLength(3);
+    expect(premium.images).toEqual(["https://cdn.proposales.test/premium.png"]);
+  });
+
   it("C5(b) strips unknown wire keys before mapping", async () => {
     const fixture = (await import("./fixtures/content-list.json")).default;
     const item = toContentItem(contentListResponseSchema.parse(fixture).data[0]);

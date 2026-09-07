@@ -20,13 +20,22 @@ const boundedCreatedAtSchema = z.number().int().refine(
   { message: "must produce a four-digit UTC ISO timestamp when interpreted as milliseconds" },
 );
 
+/**
+ * The vendor returns images as objects, and only for a single-variation query — `getContent`,
+ * never `listContent` (api-reference/content/list.md: "will only be included when filtering
+ * content by variation ID"). `url` is nullable there and is read leniently on purpose: an image
+ * is presentational, so an odd one is dropped by `toContentItem` rather than failing the whole
+ * content read the agent depends on.
+ */
+const contentImageResponseSchema = z.object({ url: z.string().nullish() });
+
 export const contentItemResponseSchema = z.object({
   product_id: z.number().int(),
   variation_id: z.number().int(),
   title: localizedTextSchema,
   description: localizedTextSchema.optional(),
   created_at: boundedCreatedAtSchema,
-  images: z.array(z.string()).optional(),
+  images: z.array(contentImageResponseSchema).optional(),
 });
 
 export const contentListResponseSchema = z.object({
