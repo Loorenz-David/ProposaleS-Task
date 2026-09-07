@@ -4,11 +4,15 @@ An AI-assisted workflow for turning incomplete commercial intent (briefs, meetin
 
 ## Status
 
-**Backend workflow implemented; no transport and no product UI yet.** The proposal preparation workflow exists end to end on the server and is proven offline by the test suite: a brief becomes a structured proposition, a human edits and approves it, and the approved payload is executed deterministically as a Proposales draft whose applied pricing is read back and returned with the editor URL. It is reachable today only from server code through [`src/features/proposal-preparation/server/index.ts`](src/features/proposal-preparation/README.md) — there is no Server Action, Route Handler, or UI wired to it. The `/` route is still the neutral shell: a product-neutral root layout, a small styling foundation, and three shared primitives (`Button`, `Input`, `Textarea`).
+**Backend workflow complete; frontend complete on fixtures; the two are not yet integrated.** The proposal preparation workflow exists end to end on the server and is proven offline by the test suite: a brief becomes a structured proposition, a human edits and approves it, and the approved payload is executed deterministically as a Proposales draft whose applied pricing is read back and returned with the editor URL. It is reachable today only from server code through [`src/features/proposal-preparation/server/index.ts`](src/features/proposal-preparation/README.md) — there is no Server Action or Route Handler wired to it yet.
+
+Separately, the full human-in-the-loop workflow is also implemented end to end on the client, against era-marked fixtures. The root route renders the two-pane Proposal Preparation shell with named landmarks, a keyboard- and pointer-operable divider, and a keyboard-accessible, reorderable, closable session tab strip. Inside that shell, a session can be driven through a full cycle — a brief, a structured clarification exchange, a reviewable proposition with provenance and a client preview, inline edits and line-item replacement, and an approval that produces a created or failed draft presentation — entirely against a scripted, in-memory turn adapter under `client/fixtures/*.temporary-fixture.ts`. That adapter stands in for both the AI agent and the Proposales backend: it returns fixed results by turn kind, never reads what the user typed, and computes nothing against the real server workflow described above. The production visual foundation is a Tailwind theme layer defining every visual value once, with base element typography and global focus and reduced-motion treatment. The session strip uses Radix Tabs and the review surface's field-level dialog uses Radix Popover; no shared local UI wrapper exists.
+
+The two halves coexist in this repository but are not wired together: the frontend does not call the backend workflow, and no persistence exists on either side. Connecting them is the next sprint's work, not something this merge performs.
 
 ## The workflow
 
-Everything below the transport line is implemented and tested.
+Every step below is implemented and tested today — the reasoning and mutation logic on the server, the presentation shape on the client — but the two halves are not yet wired together (see Status). The frontend currently drives this shape against fixtures, not against the server implementation.
 
 ```
 Human intent (brief, notes, requirements)
@@ -42,6 +46,8 @@ Verified against `package.json`.
 | Runtime validation | Zod 4 |
 | Unit and component tests | Vitest 5 with React Testing Library and jest-dom; node project for server tests, jsdom project for app/component tests |
 | End-to-end tests | Playwright, Chromium |
+| Headless interaction primitives | Radix Tabs 1.1.21 (with Roving Focus 1.1.19), Radix Popover 1.1.23 |
+| Icons | Lucide React 1.41.0; session controls use native text glyphs where sufficient |
 | Lint | ESLint 9 with `eslint-config-next` |
 | Hosting | Vercel |
 
@@ -106,8 +112,8 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs typecheck, lint, 
 
 ## Testing strategy
 
-- **Vitest and React Testing Library** cover everything below the browser: pure functions, schemas, domain rules, services, adapters with mocked HTTP, and component tests. The node project collects `src/lib/**`, `src/features/**`, and `test/setup/node.test.ts`; the jsdom project collects `src/app/**` and `src/components/**`. Vitest excludes `e2e/` and `*.live.test.ts` so the default projects never overlap with end-to-end or opt-in live tests.
-- **Playwright** covers critical browser-level flows from `e2e/`. It starts `npm run dev` itself and runs against Chromium. Today it has one spec that checks the application shell renders and the skip link works.
+- **Vitest and React Testing Library** cover everything below the browser: pure functions, schemas, domain rules, services, adapters with mocked HTTP, and component tests. Every `*.test.ts(x)` under `src/` or `test/` is claimed by exactly one project: the `jsdom` project claims every `.tsx` test and every `.ts` test under a feature's `hooks/`; the `node` project claims everything else (`src/lib/**`, `src/styles/**`, `src/app/**`, `src/features/**` outside `hooks/`, `test/**`). Vitest excludes `e2e/` and `*.live.test.ts` so the default projects never overlap with end-to-end or opt-in live tests.
+- **Playwright** covers critical browser-level flows from `e2e/`. It starts `npm run dev` itself and runs against Chromium. Today `e2e/workspace.spec.ts` checks the workspace landmarks, skip link, divider interactions, narrow-width containment, idle state, and the carried visual-foundation checks; `e2e/session-tabs.spec.ts` checks session-tab geometry, focus, hit targets, elision, and URL stability.
 - Layers, what each must prove, and the rules for agent evals: [11-testing-principles.md](architectural_contracts/11-testing-principles.md).
 
 ## Agent development
@@ -137,11 +143,10 @@ A refresh detects possible contract drift; a dependency-aware review of the diff
 
 ```
 .
-├── src/app/                     # Next.js routes: root layout (application shell) and neutral root route
-├── src/components/ui/           # Shared presentational primitives with no domain knowledge
+├── src/app/                     # Next.js routes: root layout and Proposal Preparation workspace route
 ├── src/features/                # Feature code; today: proposal-preparation
 ├── src/lib/                     # Integrations and shared primitives: proposales, ai, agent, env, errors, values
-├── src/styles/                  # Design tokens and global base styles
+├── src/styles/                  # Tailwind theme layer (visual values, defined once) and global base styles
 ├── e2e/                         # Playwright specs
 ├── architectural_contracts/     # Normative engineering contracts (numbered in read order)
 ├── agent-skills/                # Shared agent policies
@@ -152,7 +157,7 @@ A refresh detects possible contract drift; a dependency-aware review of the diff
 └── .env.example                 # Configuration inventory
 ```
 
-Feature code lives under `src/features/<feature>/` and integrations under `src/lib/<system>/` per [03-feature-architecture.md](architectural_contracts/03-feature-architecture.md). Today that is one feature, [proposal-preparation](src/features/proposal-preparation/README.md), over four integrations: [proposales](src/lib/proposales/README.md), [ai](src/lib/ai/README.md), `agent`, and `env`.
+Feature code lives under `src/features/<feature>/` and integrations under `src/lib/<system>/` per [03-feature-architecture.md](architectural_contracts/03-feature-architecture.md). Today that is one feature, [proposal-preparation](src/features/proposal-preparation/README.md), over four server-side integrations: [proposales](src/lib/proposales/README.md), [ai](src/lib/ai/README.md), `agent`, and `env`. Within the feature, `server/` holds the real workflow described under Status; `client/` owns the persistent workspace shell, page-lifetime session runtime and tab strip, and the full presentation and interaction layer, driven for now by the scripted fixtures under `client/fixtures/`. `client/view-models/` holds the presentation boundary that will absorb the real server contracts unchanged once the two are wired together.
 
 ## Deployment
 
@@ -163,7 +168,9 @@ The baseline deploys to Vercel. Environment variables are configured in the Verc
 Established:
 
 - Next.js scaffold, TypeScript, lint, unit and end-to-end test harnesses, CI.
-- Application shell, styling foundation, and shared UI primitives.
+- The persistent Proposal Preparation workspace shell: fixed agent surface, session-controlled main-surface seam, user-controlled divider, named landmarks, skip link, and honest idle state. The divider width is page-lifetime state and is not persisted. No shared UI primitive exists yet.
+- The page-lifetime session runtime and tab strip: independent session records, creation, activation, keyboard/pointer reorder, close focus destinations, active-tab reveal, and explicit non-wrapping Radix tab mechanics. Session state is not persisted.
+- The full presentation and interaction layer of the proposal-preparation workflow, against era-marked fixtures: brief submission and a scripted working state; a structured clarification exchange (single and batch, answer or explicit skip, never both); a review surface with per-leaf provenance, absence, unresolved-information, and validation-error presentation; inline field edits and line-item replacement from retained alternatives; a field-scoped "ask the agent" instruction on a Radix Popover; a read-only client preview with its approximation disclosure; and an approval flow producing a created, recovered, or failed draft presentation with Applied Pricing rendered exactly as returned. Every domain object behind this is a hand-written, explicitly temporary type in `types/temporary-turn.ts`, populated by one scripted adapter in `client/fixtures/turns.temporary-fixture.ts` that returns fixed results by turn kind and never reads, parses, or reasons about what the user typed. Session close and discard are guarded by a meaningful-work predicate with a native confirmation dialog; a departure warning covers an in-flight draft creation; retained context (the fields/preview toggle, an opened line-item replacement) is restored independently per session on switch.
 - Architecture contracts and agent bootstrap.
 - Vendored Proposales reference and refresh workflow.
 - The Proposales adapter: transport with retries, content reads, draft creation, recovery search by generation id, and Applied Pricing read-back.
@@ -172,8 +179,7 @@ Established:
 
 Not yet built:
 
-- Transport. Nothing calls the workflow from the browser; `server/actions.ts` is the frontend stream's next step.
-- Product UI. The `/` route is still neutral.
+- The seam between the two halves above. The backend workflow and the frontend's presentation layer are each complete and tested independently, but nothing yet calls the backend workflow from the browser: the frontend's scripted fixture adapter (`client/fixtures/turns.temporary-fixture.ts`) has not been replaced with a real call to `src/features/proposal-preparation/server/index.ts`.
 
 Decided and deliberately absent:
 
@@ -185,10 +191,12 @@ Decided and deliberately absent:
 
 Decided for the frontend:
 
-- Tailwind CSS as the default production styling mechanism, with `src/styles/tokens.css` as the single definition of visual values. The existing CSS Modules are converted only when their components are touched by production UI work ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md)).
+- Tailwind CSS as the production styling mechanism. Visual values are defined once, in the Tailwind theme layer at `src/styles/theme.css` ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md)).
 - Zustand for feature-scoped client stores only, above `useState` and `useReducer` ([05-client-architecture.md](architectural_contracts/05-client-architecture.md) §5.1).
 
 Deliberately absent from the workflow itself: the application never sends a proposal, never writes a price, and never lets a model touch an approved payload. Those are enforced in code and pinned by tests, not conventions; the rules and where each is enforced are in the [feature README](src/features/proposal-preparation/README.md).
+
+Future integration work: replacing the frontend's scripted fixture adapter with the browser-to-server transport boundary and a real call into the server workflow above, so that the AI agent reasoning, the real Proposales adapter and mutation, and the real editor handoff URL — all of which already exist on the server — become reachable from the UI.
 
 ## Documentation map
 

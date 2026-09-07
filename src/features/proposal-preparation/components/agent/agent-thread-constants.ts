@@ -1,0 +1,1 @@
+export const THREAD_FOLLOW_BOTTOM_THRESHOLD_PX = 80;

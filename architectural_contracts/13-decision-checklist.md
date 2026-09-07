@@ -99,7 +99,7 @@ Apply this before adding a file, a function, a dependency, or a feature. If any 
 31. **What does this package do that the platform or an existing dependency does not?** [10-security-and-trust-boundaries.md](10-security-and-trust-boundaries.md) §11
 
 32. **Does this introduce a database, authentication, a client state or data-fetching library, a component library, a queue, or a cache?**
-    Stop. That is an architectural decision recorded in [README.md](README.md) "Resolved decisions", not a feature change. Zustand and Tailwind are already ratified there, with the conditions that govern their use ([05-client-architecture.md](05-client-architecture.md) §5.1, [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §1); TanStack Query, a component library, and client-side persistence are not, and each needs the named requirement first ([05-client-architecture.md](05-client-architecture.md) §4, §5.2, [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §5).
+    Stop. That is an architectural decision recorded in [README.md](../README.md) "Resolved decisions", not a feature change. Zustand and Tailwind are already ratified there, with the conditions that govern their use ([05-client-architecture.md](05-client-architecture.md) §5.1, [15-ui-styling-and-component-system.md](15-ui-styling-and-component-system.md) §1); TanStack Query and client-side persistence are not, and each needs the named requirement first ([05-client-architecture.md](05-client-architecture.md) §4, §5.2). Radix UI Primitives and Lucide React are adopted as recorded in [README.md](../README.md) "Resolved decisions".
 
 ## 6. Before persisting anything
 

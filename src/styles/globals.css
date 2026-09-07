@@ -1,110 +1,136 @@
 @import "tailwindcss";
+@import "./theme.css";
 
-/* Base reset: the minimum needed for predictable layout. */
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
+/*
+ * DESIGN DELTA (register #11, master plan §11.2): design 01's border-ramp collapse (six
+ * steps -> four) and half-pixel type-size snapping are open design questions, not ratified
+ * decisions. This file and the theme layer implement design 01's current specification
+ * behaviour (the full ramp, the exact half-pixel sizes) rather than the recommendation, per
+ * design 10 §4. Reported, not resolved, here.
+ */
 
-html {
-    -webkit-text-size-adjust: 100%;
-}
+/*
+ * The base rules below live in Tailwind's `base` layer, not unlayered, so that a component's
+ * own utility classes win over them. Unlayered rules beat every layered rule regardless of
+ * specificity, which silently defeated `text-*`, `font-*`, `text-[color]` and `outline-none`
+ * on every `button`/`input`/`select`/`textarea` in the app (`font: inherit; color: inherit`)
+ * and on every focused element (`:focus-visible { outline: ... }`). Contract 15 §1 makes the
+ * component file the readable definition of its own look; that only holds if utilities win.
+ *
+ * The reduced-motion block below stays unlayered on purpose: it is an accessibility floor
+ * that must beat component styling, not lose to it.
+ */
+@layer base {
+    /* Base reset: the minimum needed for predictable layout. */
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
 
-body {
-    margin: 0;
-    min-height: 100dvh;
-    background: var(--color-bg);
-    color: var(--color-fg);
-    font-family: var(--font-sans);
-    font-size: var(--text-base);
-    line-height: var(--leading-normal);
-    -webkit-font-smoothing: antialiased;
-}
+    html {
+        -webkit-text-size-adjust: 100%;
+        /* Design 01 §1.1: the production UI is a dark application; no light mode exists in V1. */
+        color-scheme: dark;
+    }
 
-/* Typography hierarchy */
-h1,
-h2,
-h3 {
-    margin: 0;
-    line-height: var(--leading-tight);
-    font-weight: 600;
-    letter-spacing: -0.01em;
-}
+    body {
+        margin: 0;
+        min-height: 100dvh;
+        background: var(--color-bg);
+        color: var(--color-fg);
+        font-family: var(--font-sans);
+        font-size: var(--text-base);
+        line-height: var(--leading-normal);
+        -webkit-font-smoothing: antialiased;
+    }
 
-h1 {
-    font-size: var(--text-2xl);
-}
+    /* Typography hierarchy */
+    h1,
+    h2,
+    h3 {
+        margin: 0;
+        line-height: var(--leading-tight);
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
 
-h2 {
-    font-size: var(--text-xl);
-}
+    h1 {
+        font-size: var(--text-2xl);
+    }
 
-h3 {
-    font-size: var(--text-lg);
-}
+    h2 {
+        font-size: var(--text-xl);
+    }
 
-p {
-    margin: 0;
-}
+    h3 {
+        font-size: var(--text-lg);
+    }
 
-*+p,
-*+h2,
-*+h3 {
-    margin-top: var(--space-4);
-}
+    p {
+        margin: 0;
+    }
 
-*+h2 {
-    margin-top: var(--space-8);
-}
+    *+p,
+    *+h2,
+    *+h3 {
+        margin-top: var(--space-4);
+    }
 
-small {
-    font-size: var(--text-sm);
-    color: var(--color-fg-muted);
-}
+    *+h2 {
+        margin-top: var(--space-8);
+    }
 
-a {
-    color: var(--color-accent);
-    text-underline-offset: 0.15em;
-}
+    small {
+        font-size: var(--text-sm);
+        color: var(--color-fg-muted);
+    }
 
-code,
-pre {
-    font-family: var(--font-mono);
-    font-size: 0.9em;
-}
+    a {
+        /* Design 01 §5 correction 4: never the accent as text on a dark surface; use the
+           corrected ink-on-dark value, which the prototype already uses for links. */
+        color: var(--color-accent-ink-on-dark);
+        text-underline-offset: 0.15em;
+    }
 
-/* Form controls inherit typography instead of the user-agent defaults. */
-button,
-input,
-select,
-textarea {
-    font: inherit;
-    color: inherit;
-    margin: 0;
-}
+    code,
+    pre {
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+    }
 
-button {
-    cursor: pointer;
-}
+    /* Form controls inherit typography instead of the user-agent defaults. */
+    button,
+    input,
+    select,
+    textarea {
+        font: inherit;
+        color: inherit;
+        margin: 0;
+    }
 
-button:disabled {
-    cursor: not-allowed;
-}
+    button {
+        cursor: pointer;
+    }
 
-label {
-    display: inline-block;
-    font-weight: 500;
-}
+    button:disabled {
+        cursor: not-allowed;
+    }
 
-/* Focus: visible for keyboard users, quiet for pointer users. */
-:focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: 2px;
-}
+    label {
+        display: inline-block;
+        font-weight: 500;
+    }
 
-:focus:not(:focus-visible) {
-    outline: none;
+    /* Focus: visible for keyboard users, quiet for pointer users. */
+    :focus-visible {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
+    }
+
+    :focus:not(:focus-visible) {
+        outline: none;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

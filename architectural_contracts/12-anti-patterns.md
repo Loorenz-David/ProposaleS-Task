@@ -53,7 +53,7 @@ Governed by [15-ui-styling-and-component-system.md](15-ui-styling-and-component-
 |---|---|---|
 | Inline `style={{...}}` objects as the general styling mechanism | Prohibited | Tailwind classes; `style` only for values computed at runtime (a dragged width, a transform, a popover coordinate) |
 | A second styling system beside Tailwind (CSS-in-JS, styled-components, SCSS) | Prohibited | One mechanism. [15](15-ui-styling-and-component-system.md) §1 |
-| Hard-coded colors, spacing, and type sizes repeated across components | Prohibited | A token in `src/styles/tokens.css`, wired into the Tailwind theme |
+| Hard-coded colors, spacing, and type sizes repeated across components | Prohibited | A value in the Tailwind theme layer (`src/styles/theme.css`), defined once |
 | A design-token taxonomy (semantic layers, component tokens, theme scales) built before repeated patterns demand it | Prohibited | One small flat set of values |
 | Promoting a component to `src/components/ui/` with one consumer, or because it "looks reusable" | Prohibited | It lives beside its consumer until a second feature uses it |
 | Domain knowledge, fetching, or feature state inside a `src/components/ui/` primitive | Prohibited | It belongs in the feature |
