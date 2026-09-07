@@ -50,7 +50,7 @@ export function InteractionPill({ viewModel, onIntent }: InteractionPillProps) {
   if (viewModel.kind === "action") {
     return (
       <div className={shell}>
-        <button className={row} type="button" aria-label={viewModel.accessibleName} onClick={() => onIntent(viewModel.intent)}>
+        <button className={row} type="button" aria-label={viewModel.accessibleName} data-pill-intent={viewModel.intent.kind} onClick={() => onIntent(viewModel.intent)}>
           <PillLabel viewModel={viewModel} />
           <ChevronRight aria-hidden="true" className="shrink-0 text-[var(--color-fg-quiet)]" size={15} />
         </button>

@@ -855,5 +855,10 @@ Tracker §4 rows 05–15: `State` → `SUBMISSION_SPRINT`, `Note` → "see §3B"
   answer/skip drafts, bounded navigation, pinned actions, first-open focus, Escape dismissal with
   composer focus return, Ctrl/Cmd+Enter, inline failure description, and always-available skip actions
   implemented. The panel remains mounted while dismissed so reopening preserves draft input.
+- WP5 — review surface: structured proposition header, accessible Fields/Client Preview radio toggle,
+  definition-list fields, fixed-layout line-item table, provenance text, commercial notes, assumptions,
+  warnings, unresolved information, and approval-boundary action implemented. Mapping tests cover
+  carried leaves in both directions, all provenance classes, honest absence, readiness, and validation
+  routing.
 - Files created/modified, package/version, theme names, design deltas, later checkpoints, Pass B open
   items, and the final verification SHA will be completed at the exit gate.
