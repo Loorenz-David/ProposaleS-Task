@@ -57,6 +57,90 @@ test("empty to created is operable with the real fixture latency", async ({ page
   await expect(link).toHaveAttribute("rel", "noopener noreferrer");
 });
 
+test("a resolved turn stays with its origin session and marks that tab unread", async ({ page }) => {
+  await page.goto("/");
+  const composer = page.getByRole("textbox", { name: "Message Proposal Copilot" });
+  await composer.fill("A brief that resolves after switching sessions.");
+  await composer.press("Enter");
+  await expect(page.locator('[data-status="working"]')).toBeVisible();
+
+  await page.getByRole("button", { name: "New session" }).click();
+  const tabs = page.getByRole("tab");
+  await expect(tabs).toHaveCount(2);
+  await expect(page.getByRole("region", { name: "Agent questions" })).toHaveCount(0);
+
+  await expect(tabs.nth(0)).toHaveAttribute("aria-label", /1 unread/);
+  await tabs.nth(0).click();
+  await expect(page.getByRole("region", { name: "Agent questions" })).toBeVisible();
+  await expect(tabs.nth(0)).not.toHaveAttribute("aria-label", /unread/);
+});
+
+test("typed draft close confirms, cancels, and restores focus to the neighbour", async ({ page }) => {
+  await page.goto("/");
+  const composer = page.getByRole("textbox", { name: "Message Proposal Copilot" });
+  await composer.fill("Keep this draft in the session until I confirm close.");
+  await page.getByRole("button", { name: "New session" }).click();
+  const tabs = page.getByRole("tab");
+  await expect(tabs).toHaveCount(2);
+
+  const firstWrapper = page.locator("[data-session-tab-wrapper]").nth(0);
+  await firstWrapper.getByRole("button", { name: /Close session/ }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(tabs).toHaveCount(2);
+
+  await firstWrapper.getByRole("button", { name: /Close session/ }).click();
+  await dialog.getByRole("button", { name: "Close session" }).click();
+  await expect(page.getByRole("tab")).toHaveCount(1);
+  await expect(page.getByRole("tab")).toBeFocused();
+  await expect(page.getByRole("textbox", { name: "Message Proposal Copilot" })).toHaveValue("");
+});
+
+test("closing while a draft is creating is refused", async ({ page }) => {
+  test.slow();
+  await reachReview(page);
+  await page.getByRole("button", { name: "Approve and create draft" }).click();
+  await expect(page.getByRole("heading", { name: "Creating draft in Proposales" })).toBeFocused();
+
+  await page.getByRole("button", { name: /Close session/ }).click();
+  await expect(page.locator("[data-session-status-announcement]")).toHaveText(
+    "This session cannot be closed while its draft is being created.",
+  );
+  await expect(page.getByRole("tab")).toHaveCount(1);
+});
+
+test("session work surface and opened block context are restored independently", async ({ page }) => {
+  test.slow();
+  await reachReview(page);
+  await page.getByRole("button", { name: "Replace" }).first().click();
+  await expect(page.getByRole("region", { name: "Replace line item" })).toBeVisible();
+  await page.getByRole("radio", { name: "Client Preview" }).click();
+  await expect(page.getByRole("radio", { name: "Client Preview" })).toBeChecked();
+
+  await page.getByRole("button", { name: "New session" }).click();
+  await reachReview(page);
+  await expect(page.getByRole("radio", { name: "Fields" })).toBeChecked();
+
+  const tabs = page.getByRole("tab");
+  await tabs.nth(0).click();
+  await expect(page.getByRole("radio", { name: "Client Preview" })).toBeChecked();
+  await expect(page.getByRole("region", { name: "Replace line item" })).toHaveCount(0);
+  await page.getByRole("radio", { name: "Fields" }).click();
+  await expect(page.getByRole("region", { name: "Replace line item" })).toBeVisible();
+
+  await tabs.nth(1).click();
+  await expect(page.getByRole("radio", { name: "Fields" })).toBeChecked();
+});
+
+test("reload starts one empty session without restoring the previous workspace", async ({ page }) => {
+  await reachReview(page);
+  await page.reload();
+  await expect(page.getByRole("tab")).toHaveCount(1);
+  await expect(page.getByText("Start with a brief", { exact: false })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Walnut dining set for Studio North", level: 1 })).toHaveCount(0);
+});
+
 test.describe("reduced motion", () => {
   test.use({ contextOptions: { reducedMotion: "reduce" } });
 
@@ -67,6 +151,28 @@ test.describe("reduced motion", () => {
     const creating = page.getByRole("heading", { name: "Creating draft in Proposales" });
     await expect(creating).toBeFocused();
     await expect(page.getByRole("status").locator("svg")).toHaveCSS("animation-name", "none");
+    await expect(page.getByRole("heading", { name: "Draft created in Proposales", level: 1 })).toBeFocused();
+  });
+
+  test("the complete clarification, review, ask, and creation loop remains operable", async ({ page }) => {
+    test.slow();
+    await reachReview(page);
+    await page.getByRole("button", { name: /Edit Title, currently/ }).click();
+    const titleInput = page.getByRole("textbox", { name: "Edit Title" });
+    await titleInput.fill("Reduced motion dining collection");
+    await titleInput.press("Enter");
+    await expect(page.locator('[data-status="working"]')).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Reduced motion dining collection", level: 1 })).toBeVisible();
+
+    await page.getByRole("button", { name: "Ask the agent about Title" }).click();
+    const ask = page.getByRole("textbox", { name: "Ask the agent about Title" });
+    await ask.fill("Keep the introduction warm");
+    await ask.press("Enter");
+    await expect(page.locator('[data-status="working"]')).toBeVisible();
+    await expect(page.getByText("We will restore the walnut dining collection", { exact: false })).toBeVisible();
+
+    await page.getByRole("button", { name: "Approve and create draft" }).click();
+    await expect(page.getByRole("heading", { name: "Creating draft in Proposales" })).toBeFocused();
     await expect(page.getByRole("heading", { name: "Draft created in Proposales", level: 1 })).toBeFocused();
   });
 });
