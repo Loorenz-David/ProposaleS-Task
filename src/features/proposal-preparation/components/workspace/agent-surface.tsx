@@ -43,9 +43,20 @@ export function AgentSurface({ closeGuard }: { closeGuard?: CloseGuardController
   const setWorkSurface = useWorkspaceSessionStore((state) => state.setWorkSurface);
   const { dispatch } = useTurnDispatch();
 
+  /**
+   * The composer means "brief" until a proposition exists and "revision" afterwards — which is
+   * what its own hint has always said. A session whose draft exists offers no turn at all.
+   */
   const submitBrief = () => {
     if (!activeSessionId || !record || record.composerDraft.length === 0 || record.inFlightTurn) return;
-    void dispatch(activeSessionId, { kind: "brief", text: record.composerDraft });
+    if (record.workflow?.draftReference) return;
+    const text = record.composerDraft;
+    void dispatch(
+      activeSessionId,
+      record.workflow?.currentProposition
+        ? { kind: "revision", instruction: text, scope: null }
+        : { kind: "brief", text },
+    );
   };
 
   const onPillIntent = (intent: PillIntent) => {
@@ -125,7 +136,7 @@ export function AgentSurface({ closeGuard }: { closeGuard?: CloseGuardController
         <AgentComposer
           ref={composerRef}
           hint={record.workflow?.currentProposition ? "Ask for a revision, or edit a field in the review." : "Enter to send · Shift+Enter for a new line"}
-          isSubmitting={record.inFlightTurn !== null}
+          isSubmitting={record.inFlightTurn !== null || record.workflow?.draftReference !== undefined}
           onChange={(text) => setComposerDraft(activeSessionId, text)}
           onSubmit={submitBrief}
           value={record.composerDraft}

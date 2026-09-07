@@ -1,5 +1,5 @@
 import type { SessionRuntimeRecord } from "../../types/session";
-import type { TemporaryClarification } from "../../types/temporary-turn";
+import type { ClarificationAnswer } from "../../schemas/clarification";
 
 export type ClarificationDraft = {
   questionId: string;
@@ -23,7 +23,7 @@ export type ClarificationPanelViewModel = {
 export function toClarificationAnswersInput(
   drafts: ClarificationDraft[],
   receivedQuestionIds: string[],
-): { answers: TemporaryClarification["answers"] } {
+): { answers: ClarificationAnswer[] } {
   const draftById = new Map(drafts.map((draft) => [draft.questionId, draft]));
   return {
     answers: receivedQuestionIds.flatMap((questionId) => {
@@ -54,10 +54,12 @@ export function toClarificationPanelViewModel(
   record: SessionRuntimeRecord,
 ): ClarificationPanelViewModel | null {
   if (record.latestResult?.status !== "clarification") return null;
+  // Questions come from the result the turn returned; answers come from the state, which is where
+  // the round is recorded. An absent round means no answers — a fact, not a default.
   const answers = new Map(
-    record.latestResult.clarification.answers.map((entry) => [entry.questionId, entry.answer]),
+    (record.workflow?.clarification?.answers ?? []).map((entry) => [entry.questionId, entry.answer]),
   );
-  const questions = record.latestResult.clarification.questions.map((question) => {
+  const questions = record.latestResult.questions.map((question) => {
     const answer = answers.get(question.questionId);
     return {
       questionId: question.questionId,

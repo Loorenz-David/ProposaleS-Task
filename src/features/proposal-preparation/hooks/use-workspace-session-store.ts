@@ -9,7 +9,7 @@ import type {
   WorkspaceSessionId,
   WorkSurface,
 } from "../types/session";
-import type { TemporaryTurnInput, TemporaryTurnOutcome } from "../types/temporary-turn";
+import type { TurnInput, TurnOutcome } from "../types/turn";
 
 export type WorkspaceSessionState = {
   activeSessionId: WorkspaceSessionId | null;
@@ -29,8 +29,8 @@ export type WorkspaceSessionState = {
   applyTurnResult: (
     originSessionId: WorkspaceSessionId,
     turnId: string,
-    outcome: TemporaryTurnOutcome,
-    retryInput: TemporaryTurnInput,
+    outcome: TurnOutcome,
+    retryInput: TurnInput,
   ) => void;
   applyTurnFailure: (
     originSessionId: WorkspaceSessionId,
@@ -56,6 +56,7 @@ function createSessionRecord(): SessionRuntimeRecord {
     thread: [],
     latestResult: null,
     workflow: null,
+    conversation: null,
     inFlightTurn: null,
     hasStartedTurn: false,
     unread: 0,
@@ -66,7 +67,7 @@ function createSessionRecord(): SessionRuntimeRecord {
   };
 }
 
-function siteForInput(input: TemporaryTurnInput) {
+function siteForInput(input: TurnInput) {
   if (input.kind === "approval") return { kind: "creation" as const };
   if (input.kind === "revision") {
     return input.scope
@@ -259,7 +260,10 @@ export const useWorkspaceSessionStore = create<WorkspaceSessionState>((set, get)
             },
           ],
           latestResult: outcome.result,
-          workflow: outcome.workflow,
+          workflow: outcome.state,
+          // Absent means the turn produced none — approval does not — so the record keeps the
+          // conversation it holds rather than clearing it.
+          conversation: outcome.conversation === undefined ? record.conversation : outcome.conversation,
           clarificationPanel: outcome.result.status === "clarification" ? "open" : "dismissed",
           callFailure: null,
           unread: record.unread + (state.activeSessionId === originSessionId ? 0 : 1),

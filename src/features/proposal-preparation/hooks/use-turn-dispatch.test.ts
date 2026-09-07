@@ -3,11 +3,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { temporaryFixtureErrorDto } from "../client/fixtures/failures.temporary-fixture";
-import {
-  setTemporaryTurnAdapterForTests,
-} from "../client/fixtures/turns.temporary-fixture";
-import { temporaryFixturePropositionV1 } from "../client/fixtures/proposition.temporary-fixture";
+import { fixtureErrorDto } from "../client/fixtures/failures.fixture";
+import { setTurnTransportForTests } from "../client/turn-transport";
+import { fixtureClarificationOutcome } from "../client/fixtures/turn-outcome.fixture";
+import { fixturePropositionV1 } from "../client/fixtures/proposition.fixture";
 import { createWorkspaceSessionState, useWorkspaceSessionStore } from "./use-workspace-session-store";
 import { useTurnDispatch } from "./use-turn-dispatch";
 import type { WorkspaceSessionId } from "../types/session";
@@ -29,14 +28,7 @@ function activeId() {
 }
 
 function briefOutcome() {
-  return {
-    ok: true as const,
-    result: {
-      status: "clarification" as const,
-      clarification: { questions: [], answers: [] },
-    },
-    workflow: { clarification: { questions: [], answers: [] } },
-  };
+  return fixtureClarificationOutcome();
 }
 
 beforeEach(() => {
@@ -44,14 +36,14 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  setTemporaryTurnAdapterForTests(null);
+  setTurnTransportForTests(null);
 });
 
 describe("useTurnDispatch", () => {
   it("R1.1/R1.2: keeps the captured origin and increments only its background unread", async () => {
     const first = activeId();
     const wait = deferred<ReturnType<typeof briefOutcome>>();
-    setTemporaryTurnAdapterForTests({ run: async () => wait.promise });
+    setTurnTransportForTests({ run: async () => wait.promise });
     const { result } = renderHook(() => useTurnDispatch());
     const secondSnapshot = useWorkspaceSessionStore.getState().createSession();
     const secondBefore = structuredClone(useWorkspaceSessionStore.getState().sessions[secondSnapshot]);
@@ -87,7 +79,7 @@ describe("useTurnDispatch", () => {
   it("R1.5: discards an origin that was closed before resolution", async () => {
     const origin = activeId();
     const wait = deferred<ReturnType<typeof briefOutcome>>();
-    setTemporaryTurnAdapterForTests({ run: async () => wait.promise });
+    setTurnTransportForTests({ run: async () => wait.promise });
     const { result } = renderHook(() => useTurnDispatch());
     let dispatchPromise!: Promise<void>;
     act(() => {
@@ -106,12 +98,12 @@ describe("useTurnDispatch", () => {
   it("R1.7: submits only one approval while the origin is pending", async () => {
     const id = activeId();
     const wait = deferred<ReturnType<typeof briefOutcome>>();
-    setTemporaryTurnAdapterForTests({ run: async () => wait.promise });
+    setTurnTransportForTests({ run: async () => wait.promise });
     const { result } = renderHook(() => useTurnDispatch());
     const input = {
       kind: "approval" as const,
-      workflow: { currentProposition: temporaryFixturePropositionV1 },
-      proposition: temporaryFixturePropositionV1,
+      workflow: { currentProposition: fixturePropositionV1 },
+      proposition: fixturePropositionV1,
       acknowledgment: { statementId: "id", wording: "wording" },
     };
     let first!: Promise<void>;
@@ -129,8 +121,8 @@ describe("useTurnDispatch", () => {
 
   it("R1.8: attributes a failure to the origin without unread", async () => {
     const id = activeId();
-    setTemporaryTurnAdapterForTests({
-      run: async () => ({ ok: false as const, error: temporaryFixtureErrorDto("integration_error") }),
+    setTurnTransportForTests({
+      run: async () => ({ ok: false as const, error: fixtureErrorDto("integration_error") }),
     });
     const { result } = renderHook(() => useTurnDispatch());
     await act(() => result.current.dispatch(id, { kind: "brief", text: "x" }));
@@ -142,7 +134,7 @@ describe("useTurnDispatch", () => {
 
   it("R1.9: uses UUID turn ids and keeps the store counter guard intact", () => {
     const id = activeId();
-    setTemporaryTurnAdapterForTests({ run: async () => new Promise(() => {}) });
+    setTurnTransportForTests({ run: async () => new Promise(() => {}) });
     const { result } = renderHook(() => useTurnDispatch());
     act(() => {
       void result.current.dispatch(id, { kind: "brief", text: "x" });
@@ -171,7 +163,7 @@ describe("useTurnDispatch", () => {
     const first = activeId();
     const second = useWorkspaceSessionStore.getState().createSession();
     const wait = deferred<ReturnType<typeof briefOutcome>>();
-    setTemporaryTurnAdapterForTests({ run: async () => wait.promise });
+    setTurnTransportForTests({ run: async () => wait.promise });
     useWorkspaceSessionStore.getState().setComposerDraft(first, "A draft");
     useWorkspaceSessionStore.getState().setComposerDraft(second, "B draft");
     const { result } = renderHook(() => useTurnDispatch());
@@ -210,7 +202,7 @@ describe("useTurnDispatch", () => {
     const id = activeId();
     const wait = deferred<ReturnType<typeof briefOutcome>>();
     let received: unknown;
-    setTemporaryTurnAdapterForTests({
+    setTurnTransportForTests({
       run: async (input) => {
         received = input;
         return wait.promise;
@@ -240,7 +232,7 @@ describe("useTurnDispatch", () => {
   it("R5.7: ask-agent uses the field label in the revision and preserves its scope", async () => {
     const id = activeId();
     const wait = deferred<ReturnType<typeof briefOutcome>>();
-    setTemporaryTurnAdapterForTests({ run: async () => wait.promise });
+    setTurnTransportForTests({ run: async () => wait.promise });
     const { result } = renderHook(() => useTurnDispatch());
     let pending!: Promise<void>;
     act(() => {

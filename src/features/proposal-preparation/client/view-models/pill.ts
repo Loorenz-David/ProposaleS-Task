@@ -1,4 +1,6 @@
-import type { TemporaryDomainResult } from "../../types/temporary-turn";
+import type { ClarificationAnswer } from "../../schemas/clarification";
+import type { DomainResult } from "../../schemas/turn-result";
+import { readLeaf } from "./leaf";
 export type PillIntent = { kind: "reopen-questions" } | { kind: "focus-review" };
 
 export type PillKind = "thought" | "ask" | "link" | "action";
@@ -49,11 +51,19 @@ export type PillViewModel =
       intent: PillIntent;
     };
 
-export function toPillViewModels(result: TemporaryDomainResult, entryId: string): PillViewModel[] {
+/**
+ * `answers` is passed in rather than read off the result: the clarification result member carries
+ * only the questions, and the answers live on the workflow state (§1.2). An empty list therefore
+ * means "no answers yet", which is exactly what an unanswered round is.
+ */
+export function toPillViewModels(
+  result: DomainResult,
+  entryId: string,
+  answers: ClarificationAnswer[] = [],
+): PillViewModel[] {
   if (result.status === "proposition") {
-    const rationale = result.proposition.agentRationale.known
-      ? result.proposition.agentRationale.value
-      : null;
+    const rationaleLeaf = readLeaf<string>(result.proposition.agentRationale);
+    const rationale = rationaleLeaf.known ? rationaleLeaf.value : null;
     return [
       {
         id: `${entryId}:thought`,
@@ -64,10 +74,13 @@ export function toPillViewModels(result: TemporaryDomainResult, entryId: string)
         defaultExpanded: false,
         payload: {
           rationale,
-          assumptions: result.proposition.assumptions.map((assumption) => ({ ...assumption })),
+          assumptions: result.proposition.assumptions.map((assumption) => ({
+            path: assumption.path,
+            note: assumption.note.value,
+          })),
           warnings: result.proposition.warnings.map((warning) => ({
             kind: warning.kind,
-            text: warning.text,
+            text: warning.text.value,
           })),
         },
       },
@@ -83,10 +96,8 @@ export function toPillViewModels(result: TemporaryDomainResult, entryId: string)
   }
 
   if (result.status === "clarification") {
-    const answerById = new Map(
-      result.clarification.answers.map((answer) => [answer.questionId, answer.answer]),
-    );
-    const questions = result.clarification.questions.map((question) => {
+    const answerById = new Map(answers.map((answer) => [answer.questionId, answer.answer]));
+    const questions = result.questions.map((question) => {
       const answer = answerById.get(question.questionId);
       return {
         questionId: question.questionId,
@@ -96,12 +107,17 @@ export function toPillViewModels(result: TemporaryDomainResult, entryId: string)
       };
     });
     const openCount = questions.filter((question) => question.state === "open").length;
+    // The budget note is appended rather than replacing the count: the questions still stand, and
+    // why the agent stopped asking is a separate fact the reader needs (§12A.9).
+    const meta = result.budgetExhausted
+      ? `${openCount} open · the agent reached its ${result.budgetExhausted.budget} limit`
+      : `${openCount} open`;
     return [
       {
         id: `${entryId}:ask`,
         kind: "ask",
         label: "Questions to resolve",
-        meta: `${openCount} open`,
+        meta,
         accessibleName: `${openCount} open questions`,
         defaultExpanded: openCount > 0,
         payload: { questions },
@@ -125,7 +141,7 @@ export function toPillViewModels(result: TemporaryDomainResult, entryId: string)
         label: "Open in Proposales",
         meta: result.status === "recovered" ? "Recovered draft" : "Draft created",
         accessibleName: "Open the draft in Proposales (opens in a new tab)",
-        href: result.draftResult.editorUrl,
+        href: result.draft.editorUrl,
       },
     ];
   }

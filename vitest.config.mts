@@ -37,6 +37,15 @@ export default defineConfig({
       },
       {
         extends: true,
+        resolve: {
+          alias: {
+            "@": fileURLToPath(new URL("./src", import.meta.url)),
+            // The client seam imports `server/actions` for its types and its action functions, so
+            // a jsdom test that renders the workspace reaches `server-only`. The node project has
+            // stubbed it since the backend suites began; both projects now agree.
+            "server-only": fileURLToPath(new URL("./test/stubs/server-only.ts", import.meta.url)),
+          },
+        },
         test: {
           name: "jsdom",
           environment: "jsdom",

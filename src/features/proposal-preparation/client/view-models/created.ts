@@ -1,12 +1,7 @@
+import type { AppliedPricingReport, DraftNoticeKind } from "../../schemas/draft-result";
 import type { SessionRuntimeRecord } from "../../types/session";
-import type { TemporaryAppliedPricing } from "../../types/temporary-turn";
 import { toMoneyDisplay } from "./money";
 import { toReviewSurfaceViewModel, type ReviewSurfaceViewModel } from "./review";
-
-export const TEMPORARY_FIXTURE_PRICING_ACKNOWLEDGMENT = {
-  statementId: "temporary-library-pricing",
-  wording: "Prices come from the content library and are applied by Proposales.",
-} as const;
 
 export type AppliedPricingViewModel =
   | {
@@ -36,7 +31,7 @@ export type CreatedViewModel = {
 };
 
 const PRICING_REASON_TEXT: Record<
-  Extract<TemporaryAppliedPricing, { available: false }>["reason"],
+  Extract<AppliedPricingReport, { available: false }>["reason"],
   string
 > = {
   read_failed_upstream: "Pricing could not be read from Proposales.",
@@ -45,7 +40,16 @@ const PRICING_REASON_TEXT: Record<
   read_budget_exhausted: "Pricing could not be read within this run.",
 };
 
-function toAppliedPricingViewModel(pricing: TemporaryAppliedPricing): AppliedPricingViewModel {
+const NOTICE_TEXT: Record<DraftNoticeKind, string> = {
+  inline_recipient_may_duplicate_contact:
+    "The inline recipient may duplicate an existing Proposales contact.",
+  editor_url_origin_unexpected:
+    "Proposales returned an editor link on an unexpected origin. Open it only if you recognise it.",
+};
+
+function toAppliedPricingViewModel(pricing: AppliedPricingReport): AppliedPricingViewModel {
+  // The unavailable arm carries no money field, so there is nothing here that could render as a
+  // zero amount; `status` is deliberately not shown (§12A.9).
   if (!pricing.available) return { available: false, reasonText: PRICING_REASON_TEXT[pricing.reason] };
   return {
     available: true,
@@ -55,7 +59,8 @@ function toAppliedPricingViewModel(pricing: TemporaryAppliedPricing): AppliedPri
     blocks: pricing.blocks.map((block) => ({
       contentId: block.contentId,
       quantity: String(block.quantity),
-      optional: block.optional,
+      // The vendor omits the flag rather than sending `false`, so absence means not optional.
+      optional: block.optional === true,
       unitWithoutTax: toMoneyDisplay(block.unitValueWithDiscountWithoutTax),
       unitWithTax: toMoneyDisplay(block.unitValueWithDiscountWithTax),
     })),
@@ -76,12 +81,10 @@ export function toCreatedViewModel(record: SessionRuntimeRecord): CreatedViewMod
         ? "Draft recovered in Proposales"
         : "Draft created in Proposales",
     isRecovered: result.status === "recovered",
-    identifier: result.draftResult.proposalUuid,
-    editorUrl: result.draftResult.editorUrl,
-    pricing: toAppliedPricingViewModel(result.draftResult.appliedPricing),
-    notices: result.draftResult.notices.map(
-      () => "The inline recipient may duplicate an existing Proposales contact.",
-    ),
+    identifier: result.draft.proposalUuid,
+    editorUrl: result.draft.editorUrl,
+    pricing: toAppliedPricingViewModel(result.draft.appliedPricing),
+    notices: result.draft.notices.map((notice) => NOTICE_TEXT[notice.kind]),
     reviewed: toReviewSurfaceViewModel(record),
   };
 }

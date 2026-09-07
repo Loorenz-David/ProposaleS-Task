@@ -558,3 +558,30 @@ Adopted while implementing:
 Tests amended (two files, same reason): `src/lib/ai/client.test.ts` and `src/lib/ai/registry.test.ts` construct a complete server environment explicitly and so had to gain `COPILOT_LIVE_MUTATIONS: "disabled"`. Contract 11 §5 requires tests to construct configuration explicitly, so the fix belongs in them, not in a default on the schema. No assertion changed.
 
 Planted-defect rows verified by running them: removing the exposure check reddens T-BOUND-4 (confirmed, then restored); `test/isolation.test.ts` gains a row where `"use server";` without the `server-only` import is still a violation, and one where the directive before the import is admitted.
+
+### 15.4 WP3 — type and seam rebinding
+
+`types/turn.ts` (new) · `types/temporary-turn.ts` (deleted) · `types/session.ts` · `client/turn-transport.ts` (+test) · `client/view-models/leaf.ts` (+test) · six `client/fixtures/*.fixture.ts` rewritten as parse results, plus `workflow-state.fixture.ts` and `turn-outcome.fixture.ts` (all with construction tests) · seven view models · the store and the dispatch hook · `vitest.config.mts`. `npm test` 882 green, typecheck and lint green. Component production diff since WP1: only `agent-surface.tsx` and `main-application-surface.tsx` (§15.6).
+
+Adopted while implementing:
+
+- **`readLeaf` / `sourcedToLeaf` (`client/view-models/leaf.ts`), from difference D1.** Absence-capable leaves infer as `unknown`, so the presentation layer needs one place that recovers the shape. `readLeaf` narrows to the two arms the schema admits and **throws** on anything else rather than treating it as absent: the value was already parsed server-side, so a third shape is a programming error, not a missing value (06 §3). Its types are composed from `PropositionSource` and `Ref`, exported by `schemas/shared.ts`, so nothing is hand-copied (05 §8) and no schema was edited.
+- **`vitest.config.mts`'s jsdom `server-only` alias was pulled forward from WP4.** The transport imports `server/actions`, so every jsdom hook and component test reached the real `server-only` package and failed at import. This is exactly the risk in §12; the fix is the plan's own, applied one work package earlier because WP3's tests need it.
+- **`turn-outcome.fixture.ts` (new, test-only, not in §5).** The deleted `turns.temporary-fixture.ts` had two roles: producing outcomes for store and hook tests, and standing in for the network. Only the second is replaced by `setTurnTransportForTests`; the first needed a home, and inlining real-shaped outcomes into two test files would have duplicated them.
+- **`toLeafValue` accepts `string | number | boolean`,** the type `ProposalReviewSurface.onCommitEdit` already declares. Narrowing it to `string` would have meant editing a component outside A1/A2/B1 — a stop condition — to gain nothing: a value that is already a number needs no interpretation and is passed through.
+- **The fixture era encoded a rule the backend forbids.** `fixturePropositionV1` originally sourced `quantity` and `optional` to `"inferred"`; `consequentialSchema` admits only `brief` and `human`, because the model may not invent a quantity. The fixture was corrected to `brief` (the assumption note already said the brief was where six chairs came from). This is now a permanent row: `proposition.fixture.test.ts` asserts an `inferred` quantity is rejected.
+
+Tests amended, and why (no test was deleted):
+
+| Test | Change | Why |
+|---|---|---|
+| `review.test.ts` recipient paths | `recipient.firstName` → `recipient.value.firstName` | The real schema nests recipient leaves one level deeper. Same rows, real path. |
+| `review.test.ts` absent-recipient row | An absent recipient now renders five rows, not one | `apply-edits.ts` materializes the recipient from a leaf path, so each row is editable. The single "Recipient: Not set" row was an affordance with no operation behind it. |
+| `review.test.ts` R5.6 | Four alternatives → three, duplicate retained | `MAX_ALTERNATIVES_PER_BLOCK` is 3, so a four-entry block is not a shape the backend can return. Order and repetition are still what the row proves. |
+| `pill.test.ts`, `clarification.test.ts` | Questions read from the result, answers from the state | The clarification result member carries `questions` only (§1.2). |
+| `created.test.ts`, `pill.test.ts`, `main-surface.test.ts`, `agent-status-line.test.tsx` | `draftResult` → `draft` | The result member's real name. |
+| `main-application-surface.test.tsx` R6.1 | Asserts the intent and the captured held state; the envelope's contents move to `turn-transport.test.ts` | A1 moved envelope composition out of the component. The assertion was relocated, not dropped — the transport rows prove the held state, its proposition and the shared acknowledgment all go out. |
+| `approval-action.test.tsx` | Expects the real `LIBRARY_PRICING_STATEMENT_TEXT` wording | The acknowledgment is now the one the envelope actually names. |
+| `use-workspace-session-store.test.ts` C7 | Record literal gains `conversation: null` | The record gained the field. |
+| store and dispatch tests | Outcomes from `turn-outcome.fixture.ts`; seam renamed to `setTurnTransportForTests` | The fixture adapter is gone. |
+| `src/lib/ai/{client,registry}.test.ts` | (WP2) `COPILOT_LIVE_MUTATIONS` added to explicit env | See §15.3. |

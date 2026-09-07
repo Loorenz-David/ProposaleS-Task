@@ -1,4 +1,5 @@
-import type { TemporaryProposition } from "../../types/temporary-turn";
+import type { Proposition } from "../../schemas/proposition";
+import { readLeaf } from "./leaf";
 
 export type PreviewViewModel = {
   title: string | null;
@@ -9,15 +10,18 @@ export type PreviewViewModel = {
   isEmpty: boolean;
 };
 
-export function toPreviewViewModel(proposition: TemporaryProposition): PreviewViewModel {
-  const title = proposition.title.known ? proposition.title.value : null;
-  const narrative = proposition.descriptionNarrative.known
-    ? proposition.descriptionNarrative.value
-    : null;
-  const items = proposition.blocks.map((block) => ({
-    title: block.title,
-    description: block.description.known ? block.description.value : null,
-  }));
+export function toPreviewViewModel(proposition: Proposition): PreviewViewModel {
+  const titleLeaf = readLeaf<string>(proposition.title);
+  const narrativeLeaf = readLeaf<string>(proposition.descriptionNarrative);
+  const title = titleLeaf.known ? titleLeaf.value : null;
+  const narrative = narrativeLeaf.known ? narrativeLeaf.value : null;
+  const items = proposition.blocks.map((block) => {
+    const description = readLeaf<string>(block.description);
+    return {
+      title: block.title.value,
+      description: description.known ? description.value : null,
+    };
+  });
   return {
     title,
     narrative,

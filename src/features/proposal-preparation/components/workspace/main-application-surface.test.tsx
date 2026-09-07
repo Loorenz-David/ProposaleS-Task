@@ -3,11 +3,10 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { temporaryFixtureDraftResultCreated } from "../../client/fixtures/draft-result.temporary-fixture";
-import { temporaryFixturePropositionV1 } from "../../client/fixtures/proposition.temporary-fixture";
-import {
-  setTemporaryTurnAdapterForTests,
-} from "../../client/fixtures/turns.temporary-fixture";
+import { fixtureDraftResultCreated } from "../../client/fixtures/draft-result.fixture";
+import { fixtureFailedResult } from "../../client/fixtures/failures.fixture";
+import { setTurnTransportForTests } from "../../client/turn-transport";
+import { fixtureWorkflowState } from "../../client/fixtures/workflow-state.fixture";
 import { createWorkspaceSessionState, useWorkspaceSessionStore } from "../../hooks/use-workspace-session-store";
 import { MainApplicationSurface } from "./main-application-surface";
 
@@ -21,23 +20,28 @@ beforeEach(() => {
       ...state.sessions,
       [sessionId]: {
         ...state.sessions[sessionId],
-        workflow: { currentProposition: temporaryFixturePropositionV1 },
+        workflow: fixtureWorkflowState(),
       },
     },
   });
 });
 
-afterEach(() => setTemporaryTurnAdapterForTests(null));
+afterEach(() => setTurnTransportForTests(null));
 
 describe("MainApplicationSurface machinery", () => {
-  it("R6.1/R6.2/R6.4: submits the held proposition and imported acknowledgment without optimistic terminality", () => {
+  it("R6.1/R6.2/R6.4: dispatches approval as an intent, with the held state and no optimistic terminality", () => {
+    // The component states that the human approved; it does not assemble the envelope. The
+    // envelope's contents — the held state, that same state's proposition, and the shared
+    // acknowledgment — are asserted where they are now composed, in turn-transport.test.ts.
     const source = readFileSync(path.join(__dirname, "main-application-surface.tsx"), "utf8");
-    expect(source).toContain("proposition: record.workflow!.currentProposition!");
+    expect(source).not.toContain("pricingAcknowledgment");
     expect(source).not.toContain("proposition: surface.review");
     let received: unknown;
-    setTemporaryTurnAdapterForTests({
-      run: async (input) => {
+    let heldAtDispatch: unknown;
+    setTurnTransportForTests({
+      run: async (input, held) => {
         received = input;
+        heldAtDispatch = held;
         return new Promise(() => {});
       },
     });
@@ -46,15 +50,8 @@ describe("MainApplicationSurface machinery", () => {
     const id = useWorkspaceSessionStore.getState().activeSessionId;
     if (!id) throw new Error("session missing");
     const record = useWorkspaceSessionStore.getState().sessions[id];
-    expect(received).toEqual({
-      kind: "approval",
-      workflow: record.workflow,
-      proposition: record.workflow?.currentProposition,
-      acknowledgment: {
-        statementId: "temporary-library-pricing",
-        wording: "Prices come from the content library and are applied by Proposales.",
-      },
-    });
+    expect(received).toEqual({ kind: "approval" });
+    expect(heldAtDispatch).toEqual({ workflow: record.workflow, conversation: record.conversation });
     expect(record.workflow?.draftReference).toBeUndefined();
     expect(record.inFlightTurn?.kind).toBe("approval");
   });
@@ -67,12 +64,7 @@ describe("MainApplicationSurface machinery", () => {
     useWorkspaceSessionStore.getState().applyTurnFailure(id, "creation", {
       site: { kind: "creation" },
       error: { code: "integration_error", message: "Creation failed", details: { retryable: true } },
-      retry: {
-        kind: "approval",
-        workflow: { currentProposition: temporaryFixturePropositionV1 },
-        proposition: temporaryFixturePropositionV1,
-        acknowledgment: { statementId: "temporary-library-pricing", wording: "wording" },
-      },
+      retry: { kind: "approval" },
     });
     const failed = useWorkspaceSessionStore.getState().sessions[id];
     expect(failed.workflow?.currentProposition).toEqual(before);
@@ -82,8 +74,8 @@ describe("MainApplicationSurface machinery", () => {
     useWorkspaceSessionStore.getState().startTurn(id, { turnId: "run", kind: "brief" });
     useWorkspaceSessionStore.getState().applyTurnResult(id, "run", {
       ok: true,
-      result: { status: "failed", failure: { reason: "budget_exhausted", budget: "wall_time" } },
-      workflow: { currentProposition: before },
+      result: fixtureFailedResult("budget_exhausted"),
+      state: fixtureWorkflowState({ currentProposition: before }),
     }, { kind: "brief", text: "retry" });
     const runFailed = useWorkspaceSessionStore.getState().sessions[id];
     expect(runFailed.callFailure).toBeNull();

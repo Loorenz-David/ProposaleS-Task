@@ -1,19 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { temporaryFixturePropositionV1 } from "../fixtures/proposition.temporary-fixture";
-import { temporaryFixtureSessionRuntimeRecord } from "../fixtures/session-runtime.temporary-fixture";
+import { fixturePropositionV1 } from "../fixtures/proposition.fixture";
+import { fixtureSessionRuntimeRecord } from "../fixtures/session-runtime.fixture";
 import { toThreadViewModel, toWorkingLabel } from "./thread";
 
 describe("thread view model", () => {
   it("maps human and completed agent turns without interpreting text", () => {
     const viewModel = toThreadViewModel(
-      temporaryFixtureSessionRuntimeRecord({
+      fixtureSessionRuntimeRecord({
         thread: [
           { entryId: "human", kind: "human", text: "messy\nbrief", scope: null },
           {
             entryId: "agent",
             kind: "result",
-            result: { status: "proposition", proposition: temporaryFixturePropositionV1 },
+            result: { status: "proposition", proposition: fixturePropositionV1 },
             scope: null,
           },
         ],

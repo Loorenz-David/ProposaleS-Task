@@ -3,9 +3,9 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { temporaryFixtureSessionRuntimeRecord } from "../../client/fixtures/session-runtime.temporary-fixture";
-import { temporaryFixtureDraftResultCreated } from "../../client/fixtures/draft-result.temporary-fixture";
-import { temporaryFixturePropositionV1 } from "../../client/fixtures/proposition.temporary-fixture";
+import { fixtureSessionRuntimeRecord } from "../../client/fixtures/session-runtime.fixture";
+import { fixtureDraftResultCreated } from "../../client/fixtures/draft-result.fixture";
+import { fixturePropositionV1 } from "../../client/fixtures/proposition.fixture";
 import { useWorkspaceSessionStore } from "../../hooks/use-workspace-session-store";
 import { AgentStatusLine } from "./agent-status-line";
 import { AgentSurface } from "../workspace/agent-surface";
@@ -18,7 +18,7 @@ beforeEach(() => {
     sessions: {},
   });
   useWorkspaceSessionStore.setState(() => {
-    const record = temporaryFixtureSessionRuntimeRecord();
+    const record = fixtureSessionRuntimeRecord();
     return { activeSessionId: record.id, sessionIds: [record.id], sessions: { [record.id]: record } };
   });
 });
@@ -72,14 +72,14 @@ describe("AgentStatusLine", () => {
     const statuses = [
       { inFlightTurn: { turnId: "turn", kind: "brief" as const } },
       {
-        latestResult: { status: "created" as const, draftResult: temporaryFixtureDraftResultCreated },
+        latestResult: { status: "created" as const, draft: fixtureDraftResultCreated },
         workflow: {
-          currentProposition: temporaryFixturePropositionV1,
+          currentProposition: fixturePropositionV1,
           draftReference: { proposalUuid: "proposal", editorUrl: "https://example.invalid" },
         },
       },
-      { latestResult: { status: "clarification" as const, clarification: { questions: [], answers: [] } } },
-      { workflow: { currentProposition: temporaryFixturePropositionV1 } },
+      { latestResult: { status: "clarification" as const, questions: [] } },
+      { workflow: { currentProposition: fixturePropositionV1 } },
       { hasStartedTurn: true },
       {},
     ];

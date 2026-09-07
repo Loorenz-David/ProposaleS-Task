@@ -38,7 +38,7 @@ export function toThreadViewModel(record: SessionRuntimeRecord): ThreadViewModel
       owner: "agent",
       scope: entry.scope,
       prose: RESULT_PROSE[entry.result.status],
-      pills: toPillViewModels(entry.result, entry.entryId),
+      pills: toPillViewModels(entry.result, entry.entryId, record.workflow?.clarification?.answers ?? []),
     };
   });
   return { turns, isEmpty: turns.length === 0 };

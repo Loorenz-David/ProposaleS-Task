@@ -1,10 +1,21 @@
+import {
+  LIBRARY_PRICING_STATEMENT_ID,
+  LIBRARY_PRICING_STATEMENT_TEXT,
+} from "../../schemas/approval";
+import type { Proposition } from "../../schemas/proposition";
 import type { SessionRuntimeRecord } from "../../types/session";
-import type {
-  TemporaryLeaf,
-  TemporaryProposition,
-} from "../../types/temporary-turn";
-import { TEMPORARY_FIXTURE_PRICING_ACKNOWLEDGMENT } from "./created";
+import { readLeaf, sourcedToLeaf, type MaybeLeaf } from "./leaf";
 import { toMoneyDisplay } from "./money";
+
+/**
+ * The exact wording the human acknowledges, and the id that names it. Both come from the schema
+ * module that owns the approval envelope, so the wording on screen and the id in the payload
+ * cannot drift apart.
+ */
+export const PRICING_ACKNOWLEDGMENT = {
+  statementId: LIBRARY_PRICING_STATEMENT_ID,
+  wording: LIBRARY_PRICING_STATEMENT_TEXT,
+} as const;
 
 export type ProvenanceViewModel =
   | { class: "absent"; text: string }
@@ -83,7 +94,7 @@ export type ReviewSurfaceViewModel = {
   acknowledgment: { statementId: string; wording: string };
 };
 
-export function toProvenanceViewModel(leaf: TemporaryLeaf<unknown>): ProvenanceViewModel {
+export function toProvenanceViewModel(leaf: MaybeLeaf<unknown>): ProvenanceViewModel {
   if (!leaf.known) return { class: "absent", text: "Not set" };
   if (leaf.source === "human") return { class: "human", text: "Set by you" };
   if (leaf.source === "inferred") {
@@ -92,14 +103,46 @@ export function toProvenanceViewModel(leaf: TemporaryLeaf<unknown>): ProvenanceV
   return { class: "sourced", text: null };
 }
 
+/**
+ * Types the value the human typed for the leaf it belongs to. `apply-edits.ts` re-parses a
+ * `set_leaf` value with the leaf's own schema, so a quantity must arrive as a JSON number and an
+ * optional flag as a JSON boolean; anything else is sent as the raw string and the server reports
+ * the type error at the path. This is JSON typing for the wire, not locale parsing or reformatting.
+ */
+export function toLeafValue(
+  kind: EditableLeafViewModel["kind"],
+  text: string | number | boolean,
+): unknown {
+  // The inline editor hands back what the human typed. A value that is already a number or a
+  // boolean needs no interpretation and is passed through.
+  if (typeof text !== "string") return text;
+  const trimmed = text.trim();
+  if (kind === "number" && /^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
+  if (kind === "boolean") {
+    const lowered = trimmed.toLowerCase();
+    if (lowered === "yes" || lowered === "true") return true;
+    if (lowered === "no" || lowered === "false") return false;
+  }
+  return text;
+}
+
 function samePath(left: string[], right: string[]) {
   return left.length === right.length && left.every((part, index) => part === right[index]);
 }
 
-function displayLeaf(
-  leaf: TemporaryLeaf<string | number | boolean>,
-  absentText: string,
-) {
+/** Finds the leaf kind a rendered path was given, so a committed edit can be typed for the wire. */
+export function leafKindForPath(
+  review: ReviewSurfaceViewModel,
+  path: string[],
+): EditableLeafViewModel["kind"] | null {
+  const leaves = [
+    ...review.fields.map((field) => field.leaf),
+    ...review.blocks.flatMap((block) => [block.quantity, block.optional, block.reviewerComment]),
+  ];
+  return leaves.find((leaf) => samePath(leaf.path, path))?.kind ?? null;
+}
+
+function displayLeaf(leaf: MaybeLeaf<string | number | boolean>, absentText: string) {
   if (!leaf.known) return absentText;
   if (typeof leaf.value === "boolean") return leaf.value ? "Yes" : "No";
   return String(leaf.value);
@@ -107,7 +150,7 @@ function displayLeaf(
 
 function toEditableLeaf(
   record: SessionRuntimeRecord,
-  leaf: TemporaryLeaf<string | number | boolean>,
+  leaf: MaybeLeaf<string | number | boolean>,
   path: string[],
   label: string,
   kind: EditableLeafViewModel["kind"],
@@ -138,13 +181,13 @@ function toEditableLeaf(
   };
 }
 
-function propositionFrom(record: SessionRuntimeRecord): TemporaryProposition {
+function propositionFrom(record: SessionRuntimeRecord): Proposition {
   const proposition = record.workflow?.currentProposition;
   if (!proposition) throw new Error("Review presentation requires a current proposition.");
   return proposition;
 }
 
-function countResolutions(proposition: TemporaryProposition) {
+function countResolutions(proposition: Proposition) {
   let unresolved = 0;
   let deferred = 0;
   for (const item of proposition.unresolvedItems) {
@@ -154,22 +197,30 @@ function countResolutions(proposition: TemporaryProposition) {
   return { unresolved, deferred };
 }
 
-function displayKnownString(leaf: TemporaryLeaf<string>) {
-  return leaf.known ? leaf.value : "Not set";
-}
+const RECIPIENT_ROWS = [
+  ["firstName", "First name"],
+  ["lastName", "Last name"],
+  ["email", "Email"],
+  ["phone", "Phone"],
+  ["companyName", "Company"],
+] as const;
 
 export function toReviewSurfaceViewModel(
   record: SessionRuntimeRecord,
   validation: Array<{ path: string[]; message: string }> = [],
 ): ReviewSurfaceViewModel {
   const proposition = propositionFrom(record);
+  const title = readLeaf<string>(proposition.title);
   const fields: FieldViewModel[] = [
-    { leaf: toEditableLeaf(record, proposition.title, ["title"], "Title", "text", validation), canAsk: true },
-    { leaf: toEditableLeaf(record, proposition.language, ["language"], "Language", "text", validation), canAsk: true },
+    { leaf: toEditableLeaf(record, title, ["title"], "Title", "text", validation), canAsk: true },
+    {
+      leaf: toEditableLeaf(record, readLeaf<string>(proposition.language), ["language"], "Language", "text", validation),
+      canAsk: true,
+    },
     {
       leaf: toEditableLeaf(
         record,
-        proposition.descriptionNarrative,
+        readLeaf<string>(proposition.descriptionNarrative),
         ["descriptionNarrative"],
         "Introduction",
         "text",
@@ -179,95 +230,111 @@ export function toReviewSurfaceViewModel(
     },
   ];
 
-  if (proposition.recipient.known) {
-    const recipientRows = [
-      ["firstName", "First name", proposition.recipient.firstName],
-      ["lastName", "Last name", proposition.recipient.lastName],
-      ["email", "Email", proposition.recipient.email],
-      ["phone", "Phone", proposition.recipient.phone],
-      ["companyName", "Company", proposition.recipient.companyName],
-    ] as const;
-    for (const [key, label, leaf] of recipientRows) {
-      fields.push({
-        leaf: toEditableLeaf(record, leaf, ["recipient", key], label, "text", validation),
-        canAsk: true,
-      });
-    }
-  } else {
+  /**
+   * An absent recipient still gets its five rows, each at its own leaf path. `apply-edits.ts`
+   * materializes the recipient when one of those leaves is set, so every row is editable; a single
+   * "Recipient: Not set" row would have been an affordance with no operation behind it.
+   */
+  const recipientLeaves: Record<string, unknown> | undefined = proposition.recipient.known
+    ? proposition.recipient.value
+    : undefined;
+  for (const [key, label] of RECIPIENT_ROWS) {
     fields.push({
-      leaf: toEditableLeaf(record, proposition.recipient, ["recipient"], "Recipient", "text", validation),
+      leaf: toEditableLeaf(
+        record,
+        recipientLeaves === undefined ? { known: false } : readLeaf<string>(recipientLeaves[key]),
+        ["recipient", "value", key],
+        label,
+        "text",
+        validation,
+      ),
       canAsk: true,
     });
   }
 
-  const blocks = proposition.blocks.map((block, index): BlockViewModel => ({
-    index,
-    contentId: block.contentId.value,
-    title: block.title,
-    description: block.description.known ? block.description.value : null,
-    replacedByHuman: block.contentId.source === "human",
-    quantity: toEditableLeaf(
-      record,
-      block.quantity,
-      ["blocks", String(index), "quantity"],
-      `${block.title} quantity`,
-      "number",
-      validation,
-      "Not set — Proposales applies its default",
-    ),
-    optional: toEditableLeaf(
-      record,
-      block.optional,
-      ["blocks", String(index), "optional"],
-      `${block.title} optional`,
-      "boolean",
-      validation,
-      "Not set — Proposales applies its default",
-    ),
-    reviewerComment: toEditableLeaf(
-      record,
-      block.reviewerComment,
-      ["blocks", String(index), "reviewerComment"],
-      `${block.title} reviewer comment`,
-      "text",
-      validation,
-    ),
-    pricingStatement: "Pricing comes from the content library and is applied by Proposales.",
-    alternatives: block.alternatives.map((alternative) => ({ ...alternative })),
-  }));
+  const blocks = proposition.blocks.map((block, index): BlockViewModel => {
+    const blockTitle = block.title.value;
+    const description = readLeaf<string>(block.description);
+    return {
+      index,
+      contentId: block.contentId.value,
+      title: blockTitle,
+      description: description.known ? description.value : null,
+      replacedByHuman: block.contentId.source === "human",
+      quantity: toEditableLeaf(
+        record,
+        readLeaf<number>(block.quantity),
+        ["blocks", String(index), "quantity"],
+        `${blockTitle} quantity`,
+        "number",
+        validation,
+        "Not set — Proposales applies its default",
+      ),
+      optional: toEditableLeaf(
+        record,
+        readLeaf<boolean>(block.optional),
+        ["blocks", String(index), "optional"],
+        `${blockTitle} optional`,
+        "boolean",
+        validation,
+        "Not set — Proposales applies its default",
+      ),
+      reviewerComment: toEditableLeaf(
+        record,
+        readLeaf<string>(block.reviewerComment),
+        ["blocks", String(index), "reviewerComment"],
+        `${blockTitle} reviewer comment`,
+        "text",
+        validation,
+      ),
+      pricingStatement: "Pricing comes from the content library and is applied by Proposales.",
+      alternatives: block.alternatives.map((alternative) => ({
+        variationId: alternative.variationId,
+        title: alternative.title,
+        matchStrength: alternative.matchStrength,
+        reason: alternative.reason.value,
+      })),
+    };
+  });
 
   const { unresolved, deferred } = countResolutions(proposition);
   const renderedPaths = [
     ...fields.map((field) => field.leaf.path),
     ...blocks.flatMap((block) => [block.quantity.path, block.optional.path, block.reviewerComment.path]),
   ];
+  const companyName = proposition.recipient.known
+    ? readLeaf<string>(proposition.recipient.value.companyName)
+    : { known: false as const };
 
   return {
-    title: proposition.title.known ? proposition.title.value : "Untitled proposal",
-    clientLabel:
-      proposition.recipient.known && proposition.recipient.companyName.known
-        ? proposition.recipient.companyName.value
-        : null,
+    title: title.known ? title.value : "Untitled proposal",
+    clientLabel: companyName.known ? companyName.value : null,
     version: proposition.version,
     fields,
     blocks,
     notes: {
-      commercialNotes: proposition.commercialNotes.map((note) => ({
-        text: note.text,
-        amountDisplay: note.amount.known ? toMoneyDisplay(note.amount.value) : null,
-        amountProvenance: toProvenanceViewModel(note.amount),
-        taxBasis: displayKnownString(note.taxBasis),
-      })),
+      commercialNotes: proposition.commercialNotes.map((note) => {
+        const amount = readLeaf<{ amountMinor: number; currency: string }>(note.amount);
+        return {
+          text: note.text.value,
+          amountDisplay: amount.known ? toMoneyDisplay(amount.value) : null,
+          amountProvenance: toProvenanceViewModel(amount),
+          taxBasis: note.taxBasis.value,
+        };
+      }),
       commercialAssumptions: proposition.commercialAssumptions.map((assumption) => ({
         kind: assumption.kind,
-        statedValue: displayKnownString(assumption.statedValue),
-        provenance: toProvenanceViewModel(assumption.statedValue),
+        statedValue: assumption.statedValue.value,
+        provenance: toProvenanceViewModel(sourcedToLeaf(assumption.statedValue)),
       })),
       assumptions: proposition.assumptions.map((assumption) => ({
         pathLabel: assumption.path.join(" › "),
-        note: assumption.note,
+        note: assumption.note.value,
       })),
-      warnings: proposition.warnings.map((warning) => ({ kind: warning.kind, text: warning.text })),
+      warnings: proposition.warnings.map((warning) => ({
+        kind: warning.kind,
+        text: warning.text.value,
+      })),
       unresolvedItems: proposition.unresolvedItems.map((item) => ({
         itemLabel: item.itemKey,
         resolution: item.resolution,
@@ -283,6 +350,6 @@ export function toReviewSurfaceViewModel(
     surfaceErrors: validation
       .filter((issue) => !renderedPaths.some((path) => samePath(path, issue.path)))
       .map((issue) => issue.message),
-    acknowledgment: TEMPORARY_FIXTURE_PRICING_ACKNOWLEDGMENT,
+    acknowledgment: PRICING_ACKNOWLEDGMENT,
   };
 }

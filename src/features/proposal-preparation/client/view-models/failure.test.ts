@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { temporaryFixtureErrorDto, temporaryFixtureRunFailure } from "../fixtures/failures.temporary-fixture";
+import { fixtureErrorDto, fixtureRunFailure } from "../fixtures/failures.fixture";
 import { toCallFailureViewModel, toCreationFailureViewModel, toRunFailureTurn } from "./failure";
 import type { CallFailure } from "../../types/session";
 
-function failure(code: Parameters<typeof temporaryFixtureErrorDto>[0], overrides: Parameters<typeof temporaryFixtureErrorDto>[1] = {}): CallFailure {
-  return { site: { kind: "agent" }, error: temporaryFixtureErrorDto(code, overrides), retry: { kind: "brief", text: "retry" } };
+function failure(code: Parameters<typeof fixtureErrorDto>[0], overrides: Parameters<typeof fixtureErrorDto>[1] = {}): CallFailure {
+  return { site: { kind: "agent" }, error: fixtureErrorDto(code, overrides), retry: { kind: "brief", text: "retry" } };
 }
 
 describe("failure adapters", () => {
@@ -41,6 +41,6 @@ describe("failure adapters", () => {
   });
 
   it("maps all production run-failure reasons", () => {
-    expect(["budget_exhausted", "model_output_invalid", "tool_output_invalid"].map((reason) => toRunFailureTurn(temporaryFixtureRunFailure(reason as Parameters<typeof temporaryFixtureRunFailure>[0])).headline)).toHaveLength(3);
+    expect(["budget_exhausted", "model_output_invalid", "tool_output_invalid"].map((reason) => toRunFailureTurn(fixtureRunFailure(reason as Parameters<typeof fixtureRunFailure>[0])).headline)).toHaveLength(3);
   });
 });

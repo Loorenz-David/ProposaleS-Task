@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { temporaryFixtureErrorDto } from "../../client/fixtures/failures.temporary-fixture";
+import { fixtureErrorDto } from "../../client/fixtures/failures.fixture";
 import { toCallFailureViewModel } from "../../client/view-models/failure";
 import type { CallFailure } from "../../types/session";
 import { TurnFailureNotice } from "./turn-failure-notice";
@@ -22,7 +22,7 @@ const codes = [
 function failureFor(code: (typeof codes)[number], retryable?: boolean): CallFailure {
   return {
     site: { kind: "agent" },
-    error: temporaryFixtureErrorDto(code, {
+    error: fixtureErrorDto(code, {
       details: retryable === undefined ? undefined : { retryable },
     }),
     retry: { kind: "brief", text: "Messy brief" },

@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { temporaryFixturePropositionV1 } from "../client/fixtures/proposition.temporary-fixture";
+import { fixturePropositionV1 } from "../client/fixtures/proposition.fixture";
+import { fixtureTerminalWorkflowState, fixtureWorkflowState } from "../client/fixtures/workflow-state.fixture";
 import { createWorkspaceSessionState, useWorkspaceSessionStore } from "./use-workspace-session-store";
 import { useCloseGuard } from "./use-close-guard";
 import type { SessionRuntimeRecord, WorkspaceSessionId } from "../types/session";
@@ -35,9 +36,9 @@ describe("useCloseGuard", () => {
   it.each([
     ["started turn", { hasStartedTurn: true }],
     ["thread", { thread: [{ entryId: "entry", kind: "human" as const, text: "x", scope: null }] }],
-    ["proposition", { workflow: { currentProposition: temporaryFixturePropositionV1 } }],
-    ["clarification", { workflow: { clarification: { questions: [], answers: [] } } }],
-    ["draft reference", { workflow: { draftReference: { proposalUuid: "p", editorUrl: "https://example.invalid" } } }],
+    ["proposition", { workflow: fixtureWorkflowState() }],
+    ["clarification", { workflow: fixtureWorkflowState({ clarification: { questions: [], answers: [] } }) }],
+    ["draft reference", { workflow: fixtureTerminalWorkflowState() }],
     ["in-flight turn", { inFlightTurn: { turnId: "t", kind: "brief" as const } }],
   ])("R3.1–R3.6: confirms for %s", (_label, changes) => {
     const sessionId = id();

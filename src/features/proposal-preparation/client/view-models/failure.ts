@@ -1,5 +1,7 @@
 import type { CallFailure } from "../../types/session";
-import type { TemporaryRunFailure } from "../../types/temporary-turn";
+import type { DomainResult } from "../../schemas/turn-result";
+
+type RunFailure = Extract<DomainResult, { status: "failed" }>["failure"];
 
 export type ErrorTreatmentKey =
   | "validation_error"
@@ -80,7 +82,7 @@ export function toCreationFailureViewModel(failure: CallFailure): CreationFailur
   };
 }
 
-export function toRunFailureTurn(failure: TemporaryRunFailure): {
+export function toRunFailureTurn(failure: RunFailure): {
   headline: string;
   detail: string | null;
   issuePaths: string[];
@@ -96,9 +98,13 @@ export function toRunFailureTurn(failure: TemporaryRunFailure): {
     return {
       headline: "The agent returned an invalid draft",
       detail: "Review the affected information and try again.",
-      issuePaths: failure.issues.map((issue) => issue.path.join(" › ")),
+      // `issues` is optional: absent means the run reported no paths, which is a fact about the
+      // failure rather than a value to default. This is the one `??` the adapter needs.
+      issuePaths: (failure.issues ?? []).map((issue) => issue.path.join(" › ")),
     };
   }
+  // `tool_output_invalid` and the test-only `script_exhausted` are the same thing to a reader:
+  // the run could not use what it was given, and nothing was sent.
   return {
     headline: "A catalog result could not be used",
     detail: "Nothing was sent and your existing work remains available.",

@@ -2,12 +2,12 @@
 
 import { useCallback } from "react";
 
-import { temporaryFixtureTurnAdapter } from "../client/fixtures/turns.temporary-fixture";
+import { turnTransport } from "../client/turn-transport";
 import type { CallFailure, InFlightTurn, WorkspaceSessionId } from "../types/session";
-import type { TemporaryTurnInput } from "../types/temporary-turn";
+import type { TurnInput } from "../types/turn";
 import { useWorkspaceSessionStore } from "./use-workspace-session-store";
 
-function toInFlightTurn(input: TemporaryTurnInput, turnId: string): InFlightTurn {
+function toInFlightTurn(input: TurnInput, turnId: string): InFlightTurn {
   if (input.kind === "edit") {
     return {
       turnId,
@@ -20,7 +20,7 @@ function toInFlightTurn(input: TemporaryTurnInput, turnId: string): InFlightTurn
 
 function failureMatchesInput(
   failure: CallFailure,
-  input: TemporaryTurnInput,
+  input: TurnInput,
 ) {
   if (input.kind === "approval") return failure.site.kind === "creation";
   if (input.kind === "revision") {
@@ -42,14 +42,19 @@ function failureMatchesInput(
 }
 
 export function useTurnDispatch(): {
-  dispatch: (sessionId: WorkspaceSessionId, input: TemporaryTurnInput) => Promise<void>;
+  dispatch: (sessionId: WorkspaceSessionId, input: TurnInput) => Promise<void>;
 } {
-  const dispatch = useCallback(async (sessionId: WorkspaceSessionId, input: TemporaryTurnInput) => {
+  const dispatch = useCallback(async (sessionId: WorkspaceSessionId, input: TurnInput) => {
     const originSessionId = sessionId;
     const turnId = globalThis.crypto.randomUUID();
     const record = useWorkspaceSessionStore.getState().sessions[originSessionId];
     if (!record || record.inFlightTurn !== null) return;
-    const position = record.thread.length;
+    // A session whose draft exists is terminal: Proposales is the editing environment from that
+    // point, so there is no turn left to offer (§12A.15).
+    if (record.workflow?.draftReference) return;
+    // Captured before any await, with the origin and the turn id, so the turn is composed from
+    // what was on screen when the human acted rather than from whatever resolves first.
+    const held = { workflow: record.workflow, conversation: record.conversation };
     const humanEntry =
       input.kind === "brief"
         ? { text: input.text, scope: null }
@@ -67,7 +72,7 @@ export function useTurnDispatch(): {
       useWorkspaceSessionStore.getState().clearComposerDraft(originSessionId);
     }
 
-    const outcome = await temporaryFixtureTurnAdapter.run(input, position);
+    const outcome = await turnTransport.run(input, held);
     if (outcome.ok) {
       useWorkspaceSessionStore.getState().applyTurnResult(originSessionId, turnId, outcome, input);
     } else {

@@ -8,8 +8,8 @@ import {
   createWorkspaceSessionState,
   useWorkspaceSessionStore,
 } from "./use-workspace-session-store";
-import { temporaryFixtureErrorDto } from "../client/fixtures/failures.temporary-fixture";
-import { temporaryFixtureTurnAdapter } from "../client/fixtures/turns.temporary-fixture";
+import { fixtureErrorDto } from "../client/fixtures/failures.fixture";
+import { fixtureClarificationOutcome } from "../client/fixtures/turn-outcome.fixture";
 import type { WorkspaceSessionId } from "../types/session";
 
 const SOURCE = readFileSync(path.join(__dirname, "use-workspace-session-store.ts"), "utf8");
@@ -136,6 +136,7 @@ describe("new session", () => {
       thread: [],
       latestResult: null,
       workflow: null,
+      conversation: null,
       inFlightTurn: null,
       hasStartedTurn: false,
       unread: 0,
@@ -158,7 +159,7 @@ describe("turn result ownership", () => {
     });
     useWorkspaceSessionStore.getState().createSession();
 
-    const outcome = await temporaryFixtureTurnAdapter.run(input, 0, () => Promise.resolve());
+    const outcome = fixtureClarificationOutcome();
     useWorkspaceSessionStore.getState().applyTurnResult(originSessionId, turn.turnId, outcome, input);
 
     const state = useWorkspaceSessionStore.getState();
@@ -173,7 +174,7 @@ describe("turn result ownership", () => {
       turnId: "turn-current",
       kind: "brief",
     });
-    const outcome = await temporaryFixtureTurnAdapter.run(input, 0, () => Promise.resolve());
+    const outcome = fixtureClarificationOutcome();
     useWorkspaceSessionStore.getState().applyTurnResult(sessionId, "turn-stale", outcome, input);
 
     expect(useWorkspaceSessionStore.getState().sessions[sessionId]?.inFlightTurn?.turnId).toBe(
@@ -192,13 +193,13 @@ describe("turn result ownership", () => {
     useWorkspaceSessionStore.getState().applyTurnResult(
       sessionId,
       "turn-failed",
-      { ok: false, error: temporaryFixtureErrorDto("integration_error") },
+      { ok: false, error: fixtureErrorDto("integration_error") },
       input,
     );
 
     expect(useWorkspaceSessionStore.getState().sessions[sessionId]?.callFailure).toEqual({
       site: { kind: "ask", fieldLabel: "Title" },
-      error: temporaryFixtureErrorDto("integration_error"),
+      error: fixtureErrorDto("integration_error"),
       retry: input,
     });
   });
@@ -209,11 +210,7 @@ describe("unread ownership", () => {
     const sessionId = useWorkspaceSessionStore.getState().activeSessionId as WorkspaceSessionId;
     useWorkspaceSessionStore.getState().startTurn(sessionId, { turnId: "active", kind: "brief" });
     expect(useWorkspaceSessionStore.getState().sessions[sessionId]?.unread).toBe(0);
-    useWorkspaceSessionStore.getState().applyTurnResult(sessionId, "active", {
-      ok: true,
-      result: { status: "clarification", clarification: { questions: [], answers: [] } },
-      workflow: { clarification: { questions: [], answers: [] } },
-    }, { kind: "brief", text: "x" });
+    useWorkspaceSessionStore.getState().applyTurnResult(sessionId, "active", fixtureClarificationOutcome(), { kind: "brief", text: "x" });
     expect(useWorkspaceSessionStore.getState().sessions[sessionId]?.unread).toBe(0);
   });
 
@@ -272,15 +269,11 @@ describe("retained context", () => {
     const firstRetained = useWorkspaceSessionStore.getState().sessions[first]!.retained;
     const secondRetained = useWorkspaceSessionStore.getState().sessions[second]!.retained;
     useWorkspaceSessionStore.getState().startTurn(first, { turnId: "first", kind: "brief" });
-    useWorkspaceSessionStore.getState().applyTurnResult(first, "first", {
-      ok: true,
-      result: { status: "clarification", clarification: { questions: [], answers: [] } },
-      workflow: { clarification: { questions: [], answers: [] } },
-    }, { kind: "brief", text: "x" });
+    useWorkspaceSessionStore.getState().applyTurnResult(first, "first", fixtureClarificationOutcome(), { kind: "brief", text: "x" });
     useWorkspaceSessionStore.getState().startTurn(second, { turnId: "second", kind: "brief" });
     useWorkspaceSessionStore.getState().applyTurnFailure(second, "second", {
       site: { kind: "agent" },
-      error: temporaryFixtureErrorDto("integration_error"),
+      error: fixtureErrorDto("integration_error"),
       retry: { kind: "brief", text: "x" },
     });
     expect(useWorkspaceSessionStore.getState().sessions[first]?.retained).toBe(firstRetained);

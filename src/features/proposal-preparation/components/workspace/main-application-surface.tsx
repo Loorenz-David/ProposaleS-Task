@@ -3,6 +3,7 @@
 import type { MainSurfaceState } from "../../types/presentation";
 import { toMainSurfaceViewModel } from "../../client/view-models/main-surface";
 import { toPreviewViewModel } from "../../client/view-models/preview";
+import { leafKindForPath, toLeafValue } from "../../client/view-models/review";
 import { useWorkspaceSessionStore } from "../../hooks/use-workspace-session-store";
 import { useTurnDispatch } from "../../hooks/use-turn-dispatch";
 import type { CloseGuardController } from "../../hooks/use-close-guard";
@@ -11,7 +12,6 @@ import { CreatingSurface } from "../creation/creating-surface";
 import { CreationFailureSurface } from "../creation/creation-failure-surface";
 import { ProposalPreparationIdleSurface } from "../idle/proposal-preparation-idle-surface";
 import { ProposalReviewSurface } from "../review/proposal-review-surface";
-import { TEMPORARY_FIXTURE_PRICING_ACKNOWLEDGMENT } from "../../client/view-models/created";
 
 export function MainApplicationSurface({ state, closeGuard }: { state?: MainSurfaceState; closeGuard?: CloseGuardController }) {
   const record = useWorkspaceSessionStore((store) =>
@@ -50,19 +50,22 @@ export function MainApplicationSurface({ state, closeGuard }: { state?: MainSurf
           isSubmitting={record.inFlightTurn !== null}
           openedBlock={surface.openedBlock}
           isTerminal={false}
-          onApprove={() => void dispatch(activeSessionId, {
-            kind: "approval",
-            workflow: record.workflow ?? {},
-            proposition: record.workflow!.currentProposition!,
-            acknowledgment: TEMPORARY_FIXTURE_PRICING_ACKNOWLEDGMENT,
-          })}
+          onApprove={() => void dispatch(activeSessionId, { kind: "approval" })}
           onAskAgent={(ask) => void dispatch(activeSessionId, { kind: "revision", instruction: `About ${ask.fieldLabel}: ${ask.text}`, scope: ask.fieldLabel })}
           onBackToReview={() => dismissCallFailure(activeSessionId)}
           onCancelEdit={() => undefined}
           onCloseBlock={() => setOpenedBlock(activeSessionId, null)}
           onCommitEdit={(edit) => {
             if (record.workflow?.draftReference) return;
-            void dispatch(activeSessionId, { kind: "edit", operation: { op: "set_leaf", path: edit.path, value: edit.value } });
+            const kind = leafKindForPath(surface.review, edit.path);
+            void dispatch(activeSessionId, {
+              kind: "edit",
+              operation: {
+                op: "set_leaf",
+                path: edit.path,
+                value: kind === null ? edit.value : toLeafValue(kind, edit.value),
+              },
+            });
           }}
           onDiscard={() => {
             if (closeGuard && activeSessionId) closeGuard.requestClose(activeSessionId);
