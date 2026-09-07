@@ -6,8 +6,8 @@ import path from "node:path";
 import { temporaryFixtureErrorDto } from "../client/fixtures/failures.temporary-fixture";
 import {
   setTemporaryTurnAdapterForTests,
-  temporaryFixturePropositionV1,
 } from "../client/fixtures/turns.temporary-fixture";
+import { temporaryFixturePropositionV1 } from "../client/fixtures/proposition.temporary-fixture";
 import { createWorkspaceSessionState, useWorkspaceSessionStore } from "./use-workspace-session-store";
 import { useTurnDispatch } from "./use-turn-dispatch";
 import type { WorkspaceSessionId } from "../types/session";
@@ -152,5 +152,57 @@ describe("useTurnDispatch", () => {
     );
     const storeSource = readFileSync(path.join(__dirname, "use-workspace-session-store.ts"), "utf8");
     expect(storeSource).not.toMatch(/let\s+(?:sessionSeq|counter)/);
+  });
+
+  it("R2.1: keeps composer drafts with their own session", () => {
+    const first = activeId();
+    const second = useWorkspaceSessionStore.getState().createSession();
+    useWorkspaceSessionStore.getState().setComposerDraft(first, "A draft");
+    useWorkspaceSessionStore.getState().setComposerDraft(second, "B draft");
+    useWorkspaceSessionStore.getState().activateSession(first);
+    expect(useWorkspaceSessionStore.getState().sessions[first]?.composerDraft).toBe("A draft");
+    useWorkspaceSessionStore.getState().activateSession(second);
+    expect(useWorkspaceSessionStore.getState().sessions[second]?.composerDraft).toBe("B draft");
+    useWorkspaceSessionStore.getState().activateSession(first);
+    expect(useWorkspaceSessionStore.getState().sessions[first]?.composerDraft).toBe("A draft");
+  });
+
+  it("R2.2/R2.3: clears only the sending draft and leaves another session's pending control independent", async () => {
+    const first = activeId();
+    const second = useWorkspaceSessionStore.getState().createSession();
+    const wait = deferred<ReturnType<typeof briefOutcome>>();
+    setTemporaryTurnAdapterForTests({ run: async () => wait.promise });
+    useWorkspaceSessionStore.getState().setComposerDraft(first, "A draft");
+    useWorkspaceSessionStore.getState().setComposerDraft(second, "B draft");
+    const { result } = renderHook(() => useTurnDispatch());
+    let pending!: Promise<void>;
+    act(() => {
+      pending = result.current.dispatch(first, { kind: "brief", text: "A draft" });
+    });
+    expect(useWorkspaceSessionStore.getState().sessions[first]?.composerDraft).toBe("");
+    expect(useWorkspaceSessionStore.getState().sessions[second]?.composerDraft).toBe("B draft");
+    expect(useWorkspaceSessionStore.getState().sessions[second]?.inFlightTurn).toBeNull();
+    wait.resolve(briefOutcome());
+    await pending;
+  });
+
+  it("R2.4/R2.5: keeps a draft through clarification dismissal and does not trim it", () => {
+    const id = activeId();
+    const store = useWorkspaceSessionStore.getState();
+    store.setComposerDraft(id, "  ");
+    useWorkspaceSessionStore.setState({
+      sessions: {
+        ...useWorkspaceSessionStore.getState().sessions,
+        [id]: {
+          ...useWorkspaceSessionStore.getState().sessions[id],
+          latestResult: { status: "clarification", clarification: { questions: [], answers: [] } },
+          clarificationPanel: "open",
+        },
+      },
+    });
+    store.dismissClarificationPanel(id);
+    expect(useWorkspaceSessionStore.getState().sessions[id]?.composerDraft).toBe("  ");
+    const source = readFileSync(path.join(__dirname, "../components/workspace/agent-surface.tsx"), "utf8");
+    expect(source).not.toContain("composerDraft.trim()");
   });
 });

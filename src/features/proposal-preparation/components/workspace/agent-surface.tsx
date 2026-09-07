@@ -40,13 +40,8 @@ export function AgentSurface() {
   const { dispatch } = useTurnDispatch();
 
   const submitBrief = () => {
-    if (!activeSessionId || !record?.composerDraft.trim() || record.inFlightTurn) return;
-    void dispatch(
-      activeSessionId,
-      record.workflow?.currentProposition
-        ? { kind: "revision", instruction: record.composerDraft, scope: null }
-        : { kind: "brief", text: record.composerDraft },
-    );
+    if (!activeSessionId || !record || record.composerDraft.length === 0 || record.inFlightTurn) return;
+    void dispatch(activeSessionId, { kind: "brief", text: record.composerDraft });
   };
 
   const onPillIntent = (intent: PillIntent) => {
@@ -130,7 +125,7 @@ export function AgentSurface() {
           viewModel={panel}
         />
       ) : null}
-      <div hidden={panel?.isOpen === true}>
+      {!panel ? (
         <AgentComposer
           ref={composerRef}
           hint={record.workflow?.currentProposition ? "Ask for a revision, or edit a field in the review." : "Enter to send · Shift+Enter for a new line"}
@@ -139,7 +134,7 @@ export function AgentSurface() {
           onSubmit={submitBrief}
           value={record.composerDraft}
         />
-      </div>
+      ) : null}
     </aside>
   );
 }

@@ -742,3 +742,14 @@ focus-order row is not evidence (master plan §11.1, follow-up 18). Free the por
   R1.1 (observed value `2` instead of `1`); reverted. Mutation files were
   `use-turn-dispatch.ts` and `use-workspace-session-store.ts`, applied and reverted before commit.
 - Checkpoint stamp: `npm test` — 53 files / 286 tests green.
+
+### WP2 checkpoint
+
+- Wired the composer to the active session's exact `composerDraft`, with no trimming or pattern
+  gate; a non-empty submit dispatches the fixture `brief` input and only the sending session's
+  draft is cleared. The composer is absent while an open clarification panel owns the surface, and
+  dismissing the panel leaves the draft intact.
+- Acceptance evidence: R2.1–R2.5 are covered in `use-turn-dispatch.test.ts`; the full suite is
+  green.
+- No Pass A visual contract or prop was extended. No mutation was declared for WP2.
+- Checkpoint stamp: `npm test` — 53 files / 289 tests green.
