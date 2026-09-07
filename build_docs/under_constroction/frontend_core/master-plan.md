@@ -247,6 +247,27 @@ lapse by argument: phase 02's projection gate stays **not waived**, on its own r
 silent-failure mechanism, so §7.2's own rule makes it mandatory and its waivable list was wrong to
 carry 02.
 
+### 3B. Submission sprint (owner decision, 2026-09-07)
+
+After phase 04 reached `APPROVED`, phases 05–15 were collapsed into one submission sprint for the
+time-boxed take-home delivery. The historical phase plans remain source material and specification;
+their independent projection, review, correction, re-review and approval gates are intentionally
+waived. The sprint runs in two passes, each with its own plan: Pass A, visual and product
+implementation (`plans/sprint-pass-a-visual.md`), which also builds the minimal fixture-era spine
+needed to see every state in a browser; Pass B, behavioural machinery
+(`plans/sprint-pass-b-machinery.md`), by a separate session working from Pass A's component contracts.
+Phases 16–17 remain a later real-backend integration sprint, themselves collapsed into one.
+Architecture contracts, product semantics, accessibility, frontend/backend authority boundaries,
+fixture-era markers, the closed retained-context set, and the closing verification stamp remain
+binding. Phases 05–15 are **not** marked `APPROVED` individually; the tracker shows them as
+`SUBMISSION_SPRINT` and each pass plan carries a sprint log recording tests amended, dependencies
+added, theme values added, and design deltas.
+
+**Owner decisions 23 and 24 (2026-09-07).** 23: the scripted fixture turn adapter carries one
+era-marked demo latency constant, `TEMPORARY_FIXTURE_TURN_LATENCY_MS`, representing a state and not
+progress; deleted at integration. 24: the design fonts are loaded through `next/font/google` in
+`src/app/layout.tsx`.
+
 ---
 
 ## 4. Progress tracker
@@ -260,17 +281,17 @@ derived from the tables, never typed forward: re-derive before any count-bearing
 | 02 | Persistent shell: landmarks, divider, narrow width, containment | `plans/phase-02-workspace-shell.md` | 6 | `APPROVED` | 2026-09-07 | coordinator | approved **without a re-review session, on the owner's explicit decision**. Fix round 2: 60/60 rows mapped, 17/17 named mutations executed and reverted (16 reds, C4(g) honestly unmeasured); unit 154/154, E2E 66/66, typecheck/lint/build green, re-verified by the coordinator on the handed-over tree. Six independent coordinator mutations, none of a shape the fix round used: five reddened, one passed and is §11.3 follow-up 16 |
 | 03 | Session runtime and the tab strip | `plans/phase-03-session-runtime-and-tabs.md` | 7 | `APPROVED` | 2026-09-07 | coordinator | approved after **one full review round** (round 3) and its fix round, under owner decisions 15, 16 and 17. 47 rows / 4 held, 18/18 named mutations. Stamp on the handed-over tree: unit **184/184**, E2E **69/69**, typecheck, lint, build green. Nine deferred measurement findings are §11.3 follow-up 19, one re-assigned as follow-up 20; the approval basis and its limits are in §11.1 and the plan's Review log |
 | 04 | Derived presentation: status and the derivation register | `plans/phase-04-derived-presentation.md` | 5 | `APPROVED` | 2026-09-07 | coordinator | approved after one implement round, **without a review session, on the owner's explicit decision**. 22 measurable rows, 2 held, 5/5 named mutations. Four independent coordinator mutations: two bit, two passed and became findings B1 and N1. B1 closed by the one owner-authorized coordinator code edit, which also removed a user-visible duplicate. Stamp: unit **205/205**, E2E **69/69**, typecheck, lint, build. Approval basis and its limits in §11.1 and the plan's Review log; two instrument findings deferred as §11.3 follow-ups 24 and 25 |
-| 05 | Turn dispatch, origin attribution, close/discard guard | `plans/phase-05-turn-dispatch-and-close-guard.md` | 8 | `NOT_STARTED` | 2026-09-07 | coordinator | projection required (attribution, destructive guard). **Gained C7 and C8 (unread and attention) by owner decision 20**, 2026-09-07, with `STATUS_ANNOUNCEMENT_DEBOUNCE_MS` and the debounced announcement; `F11` added to §7.3 and to its `Serves` line. Now 8 criteria / **50 rows** — the largest phase in the project, at the sizing target: its pre-dispatch lint carries an explicit split question, and §11.3 follow-up 19's B2 |
-| 06 | Agent surface: thread, autoscroll, composer, empty state | `plans/phase-06-agent-surface.md` | 7 | `NOT_STARTED` | 2026-09-06 | planner | projection waivable |
-| 07 | Interaction pills and domain-result rendering | `plans/phase-07-pills-and-result-rendering.md` | 7 | `NOT_STARTED` | 2026-09-06 | planner | projection waivable |
-| 08 | Clarification panel | `plans/phase-08-clarification-panel.md` | 7 | `NOT_STARTED` | 2026-09-06 | planner | projection required (omission-versus-skip) |
-| 09 | Review surface: field set, provenance, unresolved information | `plans/phase-09-review-surface.md` | 7 | `NOT_STARTED` | 2026-09-06 | planner | projection required (provenance, absence) |
-| 10 | Client preview, work-surface toggle, money rendering | `plans/phase-10-preview-and-money.md` | 7 | `NOT_STARTED` | 2026-09-06 | planner | projection required (money) |
-| 11 | Review edits: inline edit, validation paths, replacement | `plans/phase-11-review-edits.md` | 8 | `NOT_STARTED` | 2026-09-06 | planner | projection required (paths, ordering) |
-| 12 | Approval, creating, created and recovered | `plans/phase-12-approval-and-created.md` | 8 | `NOT_STARTED` | 2026-09-06 | planner | projection required (submit-once, terminality) |
-| 13 | Failure taxonomy and recovery | `plans/phase-13-failure-taxonomy.md` | 7 | `NOT_STARTED` | 2026-09-06 | planner | projection waivable |
-| 14 | Retained context and restoration on activation | `plans/phase-14-retained-context-and-restoration.md` | 8 | `NOT_STARTED` | 2026-09-06 | planner | projection required (precedence, category-C leakage) |
-| 15 | Presentation boundary audit and fixture-era closure | `plans/phase-15-boundary-audit.md` | 7 | `NOT_STARTED` | 2026-09-06 | planner | projection required (absence claims) |
+| 05 | Turn dispatch, origin attribution, close/discard guard | `plans/phase-05-turn-dispatch-and-close-guard.md` | 8 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
+| 06 | Agent surface: thread, autoscroll, composer, empty state | `plans/phase-06-agent-surface.md` | 7 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
+| 07 | Interaction pills and domain-result rendering | `plans/phase-07-pills-and-result-rendering.md` | 7 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
+| 08 | Clarification panel | `plans/phase-08-clarification-panel.md` | 7 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
+| 09 | Review surface: field set, provenance, unresolved information | `plans/phase-09-review-surface.md` | 7 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
+| 10 | Client preview, work-surface toggle, money rendering | `plans/phase-10-preview-and-money.md` | 7 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
+| 11 | Review edits: inline edit, validation paths, replacement | `plans/phase-11-review-edits.md` | 8 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
+| 12 | Approval, creating, created and recovered | `plans/phase-12-approval-and-created.md` | 8 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
+| 13 | Failure taxonomy and recovery | `plans/phase-13-failure-taxonomy.md` | 7 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
+| 14 | Retained context and restoration on activation | `plans/phase-14-retained-context-and-restoration.md` | 8 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
+| 15 | Presentation boundary audit and fixture-era closure | `plans/phase-15-boundary-audit.md` | 7 | `SUBMISSION_SPRINT` | 2026-09-07 | coordinator | see §3B |
 | 16 | Browser-to-server boundary | `plans/phase-16-transport-boundary.md` | 5 | `NOT_STARTED` | 2026-09-06 | planner | **gated on backend phases 11–14 `APPROVED` and merged** |
 | 17 | Seam replacement, critical flow, closeout | `plans/phase-17-seam-replacement-and-closeout.md` | 5 | `NOT_STARTED` | 2026-09-06 | planner | **gated on backend phases 5, 6, 10–14 `APPROVED` and merged** |
 
@@ -541,6 +562,21 @@ component-level name is declared. **Value-by-value fidelity of the ramps to desi
 is verified at review, not by test**, deliberately: a test transcribing the same table into
 assertions proves only that two copies of one table agree, and it is the row-that-cannot-fail
 shape. The reviewer reads the ramp against design 01.
+
+**Submission-sprint light-document addition (owner-authorized Pass A, 2026-09-07).** Design 01
+§1.12 supplies the following flat values for the client-preview document. They extend the closed
+theme-name set without creating a semantic or component-level taxonomy:
+
+| Name | Value | Use |
+|---|---|---|
+| `--color-paper` | `#fff` | preview frame |
+| `--color-paper-ink` | `#111214` | preview base ink |
+| `--color-paper-ink-body` | `#3f4147` | narrative |
+| `--color-paper-ink-meta` | `#6b6d73` | item detail on white |
+| `--color-paper-rule` | `#ececef` | item separators |
+| `--color-paper-rule-strong` | `#e4e4e7` | heading rules |
+| `--color-paper-hero-start` | `#1d3b4a` | hero gradient start |
+| `--color-paper-hero-end` | `#0f2733` | hero gradient end |
 
 ### 6.6 Fixture-era markers and the two eras (§12A.8, §9.3)
 
@@ -1152,6 +1188,7 @@ This section absorbs the project README, which is now a one-screen pointer to th
 | Coordinator edit to application code (one, authorized) | 2026-09-07 — the standing instruction is *"i will do it my self you should remain only orchestrator"*. Presented with the choice of shipping a user-visible duplicate or having the coordinator delete one span, the owner chose the latter explicitly. The edit: `components/agent/agent-status-line.tsx`, the `data-agent-status-text` span removed and `justify-between` → `justify-end` so the surviving phase label keeps design 03 §3.2's right placement. **It closed finding B1 as a side effect, verified by re-running the mutation**: severing the phase label from its source left 205/205 green before the deletion and reddens C3(c)/C6(b) after it. **This authorization was for one edit and does not generalise** |
 | Phase 04 approval-gate stamp — one confounded run, declined | 2026-09-07 — the first end-to-end attempt returned **68/69**, failing exactly the focus-order row that produced §11.3 follow-up 18. Not the code: an orphaned `next-server` whose parent process no longer existed held port 3000, so Playwright could not start its own, and reusing that instance reproduced the dev-server-state phenomenon follow-up 18 documents. The coordinator had strong grounds to predict the green — identical source gave 69/69 on a fresh server earlier the same day, and the round's entire diff was one non-focusable `<span>` — and **declined to record it**, re-stamping on a fresh server after the owner freed the port. Follow-up 18's lesson applied in the other direction: **a red on a confounded server is no more citable than a green on one** |
 | Backend phases merged from `main` | 1 (topology and environment), 2 (errors, logger, shared value shapes), 3 (Proposales adapter: transport, error translation, content read) — all `APPROVED`. Backend phases 4–15 `NOT_STARTED` |
+| Submission sprint authorized | 2026-09-07 — owner collapsed frontend phases 05–15 into the two-pass submission sprint recorded in §3B. Independent phase projection/review gates are waived; architecture, product, accessibility, authority, fixture-era and closing-verification constraints remain binding. Owner decisions 23 and 24 authorize the single fixture latency and the `next/font/google` loads. |
 
 Every future `main` merge is recorded here with its date and the backend phases it brought.
 
@@ -1187,6 +1224,10 @@ specification behaviour where it does not conflict with §13, leaves a marker, a
 | 22 | design 04 §3.1's close-button and §3.5's new-session hover ink `#fff` is rendered with `--color-fg` (`#f5f5f6`) — **owner decision 22**, same reasoning | styling round 1 card 1 |
 | 23 | **Design 04 disagrees with itself on the close control's size**: §3.1 specifies a 17×17 control, §5 requires the close target be **≥24px** through padding. 24×24 is kept — §5 is the accessibility requirement and standing rule 6 gives it the win — so the hover circle is 24px rather than 17px. Recorded because it is a visible deviation from §3.1's number, and because the same disagreement will recur wherever §3 gives a glyph size and §5 gives a target size | styling round 1 |
 | 24 | **Design 04 §6's dragging `opacity: 0.45` is not implemented.** Rendering a drag state needs render-visible state wired through `onDragStart`/`onDragEnd`, and `onDragOver` fires continuously while committing a move — a change to behaviour phase 03 shipped and the styling round was explicitly forbidden to touch. The phase that revisits reorder either implements it with a criterion or records it again | styling round 1 |
+| 25 | the client preview adds design 01 §1.12's eight light-document values to the otherwise dark flat theme ramp; this is the source design's documented light-surface exception, not a new theme taxonomy | submission sprint Pass A §7.4 |
+| 26 | the preview validity treatment uses dark `--color-bg` ink on `--color-accent`, applying design 01 §5 correction 3 instead of the prototype's failing white-on-blue pair | submission sprint Pass A §7.4 |
+| 27 | the created state's white primary action uses `--color-fg` and its hover uses `--color-fg-body`, following owner decision 22's nearest-entry precedent rather than adding paper-button values | submission sprint Pass A §7.4 |
+| 28 | the creation-failure medallion uses the existing attention wash and a 50% modifier on `--color-attention`; the approximate design gains no new border property | submission sprint Pass A §7.4 |
 
 ### 11.3 Follow-up register
 
