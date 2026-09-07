@@ -114,7 +114,7 @@ export const warningSchema = z.strictObject({
   reason: boundedText(MAX_RATIONALE_CHARS).optional(),
 });
 
-const languageCodeSchema = z.string().regex(/^[a-z]{2}$/);
+export const languageCodeSchema = z.string().regex(/^[a-z]{2}$/);
 const unresolvedItemSchema = z.strictObject({
   itemKey: z.string().min(1),
   resolution: z.enum(["unresolved", "deferred_by_user"]),

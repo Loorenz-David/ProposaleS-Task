@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ValidationError } from "@/lib/errors/app-error";
+import { zodIssues } from "@/lib/errors/zod-issues";
 import { isoTimestampSchema } from "@/lib/values/timestamp";
 import { uuidV4Schema } from "@/lib/values/uuid";
 
@@ -48,18 +49,6 @@ function serializationError(): ValidationError {
   return new ValidationError({
     reason: "domain_rule",
     issues: [{ path: [], message: "workflow state must be JSON-serializable" }],
-  });
-}
-
-function zodIssues(error: z.ZodError) {
-  return error.issues.flatMap((issue) => {
-    if (issue.code === "unrecognized_keys") {
-      return issue.keys.map((key) => ({
-        path: [...issue.path.map(String), key],
-        message: issue.message,
-      }));
-    }
-    return [{ path: issue.path.map(String), message: issue.message }];
   });
 }
 

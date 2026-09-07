@@ -1,8 +1,7 @@
 import "server-only";
 
-import type { z } from "zod";
-
 import { ValidationError } from "@/lib/errors/app-error";
+import { zodIssues } from "@/lib/errors/zod-issues";
 import type { ProposalesClient } from "@/lib/proposales";
 import { getProposalesClient } from "@/lib/proposales";
 
@@ -14,20 +13,6 @@ const defaultDeps = {
     return getProposalesClient();
   },
 };
-
-// Duplicated from schemas/workflow-state.ts's zodIssues (D15): two call sites is not yet
-// a pattern (contract 03 §3), so this stays a private copy rather than a shared export.
-function zodIssues(error: z.ZodError) {
-  return error.issues.flatMap((issue) => {
-    if (issue.code === "unrecognized_keys") {
-      return issue.keys.map((key) => ({
-        path: [...issue.path.map(String), key],
-        message: issue.message,
-      }));
-    }
-    return [{ path: issue.path.map(String), message: issue.message }];
-  });
-}
 
 export async function searchContentForHuman(
   input: unknown,
