@@ -259,6 +259,29 @@ describe("AI client", () => {
     expect(calls[0]?.maxRetries).toBe(0);
   });
 
+  it("C6(l): asks OpenAI not to constrain decoding to the JSON schema", async () => {
+    // A live run against gpt-5.6-luna returned 400 invalid_json_schema: strict mode forbids
+    // `propertyNames` and requires every key to appear in `required`, and the proposition's
+    // provenance shapes are neither. The Zod parse in `run()` is what makes output authoritative,
+    // so the schema stays a decoding hint here rather than a decoding constraint.
+    const { client, calls } = makeClient(result(), "openai");
+
+    await client.generateStep({ ...basicInput, outputJsonSchema: { type: "object" } }, { timeoutMs: 100 });
+
+    expect(calls[0]?.providerOptions).toEqual({ openai: { strictJsonSchema: false } });
+    // The schema itself still goes to the model.
+    expect(calls[0]?.output).toBeDefined();
+  });
+
+  it("C6(m): sends no provider options on a step that has no output schema", async () => {
+    const { client, calls } = makeClient(result(), "openai");
+
+    await client.generateStep(basicInput, { timeoutMs: 100 });
+
+    expect(calls[0]?.providerOptions).toBeUndefined();
+    expect(calls[0]?.output).toBeUndefined();
+  });
+
   it("C6(g): passes system and text messages unchanged", async () => {
     const { client, calls } = makeClient(result());
 

@@ -36,9 +36,26 @@ type GenerateTextRequest = {
   messages: ModelMessage[];
   tools?: Record<string, Tool>;
   output?: ReturnType<typeof Output.object>;
+  providerOptions?: Record<string, Record<string, unknown>>;
   maxRetries: number;
   abortSignal: AbortSignal;
 };
+
+/**
+ * OpenAI's constrained-decode mode ("strict" structured output) accepts only a subset of JSON
+ * Schema: it forbids `propertyNames`, and it requires every key of an object to appear in
+ * `required`, so an optional field must be modelled as a nullable one instead. The proposition's
+ * provenance shapes are neither — a `ref` carries whichever of `variationId`, `questionId`,
+ * `editTurn`, `turnId` and `quote` applies, and a bare warning value is a recursive record. A live
+ * run against `gpt-5.6-luna` returned 400 `invalid_json_schema` on exactly that.
+ *
+ * Turning strict off makes the schema a decoding hint rather than a decoding constraint. It is not
+ * a loosening of any boundary this application relies on: the model's output is authoritative only
+ * after `run()` parses it with the Zod output schema and `validateAgentOutput` resolves every
+ * reference, and output that does not conform is already a retried, then failed, turn. The setting
+ * is namespaced by provider, so it is inert for Anthropic.
+ */
+const OPENAI_PROVIDER_OPTIONS = { openai: { strictJsonSchema: false } } as const;
 
 export type GenerateTextDependency = (request: GenerateTextRequest) => Promise<AiSdkResult>;
 
@@ -150,7 +167,10 @@ export function createAiClient(env: ServerEnv = serverEnv, deps: AiClientDeps = 
         tools: toSdkTools(input.tools),
         ...(input.outputJsonSchema === undefined
           ? {}
-          : { output: Output.object({ schema: jsonSchema(asJsonSchema(input.outputJsonSchema)) }) }),
+          : {
+              output: Output.object({ schema: jsonSchema(asJsonSchema(input.outputJsonSchema)) }),
+              providerOptions: OPENAI_PROVIDER_OPTIONS,
+            }),
         abortSignal: AbortSignal.timeout(options.timeoutMs),
       };
 
