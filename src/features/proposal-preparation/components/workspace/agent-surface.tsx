@@ -20,8 +20,9 @@ import { AgentStatusLine } from "../agent/agent-status-line";
 import { TurnFailureNotice } from "../agent/turn-failure-notice";
 import { useTurnDispatch } from "../../hooks/use-turn-dispatch";
 import { useWorkspaceSessionStore } from "../../hooks/use-workspace-session-store";
+import type { CloseGuardController } from "../../hooks/use-close-guard";
 
-export function AgentSurface() {
+export function AgentSurface({ closeGuard }: { closeGuard?: CloseGuardController }) {
   const activeSessionId = useWorkspaceSessionStore((state) => state.activeSessionId);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const record = useWorkspaceSessionStore((state) =>
@@ -87,7 +88,7 @@ export function AgentSurface() {
       className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--color-bg-agent-pane)]"
     >
       <AgentHeader sessionCount={sessionCount} />
-      <SessionTabStrip />
+      <SessionTabStrip closeGuard={closeGuard} />
       <AgentStatusLine />
       {thread.isEmpty && !record.inFlightTurn ? (
         <div className="min-h-0 flex-1 overflow-y-auto px-[18px]">

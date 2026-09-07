@@ -753,3 +753,22 @@ focus-order row is not evidence (master plan §11.1, follow-up 18). Free the por
   green.
 - No Pass A visual contract or prop was extended. No mutation was declared for WP2.
 - Checkpoint stamp: `npm test` — 53 files / 289 tests green.
+
+### WP3 checkpoint
+
+- Added `useCloseGuard` as the single target-time close/discard authority. Meaningful work,
+  whitespace-only drafts, target-session isolation, last-session replacement, confirmation title,
+  creation refusal, dismissal on interaction/resolution, and post-close focus callbacks are wired
+  through the existing dialog and tab affordances. The review discard now delegates to the same
+  guard.
+- Acceptance evidence: `use-close-guard.test.ts` covers R3.1–R3.15; the C3(i) Pass A guard was
+  amended to assert zero direct strip removals and one guarded removal call, as explicitly
+  authorized by §4.
+- Mutation ledger: M3 changed the close branch to gate on derived tab status and reddened R3.7
+  (an actually empty session opened the dialog); reverted. M4 changed creation refusal into a
+  confirmation and reddened R3.12; reverted. Mutation file was `use-close-guard.ts`, applied
+  and reverted before commit.
+- Pass A component contracts extended only with optional machinery props on `AgentSurface`,
+  `SessionTabStrip`, and `MainApplicationSurface`, because one shared guard instance must
+  serve tab close and review discard while `ProposalWorkspace` owns the dialog.
+- Checkpoint stamp: `npm test` — 54 files / 304 tests green.

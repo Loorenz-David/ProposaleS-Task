@@ -5,13 +5,14 @@ import { toMainSurfaceViewModel } from "../../client/view-models/main-surface";
 import { toPreviewViewModel } from "../../client/view-models/preview";
 import { useWorkspaceSessionStore } from "../../hooks/use-workspace-session-store";
 import { useTurnDispatch } from "../../hooks/use-turn-dispatch";
+import type { CloseGuardController } from "../../hooks/use-close-guard";
 import { CreatedSurface } from "../creation/created-surface";
 import { CreatingSurface } from "../creation/creating-surface";
 import { CreationFailureSurface } from "../creation/creation-failure-surface";
 import { ProposalPreparationIdleSurface } from "../idle/proposal-preparation-idle-surface";
 import { ProposalReviewSurface } from "../review/proposal-review-surface";
 
-export function MainApplicationSurface({ state }: { state?: MainSurfaceState }) {
+export function MainApplicationSurface({ state, closeGuard }: { state?: MainSurfaceState; closeGuard?: CloseGuardController }) {
   const record = useWorkspaceSessionStore((store) =>
     store.activeSessionId ? store.sessions[store.activeSessionId] : null,
   );
@@ -57,7 +58,9 @@ export function MainApplicationSurface({ state }: { state?: MainSurfaceState }) 
           onCancelEdit={() => undefined}
           onCloseBlock={() => setOpenedBlock(activeSessionId, null)}
           onCommitEdit={(edit) => void dispatch(activeSessionId, { kind: "edit", operation: { op: "set_leaf", path: edit.path, value: edit.value } })}
-          onDiscard={() => undefined}
+          onDiscard={() => {
+            if (closeGuard && activeSessionId) closeGuard.requestClose(activeSessionId);
+          }}
           onOpenBlock={(contentId) => setOpenedBlock(activeSessionId, contentId)}
           onRemoveBlock={({ blockIndex }) => void dispatch(activeSessionId, { kind: "edit", operation: { op: "remove_block", index: blockIndex } })}
           onReplaceBlock={({ blockIndex, variationId }) => void dispatch(activeSessionId, { kind: "edit", operation: { op: "replace_block", index: blockIndex, variationId } })}

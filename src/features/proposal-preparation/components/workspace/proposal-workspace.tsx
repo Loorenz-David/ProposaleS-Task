@@ -6,7 +6,9 @@ import { flushSync } from "react-dom";
 import { AgentSurface } from "./agent-surface";
 import { MainApplicationSurface } from "./main-application-surface";
 import { WorkspaceDivider } from "./workspace-divider";
+import { ConfirmDialog } from "./confirm-dialog";
 import { useDividerWidth } from "../../hooks/use-divider-width";
+import { useCloseGuard } from "../../hooks/use-close-guard";
 
 const subscribeToHydration = () => () => {};
 
@@ -17,6 +19,7 @@ export function ProposalWorkspace() {
   const [isResizing, setIsResizing] = useState(false);
   const [announcementKey, setAnnouncementKey] = useState(0);
   const { width, effectiveMax, setWidth, reset } = useDividerWidth(containerWidth);
+  const closeGuard = useCloseGuard();
 
   const announceReset = () => {
     flushSync(() => setAnnouncementKey((key) => key + 1));
@@ -43,7 +46,7 @@ export function ProposalWorkspace() {
     >
       <div className="flex min-w-0 shrink-0" style={{ width }}>
         {isHydrated ? (
-          <AgentSurface />
+          <AgentSurface closeGuard={closeGuard} />
         ) : (
           <aside
             aria-label="Proposal agent"
@@ -61,7 +64,8 @@ export function ProposalWorkspace() {
         isResizing={isResizing}
         width={width}
       />
-      <MainApplicationSurface />
+      <MainApplicationSurface closeGuard={closeGuard} />
+      <ConfirmDialog {...closeGuard.dialog} />
       <span aria-live="polite" className="sr-only" data-divider-announcement>
         {announcementKey > 0
           ? `Agent panel reset to default width${"\u200b".repeat(announcementKey)}`

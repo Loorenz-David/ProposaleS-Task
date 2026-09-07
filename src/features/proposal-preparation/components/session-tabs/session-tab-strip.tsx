@@ -7,6 +7,8 @@ import {
   useWorkspaceSessionStore,
   type WorkspaceSessionId,
 } from "../../hooks/use-workspace-session-store";
+import type { CloseGuardController } from "../../hooks/use-close-guard";
+import { useCloseGuard } from "../../hooks/use-close-guard";
 import { toTabViewModel } from "../../client/view-models/session-tab";
 import { ACTIVE_TAB_REVEAL_MARGIN_PX } from "./session-tabs-constants";
 import { revealActiveTabScrollLeft } from "./reveal-active-tab";
@@ -42,14 +44,15 @@ function tabPanelId(sessionId: WorkspaceSessionId) {
   return `session-tab-panel-${sessionId}`;
 }
 
-export function SessionTabStrip() {
+export function SessionTabStrip({ closeGuard }: { closeGuard?: CloseGuardController }) {
+  const localCloseGuard = useCloseGuard();
+  const guard = closeGuard ?? localCloseGuard;
   const activeSessionId = useWorkspaceSessionStore((state) => state.activeSessionId);
   const sessionIds = useWorkspaceSessionStore((state) => state.sessionIds);
   const sessions = useWorkspaceSessionStore((state) => state.sessions);
   const activateSession = useWorkspaceSessionStore((state) => state.activateSession);
   const createSession = useWorkspaceSessionStore((state) => state.createSession);
   const moveSession = useWorkspaceSessionStore((state) => state.moveSession);
-  const closeSession = useWorkspaceSessionStore((state) => state.closeSession);
 
   const scrollRegionRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef(new Map<WorkspaceSessionId, HTMLButtonElement>());
@@ -128,14 +131,17 @@ export function SessionTabStrip() {
       if (index === -1) return;
       const tab = tabRefs.current.get(sessionId);
       const focusWasInsideRemovedTab = Boolean(tab?.parentElement?.contains(document.activeElement));
+      const requestClose = guard.requestClose;
       if (sessionId === activeSessionId) {
         requestFocusAfterCommit({ kind: "active" });
       } else if (focusWasInsideRemovedTab) {
         requestFocusAfterCommit({ kind: "index", index });
       }
-      closeSession(sessionId);
+      requestClose(sessionId, () => requestFocusAfterCommit(
+        sessionId === activeSessionId ? { kind: "active" } : { kind: "index", index },
+      ));
     },
-    [activeSessionId, closeSession, requestFocusAfterCommit, sessionIds],
+    [activeSessionId, guard, requestFocusAfterCommit, sessionIds],
   );
 
   const handleCreate = () => {
@@ -304,6 +310,9 @@ export function SessionTabStrip() {
       ))}
       <span aria-live="polite" className="sr-only" data-session-reorder-announcement>
         {announcement}
+      </span>
+      <span aria-live="polite" className="sr-only" data-session-status-announcement>
+        {guard.refusal?.message ?? ""}
       </span>
     </Tabs.Root>
   );

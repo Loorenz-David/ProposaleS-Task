@@ -109,14 +109,16 @@ describe("session close", () => {
     expect(new Set([first, second, third]).size).toBe(3);
   });
 
-  it("C3(i): the only store removal call is behind the named gate module", () => {
+  it("C3(i): the only store removal call is behind the named guard module", () => {
     const strip = readFileSync(
       path.resolve(__dirname, "../components/session-tabs/session-tab-strip.tsx"),
       "utf8",
     );
     expect(strip).toMatch(/function|const\s+closeSessionAtGate/);
-    expect(strip.match(/\bcloseSession\(/g) ?? []).toHaveLength(1);
+    expect(strip.match(/\bcloseSession\(/g) ?? []).toHaveLength(0);
     expect(strip).toContain("closeSessionAtGate(sessionId)");
+    const guard = readFileSync(path.resolve(__dirname, "use-close-guard.ts"), "utf8");
+    expect(guard.match(/\bcloseSession\(/g) ?? []).toHaveLength(1);
   });
 });
 
