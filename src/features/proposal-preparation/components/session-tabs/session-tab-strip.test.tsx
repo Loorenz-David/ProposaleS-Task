@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { renderToString } from "react-dom/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { ProposalWorkspace } from "../workspace/proposal-workspace";
@@ -9,6 +10,8 @@ import {
   useWorkspaceSessionStore,
 } from "../../hooks/use-workspace-session-store";
 import { reorderTabInteraction, SessionTabStrip } from "./session-tab-strip";
+
+const STORE_SOURCE = readFileSync(path.join(__dirname, "../../hooks/use-workspace-session-store.ts"), "utf8");
 
 beforeEach(() => {
   useWorkspaceSessionStore.setState(createWorkspaceSessionState());
@@ -69,9 +72,11 @@ describe("SessionTabStrip", () => {
   it("C3(a,f): closing a focused background tab focuses the tab at its old index", () => {
     addSessions(2);
     render(<SessionTabStrip />);
+    const activeBeforeClose = useWorkspaceSessionStore.getState().activeSessionId;
     const firstClose = screen.getAllByRole("button", { name: "Close session New proposal session" })[0];
     firstClose.focus();
     fireEvent.click(firstClose);
+    expect(useWorkspaceSessionStore.getState().activeSessionId).toBe(activeBeforeClose);
     expect(document.activeElement).toBe(tabs()[0]);
     expect(document.activeElement?.tagName).not.toBe("BODY");
   });
@@ -183,5 +188,13 @@ describe("SessionTabStrip", () => {
     expect(document.activeElement).toBe(add);
     expect(screen.getByRole("tablist")).not.toContainElement(add);
     expect(add.parentElement).toBe(screen.getByRole("tablist").parentElement);
+  });
+
+  it("C7(f): first render contains a real session tab", () => {
+    const markup = renderToString(<SessionTabStrip />);
+    expect(STORE_SOURCE).toMatch(/const initialSessionState = createInitialSession\(\);/);
+    expect(markup).toContain('role="tablist"');
+    expect(markup).toContain('role="tab"');
+    expect(markup).toContain('data-new-session');
   });
 });

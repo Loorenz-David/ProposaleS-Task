@@ -33,6 +33,8 @@ function createInitialSession(): Pick<WorkspaceSessionState, "activeSessionId" |
   };
 }
 
+const initialSessionState = createInitialSession();
+
 export function createWorkspaceSessionState(): Pick<
   WorkspaceSessionState,
   "activeSessionId" | "sessionIds" | "sessions"
@@ -41,9 +43,7 @@ export function createWorkspaceSessionState(): Pick<
 }
 
 export const useWorkspaceSessionStore = create<WorkspaceSessionState>((set, get) => ({
-  activeSessionId: null,
-  sessionIds: [],
-  sessions: {},
+  ...initialSessionState,
   activateSession: (sessionId) => {
     if (!get().sessions[sessionId]) return;
     set({ activeSessionId: sessionId });

@@ -1,7 +1,7 @@
 "use client";
 
 import * as Tabs from "@radix-ui/react-tabs";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import {
   useWorkspaceSessionStore,
@@ -54,15 +54,8 @@ export function SessionTabStrip() {
   const tabRefs = useRef(new Map<WorkspaceSessionId, HTMLButtonElement>());
   const draggedIdRef = useRef<WorkspaceSessionId | null>(null);
   const focusRequestRef = useRef<FocusRequest | null>(null);
-  const initialisedRef = useRef(false);
+  const repairingFocusRef = useRef(false);
   const [announcement, setAnnouncement] = useState("");
-
-  useEffect(() => {
-    if (!initialisedRef.current && sessionIds.length === 0) {
-      initialisedRef.current = true;
-      createSession();
-    }
-  }, [createSession, sessionIds.length]);
 
   const focusTab = useCallback((sessionId: WorkspaceSessionId | undefined) => {
     if (sessionId) tabRefs.current.get(sessionId)?.focus();
@@ -76,6 +69,7 @@ export function SessionTabStrip() {
     const request = focusRequestRef.current;
     if (!request) return;
     focusRequestRef.current = null;
+    repairingFocusRef.current = true;
     if (request.kind === "active") {
       if (activeSessionId) focusTab(activeSessionId);
     } else if (request.kind === "id") {
@@ -83,6 +77,7 @@ export function SessionTabStrip() {
     } else {
       focusTab(sessionIds[Math.min(request.index, sessionIds.length - 1)]);
     }
+    repairingFocusRef.current = false;
   }, [activeSessionId, focusTab, sessionIds]);
 
   const revealActiveTab = useCallback(() => {
@@ -207,7 +202,9 @@ export function SessionTabStrip() {
                       activateSession(sessionId);
                       focusTab(sessionId);
                     }}
-                    onFocus={() => activateSession(sessionId)}
+                    onFocus={() => {
+                      if (!repairingFocusRef.current) activateSession(sessionId);
+                    }}
                     onKeyDown={(event) => {
                       const isReorder = (event.metaKey || event.ctrlKey) && event.shiftKey;
                       if (isReorder && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {

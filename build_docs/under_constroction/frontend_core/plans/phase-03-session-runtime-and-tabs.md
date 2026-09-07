@@ -870,3 +870,43 @@ produced no artifact, and its prompt was **repaired**, not re-authored: one gate
 state it was always meant to check, and every other word stands. **A session that halts at the gate
 with zero writes, against a prompt that is corrected rather than superseded, does not consume a
 round number.** Both prompt and plan are current; the same file is re-dispatched.
+
+### Implementer fix round 4 — Codex, 2026-09-07
+
+The applicable contracts were re-emitted before implementation: `02-runtime-boundaries.md`,
+`03-feature-architecture.md`, `05-client-architecture.md`,
+`15-ui-styling-and-component-system.md`, `11-testing-principles.md`,
+`13-decision-checklist.md`, `12-anti-patterns.md`, and
+`14-documentation-principles.md`. No server, integration, persistence, data-contract, or agent
+contract applies to this four-item fix. No durable feature README exists; the root README remains
+true, so no README change was needed.
+
+Corrections and outcomes:
+
+- **B3:** added a `repairingFocusRef` around close-induced layout-effect focus. User focus still
+  activates a tab, while close repair does not; C3(a) now asserts both unchanged active id and
+  repaired focus destination.
+- **S10:** moved `SessionTabStrip` to the first child of `AgentSurface`, above the idle content.
+- **S11:** seeded `initialSessionState` at store module scope with one session. The three
+  post-navigation readiness waits in `e2e/workspace.spec.ts` (C2(a), C2(e), and each C4(width)-3
+  instance) were retired; none was kept because the first rendered document now contains a tab.
+  C7(f) asserts the server-rendered markup and the module-scope seed.
+- **C4(b):** diagnosed the failure as an immediate geometry read racing the asynchronous
+  `ResizeObserver` reveal after viewport resize. The helper now polls the existing subject
+  (overflowing strip plus both margin inequalities) until it is true, retaining all five
+  operations and the same margin assertion.
+
+The closing matrix recorded the registered Next.js `next dev` overlay failure in inherited C2(a):
+the full suite was 68/69 in each of three clean runs and the isolated retry also failed. C4(b)
+passed in all three runs. This is the documented environment-dependent follow-up 18, not a
+phase-03 product change; no inherited assertion was weakened.
+
+The 18-mutation arithmetic was re-derived as: C1(b) 1 + C2(b) 1 + C2(c) 3 + C3(a) 1 + C3(e) 1
++ C3(g) 1 + C3(h) 1 + C3(i) 1 + C4(f) 3 + C5(c) 1 + C6(e) 1 + C6(f) 1 + C7(a) 1 + C7(f) 1
+= **18**. The two new round-4 mutations were executed and reverted: the C3(a) repair guard
+mutation reddened the active-session assertion, and the C7(f) post-mount-seed mutation reddened
+the seed assertion. The prior sixteen remain recorded by the round-2 handoff; no additional named
+mutation was introduced.
+
+The documentation impact review found no durable current-state document made false or incomplete.
+No architecture graph exists, so there is no graph delta.

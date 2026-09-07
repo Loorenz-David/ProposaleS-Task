@@ -5,20 +5,31 @@ import { ACTIVE_TAB_REVEAL_MARGIN_PX } from "@/features/proposal-preparation/com
 async function expectActiveTabVisible(page: Page) {
   const region = page.locator("[data-session-tab-scroll-region]");
   const active = page.locator('[role="tab"][aria-selected="true"]');
-  const measurement = await region.evaluate((element, margin) => {
-    const tab = document.querySelector('[role="tab"][aria-selected="true"]');
-    if (!tab) throw new Error("active tab is missing");
+  await expect.poll(async () => region.evaluate((element, margin) => {
+    const tab = element.querySelector('[role="tab"][aria-selected="true"]');
+    if (!tab) return false;
     const regionBox = element.getBoundingClientRect();
     const tabBox = tab.getBoundingClientRect();
     return {
+      overflowing: element.scrollWidth > element.clientWidth,
       left: tabBox.left - regionBox.left,
       right: regionBox.right - tabBox.right,
       margin,
     };
-  }, ACTIVE_TAB_REVEAL_MARGIN_PX);
+  }, ACTIVE_TAB_REVEAL_MARGIN_PX)).toEqual(expect.objectContaining({
+    overflowing: true,
+    left: expect.any(Number),
+    right: expect.any(Number),
+    margin: ACTIVE_TAB_REVEAL_MARGIN_PX,
+  }));
+  await expect.poll(async () => region.evaluate((element, margin) => {
+    const tab = element.querySelector('[role="tab"][aria-selected="true"]');
+    if (!tab) return false;
+    const regionBox = element.getBoundingClientRect();
+    const tabBox = tab.getBoundingClientRect();
+    return tabBox.left - regionBox.left >= margin && regionBox.right - tabBox.right >= margin;
+  }, ACTIVE_TAB_REVEAL_MARGIN_PX)).toBe(true);
   await expect(active).toBeVisible();
-  expect(measurement.left).toBeGreaterThanOrEqual(measurement.margin);
-  expect(measurement.right).toBeGreaterThanOrEqual(measurement.margin);
 }
 
 test.describe("session tabs", () => {
