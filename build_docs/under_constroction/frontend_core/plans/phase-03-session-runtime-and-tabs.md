@@ -910,3 +910,58 @@ mutation was introduced.
 
 The documentation impact review found no durable current-state document made false or incomplete.
 No architecture graph exists, so there is no graph delta.
+
+### Fix round 4 consumed — coordinator, 2026-09-07
+
+`handoffs/implementer/phase-03-fix-round-4.handoff.implementer.md`, state `IMPLEMENTED`, actor
+Codex, checkpoint `85bc033`.
+
+**Reconciliation, clean.** Write perimeter matches the checkpoint exactly — nine files, all
+declared, nothing outside. Coverage map totals 47 (5+8+9+6+7+6+6) with 4 held. Mutation arithmetic
+18 = 16 carried + 2 new, each new one recording site, observed red and revert. Unit 183 → **184**,
+the added test being C7(f). The three end-to-end runs §6 mandated were taken and all three
+reported.
+
+**All four corrections landed, verified by inspection and by variation.**
+
+- **B3.** `repairingFocusRef` is set immediately before `focusTab` in the layout effect and cleared
+  immediately after; `onFocus` returns early while it is set. `.focus()` dispatches `onFocus`
+  synchronously, so the flag's scope is exactly right. **The probe worth running was not the one the
+  round ran** — the risk in a guard like this is that it suppresses activation where activation is
+  *required*, so the coordinator traced every caller instead. Arrow navigation calls
+  `activateSession(targetId)` explicitly and then `focusTab` **directly**, bypassing the repair
+  path, so activation-follows-focus is untouched; creation activates in the store before the repair
+  runs; and on the reorder path the suppression **strengthens** C2(b), which requires the active
+  session unchanged by a move. No path lost an activation it needed.
+- **S10.** `<SessionTabStrip />` is now the first child of the `aside`, above the idle block, per
+  design 03 §2 and design 04 §1–§2.
+- **S11.** The post-mount `useEffect` is deleted and the store seeds one session at module scope, so
+  the first rendered document carries a real tab. All three readiness waits were retired, none
+  kept — which is what the correction predicted and is the honest outcome.
+- **Correction 4 — C4(b) is fixed and the fix is confirmed independently.** It was failing **3 of 4**
+  isolated runs on the round-2 tree; on this tree it passes **4 of 4**. The repair polls the existing
+  overflow and margin predicates rather than weakening them, and no operation was removed from the
+  five.
+
+**The phase still cannot take a green stamp, and the reason is not this round's work.**
+`e2e/workspace.spec.ts` `C2(a)` now fails **deterministically** — 4 of 4 isolated runs here, and all
+three of the round's own full runs at 68/69. It was intermittent before and is now constant. Cause,
+measured rather than inferred by instrumenting the live tab order:
+
+```
+Tab 1 skip link · 2 tab trigger · 3 close ✕ · 4 new session + · 5 divider · 6 NEXTJS-PORTAL · 7 probe
+```
+
+**The product's tab order is correct and the test's count is correct.** Five product stops precede
+the probe, the test presses six, and the probe is the sixth product stop. What occupies position six
+is the Next.js dev-tools overlay, which exists only under `next dev`. This is master plan §11.3
+follow-up 18 exactly as registered, and it has crossed from intermittent to permanent because this
+round legitimately removed the readiness waits and seeded the strip at first render — both correct
+changes that happen to remove the timing slack the row was surviving on.
+
+**Consequence: standing rule 16 blocks approval**, and it should. A permanently red suite is worse
+than a red row: it destroys the signal for phases 04 onward, so nobody notices the next real
+failure. The repair is follow-up 18's, not phase 03's, and the assertion must not be weakened to
+recover a green run. `devIndicators: false` is supported by the installed `next@16.3.4`
+(`node_modules/next/dist/server/config-schema.js` accepts `z.literal(false)`), and the repository has
+no `next.config` file at all today. Relayed to the owner as a decision.
