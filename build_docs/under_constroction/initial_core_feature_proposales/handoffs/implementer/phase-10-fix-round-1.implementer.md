@@ -84,7 +84,8 @@ Restricted-file digest evidence, SHA-256 (checkpoint `438f804` → current after
 
 Each row below was run after printing an applied-substitution count of 1, failed as observed, and
 was reverted before the next mutation. The scope was the named phase test; the final row delta was
-one failing test for each single-mutant run.
+one failing test for each single-mutant run. There were 9 unique named applications: MUT-10-16
+plus MUT-10-18…25; MUT-10-22 and MUT-10-23 were additionally verified as C4(g)-only reds.
 
 | Mutation | Applied site | Command / observed red |
 |---|---|---|

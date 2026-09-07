@@ -409,8 +409,9 @@ positive/negative guards for C1(h), C1(i), C2(d), C2(f), C3(b), C3(d), C3(f), C3
 and C5(e), and remove the two unused `AnyRecord` declarations.
 
 Coverage is **6 criteria / 37 rows / 25 named mutations**. All 37 row ids appear in executing
-test names. The 11 required fix-round mutation applications (MUT-10-16, MUT-10-18…25, and the
-two additional C4(g) directions MUT-10-22/23) each reddened the named row and were reverted.
+test names. The 9 unique required fix-round mutation applications (MUT-10-16 and MUT-10-18…25;
+MUT-10-22/23 were each run with C4(g) as the sole failing row) each reddened the named row and
+were reverted.
 The restricted `schemas/conversation.ts` and `server/domain/retrieval-record.ts` digests are
 unchanged from checkpoint `438f804`. Closing L4: `npm test` **35 files / 458 tests** green;
 `npm run typecheck` and `npm run lint` exit 0. No build, network, provider call, install, or
