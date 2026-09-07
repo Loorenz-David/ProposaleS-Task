@@ -273,6 +273,34 @@ describe("AI client", () => {
     expect(calls[0]?.output).toBeDefined();
   });
 
+  it("C6(n): unwraps the envelope OpenAI's dialect forced onto the schema", async () => {
+    // OpenAI cannot express a top-level union, so the agent output schema is nested one level
+    // down. The wrapper is the vendor's, not the caller's: what comes back out is the union member
+    // `run()` will parse.
+    const { client, calls } = makeClient(result({ output: { result: { kind: "proposition" } } }), "openai");
+
+    const step = await client.generateStep(
+      { ...basicInput, outputJsonSchema: { oneOf: [{ type: "object" }, { type: "object" }] } },
+      { timeoutMs: 100 },
+    );
+
+    expect(step).toEqual({ kind: "final", output: { kind: "proposition" }, usage: expect.anything() });
+    expect(calls[0]?.output).toBeDefined();
+  });
+
+  it("C6(o): leaves Anthropic's output exactly as the SDK produced it", async () => {
+    // The same SDK answer, the other provider: nothing is unwrapped, so a real `result` key in a
+    // model's own output could never be silently stripped.
+    const { client } = makeClient(result({ output: { result: { kind: "proposition" } } }), "anthropic");
+
+    const step = await client.generateStep(
+      { ...basicInput, outputJsonSchema: { oneOf: [{ type: "object" }, { type: "object" }] } },
+      { timeoutMs: 100 },
+    );
+
+    expect(step.kind === "final" && step.output).toEqual({ result: { kind: "proposition" } });
+  });
+
   it("C6(m): sends no provider options on a step that has no output schema", async () => {
     const { client, calls } = makeClient(result(), "openai");
 

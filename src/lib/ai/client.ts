@@ -11,7 +11,7 @@ import type { ModelMessage, Tool, LanguageModelUsage } from "ai";
 
 import { serverEnv, type ServerEnv } from "@/lib/env/server";
 import { AiProviderError, fromSdkError } from "@/lib/ai/errors";
-import { outputSchemaForProvider } from "@/lib/ai/openai-schema";
+import { outputAdapterFor } from "@/lib/ai/openai-schema";
 import type {
   AiClient,
   AgentMessage,
@@ -162,16 +162,17 @@ export function createAiClient(env: ServerEnv = serverEnv, deps: AiClientDeps = 
     provider: env.AI_PROVIDER,
     model: env.AI_MODEL,
     async generateStep(input, options) {
+      const adapter = input.outputJsonSchema === undefined
+        ? undefined
+        : outputAdapterFor(env.AI_PROVIDER, input.outputJsonSchema);
       const request = {
         system: input.system,
         messages: toSdkMessages(input.messages),
         tools: toSdkTools(input.tools),
-        ...(input.outputJsonSchema === undefined
+        ...(adapter === undefined
           ? {}
           : {
-              output: Output.object({
-                schema: jsonSchema(asJsonSchema(outputSchemaForProvider(env.AI_PROVIDER, input.outputJsonSchema))),
-              }),
+              output: Output.object({ schema: jsonSchema(asJsonSchema(adapter.schema)) }),
               providerOptions: OPENAI_PROVIDER_OPTIONS,
             }),
         abortSignal: AbortSignal.timeout(options.timeoutMs),
@@ -179,7 +180,9 @@ export function createAiClient(env: ServerEnv = serverEnv, deps: AiClientDeps = 
 
       try {
         const result = await callModel(model, request, deps.generateText);
-        return mapResult(result);
+        const step = mapResult(result);
+        if (step.kind !== "final" || adapter === undefined) return step;
+        return { ...step, output: adapter.unwrap(step.output) };
       } catch (error) {
         if (NoObjectGeneratedError.isInstance(error)) {
           if (error.finishReason === "content-filter") {
