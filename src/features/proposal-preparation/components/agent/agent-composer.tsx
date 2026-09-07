@@ -1,5 +1,5 @@
 import { ArrowUp } from "lucide-react";
-import type { KeyboardEvent } from "react";
+import { forwardRef, type KeyboardEvent } from "react";
 
 export type AgentComposerProps = {
   value: string;
@@ -9,7 +9,10 @@ export type AgentComposerProps = {
   onSubmit: () => void;
 };
 
-export function AgentComposer({ value, isSubmitting, hint, onChange, onSubmit }: AgentComposerProps) {
+export const AgentComposer = forwardRef<HTMLTextAreaElement, AgentComposerProps>(function AgentComposer(
+  { value, isSubmitting, hint, onChange, onSubmit },
+  ref,
+) {
   const submit = () => {
     if (!value.trim() || isSubmitting) return;
     onSubmit();
@@ -29,6 +32,7 @@ export function AgentComposer({ value, isSubmitting, hint, onChange, onSubmit }:
           Message Proposal Copilot
         </label>
         <textarea
+          ref={ref}
           id="agent-composer"
           aria-describedby="agent-composer-hint"
           className="max-h-[150px] min-h-[38px] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent py-1 text-sm leading-normal text-[var(--color-fg)] placeholder:text-[var(--color-fg-quiet)]"
@@ -53,4 +57,4 @@ export function AgentComposer({ value, isSubmitting, hint, onChange, onSubmit }:
       </p>
     </div>
   );
-}
+});

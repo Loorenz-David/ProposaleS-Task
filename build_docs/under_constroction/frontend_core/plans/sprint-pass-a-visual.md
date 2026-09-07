@@ -851,5 +851,9 @@ Tracker §4 rows 05–15: `State` → `SUBMISSION_SPRINT`, `Note` → "see §3B"
   semantics; thought payloads expose rationale/assumptions/warnings; question payloads preserve open,
   answered, and skipped state and emit `reopen-questions`. Glyphs are decorative, new-tab behavior is
   explicit in the accessible name, and fixture URLs pass through unchanged.
+- WP4 — clarification panel: single/batch derivation, received-order progress, locally retained
+  answer/skip drafts, bounded navigation, pinned actions, first-open focus, Escape dismissal with
+  composer focus return, Ctrl/Cmd+Enter, inline failure description, and always-available skip actions
+  implemented. The panel remains mounted while dismissed so reopening preserves draft input.
 - Files created/modified, package/version, theme names, design deltas, later checkpoints, Pass B open
   items, and the final verification SHA will be completed at the exit gate.

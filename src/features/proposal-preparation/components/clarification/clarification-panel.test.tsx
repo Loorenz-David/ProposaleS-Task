@@ -1,0 +1,51 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+
+import type { ClarificationPanelViewModel } from "../../client/view-models/clarification";
+import { ClarificationPanel } from "./clarification-panel";
+
+const batch: ClarificationPanelViewModel = {
+  mode: "batch",
+  openCount: 3,
+  isOpen: true,
+  questions: [
+    { questionId: "q1", text: "How many chairs?", itemLabel: "Chair Quantity", state: "open" },
+    { questionId: "q2", text: "Which finish?", itemLabel: "Finish", state: "open" },
+    { questionId: "q3", text: "When is delivery?", itemLabel: "Delivery", state: "open" },
+  ],
+};
+
+describe("ClarificationPanel", () => {
+  it("focuses the first open question and supports bounded batch navigation", () => {
+    render(<ClarificationPanel onDismiss={vi.fn()} onSubmit={vi.fn()} submitState={{ status: "idle" }} viewModel={batch} />);
+    expect(screen.getByRole("region", { name: "Agent questions" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "How many chairs?" })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Back" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByRole("textbox", { name: "Which finish?" })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Back" })).toBeEnabled();
+  });
+
+  it("emits answered and skipped drafts with Ctrl+Enter", () => {
+    const onSubmit = vi.fn();
+    render(<ClarificationPanel onDismiss={vi.fn()} onSubmit={onSubmit} submitState={{ status: "idle" }} viewModel={batch} />);
+    fireEvent.change(screen.getByRole("textbox", { name: "How many chairs?" }), { target: { value: "Six" } });
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: "Skip — leave this for the client" }));
+    fireEvent.keyDown(screen.getByRole("region", { name: "Agent questions" }), { key: "Enter", ctrlKey: true });
+    expect(onSubmit).toHaveBeenCalledWith(expect.arrayContaining([
+      expect.objectContaining({ questionId: "q1", state: "answered", text: "Six" }),
+      expect.objectContaining({ questionId: "q2", state: "skipped" }),
+    ]));
+  });
+
+  it("dismisses on Escape and keeps skip available while submitting", () => {
+    const onDismiss = vi.fn();
+    const { rerender } = render(<ClarificationPanel onDismiss={onDismiss} onSubmit={vi.fn()} submitState={{ status: "failed", message: "Please review this answer." }} viewModel={batch} />);
+    expect(screen.getByRole("textbox", { name: "How many chairs?" })).toHaveAttribute("aria-invalid", "true");
+    rerender(<ClarificationPanel onDismiss={onDismiss} onSubmit={vi.fn()} submitState={{ status: "submitting" }} viewModel={batch} />);
+    expect(screen.getByRole("button", { name: "Skip — leave this for the client" })).toBeEnabled();
+    fireEvent.keyDown(screen.getByRole("region", { name: "Agent questions" }), { key: "Escape" });
+    expect(onDismiss).toHaveBeenCalledOnce();
+  });
+});
