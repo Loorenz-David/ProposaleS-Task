@@ -4,11 +4,11 @@ An AI-assisted workflow for turning incomplete commercial intent (briefs, meetin
 
 ## Status
 
-**Foundation established, product workflow not yet implemented.** The repository has a working Next.js scaffold with typecheck, lint, unit, end-to-end, and build steps running locally and in CI, a complete set of normative architecture contracts, agent bootstrap for Claude Code and Codex, and a vendored Proposales API reference. The application currently provides a product-neutral root layout with a header and content container, a small styling foundation (design tokens, typography, focus treatment), and three shared primitives (`Button`, `Input`, `Textarea`). The `/` route is intentionally neutral until the product UI is ported. No proposal generation, agent, Proposales integration, schema, or business flow exists yet.
+**Backend workflow implemented; no transport and no product UI yet.** The proposal preparation workflow exists end to end on the server and is proven offline by the test suite: a brief becomes a structured proposition, a human edits and approves it, and the approved payload is executed deterministically as a Proposales draft whose applied pricing is read back and returned with the editor URL. It is reachable today only from server code through [`src/features/proposal-preparation/server/index.ts`](src/features/proposal-preparation/README.md) — there is no Server Action, Route Handler, or UI wired to it. The `/` route is still the neutral shell: a product-neutral root layout, a small styling foundation, and three shared primitives (`Button`, `Input`, `Textarea`).
 
-## Intended workflow
+## The workflow
 
-This is the architecture the product will follow. None of it is implemented.
+Everything below the transport line is implemented and tested.
 
 ```
 Human intent (brief, notes, requirements)
@@ -19,6 +19,8 @@ Human intent (brief, notes, requirements)
   → deterministic Proposales mutation with the exact approved payload
   → human finishes editing and sends in Proposales
 ```
+
+The human reviews and sends from Proposales; **this application never sends a proposal**, and the Proposales adapter exposes no operation that could.
 
 The principle: AI prepares, the human decides. Consequential mutations stay human-controlled, the approved payload is executed without model reinterpretation, and Proposales remains the final editing and sending environment. The full rules are in [08-agent-architecture.md](architectural_contracts/08-agent-architecture.md).
 
@@ -86,10 +88,19 @@ npm start            # serve the production build
 ```
 npm run typecheck    # tsc --noEmit
 npm run lint         # eslint .
-npm test             # vitest run (unit and component tests)
+npm test             # vitest run (unit and component tests, fully offline)
 npm run test:watch   # vitest in watch mode
 npm run test:e2e     # playwright test
+npm run test:live    # opt-in live suites; a no-op unless LIVE_SMOKE=1
 ```
+
+`npm test` never touches the network: its setup installs an offline fetch guard and seeds placeholder configuration. The live suites are separate, excluded from the default projects, and skipped unless `LIVE_SMOKE=1` is set:
+
+```
+LIVE_SMOKE=1 npm run test:live
+```
+
+They read real credentials from `.env`. One of them **creates a real Proposales draft**, titled `[DISPOSABLE COPILOT SMOKE] <timestamp>`, and prints its uuid so it can be deleted by hand; it also prints the observed editor-URL origin, which is how `PROPOSALES_EDITOR_ORIGIN` should be set. The other runs the real AI provider against a fixture catalog with Proposales faked, and writes nothing anywhere.
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs typecheck, lint, unit tests, end-to-end tests, and the production build on every push and pull request.
 
@@ -120,7 +131,7 @@ First-party Proposales documentation and the OpenAPI spec are vendored under [ap
 ./scripts/update-proposales-api-docs.sh
 ```
 
-A refresh detects possible contract drift; a dependency-aware review of the diff decides whether the application must change. Only vendor changes that touch behavior the application relies on (adapter assumptions, schemas, tests, known quirks) require action. The rule is in that folder's README. How this application uses the API will be documented in `src/lib/proposales/README.md` once the adapter exists.
+A refresh detects possible contract drift; a dependency-aware review of the diff decides whether the application must change. Only vendor changes that touch behavior the application relies on (adapter assumptions, schemas, tests, known quirks) require action. The rule is in that folder's README. How this application uses the API is documented in [src/lib/proposales/README.md](src/lib/proposales/README.md).
 
 ## Repository structure
 
@@ -128,6 +139,8 @@ A refresh detects possible contract drift; a dependency-aware review of the diff
 .
 ├── src/app/                     # Next.js routes: root layout (application shell) and neutral root route
 ├── src/components/ui/           # Shared presentational primitives with no domain knowledge
+├── src/features/                # Feature code; today: proposal-preparation
+├── src/lib/                     # Integrations and shared primitives: proposales, ai, agent, env, errors, values
 ├── src/styles/                  # Design tokens and global base styles
 ├── e2e/                         # Playwright specs
 ├── architectural_contracts/     # Normative engineering contracts (numbered in read order)
@@ -139,7 +152,7 @@ A refresh detects possible contract drift; a dependency-aware review of the diff
 └── .env.example                 # Configuration inventory
 ```
 
-Feature code will live under `src/features/<feature>/` and integrations under `src/lib/<system>/` per [03-feature-architecture.md](architectural_contracts/03-feature-architecture.md); neither exists yet.
+Feature code lives under `src/features/<feature>/` and integrations under `src/lib/<system>/` per [03-feature-architecture.md](architectural_contracts/03-feature-architecture.md). Today that is one feature, [proposal-preparation](src/features/proposal-preparation/README.md), over four integrations: [proposales](src/lib/proposales/README.md), [ai](src/lib/ai/README.md), `agent`, and `env`.
 
 ## Deployment
 
@@ -153,6 +166,14 @@ Established:
 - Application shell, styling foundation, and shared UI primitives.
 - Architecture contracts and agent bootstrap.
 - Vendored Proposales reference and refresh workflow.
+- The Proposales adapter: transport with retries, content reads, draft creation, recovery search by generation id, and Applied Pricing read-back.
+- The AI provider boundary and the agent runtime: tool definitions, a bounded run loop, budgets, and a read-only tool gate.
+- The proposal preparation workflow: preparation, clarification, edits, revision, approval validation, and deterministic execution.
+
+Not yet built:
+
+- Transport. Nothing calls the workflow from the browser; `server/actions.ts` is the frontend stream's next step.
+- Product UI. The `/` route is still neutral.
 
 Decided and deliberately absent:
 
@@ -167,11 +188,12 @@ Decided for the frontend:
 - Tailwind CSS as the default production styling mechanism, with `src/styles/tokens.css` as the single definition of visual values. The existing CSS Modules are converted only when their components are touched by production UI work ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md)).
 - Zustand for feature-scoped client stores only, above `useState` and `useReducer` ([05-client-architecture.md](architectural_contracts/05-client-architecture.md) §5.1).
 
-Future product implementation (not started): brief intake, agent reasoning and tools, prepared-proposal review and approval, the Proposales adapter, and the editor handoff.
+Deliberately absent from the workflow itself: the application never sends a proposal, never writes a price, and never lets a model touch an approved payload. Those are enforced in code and pinned by tests, not conventions; the rules and where each is enforced are in the [feature README](src/features/proposal-preparation/README.md).
 
 ## Documentation map
 
 - Engineering contracts: [architectural_contracts/README.md](architectural_contracts/README.md)
 - Which contracts apply to a task: [01-implementation-contract-guide.md](architectural_contracts/01-implementation-contract-guide.md)
 - How documentation is organized and maintained: [14-documentation-principles.md](architectural_contracts/14-documentation-principles.md)
-- Feature documentation will live at `src/features/<feature>/README.md`; intentions, plans, decisions, and investigations under `docs/`. Neither exists yet.
+- Feature documentation: [src/features/proposal-preparation/README.md](src/features/proposal-preparation/README.md).
+- Integration documentation: [src/lib/proposales/README.md](src/lib/proposales/README.md), [src/lib/ai/README.md](src/lib/ai/README.md).

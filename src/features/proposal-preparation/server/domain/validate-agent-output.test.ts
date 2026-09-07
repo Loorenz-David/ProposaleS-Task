@@ -63,4 +63,60 @@ describe("validateAgentOutput", () => {
       answeredQuestionIds: [],
     })).toEqual({ ok: false, issues: [{ path: ["blocks", "0", "contentId"] }] });
   });
+
+  it("P5(b) checks the id that reaches Proposales, not only the id the model cited", () => {
+    // A leaf whose `ref` names something real and whose `value` does not is the shape that gets a
+    // model-invented id past a provenance-only check: `value` is what becomes `content_id` on the
+    // create request. The seeded record holds "1", "2", "3" and "5"; "7" is in neither.
+    const raw = output();
+    raw.blocks[0].contentId = { value: "7", source: "proposales_content", ref: { variationId: "1" } };
+
+    expect(validateAgentOutput(raw, {
+      schema: agentOutputSchemaFor({ mode: "prepare", allowClarification: false }),
+      retrieval: seedRetrievalRecord(propositionWithAlternatives()),
+      answeredQuestionIds: [],
+    })).toEqual({ ok: false, issues: [{ path: ["blocks", "0", "contentId"] }] });
+  });
+
+  it("P5(c) checks the cited reference, not only the id that reaches Proposales", () => {
+    // The mirror image: a real id attributed to a reference this run never saw. Provenance is a
+    // consequential claim in its own right, so it is checked even when the value is retrievable.
+    const raw = output();
+    raw.blocks[0].contentId = { value: "1", source: "proposales_content", ref: { variationId: "7" } };
+
+    expect(validateAgentOutput(raw, {
+      schema: agentOutputSchemaFor({ mode: "prepare", allowClarification: false }),
+      retrieval: seedRetrievalRecord(propositionWithAlternatives()),
+      answeredQuestionIds: [],
+    })).toEqual({ ok: false, issues: [{ path: ["blocks", "0", "contentId"] }] });
+  });
+
+  it("P5(d) accepts a block only when both the value and the reference were retrieved", () => {
+    // The presence half of P5(b) and P5(c): the same walker that rejects the two divergent shapes
+    // accepts the agreeing one, so neither rejection is an artefact of a schema failure.
+    const raw = output();
+    raw.blocks[0].contentId = { value: "1", source: "proposales_content", ref: { variationId: "1" } };
+
+    expect(validateAgentOutput(raw, {
+      schema: agentOutputSchemaFor({ mode: "prepare", allowClarification: false }),
+      retrieval: seedRetrievalRecord(propositionWithAlternatives()),
+      answeredQuestionIds: [],
+    }).ok).toBe(true);
+  });
+
+  it("P5(e) rejects a human-chosen block whose content id was never retrieved", () => {
+    // `add_block` lets a human pick a block, so `contentId` may be `human`. That routes around the
+    // `proposales_content` branch entirely, and the id still becomes a real `content_id`.
+    const current = propositionWithAlternatives();
+    const raw = output();
+    raw.blocks[0].contentId = { value: "7", source: "human", ref: { variationId: "7", editTurn: 2 } };
+    (current as AnyRecord).blocks[0].contentId = { value: "7", source: "human", ref: { variationId: "7", editTurn: 2 } };
+
+    expect(validateAgentOutput(raw, {
+      schema: agentOutputSchemaFor({ mode: "revise", allowClarification: false }),
+      retrieval: seedRetrievalRecord(propositionWithAlternatives()),
+      answeredQuestionIds: [],
+      currentProposition: current,
+    })).toEqual({ ok: false, issues: [{ path: ["blocks", "0", "contentId"] }] });
+  });
 });

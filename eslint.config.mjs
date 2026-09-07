@@ -21,7 +21,10 @@ export default defineConfig([
     },
   },
   {
-    files: ["test/setup/node.ts", "test/setup/node.test.ts", "playwright.config.ts"],
+    // Harness files, not application code: they select or seed the environment rather than read
+    // application configuration from it. `*.live.test.ts` reads only the LIVE_SMOKE opt-in switch,
+    // which is a test-run selector and deliberately absent from the server env schema.
+    files: ["test/setup/node.ts", "test/setup/node.test.ts", "playwright.config.ts", "**/*.live.test.ts"],
     rules: {
       "no-restricted-properties": "off",
     },

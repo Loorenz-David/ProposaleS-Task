@@ -1,7 +1,7 @@
 ---
 plan: 12
 phase: Manual edits, human search and replace, agent revision
-state: NOT_STARTED
+state: SUBMISSION_SPRINT
 date: 2026-09-05
 author: implementation-planner round 1; amended round 2 (conversation context)
 ---
@@ -90,3 +90,11 @@ Criteria: 8 (C1–C8), 33 rows (a table line is one row; a lettered span counts 
 ## Review log
 
 *(append-only)*
+
+---
+
+## Review log
+
+**2026-09-07 — `SUBMISSION_SPRINT`.** Implemented as source material for the collapsed submission sprint covering phases 11–15, not under the phase-gated workflow: no projection round, no independent review, no named-mutation ledger, no per-phase approval. This plan remained the specification; the process around it was waived by owner decision.
+
+**This phase did not reach `APPROVED` and must not be recorded as if it had.** What the sprint waived, what stayed binding, the decisions it took, the verification it performed, and its known limitations are recorded in master plan §13.
