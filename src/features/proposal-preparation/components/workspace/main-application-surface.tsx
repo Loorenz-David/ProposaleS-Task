@@ -32,6 +32,8 @@ export function MainApplicationSurface({ state }: { state?: MainSurfaceState }) 
       {surface.kind === "review" && activeSessionId && record ? (
         <ProposalReviewSurface
           clientPreview={toPreviewViewModel(record.workflow!.currentProposition!)}
+          isEditSubmitting={record.inFlightTurn?.kind === "edit"}
+          openedBlock={surface.openedBlock}
           isTerminal={false}
           onApprove={() => void dispatch(activeSessionId, {
             kind: "approval",

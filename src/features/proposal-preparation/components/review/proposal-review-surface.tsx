@@ -1,6 +1,7 @@
 import type { ReviewSurfaceViewModel } from "../../client/view-models/review";
 import type { PreviewViewModel } from "../../client/view-models/preview";
 import type { WorkSurface } from "../../types/session";
+import { useInlineEdit } from "../../hooks/use-inline-edit";
 import { ClientPreviewSurface } from "../preview/client-preview-surface";
 import { ApprovalAction } from "./approval-action";
 import { ReviewBlocksCard } from "./review-blocks-card";
@@ -11,6 +12,8 @@ import { ReviewNotesCard } from "./review-notes-card";
 export type ProposalReviewSurfaceProps = {
   viewModel: ReviewSurfaceViewModel;
   clientPreview?: PreviewViewModel;
+  openedBlock?: import("../../client/view-models/review").BlockViewModel | null;
+  isEditSubmitting?: boolean;
   workSurface: WorkSurface;
   isTerminal: boolean;
   onWorkSurfaceChange: (workSurface: WorkSurface) => void;
@@ -27,7 +30,8 @@ export type ProposalReviewSurfaceProps = {
   onBackToReview: () => void;
 };
 
-export function ProposalReviewSurface({ viewModel, clientPreview, workSurface, isTerminal, onWorkSurfaceChange, onDiscard, onApprove }: ProposalReviewSurfaceProps) {
+export function ProposalReviewSurface({ viewModel, clientPreview, openedBlock = null, isEditSubmitting = false, workSurface, isTerminal, onWorkSurfaceChange, onDiscard, onApprove, onCommitEdit, onCancelEdit, onReplaceBlock, onRemoveBlock, onOpenBlock, onCloseBlock, onAskAgent }: ProposalReviewSurfaceProps) {
+  const inlineEdit = useInlineEdit(onCommitEdit, onCancelEdit);
   const unresolvedSummary = viewModel.readiness.unresolved || viewModel.readiness.deferred
     ? `${viewModel.readiness.unresolved} open, ${viewModel.readiness.deferred} deferred`
     : null;
@@ -38,8 +42,8 @@ export function ProposalReviewSurface({ viewModel, clientPreview, workSurface, i
         {workSurface === "fields" ? (
           <>
             {viewModel.surfaceErrors.length > 0 ? <div role="alert" className="rounded-xl border border-[var(--color-attention)]/50 bg-[var(--color-attention-wash)] p-4 text-13 text-[var(--color-fg-body)]">{viewModel.surfaceErrors.join(" ")}</div> : null}
-            <ReviewFieldsCard fields={viewModel.fields} />
-            <ReviewBlocksCard blocks={viewModel.blocks} />
+            <ReviewFieldsCard canEdit={!isTerminal} editingPath={inlineEdit.editingPath} fields={viewModel.fields} onAskAgent={onAskAgent} onCancel={inlineEdit.cancel} onCommit={inlineEdit.commit} onStartEdit={inlineEdit.startEdit} />
+            <ReviewBlocksCard blocks={viewModel.blocks} canEdit={!isTerminal} editingPath={inlineEdit.editingPath} isSubmitting={isEditSubmitting} onCancel={inlineEdit.cancel} onCloseBlock={onCloseBlock} onCommit={inlineEdit.commit} onOpenBlock={onOpenBlock} onRemoveBlock={onRemoveBlock} onReplaceBlock={onReplaceBlock} onStartEdit={inlineEdit.startEdit} openedBlock={openedBlock} />
             <ReviewNotesCard notes={viewModel.notes} />
           </>
         ) : clientPreview ? <ClientPreviewSurface viewModel={clientPreview} /> : null}

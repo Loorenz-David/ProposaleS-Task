@@ -874,5 +874,14 @@ Tracker §4 rows 05–15: `State` → `SUBMISSION_SPRINT`, `Note` → "see §3B"
   preview closed set while the fixed component contract otherwise has no seam through which the
   container can provide it. Components still consume view models only; no temporary contract crosses
   the presentation boundary.
+- WP7 — editing UX: added `@radix-ui/react-popover@1.1.23`,
+  one-at-a-time inline editing with Enter/Escape and trigger-focus return, leaf saving/failure/
+  validation presentation, ordered block replacement, removal controls, and a modal Ask Agent popover
+  with focus-in/return and safe dismissal. No value is interpreted as money; edit strings pass through
+  the temporary edit input unchanged.
+- Necessary component-prop difference: `ProposalReviewSurfaceProps` also accepts optional
+  `openedBlock` and `isEditSubmitting` presentation inputs. The fixed main-surface model already owns
+  the opened block, but the stated surface props otherwise provide no path to render that planned
+  replacement state.
 - Files created/modified, package/version, theme names, design deltas, later checkpoints, Pass B open
   items, and the final verification SHA will be completed at the exit gate.
