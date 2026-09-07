@@ -25,7 +25,7 @@ export function useTurnDispatch(): {
     const originSessionId = sessionId;
     const turnId = globalThis.crypto.randomUUID();
     const record = useWorkspaceSessionStore.getState().sessions[originSessionId];
-    if (!record) return;
+    if (!record || record.inFlightTurn !== null) return;
     const position = record.thread.length;
     const humanEntry =
       input.kind === "brief"
@@ -42,9 +42,24 @@ export function useTurnDispatch(): {
     }
 
     const outcome = await temporaryFixtureTurnAdapter.run(input, position);
-    useWorkspaceSessionStore
-      .getState()
-      .applyTurnResult(originSessionId, turnId, outcome, input);
+    if (outcome.ok) {
+      useWorkspaceSessionStore.getState().applyTurnResult(originSessionId, turnId, outcome, input);
+    } else {
+      useWorkspaceSessionStore.getState().applyTurnFailure(originSessionId, turnId, {
+        site:
+          input.kind === "approval"
+            ? { kind: "creation" }
+            : input.kind === "edit" && input.operation.op === "replace_block"
+              ? { kind: "replacement", blockIndex: input.operation.index }
+              : input.kind === "edit" && input.operation.op === "set_leaf"
+                ? { kind: "edit", path: input.operation.path }
+                : input.kind === "revision" && input.scope
+                  ? { kind: "ask", fieldLabel: input.scope }
+                  : { kind: "agent" },
+        error: outcome.error,
+        retry: input,
+      });
+    }
   }, []);
 
   return { dispatch };

@@ -714,5 +714,31 @@ focus-order row is not evidence (master plan §11.1, follow-up 18). Free the por
 
 ## 11. Sprint log
 
-*(empty — the Pass B session fills this in: gate result, name differences adopted, checkpoints,
-mutation ledger, test amendments, prop additions, audit checklist, stamp, open items)*
+### Gate and actual-tree authority
+
+- §0 passed on the received Pass A commit `b6a477ec69a5faab1eda4dc7f47e438088743787`.
+  Typecheck, lint, Vitest (`279/279`) and production build were re-run on this tree and passed;
+  all §3 entry files exist and all Pass B `new` files were absent. The typecheck/build commands
+  rewrite generated `next-env.d.ts` (and typecheck rewrites `tsconfig.tsbuildinfo`), so those
+  generated-only changes were restored after verification; the source tree was clean at the gate.
+- Actual Pass A names/contracts adopted: the existing fixture adapter exports
+  `temporaryFixtureTurnAdapter` and `setTemporaryTurnAdapterForTests`; its adapter accepts an
+  injected `wait` callback as a third parameter. `TemporaryEditOperation` already has the
+  planned single `replace_block` operation. The store's Pass A `applyTurnResult` has the
+  plan-permitted fourth `retryInput` parameter and remains backward-compatible for existing
+  failure tests; Pass B additionally exposes `applyTurnFailure` for dispatch resolution.
+- The repository uses the root `vitest.config.mts` for the planned runner partition; there is no
+  feature-local Vitest config.
+
+### WP1 checkpoint
+
+- Implemented total, origin-captured dispatch; one in-flight turn per session; UUID turn ids;
+  matching/superseded/orphan/empty-slot result handling; background unread increment at apply time;
+  explicit failure attribution; and injectable fixture adapter tests.
+- Acceptance evidence: `use-turn-dispatch.test.ts` covers R1.1–R1.9 (with R1.1/R1.2 combined in
+  one test and R1.4/R1.6 combined in one test); existing store tests remain green.
+- Mutation ledger: M1 at the `applyTurnResult` call site in `use-turn-dispatch.ts` used the active
+  id and reddened R1.1 plus R1.3; reverted. M2 incremented `unread` in `startTurn` and reddened
+  R1.1 (observed value `2` instead of `1`); reverted. Mutation files were
+  `use-turn-dispatch.ts` and `use-workspace-session-store.ts`, applied and reverted before commit.
+- Checkpoint stamp: `npm test` — 53 files / 286 tests green.

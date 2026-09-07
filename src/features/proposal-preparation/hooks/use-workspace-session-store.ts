@@ -3,6 +3,7 @@
 import { create } from "zustand";
 
 import type {
+  CallFailure,
   InFlightTurn,
   SessionRuntimeRecord,
   WorkspaceSessionId,
@@ -30,6 +31,11 @@ export type WorkspaceSessionState = {
     turnId: string,
     outcome: TemporaryTurnOutcome,
     retryInput: TemporaryTurnInput,
+  ) => void;
+  applyTurnFailure: (
+    originSessionId: WorkspaceSessionId,
+    turnId: string,
+    failure: CallFailure,
   ) => void;
   setWorkSurface: (sessionId: WorkspaceSessionId, workSurface: WorkSurface) => void;
   setOpenedBlock: (sessionId: WorkspaceSessionId, contentId: string | null) => void;
@@ -96,6 +102,10 @@ function updateRecord(
   };
 }
 
+function appliesToTurn(record: SessionRuntimeRecord, turnId: string) {
+  return record.inFlightTurn?.turnId === turnId;
+}
+
 function createInitialSession(): Pick<WorkspaceSessionState, "activeSessionId" | "sessionIds" | "sessions"> {
   const record = createSessionRecord();
   return {
@@ -118,7 +128,13 @@ export const useWorkspaceSessionStore = create<WorkspaceSessionState>((set, get)
   ...initialSessionState,
   activateSession: (sessionId) => {
     if (!get().sessions[sessionId]) return;
-    set({ activeSessionId: sessionId });
+    set((state) => ({
+      activeSessionId: sessionId,
+      sessions: {
+        ...state.sessions,
+        [sessionId]: { ...state.sessions[sessionId], unread: 0 },
+      },
+    }));
   },
   createSession: () => {
     const record = createSessionRecord();
@@ -182,6 +198,7 @@ export const useWorkspaceSessionStore = create<WorkspaceSessionState>((set, get)
   startTurn: (sessionId, turn, humanEntry) => {
     set((state) =>
       updateRecord(state, sessionId, (record) => {
+        if (record.inFlightTurn !== null) return record;
         const nextSiteKind = turn.kind === "approval" ? "creation" : turn.kind === "edit" ? "edit" : "agent";
         return {
           ...record,
@@ -207,7 +224,7 @@ export const useWorkspaceSessionStore = create<WorkspaceSessionState>((set, get)
   applyTurnResult: (originSessionId, turnId, outcome, retryInput) => {
     set((state) =>
       updateRecord(state, originSessionId, (record) => {
-        if (record.inFlightTurn?.turnId !== turnId) return record;
+        if (!appliesToTurn(record, turnId)) return record;
         if (!outcome.ok) {
           return {
             ...record,
@@ -239,7 +256,16 @@ export const useWorkspaceSessionStore = create<WorkspaceSessionState>((set, get)
           workflow: outcome.workflow,
           clarificationPanel: outcome.result.status === "clarification" ? "open" : "dismissed",
           callFailure: null,
+          unread: record.unread + (state.activeSessionId === originSessionId ? 0 : 1),
         };
+      }),
+    );
+  },
+  applyTurnFailure: (originSessionId, turnId, failure) => {
+    set((state) =>
+      updateRecord(state, originSessionId, (record) => {
+        if (!appliesToTurn(record, turnId)) return record;
+        return { ...record, inFlightTurn: null, callFailure: failure };
       }),
     );
   },
