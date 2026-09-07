@@ -923,7 +923,17 @@ Tracker §4 rows 05–15: `State` → `SUBMISSION_SPRINT`, `Note` → "see §3B"
   invariants. Persistence, backend integration, and phases 16–17 remain outside both this pass and these
   open items.
 - Checkpoints: WP1 `fafdfbb`; WP2 `ff25668`; WP3 `4a539b2`; WP4 `4d3ee54`; WP5 `1cebbae`;
-  WP6 `e34ceab`; WP7 `cea0ee0`; WP8 `5638ce4`; WP9 `97a2154`; WP10 and the final verification SHA
-  are recorded after their commits.
-- The final file inventory and verification SHA are recorded after the WP10 checkpoint so the stamp
-  names the exact clean implementation tree that was verified.
+  WP6 `e34ceab`; WP7 `cea0ee0`; WP8 `5638ce4`; WP9 `97a2154`; WP10 `9d8b46b`.
+- File inventory from the authorized starting SHA through the WP10 checkpoint: 102 files total,
+  comprising 82 additions and 20 modifications. Exact groups are: documentation (2); E2E (2);
+  package manifests (2); app shell (1); theme and theme guard (2); temporary fixtures and shape tests
+  (12); view-models and tests (20); presentation components and tests (52); hooks and tests (7); and
+  session/temporary types (2). The authoritative exact list is
+  `git diff --name-status 24abcc07b9d95c5fb18c478ca68bb54557f91ec3..9d8b46bc864a61a2af7044da995e1ae71502e014`.
+- Final verification SHA: `9d8b46bc864a61a2af7044da995e1ae71502e014`, verified from a clean
+  tree with `npm run typecheck && npm run lint && npm test && npm run test:e2e && npm run build`:
+  typecheck green; lint green; 52 test files / 279 tests green; 74 Playwright tests green; Next.js
+  16.3.4 production build green with `/` statically generated. The production-component audit
+  `rg 'temporary-fixture|Temporary[A-Z]' src/features/proposal-preparation/components
+  --glob '!**/*.test.*'` returned no matches. Build-generated `next-env.d.ts` and
+  `tsconfig.tsbuildinfo` changes were restored to the clean verification tree afterward.
