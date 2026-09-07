@@ -821,3 +821,15 @@ focus-order row is not evidence (master plan §11.1, follow-up 18). Free the por
   `main-application-surface.tsx`, `client/view-models/failure.ts`,
   `use-workspace-session-store.ts`, and `use-departure-guard.ts`.
 - Checkpoint stamp: `npm test` — 56 files / 318 tests green.
+
+### WP7 checkpoint
+
+- Activation now clears only the activated record's unread count; result application is the sole
+  background increment path. The tab view model computes inactive unread text from `unread` and
+  active id. Added a separate debounced status live region (800 ms) that replaces pending status
+  text within the window and carries close-refusal messaging without touching the reorder region.
+- Acceptance evidence: unread store tests, session-tab view-model tests, status-announcement hook
+  tests, and the existing strip/status guards cover R7.1–R7.8.
+- Mutation ledger: M13 added stored `attention` and the strip-boundary assertion reddened on the
+  forbidden stored axis; reverted. Mutation file was `use-workspace-session-store.ts`.
+- Checkpoint stamp: `npm test` — 57 files / 323 tests green.

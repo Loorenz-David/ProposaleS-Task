@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 import { temporaryFixtureSessionRuntimeRecord } from "../fixtures/session-runtime.temporary-fixture";
 import { temporaryFixturePropositionV1 } from "../fixtures/proposition.temporary-fixture";
@@ -83,5 +85,9 @@ describe("tab view model", () => {
     const record = temporaryFixtureSessionRuntimeRecord({ unread: 3 });
     expect(toTabViewModel(record).unreadText).toBe("3 unread");
     expect(toTabViewModel(record, true).unreadText).toBeNull();
+    const storeSource = readFileSync(path.join(__dirname, "../../hooks/use-workspace-session-store.ts"), "utf8");
+    const stripSource = readFileSync(path.join(__dirname, "../../components/session-tabs/session-tab-strip.tsx"), "utf8");
+    expect(storeSource).not.toContain("attention:");
+    expect(stripSource).not.toContain(".attention");
   });
 });

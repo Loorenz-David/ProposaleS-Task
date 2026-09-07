@@ -12,6 +12,7 @@ import { useCloseGuard } from "../../hooks/use-close-guard";
 import { toTabViewModel } from "../../client/view-models/session-tab";
 import { ACTIVE_TAB_REVEAL_MARGIN_PX } from "./session-tabs-constants";
 import { revealActiveTabScrollLeft } from "./reveal-active-tab";
+import { useStatusAnnouncement } from "../../hooks/use-status-announcement";
 
 type FocusRequest = { kind: "active" } | { kind: "index"; index: number } | { kind: "id"; id: WorkspaceSessionId };
 
@@ -53,6 +54,11 @@ export function SessionTabStrip({ closeGuard }: { closeGuard?: CloseGuardControl
   const activateSession = useWorkspaceSessionStore((state) => state.activateSession);
   const createSession = useWorkspaceSessionStore((state) => state.createSession);
   const moveSession = useWorkspaceSessionStore((state) => state.moveSession);
+  const statusAnnouncement = useStatusAnnouncement(
+    sessionIds.map((sessionId) => sessions[sessionId]),
+    activeSessionId,
+    guard.refusal?.message,
+  );
 
   const scrollRegionRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef(new Map<WorkspaceSessionId, HTMLButtonElement>());
@@ -312,7 +318,7 @@ export function SessionTabStrip({ closeGuard }: { closeGuard?: CloseGuardControl
         {announcement}
       </span>
       <span aria-live="polite" className="sr-only" data-session-status-announcement>
-        {guard.refusal?.message ?? ""}
+        {statusAnnouncement}
       </span>
     </Tabs.Root>
   );

@@ -203,3 +203,49 @@ describe("turn result ownership", () => {
     });
   });
 });
+
+describe("unread ownership", () => {
+  it("R7.1/R7.3: active application and dispatch do not increment unread", () => {
+    const sessionId = useWorkspaceSessionStore.getState().activeSessionId as WorkspaceSessionId;
+    useWorkspaceSessionStore.getState().startTurn(sessionId, { turnId: "active", kind: "brief" });
+    expect(useWorkspaceSessionStore.getState().sessions[sessionId]?.unread).toBe(0);
+    useWorkspaceSessionStore.getState().applyTurnResult(sessionId, "active", {
+      ok: true,
+      result: { status: "clarification", clarification: { questions: [], answers: [] } },
+      workflow: { clarification: { questions: [], answers: [] } },
+    }, { kind: "brief", text: "x" });
+    expect(useWorkspaceSessionStore.getState().sessions[sessionId]?.unread).toBe(0);
+  });
+
+  it("R7.2: activation clears unread to exactly zero", () => {
+    const first = useWorkspaceSessionStore.getState().activeSessionId as WorkspaceSessionId;
+    const second = useWorkspaceSessionStore.getState().createSession();
+    useWorkspaceSessionStore.setState({
+      sessions: {
+        ...useWorkspaceSessionStore.getState().sessions,
+        [first]: { ...useWorkspaceSessionStore.getState().sessions[first], unread: 4 },
+      },
+    });
+    useWorkspaceSessionStore.getState().activateSession(first);
+    expect(useWorkspaceSessionStore.getState().sessions[first]?.unread).toBe(0);
+    expect(useWorkspaceSessionStore.getState().sessions[second]?.unread).toBe(0);
+  });
+
+  it("R7.4/R7.5: reorder leaves unread unchanged and no increment action exists", () => {
+    const first = useWorkspaceSessionStore.getState().activeSessionId as WorkspaceSessionId;
+    const second = useWorkspaceSessionStore.getState().createSession();
+    useWorkspaceSessionStore.setState({
+      sessions: {
+        ...useWorkspaceSessionStore.getState().sessions,
+        [first]: { ...useWorkspaceSessionStore.getState().sessions[first], unread: 2 },
+        [second]: { ...useWorkspaceSessionStore.getState().sessions[second], unread: 3 },
+      },
+    });
+    useWorkspaceSessionStore.getState().moveSession(0, 1);
+    expect(useWorkspaceSessionStore.getState().sessions[first]?.unread).toBe(2);
+    expect(useWorkspaceSessionStore.getState().sessions[second]?.unread).toBe(3);
+    expect(SOURCE.length).toBeGreaterThan(0);
+    expect(SOURCE).not.toContain("incrementUnread");
+    expect(SOURCE).not.toContain("attention:");
+  });
+});
