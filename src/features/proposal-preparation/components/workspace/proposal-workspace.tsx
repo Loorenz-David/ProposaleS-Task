@@ -46,6 +46,13 @@ export function ProposalWorkspace() {
       }`}
       data-workspace-root
     >
+      {/* Rendered before the agent surface so its layout effect (native dialog.close(),
+          which restores focus to whatever invoked showModal()) runs and settles before
+          the tab strip's own post-close layout effect claims focus for the neighbouring
+          tab. Both are useLayoutEffect; React fires sibling layout effects in document
+          order, so this ordering — not DOM/visual position, which the dialog's top-layer
+          rendering makes irrelevant — is what makes the strip's explicit focus win. */}
+      <ConfirmDialog {...closeGuard.dialog} />
       <div className="flex min-w-0 shrink-0" style={{ width }}>
         {isHydrated ? (
           <AgentSurface closeGuard={closeGuard} />
@@ -67,7 +74,6 @@ export function ProposalWorkspace() {
         width={width}
       />
       <MainApplicationSurface closeGuard={closeGuard} />
-      <ConfirmDialog {...closeGuard.dialog} />
       <span aria-live="polite" className="sr-only" data-divider-announcement>
         {announcementKey > 0
           ? `Agent panel reset to default width${"\u200b".repeat(announcementKey)}`

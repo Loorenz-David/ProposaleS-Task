@@ -849,3 +849,109 @@ focus-order row is not evidence (master plan §11.1, follow-up 18). Free the por
   created overlap in R8.1/R8.2; reverted. Mutation file was `client/view-models/main-surface.ts`
   for M15 and `use-workspace-session-store.ts` for M14.
 - Checkpoint stamp: `npm test` — 57 files / 328 tests green.
+
+### WP9 checkpoint
+
+Resumed from the `6374083` handoff (WP1–WP8 checkpointed, WP9 spec added but 7/11 green). All four
+reported failures were independently re-diagnosed from the running browser before any fix was
+applied, because the handoff's four proposed causes turned out to be only partially correct — two
+were genuine product defects it had not yet isolated, and two were exactly as diagnosed.
+
+**Failure 1 — typed-draft close lost focus on the neighbouring tab (real product defect).**
+Diagnosis: `ConfirmDialog`'s `open→false` effect called native `dialog.close()` as a passive
+`useEffect`, one render phase *after* `SessionTabStrip`'s own post-close `useLayoutEffect` had
+already moved focus to the neighbouring tab. A `<dialog>`'s native `close()` restores focus to
+whatever invoked `showModal()` — here, a close button inside the tab wrapper that had just been
+removed from the document — and per the HTML focus-restoration algorithm an invoker that is no
+longer connected sends focus to `<body>`, silently overwriting the strip's explicit focus a tick
+later. Root-caused by adding temporary `data-debug-*` attributes and a throwaway diagnostic spec
+(both removed before commit) that confirmed the store and view-model layer were never involved —
+this was a pure focus-timing race between two components, not a session-isolation defect.
+Fix: (1) `confirm-dialog.tsx` — `useEffect` → `useLayoutEffect`, so the dialog's own close-focus
+restoration runs in the same pre-paint phase as the strip's; (2) `proposal-workspace.tsx` —
+`<ConfirmDialog>` moved to render *before* `<AgentSurface>` in the tree (native `<dialog>` renders
+in the browser's top layer, so this has no visual effect). React fires sibling layout effects in
+document order, so the dialog's `close()` — and the focus restoration it triggers — now settles
+*before* the strip's layout effect claims focus for the neighbour, which wins the race because it
+runs last. No unit test asserted `useCloseGuard`'s `confirm()` path was synchronous, so nothing
+else depended on the previous ordering; `confirm-dialog.test.tsx`'s own cancel-path assertion
+(focus returns to a still-present opener) is unaffected by the phase change.
+
+**Failure 2 — retained work-surface not restored after a session switch (real product defect,
+masked by the click-interception failure the handoff had already flagged).** Once the click on the
+hidden radio was fixed (below), the test progressed further and exposed a second, previously
+unreachable failure: session 0's `workSurface` read back as `"fields"` instead of the `"preview"`
+it had been set to. Diagnosed by re-adding the temporary debug attributes and a matched pair of
+throwaway specs (removed before commit): the *store* was proven correct in isolation (a Vitest
+script driving `setWorkSurface` → `createSession` → `activateSession` reproduced the exact
+sequence and read back `"preview"` correctly every time), which narrowed the defect to the render
+layer. The actual cause, found only once the render-level values were also confirmed correct
+(`surfaceWs: "preview"` from `toMainSurfaceViewModel` matched the DOM's `data-debug-*` attribute)
+and the test still failed on the *native* `getByRole("radio").toBeChecked()` check, was in the test
+helper, not the product: `reachReview()` unconditionally called `page.goto("/")`. Its **second**
+invocation in this test — intended to drive the newly created second session through the same
+brief-to-proposition flow — instead reloaded the whole page. Since the app has no persistence
+(by design), the reload silently discarded *both* open sessions and left one fresh default session
+behind; every later assertion in the test, including the "does session 0's toggle still say
+preview" check, was actually running against this third, unrelated session. Fix: split the helper
+into `driveToReview(page)` (the flow, no navigation) and `reachReview(page)` (`goto("/")` then
+`driveToReview`); the test's second call site now uses `driveToReview`, plus an added
+`expect(tabs).toHaveCount(2)` immediately after so a future regression of this exact shape fails
+loudly at the point of divergence rather than several assertions later. This is a **test-file
+fix**, not a product change — nothing under `src/` needed to move for this failure once diagnosed.
+As a genuine (if not root-cause) hardening found during this investigation, `ProposalReviewSurface`
+was additionally given `key={activeSessionId}` in `main-application-surface.tsx`: since the review
+state can be adjacent across two consecutive sessions (`surface.kind === "review"` on both sides of
+a switch), React reconciles the same component instance in place rather than remounting it, so any
+future disposable, locally-owned UI state inside that subtree (an open inline edit, an open ask
+popover) would otherwise silently survive a session switch it should not survive under §8.1. This
+key was verified *not* to be what fixed the reported symptom (the symptom persisted with only the
+key applied, and was resolved only by the `driveToReview` split); it is kept as a defensive,
+independently-justified correctness improvement and is not itself covered by a new named mutation.
+
+**Failure 3 — `getByRole("radio", {name:"Client Preview"}).click()` intercepted mid-test (test-only,
+diagnosed as suspected by the handoff and confirmed).** The work-surface toggle's radio inputs are
+`sr-only` (visually hidden, styled via a sibling `<label>`); a plain `.click()` resolves to the
+input's own (zero-visible-area) box and Playwright's actionability check finds the surrounding
+layout intercepting the point. The very first test in this file had already worked around exactly
+this by using `.focus()` + `keyboard.press("Space")`, so the WP9 additions reusing a bare `.click()`
+were reintroducing a known-broken pattern rather than finding a new one. Fix: extracted the existing
+working pattern into a shared `selectWorkSurface(page, name)` helper and used it at all three call
+sites (including the pre-existing one in test 1, for consistency). No product code changed.
+
+**Failure 4 — reload test expected non-existent copy "Start with a brief" (test-only, exactly as the
+handoff diagnosed).** Fixed the assertion to the actual `AgentEmptyState` copy, "Paste notes and I
+will draft a proposal…". No product code changed.
+
+**Failure 5 — reduced-motion loop expected the typed title to round-trip (test-only, exactly as the
+handoff diagnosed).** The scripted fixture adapter never reads submitted text (Pass A's own
+decision — no client-side intelligence); an `edit` turn always resolves to the fixture's V2
+proposition regardless of what was typed, and the semantic behaviour this row exists to protect is
+that the *server's* returned title replaces the prior one, not that the typed text survives the
+round trip. Fixed the assertion to the fixture's actual returned title, with a comment recording
+why, so a future reader does not "fix" it back.
+
+**Method note.** Two throwaway diagnostic passes were used to separate store-level correctness from
+render-level correctness before touching any source file: a temporary Vitest script exercising the
+store's public API directly (`setWorkSurface` → `createSession` → `activateSession`, read back),
+and a temporary Playwright spec plus temporary `data-debug-record-ws` / `data-debug-surface-ws`
+attributes on `<main>`. Both were fully removed before this checkpoint's commit — `git diff --stat`
+shows only the four files listed below. A third temporary attribute, `data-debug-active`, was
+briefly added and immediately removed again: exposing a session's randomly-generated id as a
+server-rendered attribute is itself non-deterministic between SSR and hydration and produced a
+Next.js hydration-mismatch overlay that then blocked its own diagnostic clicks — a self-inflicted
+false lead, recorded here so it is not mistaken for a product defect if rediscovered later.
+
+- Files touched: `e2e/proposal-flow.spec.ts` (test-only: helper split, `selectWorkSurface` helper,
+  two corrected assertions, one guarding `toHaveCount(2)`); `confirm-dialog.tsx` (`useEffect` →
+  `useLayoutEffect`); `proposal-workspace.tsx` (`ConfirmDialog` reordered before `AgentSurface`,
+  with a comment explaining why); `main-application-surface.tsx` (`key={activeSessionId}` on
+  `ProposalReviewSurface`). `tsconfig.tsbuildinfo` was regenerated by `npm run typecheck` during
+  investigation and restored to its committed state before this checkpoint, per §0's rule.
+- No Pass A visual contract or component prop changed. No approved guard (§4) was touched.
+- No new named mutation: these were pre-existing WP9 test rows reaching green, not new acceptance
+  rows — the close-focus row, the retained work-surface row, and the click-reliability and copy
+  corrections underneath the same rows the WP9 spec already declared.
+- Checkpoint stamp: `npm test` — 57 files / 328 tests green (unchanged count; no test added or
+  removed, four rewritten). `npm run test:e2e` — full suite, 80/80 green on a fresh server
+  (69 inherited from phases 01–04 unchanged, 11 in `proposal-flow.spec.ts`, all passing).

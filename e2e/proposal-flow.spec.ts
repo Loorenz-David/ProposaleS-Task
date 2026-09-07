@@ -1,7 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function reachReview(page: Page) {
-  await page.goto("/");
+// Drives the brief-to-proposition flow on whichever session is currently active,
+// without navigating. Use this for a session other than the first one in a test —
+// a second `page.goto("/")` mid-test reloads the whole page and, since the app has
+// no persistence, silently discards every open session (including the one the test
+// just switched away from), leaving one fresh default session behind. That is a real
+// product behaviour (covered by its own "reload" test) but not what a multi-session
+// test intends when it means "now do the same thing in the new tab".
+async function driveToReview(page: Page) {
   const composer = page.getByRole("textbox", { name: "Message Proposal Copilot" });
   await composer.fill("Client notes\nRestore the walnut dining set.\nKeep uncertain details visible.");
   await composer.press("Enter");
@@ -12,6 +18,16 @@ async function reachReview(page: Page) {
   await page.getByRole("button", { name: "Skip — leave this for the client" }).click();
   await page.getByRole("button", { name: "Send 2 answers" }).click();
   await expect(page.getByRole("heading", { name: "Walnut dining set for Studio North", level: 1 })).toBeVisible();
+}
+
+async function reachReview(page: Page) {
+  await page.goto("/");
+  await driveToReview(page);
+}
+
+async function selectWorkSurface(page: Page, name: "Fields" | "Client Preview") {
+  await page.getByRole("radio", { name }).focus();
+  await page.keyboard.press("Space");
 }
 
 test("empty to created is operable with the real fixture latency", async ({ page }) => {
@@ -43,8 +59,7 @@ test("empty to created is operable with the real fixture latency", async ({ page
   await expect(page.locator('[data-status="working"]')).toBeVisible();
   await expect(page.getByText("We will restore the walnut dining collection", { exact: false })).toBeVisible();
 
-  await page.getByRole("radio", { name: "Client Preview" }).focus();
-  await page.keyboard.press("Space");
+  await selectWorkSurface(page, "Client Preview");
   await expect(page.getByRole("region", { name: "Client preview (approximate)" })).toBeVisible();
   await page.getByRole("button", { name: "Approve and create draft" }).click();
   const creating = page.getByRole("heading", { name: "Creating draft in Proposales" });
@@ -115,18 +130,19 @@ test("session work surface and opened block context are restored independently",
   await reachReview(page);
   await page.getByRole("button", { name: "Replace" }).first().click();
   await expect(page.getByRole("region", { name: "Replace line item" })).toBeVisible();
-  await page.getByRole("radio", { name: "Client Preview" }).click();
+  await selectWorkSurface(page, "Client Preview");
   await expect(page.getByRole("radio", { name: "Client Preview" })).toBeChecked();
 
   await page.getByRole("button", { name: "New session" }).click();
-  await reachReview(page);
+  await driveToReview(page);
   await expect(page.getByRole("radio", { name: "Fields" })).toBeChecked();
 
   const tabs = page.getByRole("tab");
+  await expect(tabs).toHaveCount(2);
   await tabs.nth(0).click();
   await expect(page.getByRole("radio", { name: "Client Preview" })).toBeChecked();
   await expect(page.getByRole("region", { name: "Replace line item" })).toHaveCount(0);
-  await page.getByRole("radio", { name: "Fields" }).click();
+  await selectWorkSurface(page, "Fields");
   await expect(page.getByRole("region", { name: "Replace line item" })).toBeVisible();
 
   await tabs.nth(1).click();
@@ -137,7 +153,9 @@ test("reload starts one empty session without restoring the previous workspace",
   await reachReview(page);
   await page.reload();
   await expect(page.getByRole("tab")).toHaveCount(1);
-  await expect(page.getByText("Start with a brief", { exact: false })).toBeVisible();
+  await expect(
+    page.getByText("Paste notes and I will draft a proposal", { exact: false }),
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Walnut dining set for Studio North", level: 1 })).toHaveCount(0);
 });
 
@@ -162,7 +180,13 @@ test.describe("reduced motion", () => {
     await titleInput.fill("Reduced motion dining collection");
     await titleInput.press("Enter");
     await expect(page.locator('[data-status="working"]')).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Reduced motion dining collection", level: 1 })).toBeVisible();
+    // The scripted fixture adapter never reads submitted text (Pass A decision: no
+    // client-side intelligence); an edit turn always resolves to the fixture's V2
+    // proposition. The semantic behaviour this row protects is that the server's
+    // returned title replaces the prior one, not that the typed text round-trips.
+    await expect(
+      page.getByRole("heading", { name: "Studio North walnut dining collection", level: 1 }),
+    ).toBeVisible();
 
     await page.getByRole("button", { name: "Ask the agent about Title" }).click();
     const ask = page.getByRole("textbox", { name: "Ask the agent about Title" });

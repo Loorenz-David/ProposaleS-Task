@@ -44,6 +44,7 @@ export function MainApplicationSurface({ state, closeGuard }: { state?: MainSurf
       ) : null}
       {surface.kind === "review" && activeSessionId && record && !surface.creationFailure ? (
         <ProposalReviewSurface
+          key={activeSessionId}
           clientPreview={toPreviewViewModel(record.workflow!.currentProposition!)}
           isEditSubmitting={record.inFlightTurn?.kind === "edit"}
           isSubmitting={record.inFlightTurn !== null}
