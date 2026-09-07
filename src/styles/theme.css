@@ -25,6 +25,16 @@
   --color-bg-control-strong: #1f2023;
   --color-bg-resize-active: #1f2b40;
 
+  /* ---- Light approximate client document (design 01 §1.12). ---- */
+  --color-paper: #fff;
+  --color-paper-ink: #111214;
+  --color-paper-ink-body: #3f4147;
+  --color-paper-ink-meta: #6b6d73;
+  --color-paper-rule: #ececef;
+  --color-paper-rule-strong: #e4e4e7;
+  --color-paper-hero-start: #1d3b4a;
+  --color-paper-hero-end: #0f2733;
+
   /* ---- Borders (design 01 §1.2). Six-step ramp plus the two content-adjacent roles.
      Design 01's own "collapse to four" text is an open design question (register #11);
      V1 implements the specified ramp as given (task 3). ---- */
@@ -115,9 +125,8 @@
   --space-4: 1rem;
   --space-8: 2rem;
 
-  /* ---- Type (design 01 §1.6). Font files are not loaded in this phase (no product surface
-     renders); these families render through their stated fallback stack until a later phase
-     adds the loader. Sizes reuse Tailwind's default scale where it already matches design 01
+  /* ---- Type (design 01 §1.6). Font files are loaded through `next/font/google` in the root
+     layout, with the fallback stack retained here. Sizes reuse Tailwind's default scale where it already matches design 01
      exactly (base=16, xl=20, 2xl=24, 4xl=36); the rest are added as their own steps. Half-step
      names use a hyphen (`-5`), not a literal decimal point, which is not a valid unescaped CSS
      custom-property character. Line-heights are not paired per size: design 01's own line-height

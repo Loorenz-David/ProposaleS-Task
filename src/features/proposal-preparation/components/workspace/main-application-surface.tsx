@@ -2,6 +2,7 @@
 
 import type { MainSurfaceState } from "../../types/presentation";
 import { toMainSurfaceViewModel } from "../../client/view-models/main-surface";
+import { toPreviewViewModel } from "../../client/view-models/preview";
 import { useWorkspaceSessionStore } from "../../hooks/use-workspace-session-store";
 import { useTurnDispatch } from "../../hooks/use-turn-dispatch";
 import { ProposalPreparationIdleSurface } from "../idle/proposal-preparation-idle-surface";
@@ -30,6 +31,7 @@ export function MainApplicationSurface({ state }: { state?: MainSurfaceState }) 
       {surface.kind === "idle" ? <ProposalPreparationIdleSurface /> : null}
       {surface.kind === "review" && activeSessionId && record ? (
         <ProposalReviewSurface
+          clientPreview={toPreviewViewModel(record.workflow!.currentProposition!)}
           isTerminal={false}
           onApprove={() => void dispatch(activeSessionId, {
             kind: "approval",

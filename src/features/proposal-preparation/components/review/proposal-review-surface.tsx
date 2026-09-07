@@ -1,5 +1,7 @@
 import type { ReviewSurfaceViewModel } from "../../client/view-models/review";
+import type { PreviewViewModel } from "../../client/view-models/preview";
 import type { WorkSurface } from "../../types/session";
+import { ClientPreviewSurface } from "../preview/client-preview-surface";
 import { ApprovalAction } from "./approval-action";
 import { ReviewBlocksCard } from "./review-blocks-card";
 import { ReviewFieldsCard } from "./review-fields-card";
@@ -8,6 +10,7 @@ import { ReviewNotesCard } from "./review-notes-card";
 
 export type ProposalReviewSurfaceProps = {
   viewModel: ReviewSurfaceViewModel;
+  clientPreview?: PreviewViewModel;
   workSurface: WorkSurface;
   isTerminal: boolean;
   onWorkSurfaceChange: (workSurface: WorkSurface) => void;
@@ -24,7 +27,7 @@ export type ProposalReviewSurfaceProps = {
   onBackToReview: () => void;
 };
 
-export function ProposalReviewSurface({ viewModel, workSurface, isTerminal, onWorkSurfaceChange, onDiscard, onApprove }: ProposalReviewSurfaceProps) {
+export function ProposalReviewSurface({ viewModel, clientPreview, workSurface, isTerminal, onWorkSurfaceChange, onDiscard, onApprove }: ProposalReviewSurfaceProps) {
   const unresolvedSummary = viewModel.readiness.unresolved || viewModel.readiness.deferred
     ? `${viewModel.readiness.unresolved} open, ${viewModel.readiness.deferred} deferred`
     : null;
@@ -39,7 +42,7 @@ export function ProposalReviewSurface({ viewModel, workSurface, isTerminal, onWo
             <ReviewBlocksCard blocks={viewModel.blocks} />
             <ReviewNotesCard notes={viewModel.notes} />
           </>
-        ) : <div className="rounded-4xl border border-[var(--color-border-card)] p-8 text-[var(--color-fg-muted)]">Client preview is being prepared.</div>}
+        ) : clientPreview ? <ClientPreviewSurface viewModel={clientPreview} /> : null}
         {!isTerminal ? (
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(240px,360px)] sm:items-start">
             <button type="button" onClick={onDiscard} className="rounded-xl border border-[var(--color-border-control-raised)] px-5 py-3 text-sm font-semibold text-[var(--color-fg-secondary)]">Discard proposition</button>

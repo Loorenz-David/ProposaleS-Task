@@ -860,5 +860,19 @@ Tracker §4 rows 05–15: `State` → `SUBMISSION_SPRINT`, `Note` → "see §3B"
   warnings, unresolved information, and approval-boundary action implemented. Mapping tests cover
   carried leaves in both directions, all provenance classes, honest absence, readiness, and validation
   routing.
+- WP6 — client preview: the closed preview adapter and light approximate document are implemented,
+  including a growing hero, 600px reading measure, semantic item list, honest empty state, explicit
+  approximation disclosure, and an internal dark focus treatment. The eight ratified paper theme names
+  were added to `theme.css` and its closed allowlist: `--color-paper`, `--color-paper-ink`,
+  `--color-paper-ink-body`, `--color-paper-ink-meta`, `--color-paper-rule`,
+  `--color-paper-rule-strong`, `--color-paper-hero-start`, `--color-paper-hero-end`.
+- Planned design deltas applied: the hero uses the ratified 160-degree paper gradient; the approximation
+  pill uses accent on app-background ink; later created-state primary and attention-medallion treatments
+  remain to be recorded with WP8.
+- Necessary component-prop difference: `ProposalReviewSurfaceProps` accepts an optional
+  `clientPreview: PreviewViewModel`, because the fixed review view model intentionally excludes the
+  preview closed set while the fixed component contract otherwise has no seam through which the
+  container can provide it. Components still consume view models only; no temporary contract crosses
+  the presentation boundary.
 - Files created/modified, package/version, theme names, design deltas, later checkpoints, Pass B open
   items, and the final verification SHA will be completed at the exit gate.
