@@ -165,7 +165,7 @@ describe("agent run", () => {
   it("C5(c) stops at one retry and does not exhaust the scripted client", async () => {
     const { result, dependencies } = await executeRun([final({ answer: 1 }), final({ answer: 2 }), final({ answer: 3 }), final(output)]);
     expect(result).toMatchObject({ status: "failed", failure: { reason: "model_output_invalid" } });
-    expect(dependencies.ai.calls).toHaveLength(2);
+    expect(dependencies.ai.calls).toHaveLength(MAX_OUTPUT_RETRIES + 1);
   });
 
   it("C5(d) does not send or report model text", async () => {
@@ -245,6 +245,19 @@ describe("agent run", () => {
     const records = log.info.mock.calls;
     expect(records.find(([event]) => event === "agent.run.tool")?.[1]).toEqual({ runId: "run-1", traceId: "trace-1", toolCallId: "tc-1", name: "echo", ok: true, durationMs: 25 });
     expect(records.find(([event]) => event === "agent.run.end")?.[1]).toMatchObject({ durationMs: 25 });
+
+    const failureLog = logger();
+    const failureDeps = deps([calls({ toolCallId: "tc-failure", name: "missing_tool", input: {} }), final(output)]);
+    failureDeps.logger = failureLog;
+    await run({ system: "system", initialMessages: [], tools: [], outputSchema, toolContext: baseContext }, failureDeps);
+    expect(failureLog.info.mock.calls.find(([event]) => event === "agent.run.tool")?.[1]).toEqual({
+      runId: "run-1",
+      traceId: "trace-1",
+      toolCallId: "tc-failure",
+      name: "missing_tool",
+      ok: false,
+      durationMs: 0,
+    });
   });
 
   it("C7(g) reports a missing tool truthfully and continues", async () => {
