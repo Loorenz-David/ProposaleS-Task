@@ -14,10 +14,15 @@ path. The installed-package evidence for that hazard is recorded in
 §9.1.
 
 Every SDK call disables SDK retries (`maxRetries: 0`) and receives the caller's timeout signal.
-Phase 9 owns bounded output retries. The adapter reports only the three application usage fields,
-using `null` when the provider did not report a figure. Provider failures become
-`AiProviderError` with a fixed safe message; provider messages, issues, and generated text remain
-in `cause` or a deliberate invalid-output candidate and never cross as an error DTO message.
+The agent runtime owns bounded output correction, with a 120-second per-call ceiling inside a
+240-second run budget. The adapter reports only the three application usage fields, using `null`
+when the provider did not report a figure. Provider failures become `AiProviderError` with a fixed
+safe message. If the SDK cannot parse an object from a completed response, the adapter returns a
+typed parse-failure marker without the generated text; the runtime logs the safe failure kind and
+may spend one of its two bounded output-correction retries regenerating it. Schema failures return
+compact path-and-message feedback plus a size-bounded, explicitly untrusted prior candidate. The
+runtime may mechanically restore `known: true` only when the affected object already carries both
+`value` and `source`; the repaired object still passes through the unchanged authoritative schema.
 
 The scripted fake is the default test seam. It records attempted calls, including exhaustion, and
 the failing fake makes accidental model use explicit. No default-suite test makes a real provider

@@ -104,7 +104,17 @@ describe("prepareFromBrief", () => {
   it("P5 rejects an unread content identity and accepts it after get_content records it", async () => {
     const rejected = harness([languageStep("en"), finalStep(unknownContentOutput("7"))]);
     const failure = await prepareFromBrief({ brief: BRIEFS.englishSimple }, rejected.deps);
-    expect(failure.result).toEqual({ status: "failed", failure: { reason: "model_output_invalid", code: "validation_error", issues: [{ path: ["blocks", "0", "contentId"] }] } });
+    expect(failure.result).toEqual({
+      status: "failed",
+      failure: {
+        reason: "model_output_invalid",
+        code: "validation_error",
+        issues: [{
+          path: ["blocks", "0", "contentId"],
+          message: "Content provenance does not reference catalog content retrieved in this run.",
+        }],
+      },
+    });
 
     const accepted = harness([languageStep("en"), getContentStep("7"), finalStep(unknownContentOutput("7"))]);
     const result = await prepareFromBrief({ brief: BRIEFS.englishSimple }, accepted.deps);
@@ -112,11 +122,12 @@ describe("prepareFromBrief", () => {
     expect(result.state.currentProposition?.blocks[0].contentId.value).toBe("7");
   });
 
-  it("F1 returns only validation issue paths after the bounded schema retry fails", async () => {
+  it("F1 returns safe validation issues after the bounded schema retries fail", async () => {
     const test = harness([
       languageStep("en"),
       finalStep({ kind: "proposition", modelNarrative: "must not cross" }),
       finalStep({ kind: "proposition", modelNarrative: "still must not cross" }),
+      finalStep({ kind: "proposition", modelNarrative: "must never cross" }),
     ]);
     const result = await prepareFromBrief({ brief: BRIEFS.englishSimple }, test.deps);
     expect(result.result).toMatchObject({
@@ -124,7 +135,7 @@ describe("prepareFromBrief", () => {
       failure: { reason: "model_output_invalid", code: "validation_error", issues: expect.any(Array) },
     });
     expect(JSON.stringify(result.result)).not.toContain("must not cross");
-    expect(test.ai.calls).toHaveLength(3);
+    expect(test.ai.calls).toHaveLength(4);
   });
 
   it("P8 derives a supported language and asks when the derived code is unavailable", async () => {

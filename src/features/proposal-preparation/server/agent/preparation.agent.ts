@@ -2,7 +2,7 @@ import "server-only";
 
 import { run } from "@/lib/agent/run";
 import type { RunBudgets, RunResult, ToolDefinition } from "@/lib/agent/types";
-import type { AiClient, Usage } from "@/lib/ai";
+import { DEFAULT_RUN_BUDGETS, type AiClient, type Usage } from "@/lib/ai";
 import type { Logger } from "@/lib/logger";
 import type { ContentItem } from "@/lib/proposales";
 
@@ -84,6 +84,8 @@ export async function runPreparationAgent(
   input: PreparationAgentInput,
   deps: PreparationAgentDeps,
 ): Promise<{ run: RunResult<AgentOutput>; retrieval: RetrievalRecord; language: string | null; usage: Usage }> {
+  const startedAt = deps.now();
+  const budgets = input.budgets ?? DEFAULT_RUN_BUDGETS;
   const languages = catalogLanguages(input.catalog);
   const runId = deps.newRunId();
   const toolContext = { runId, traceId: runId, companyId: input.companyId, catalog: input.catalog };
@@ -107,7 +109,7 @@ export async function runPreparationAgent(
       tools: [],
       outputSchema: languageDerivationOutputSchema,
       toolContext: { ...toolContext, language: null },
-      budgets: input.budgets,
+      budgets,
     }, deps);
     usage = derivation.usage;
     if (derivation.status === "failed") return { run: derivation, retrieval: input.state?.currentProposition ? seedRetrievalRecord(input.state.currentProposition) : emptyRetrievalRecord(), language: null, usage };
@@ -120,13 +122,18 @@ export async function runPreparationAgent(
     : emptyRetrievalRecord();
   const tools = recordingTools((next) => { retrieval = next; }, () => retrieval);
   const mainMessages = buildPreparationMessages({ ...messageInput, language });
+  const mainBudgets: RunBudgets = {
+    ...budgets,
+    wallTimeMs: Math.max(0, budgets.wallTimeMs - (deps.now() - startedAt)),
+    maxTokens: Math.max(0, budgets.maxTokens - (usage.totalTokens ?? 0)),
+  };
   const main = await run({
     system: preparationSystemPromptV1({ mode: input.mode, language, catalogLanguages: languages, clarificationAllowed: input.allowClarification }),
     initialMessages: mainMessages,
     tools,
     outputSchema: agentOutputSchemaFor({ mode: input.mode, allowClarification: input.allowClarification }),
     toolContext: { ...toolContext, language },
-    budgets: input.budgets,
+    budgets: mainBudgets,
   }, deps);
   const combinedUsage = addUsage(usage, main.usage);
   return { run: { ...main, usage: combinedUsage }, retrieval, language, usage: combinedUsage };

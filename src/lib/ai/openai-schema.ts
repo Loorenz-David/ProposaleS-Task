@@ -101,8 +101,9 @@ export function toOpenAiOutputAdapter(schema: JsonSchema): OutputAdapter {
     schema: wrapRoot(cleaned) as JsonSchema,
     wrapped: true,
     unwrap: (output) => {
-      // A step that produced no parseable object hands back the raw text instead; there is nothing
-      // to unwrap, and `run()` will fail it against the real schema and retry.
+      // Only object output can carry the provider wrapper. A non-object is left untouched so the
+      // caller's authoritative schema can reject it; SDK object-parse failures are distinguished
+      // earlier by the AI client and do not reach this adapter.
       if (!isNode(output)) return output;
       if (!(OPENAI_OUTPUT_WRAPPER_KEY in output)) return output;
       return output[OPENAI_OUTPUT_WRAPPER_KEY];

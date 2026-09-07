@@ -9,6 +9,7 @@ export type ToolErrorCode = "invalid_arguments" | "invalid_tool_output" | "langu
 export type RunFailureReason = "budget_exhausted" | "model_output_invalid" | "tool_output_invalid" | "script_exhausted";
 
 export type ToolIssue = { path: string[]; message: string };
+export type RunIssue = { path: string[]; message: string };
 
 export type ToolContext = {
   runId: string;
@@ -47,7 +48,7 @@ export type RunResult<O> =
   | { status: "output"; output: O; usage: Usage; toolCalls: RecordedToolCall[] }
   | {
       status: "failed";
-      failure: { reason: RunFailureReason; budget?: "wall_time" | "tool_calls" | "tokens"; issues?: Array<{ path: string[] }> };
+      failure: { reason: RunFailureReason; budget?: "wall_time" | "tool_calls" | "tokens"; issues?: RunIssue[] };
       usage: Usage;
       toolCalls: RecordedToolCall[];
     };

@@ -48,6 +48,11 @@ export type GenerateStepResult =
       kind: "final";
       output: unknown;
       usage: Usage;
+    }
+  | {
+      kind: "invalid_output";
+      reason: "provider_parse_failure";
+      usage: Usage;
     };
 
 export type AiClient = {

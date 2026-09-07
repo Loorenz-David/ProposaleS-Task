@@ -74,7 +74,7 @@ export function fixtureFailedResult(
     reason === "budget_exhausted"
       ? { reason, code: "internal_error", budget: "wall_time" }
       : reason === "model_output_invalid"
-        ? { reason, code: "validation_error", issues: [{ path: ["title"] }] }
+        ? { reason, code: "validation_error", issues: [{ path: ["title"], message: "Title needs attention." }] }
         : { reason, code: "internal_error" };
   const parsed = domainResultSchema.parse({ status: "failed", failure });
   if (parsed.status !== "failed") throw new Error("fixture built a non-failed result");

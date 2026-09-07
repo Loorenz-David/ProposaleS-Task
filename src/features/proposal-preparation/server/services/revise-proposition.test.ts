@@ -83,7 +83,11 @@ describe("reviseProposition", () => {
     const output = agentPropositionOutput({ requestedOverrides: [{ path: ["recipient", "value", "email"], reason: "change" }] });
     const recipient = structuredClone(output.recipient) as AnyRecord;
     recipient.value.email = { known: true, value: "invented@example.test", source: "inferred" };
-    const test = harness([finalStep({ ...output, recipient }), finalStep({ ...output, recipient })]);
+    const test = harness([
+      finalStep({ ...output, recipient }),
+      finalStep({ ...output, recipient }),
+      finalStep({ ...output, recipient }),
+    ]);
     const result = await reviseProposition({ state: revisionState(), instruction: "change the email" }, test.deps);
     expect(result.result).toMatchObject({ status: "failed", failure: { reason: "model_output_invalid", code: "validation_error" } });
   });
@@ -91,7 +95,17 @@ describe("reviseProposition", () => {
   it("R3 refuses an unseen identity and accepts it after get_content", async () => {
     const rejected = harness([finalStep(contentOutput("7"))]);
     const failure = await reviseProposition({ state: revisionState(), instruction: "use item seven" }, rejected.deps);
-    expect(failure.result).toEqual({ status: "failed", failure: { reason: "model_output_invalid", code: "validation_error", issues: [{ path: ["blocks", "0", "contentId"] }] } });
+    expect(failure.result).toEqual({
+      status: "failed",
+      failure: {
+        reason: "model_output_invalid",
+        code: "validation_error",
+        issues: [{
+          path: ["blocks", "0", "contentId"],
+          message: "Content provenance does not reference catalog content retrieved in this run.",
+        }],
+      },
+    });
 
     const accepted = harness([getContentStep("7"), finalStep(contentOutput("7"))]);
     const result = await reviseProposition({ state: revisionState(), instruction: "use item seven" }, accepted.deps);
@@ -107,7 +121,7 @@ describe("reviseProposition", () => {
     expect(windowed.conversation.turns.slice(-2).map((turn) => turn.role)).toEqual(["human", "assistant"]);
 
     const invalidOutput = { kind: "proposition", secretNarrative: "do not return" };
-    const failed = harness([finalStep(invalidOutput), finalStep(invalidOutput)]);
+    const failed = harness([finalStep(invalidOutput), finalStep(invalidOutput), finalStep(invalidOutput)]);
     const state = revisionState();
     const failure = await reviseProposition({ state, instruction: "make a change" }, failed.deps);
     expect(failure.result).toMatchObject({ status: "failed", failure: { reason: "model_output_invalid" } });

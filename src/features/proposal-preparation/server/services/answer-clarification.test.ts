@@ -78,7 +78,12 @@ describe("answerClarification", () => {
 
   it("P7 cannot represent a second clarification and reports later missing title as unresolved", async () => {
     const first = await clarification();
-    const invalid = deps([languageStep("en"), finalStep(agentClarificationOutput()), finalStep(agentClarificationOutput())], first.proposales);
+    const invalid = deps([
+      languageStep("en"),
+      finalStep(agentClarificationOutput()),
+      finalStep(agentClarificationOutput()),
+      finalStep(agentClarificationOutput()),
+    ], first.proposales);
     const failure = await answerClarification({ state: first.result.state, answers: [], conversation: first.result.conversation }, invalid.value);
     expect(failure.result).toMatchObject({ status: "failed", failure: { reason: "model_output_invalid", code: "validation_error" } });
 
@@ -96,6 +101,16 @@ describe("answerClarification", () => {
     recipient.value.email = { known: true, value: "bad@example.se", source: "human", ref: { questionId: "00000000-0000-4000-8000-000000000999" } };
     const next = deps([languageStep("en"), searchStep("consulting training workshop"), finalStep({ ...output, recipient })], first.proposales);
     const result = await answerClarification({ state: first.result.state, answers: [], conversation: first.result.conversation }, next.value);
-    expect(result.result).toEqual({ status: "failed", failure: { reason: "model_output_invalid", code: "validation_error", issues: [{ path: ["recipient", "value", "email"] }] } });
+    expect(result.result).toEqual({
+      status: "failed",
+      failure: {
+        reason: "model_output_invalid",
+        code: "validation_error",
+        issues: [{
+          path: ["recipient", "value", "email"],
+          message: "Human provenance does not reference an answered question, a preserved human value, or the current instruction.",
+        }],
+      },
+    });
   });
 });

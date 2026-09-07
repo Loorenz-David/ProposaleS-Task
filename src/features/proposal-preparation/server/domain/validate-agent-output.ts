@@ -46,19 +46,22 @@ export function validateAgentOutput(
     currentProposition?: Proposition;
     currentTurn?: { turnId: string; text: string };
   },
-): { ok: true; output: AgentOutput } | { ok: false; issues: Array<{ path: string[] }> } {
+): { ok: true; output: AgentOutput } | { ok: false; issues: Array<{ path: string[]; message: string }> } {
   const parsed = ctx.schema.safeParse(raw);
   if (!parsed.success) {
-    return { ok: false, issues: parsed.error.issues.map((issue) => ({ path: issue.path.map(String) })) };
+    return {
+      ok: false,
+      issues: parsed.error.issues.map((issue) => ({ path: issue.path.map(String), message: issue.message })),
+    };
   }
 
-  const issues: Array<{ path: string[] }> = [];
+  const issues: Array<{ path: string[]; message: string }> = [];
   const issueKeys = new Set<string>();
-  const addIssue = (path: string[]) => {
+  const addIssue = (path: string[], message: string) => {
     const key = JSON.stringify(path);
     if (!issueKeys.has(key)) {
       issueKeys.add(key);
-      issues.push({ path });
+      issues.push({ path, message });
     }
   };
 
@@ -72,7 +75,9 @@ export function validateAgentOutput(
     if (isSourcedLeaf(value)) {
       const leaf = value;
       if (leaf.source === "proposales_content") {
-        if (leaf.ref?.variationId === undefined || !hasRetrieved(ctx.retrieval, leaf.ref.variationId)) addIssue(path);
+        if (leaf.ref?.variationId === undefined || !hasRetrieved(ctx.retrieval, leaf.ref.variationId)) {
+          addIssue(path, "Content provenance does not reference catalog content retrieved in this run.");
+        }
       }
       if (leaf.source === "human") {
         const byQuestion = leaf.ref?.questionId !== undefined && ctx.answeredQuestionIds.includes(leaf.ref.questionId);
@@ -83,7 +88,9 @@ export function validateAgentOutput(
           && ctx.currentTurn !== undefined
           && leaf.ref?.turnId === ctx.currentTurn.turnId
           && ctx.currentTurn.text.includes(quote);
-        if (!byQuestion && !byCurrent && !byTurn) addIssue(path);
+        if (!byQuestion && !byCurrent && !byTurn) {
+          addIssue(path, "Human provenance does not reference an answered question, a preserved human value, or the current instruction.");
+        }
       }
       return;
     }
@@ -94,7 +101,9 @@ export function validateAgentOutput(
   visit(parsed.data, []);
   if (parsed.data.kind === "proposition") {
     parsed.data.blocks.forEach((block, index) => {
-      if (!hasRetrieved(ctx.retrieval, block.contentId.value)) addIssue(["blocks", String(index), "contentId"]);
+      if (!hasRetrieved(ctx.retrieval, block.contentId.value)) {
+        addIssue(["blocks", String(index), "contentId"], "Content id was not retrieved in this run.");
+      }
     });
   }
 

@@ -4,7 +4,7 @@ import { createScriptedAiClient } from "@/lib/ai";
 import { createLogger } from "@/lib/logger";
 
 import { FIXTURE_CATALOG } from "../../fixtures/catalog";
-import { agentPropositionOutput, finalStep, searchStep } from "../../fixtures/scripts";
+import { agentPropositionOutput, finalStep, languageStep, searchStep } from "../../fixtures/scripts";
 import { validState } from "../../fixtures/states";
 import { propositionWithAlternatives } from "../../fixtures/propositions";
 import { parseProposalWorkflowState } from "../../schemas/workflow-state";
@@ -58,5 +58,28 @@ describe("runPreparationAgent", () => {
     }, { ai, now: () => 0, logger: createLogger({ sink: vi.fn() }), newRunId: () => "run-1" });
     expect(result.retrieval.candidates.has("1")).toBe(true);
     expect(result.run.status).toBe("output");
+  });
+
+  it("keeps language derivation and proposition generation inside one wall budget", async () => {
+    const ai = createScriptedAiClient([languageStep("en"), finalStep(agentPropositionOutput())]);
+    let now = -100;
+
+    await runPreparationAgent({
+      mode: "prepare",
+      brief: "brief",
+      conversation: emptyConversation(),
+      catalog: FIXTURE_CATALOG,
+      companyId: 1,
+      language: null,
+      allowClarification: false,
+      budgets: { wallTimeMs: 1000, maxToolCalls: 5, maxTokens: 1000 },
+    }, {
+      ai,
+      now: () => { now += 100; return now; },
+      logger: createLogger({ sink: vi.fn() }),
+      newRunId: () => "run-1",
+    });
+
+    expect(ai.stepOptions.map((options) => options.timeoutMs)).toEqual([800, 300]);
   });
 });

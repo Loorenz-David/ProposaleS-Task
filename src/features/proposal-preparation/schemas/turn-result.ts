@@ -39,7 +39,7 @@ export type RunReport = z.infer<typeof runReportSchema>;
 
 /**
  * The five domain result states (§17A.13). `failed` carries `code` so a future transport maps it
- * without re-deciding; the run's issue paths cross, never the model's text.
+ * without re-deciding; compact validation issues cross, never the model's text.
  */
 export const domainResultSchema = z.discriminatedUnion("status", [
   z.strictObject({
@@ -57,7 +57,7 @@ export const domainResultSchema = z.discriminatedUnion("status", [
       reason: runFailureReasonSchema,
       code: z.enum(["validation_error", "internal_error"]),
       budget: runBudgetSchema.optional(),
-      issues: z.array(z.strictObject({ path: pathSchema })).optional(),
+      issues: z.array(z.strictObject({ path: pathSchema, message: z.string().trim().min(1).max(1000) })).optional(),
     }),
   }),
   z.strictObject({ status: z.literal("created"), draft: draftResultSchema }),

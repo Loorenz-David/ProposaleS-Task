@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
-import type { RunFailureReason } from "@/lib/agent/types";
+import type { RunFailureReason, RunIssue } from "@/lib/agent/types";
 import { ValidationError } from "@/lib/errors/app-error";
 import { zodIssues } from "@/lib/errors/zod-issues";
 import { formatIsoTimestamp } from "@/lib/values/timestamp";
@@ -39,7 +39,7 @@ function knownString(value: unknown): string | null {
   return value.value;
 }
 
-function failureResult(failure: { reason: RunFailureReason; budget?: "wall_time" | "tool_calls" | "tokens"; issues?: Array<{ path: string[] }> }): Extract<DomainResult, { status: "failed" }> {
+function failureResult(failure: { reason: RunFailureReason; budget?: "wall_time" | "tool_calls" | "tokens"; issues?: RunIssue[] }): Extract<DomainResult, { status: "failed" }> {
   return {
     status: "failed",
     failure: {
@@ -127,7 +127,9 @@ export async function reviseProposition(input: unknown, deps: ReviseDeps = defau
     currentTurn: { turnId: instructionTurnId, text: parsed.data.instruction },
   });
   if (!validated.ok || validated.output.kind !== "proposition") {
-    const issues = validated.ok ? [{ path: ["kind"] }] : validated.issues;
+    const issues = validated.ok
+      ? [{ path: ["kind"], message: "Expected a proposition." }]
+      : validated.issues;
     return withTurns({
       state,
       conversation,

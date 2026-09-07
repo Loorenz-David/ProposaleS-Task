@@ -13,7 +13,7 @@ function output(): AnyRecord {
 }
 
 describe("validateAgentOutput", () => {
-  it("P6 rejects unresolved human question and turn references with paths only", () => {
+  it("P6 rejects unresolved human question and turn references with safe validation issues", () => {
     const raw = output();
     raw.title = { known: true, value: "Human title", source: "human", ref: { questionId: "unknown" } };
     const result = validateAgentOutput(raw, {
@@ -21,7 +21,13 @@ describe("validateAgentOutput", () => {
       retrieval: seedRetrievalRecord(propositionWithAlternatives()),
       answeredQuestionIds: [],
     });
-    expect(result).toEqual({ ok: false, issues: [{ path: ["title"] }] });
+    expect(result).toEqual({
+      ok: false,
+      issues: [{
+        path: ["title"],
+        message: "Human provenance does not reference an answered question, a preserved human value, or the current instruction.",
+      }],
+    });
     expect(JSON.stringify(result)).not.toContain("Human title");
 
     raw.title = { known: true, value: "Human title", source: "human", ref: { turnId: "00000000-0000-4000-8000-000000000001", quote: "Human" } };
@@ -29,7 +35,13 @@ describe("validateAgentOutput", () => {
       schema: agentOutputSchemaFor({ mode: "prepare", allowClarification: true }),
       retrieval: seedRetrievalRecord(propositionWithAlternatives()),
       answeredQuestionIds: [],
-    })).toEqual({ ok: false, issues: [{ path: ["title"] }] });
+    })).toEqual({
+      ok: false,
+      issues: [{
+        path: ["title"],
+        message: "Human provenance does not reference an answered question, a preserved human value, or the current instruction.",
+      }],
+    });
   });
 
   it("R4 accepts only a verbatim quote from the current instruction turn", () => {
@@ -49,9 +61,21 @@ describe("validateAgentOutput", () => {
     expect(validateAgentOutput(raw, ctx).ok).toBe(true);
 
     raw.blocks[0].quantity.ref.quote = "quantity 5";
-    expect(validateAgentOutput(raw, ctx)).toEqual({ ok: false, issues: [{ path: ["blocks", "0", "quantity"] }] });
+    expect(validateAgentOutput(raw, ctx)).toEqual({
+      ok: false,
+      issues: [{
+        path: ["blocks", "0", "quantity"],
+        message: "Human provenance does not reference an answered question, a preserved human value, or the current instruction.",
+      }],
+    });
     raw.blocks[0].quantity.ref = { turnId: "00000000-0000-4000-8000-000000000002", quote: "quantity 3" };
-    expect(validateAgentOutput(raw, ctx)).toEqual({ ok: false, issues: [{ path: ["blocks", "0", "quantity"] }] });
+    expect(validateAgentOutput(raw, ctx)).toEqual({
+      ok: false,
+      issues: [{
+        path: ["blocks", "0", "quantity"],
+        message: "Human provenance does not reference an answered question, a preserved human value, or the current instruction.",
+      }],
+    });
   });
 
   it("P5 rejects content identities outside the seeded or read retrieval record", () => {
@@ -61,7 +85,13 @@ describe("validateAgentOutput", () => {
       schema: agentOutputSchemaFor({ mode: "prepare", allowClarification: false }),
       retrieval: seedRetrievalRecord(propositionWithAlternatives()),
       answeredQuestionIds: [],
-    })).toEqual({ ok: false, issues: [{ path: ["blocks", "0", "contentId"] }] });
+    })).toEqual({
+      ok: false,
+      issues: [{
+        path: ["blocks", "0", "contentId"],
+        message: "Content provenance does not reference catalog content retrieved in this run.",
+      }],
+    });
   });
 
   it("P5(b) checks the id that reaches Proposales, not only the id the model cited", () => {
@@ -75,7 +105,10 @@ describe("validateAgentOutput", () => {
       schema: agentOutputSchemaFor({ mode: "prepare", allowClarification: false }),
       retrieval: seedRetrievalRecord(propositionWithAlternatives()),
       answeredQuestionIds: [],
-    })).toEqual({ ok: false, issues: [{ path: ["blocks", "0", "contentId"] }] });
+    })).toEqual({
+      ok: false,
+      issues: [{ path: ["blocks", "0", "contentId"], message: "Content id was not retrieved in this run." }],
+    });
   });
 
   it("P5(c) checks the cited reference, not only the id that reaches Proposales", () => {
@@ -88,7 +121,13 @@ describe("validateAgentOutput", () => {
       schema: agentOutputSchemaFor({ mode: "prepare", allowClarification: false }),
       retrieval: seedRetrievalRecord(propositionWithAlternatives()),
       answeredQuestionIds: [],
-    })).toEqual({ ok: false, issues: [{ path: ["blocks", "0", "contentId"] }] });
+    })).toEqual({
+      ok: false,
+      issues: [{
+        path: ["blocks", "0", "contentId"],
+        message: "Content provenance does not reference catalog content retrieved in this run.",
+      }],
+    });
   });
 
   it("P5(d) accepts a block only when both the value and the reference were retrieved", () => {
@@ -117,6 +156,9 @@ describe("validateAgentOutput", () => {
       retrieval: seedRetrievalRecord(propositionWithAlternatives()),
       answeredQuestionIds: [],
       currentProposition: current,
-    })).toEqual({ ok: false, issues: [{ path: ["blocks", "0", "contentId"] }] });
+    })).toEqual({
+      ok: false,
+      issues: [{ path: ["blocks", "0", "contentId"], message: "Content id was not retrieved in this run." }],
+    });
   });
 });

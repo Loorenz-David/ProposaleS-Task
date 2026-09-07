@@ -175,7 +175,7 @@ Feature code lives under `src/features/<feature>/` and integrations under `src/l
 
 The application deploys to Vercel. Environment variables are configured in the Vercel project, never in the repository — all eight of them, including `COPILOT_LIVE_MUTATIONS`. A missing variable fails at the first action with the variable's name and never its value.
 
-`src/app/page.tsx` sets `maxDuration = 120`, which the Server Actions invoked from that page inherit. A worst-case turn is the agent's 60-second wall-time budget plus two catalog reads; approval is a search, a create and a read-back. This requires Fluid compute, which is the default for Vercel projects created after 2025-04-23 and caps Hobby functions at 300 seconds. There is no streaming and no progress reporting: a turn shows one honest label for as long as it takes.
+`src/app/page.tsx` sets `maxDuration = 300`, which the Server Actions invoked from that page inherit. An agent run has a 240-second wall-time budget and a 120-second per-call ceiling, leaving bounded headroom for catalog reads and response handling; approval is a search, a create and a read-back. This requires Fluid compute, which caps Hobby functions at 300 seconds. There is no streaming and no progress reporting: a turn shows one honest label for as long as it takes.
 
 **Deployment posture is a deliberate choice**, because Vercel Authentication on Hobby protects preview and deployment URLs but not the production domain. Two configurations are compliant: a protected preview URL with `COPILOT_LIVE_MUTATIONS=enabled`, or a public production URL with `COPILOT_LIVE_MUTATIONS=disabled`, where reviewers see everything up to approval and creation is refused with a clear message. The code is identical under both; only the environment differs.
 
@@ -209,7 +209,7 @@ Decided for the frontend:
 
 Deliberately absent from the workflow itself: the application never sends a proposal, never writes a price, and never lets a model touch an approved payload. Those are enforced in code and pinned by tests, not conventions; the rules and where each is enforced are in the [feature README](src/features/proposal-preparation/README.md).
 
-Known limitations of the working system, rather than missing pieces: a replaced line item moves to the end of the list, which is backend semantics; a turn takes roughly 15–60 seconds behind one static label, with no progress reporting; a reload loses the workspace; and there is no human-driven content search UI.
+Known limitations of the working system, rather than missing pieces: a replaced line item moves to the end of the list, which is backend semantics; a typical turn takes roughly 15–60 seconds behind one static label, with no progress reporting (the bounded worst-case agent allowance is 240 seconds); a reload loses the workspace; and there is no human-driven content search UI.
 
 ## Documentation map
 

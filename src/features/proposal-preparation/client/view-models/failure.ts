@@ -98,9 +98,12 @@ export function toRunFailureTurn(failure: RunFailure): {
     return {
       headline: "The agent returned an invalid draft",
       detail: "Review the affected information and try again.",
-      // `issues` is optional: absent means the run reported no paths, which is a fact about the
+      // `issues` is optional: absent means the run reported no issues, which is a fact about the
       // failure rather than a value to default. This is the one `??` the adapter needs.
-      issuePaths: (failure.issues ?? []).map((issue) => issue.path.join(" › ")),
+      issuePaths: (failure.issues ?? []).map((issue) => {
+        const location = issue.path.length === 0 ? "Root" : issue.path.join(" › ");
+        return `${location}: ${issue.message}`;
+      }),
     };
   }
   // `tool_output_invalid` and the test-only `script_exhausted` are the same thing to a reader:

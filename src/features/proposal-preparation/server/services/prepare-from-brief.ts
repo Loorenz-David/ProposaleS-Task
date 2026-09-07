@@ -7,7 +7,7 @@ import { zodIssues } from "@/lib/errors/zod-issues";
 import type { Logger } from "@/lib/logger";
 import type { ProposalesClient, CompanyInfo, ContentItem } from "@/lib/proposales";
 import type { AiClient } from "@/lib/ai";
-import type { RunBudgets, RunFailureReason } from "@/lib/agent/types";
+import type { RunBudgets, RunFailureReason, RunIssue } from "@/lib/agent/types";
 import { formatIsoTimestamp } from "@/lib/values/timestamp";
 
 import { agentOutputSchemaFor, type AgentClarification } from "../../schemas/agent-output";
@@ -101,7 +101,7 @@ function mergeLanguageQuestion(values: ReadonlyArray<{ itemKey: InformationItemK
   ].slice(0, MAX_CLARIFICATION_QUESTIONS);
 }
 
-function failureResult(failure: { reason: RunFailureReason; budget?: "wall_time" | "tool_calls" | "tokens"; issues?: Array<{ path: string[] }> }): Extract<DomainResult, { status: "failed" }> {
+function failureResult(failure: { reason: RunFailureReason; budget?: "wall_time" | "tool_calls" | "tokens"; issues?: RunIssue[] }): Extract<DomainResult, { status: "failed" }> {
   return {
     status: "failed",
     failure: {
@@ -182,7 +182,10 @@ export async function completePreparationTurn(input: CompleteInput, deps: Prepar
   }
 
   if (validated.output.kind !== "proposition") {
-    return appendAssistant(input.state, input.conversation, failureResult({ reason: "model_output_invalid", issues: [{ path: ["kind"] }] }), report, deps);
+    return appendAssistant(input.state, input.conversation, failureResult({
+      reason: "model_output_invalid",
+      issues: [{ path: ["kind"], message: "Expected a proposition." }],
+    }), report, deps);
   }
 
   const assembled = assembleProposition(validated.output, {

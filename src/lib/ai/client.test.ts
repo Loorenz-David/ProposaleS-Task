@@ -210,13 +210,13 @@ describe("AI client", () => {
     await expect(client.generateStep(basicInput, { timeoutMs: 100 })).resolves.toMatchObject({ kind: "final", output });
   });
 
-  it("C6(c): turns invalid generated output into a final candidate", async () => {
+  it("C6(c): distinguishes provider object-parse failure without exposing generated text", async () => {
     const invalid = new NoObjectGeneratedError({ text: "{not json", response: { id: "response", timestamp: new Date(0), modelId: "model" }, usage: usage(), finishReason: "stop" });
     const { client } = makeClient(async () => { throw invalid; });
 
     await expect(client.generateStep(basicInput, { timeoutMs: 100 })).resolves.toEqual({
-      kind: "final",
-      output: "{not json",
+      kind: "invalid_output",
+      reason: "provider_parse_failure",
       usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
     });
   });

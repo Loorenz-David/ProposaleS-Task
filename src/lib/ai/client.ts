@@ -188,7 +188,11 @@ export function createAiClient(env: ServerEnv = serverEnv, deps: AiClientDeps = 
           if (error.finishReason === "content-filter") {
             throw fromSdkError(error, "generateStep");
           }
-          return { kind: "final", output: error.text, usage: toUsage(error.usage) };
+          return {
+            kind: "invalid_output",
+            reason: "provider_parse_failure",
+            usage: toUsage(error.usage),
+          };
         }
 
         if (error instanceof AiProviderError) throw error;

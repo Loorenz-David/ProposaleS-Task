@@ -49,7 +49,7 @@ describe("failure adapters", () => {
       headline: "The agent reached its working limit",
       issuePaths: [],
     });
-    expect(toRunFailureTurn(fixtureRunFailure("model_output_invalid")).issuePaths).toEqual(["title"]);
+    expect(toRunFailureTurn(fixtureRunFailure("model_output_invalid")).issuePaths).toEqual(["title: Title needs attention."]);
     // `script_exhausted` reads like `tool_output_invalid`: the run could not use what it was given.
     for (const reason of ["tool_output_invalid", "script_exhausted"] as const) {
       expect(toRunFailureTurn(fixtureRunFailure(reason))).toMatchObject({
@@ -62,6 +62,19 @@ describe("failure adapters", () => {
   it("an absent issues list is no paths, not a crash", () => {
     const withoutIssues = { reason: "model_output_invalid" as const, code: "validation_error" as const };
     expect(toRunFailureTurn(withoutIssues).issuePaths).toEqual([]);
+  });
+
+  it("renders a root validation issue as a meaningful non-empty Check entry", () => {
+    const rootIssue = {
+      reason: "model_output_invalid" as const,
+      code: "validation_error" as const,
+      issues: [{ path: [], message: 'Unrecognized keys: "reviewerComment", "alternatives"' }],
+    };
+
+    expect(toRunFailureTurn(rootIssue).issuePaths).toEqual([
+      'Root: Unrecognized keys: "reviewerComment", "alternatives"',
+    ]);
+    expect(toRunFailureTurn(rootIssue).issuePaths).not.toContain("");
   });
 
   it("a forbidden deployment offers no retry, whatever the flag says", () => {

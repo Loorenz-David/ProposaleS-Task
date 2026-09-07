@@ -179,5 +179,6 @@ describe("AI provider registry", () => {
       expect(value).toBeGreaterThan(0);
     }
     expect(AI_CALL_TIMEOUT_MS).toBeLessThanOrEqual(DEFAULT_RUN_BUDGETS.wallTimeMs);
+    expect(DEFAULT_RUN_BUDGETS.wallTimeMs).toBeGreaterThanOrEqual(AI_CALL_TIMEOUT_MS * 2);
   });
 });

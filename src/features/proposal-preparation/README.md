@@ -68,7 +68,7 @@ They are never merged, and the distinction is the feature's central rule.
 
 `DomainResult` is a five-member union: `clarification`, `proposition`, `failed`, `created`, `recovered`. A `failed` result is a domain outcome, not an exception — a run that exhausts its budget returns a clarification or a failure, never a fabricated proposition.
 
-Failures reach the browser through **two channels, deliberately**. A `failed` *result* is a turn that completed and has something to say, so it renders in the thread. A thrown `AppError` becomes an `ErrorDto` on `{ ok: false }` and renders as a call failure with a retry offered only when the DTO says `retryable`.
+Failures reach the browser through **two channels, deliberately**. A `failed` *result* is a turn that completed and has something to say, so it renders in the thread; model-validation issues carry a compact path and message, with `Root` naming document-level failures. A thrown `AppError` becomes an `ErrorDto` on `{ ok: false }` and renders as a call failure with a retry offered only when the DTO says `retryable`.
 
 ## Provenance
 
@@ -130,8 +130,8 @@ Two opt-in live suites sit behind `LIVE_SMOKE=1 npm run test:live`, and `LIVE_SM
 
 - **No persistence.** A reload loses the workspace, by decision.
 - **Replacement appends.** `add_block` puts the replacement block at the end of the list, so a replaced line item moves. This is backend semantics and no client-side reorder is attempted.
-- **No progress reporting.** A real turn takes roughly 15–60 seconds behind one honest label; there is no streaming and no step display.
+- **No progress reporting.** A typical real turn takes roughly 15–60 seconds behind one honest label; there is no streaming and no step display. The bounded worst-case agent allowance is 240 seconds so one slow proposition and up to two corrective attempts can complete.
 - **An absent recipient still shows its five fields.** Setting any one of them materializes the recipient server-side, so each row is a real affordance.
 - **The read-back can fail without failing the turn.** A created draft with `appliedPricing.available: false` and a reason is the correct outcome — losing the draft would be worse than reporting no pricing.
 - **`searchContentForHuman` is unexposed.** There is no human search UI in this version.
-- Under OpenAI, the provider is not asked to constrain decoding to the output schema: its structured-output dialect cannot express a top-level union, which this agent's output is. `src/lib/ai/openai-schema.ts` absorbs the difference, and the model's output is validated and retried afterwards rather than guaranteed by the vendor. Exhausting the retries is a `failed` turn, never a fabricated proposition.
+- Under OpenAI, the provider is not asked to constrain decoding to the output schema: its structured-output dialect cannot express a top-level union, which this agent's output is. `src/lib/ai/openai-schema.ts` absorbs the difference, and the model's output is validated and corrected afterwards rather than guaranteed by the vendor. Recovery can restore only a missing `known: true` discriminator when that exact leaf already contains both `value` and `source`; every consequential value and provenance ref still has to pass the authoritative schema and domain validation. Exhausting the retries is a `failed` turn, never a fabricated proposition.

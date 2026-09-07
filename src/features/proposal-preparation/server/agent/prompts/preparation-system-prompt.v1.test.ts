@@ -32,4 +32,22 @@ describe("preparationSystemPromptV1", () => {
       }
     }
   });
+
+  it("states the proposition container, discriminator, and provenance invariants", () => {
+    const prompt = preparationSystemPromptV1({ mode: "prepare", language: "en", catalogLanguages: ["en"], clarificationAllowed: false });
+
+    expect(prompt).toContain("warnings");
+    expect(prompt).toContain("requestedOverrides");
+    expect(prompt).toContain("always-present arrays");
+    expect(prompt).toContain("Each block owns");
+    expect(prompt).toContain("alternatives");
+    expect(prompt).toContain("reviewerComment");
+    expect(prompt).toContain("proposition object must not contain");
+    expect(prompt).toContain("preserve every `known` discriminator");
+    expect(prompt).toContain("preserve every provenance `ref`");
+    expect(prompt).toContain('"blocks":[]');
+    expect(prompt).toContain('"warnings":[]');
+    expect(prompt).toContain('"requestedOverrides":[]');
+    expect(prompt).toContain('"alternatives": []');
+  });
 });
