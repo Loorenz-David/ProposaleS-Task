@@ -803,3 +803,21 @@ focus-order row is not evidence (master plan §11.1, follow-up 18). Free the por
 - Pass A review contract extended with optional `isSubmitting` so approval is disabled for any
   session turn, while preserving all existing props and visual structure.
 - Checkpoint stamp: `npm test` — 54 files / 314 tests green.
+
+### WP6 checkpoint
+
+- Approval now submits the held workflow/current proposition and the imported fixture acknowledgment
+  pair; creation remains pending until the returned outcome. Call failures retain the proposition,
+  route to creation failure with Back to review first, and retry the exact stored input. Failed
+  domain results stay as thread results and never become call failures. Added the all-session,
+  non-terminal-creation `beforeunload` guard.
+- Acceptance evidence: main-surface machinery, failure view-model, departure-guard, dispatch, and
+  existing creation-surface tests cover R6.1–R6.10.
+- Mutation ledger: M9 replaced the approval proposition with the review view model and reddened
+  the R6.1 source/approval assertion; reverted. M10 offered retry for any present details and
+  reddened R6.7's false-flag rows; reverted. M11 cleared workflow on call failure and reddened
+  R6.5's proposition-survival row; reverted. M12 restricted departure to the active session and
+  reddened R6.10's non-active-creating row; reverted. Mutation files were
+  `main-application-surface.tsx`, `client/view-models/failure.ts`,
+  `use-workspace-session-store.ts`, and `use-departure-guard.ts`.
+- Checkpoint stamp: `npm test` — 56 files / 318 tests green.

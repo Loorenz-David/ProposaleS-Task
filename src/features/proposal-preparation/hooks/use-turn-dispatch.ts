@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 
 import { temporaryFixtureTurnAdapter } from "../client/fixtures/turns.temporary-fixture";
-import type { InFlightTurn, WorkspaceSessionId } from "../types/session";
+import type { CallFailure, InFlightTurn, WorkspaceSessionId } from "../types/session";
 import type { TemporaryTurnInput } from "../types/temporary-turn";
 import { useWorkspaceSessionStore } from "./use-workspace-session-store";
 
@@ -16,6 +16,29 @@ function toInFlightTurn(input: TemporaryTurnInput, turnId: string): InFlightTurn
     };
   }
   return { turnId, kind: input.kind };
+}
+
+function failureMatchesInput(
+  failure: CallFailure,
+  input: TemporaryTurnInput,
+) {
+  if (input.kind === "approval") return failure.site.kind === "creation";
+  if (input.kind === "revision") {
+    return input.scope
+      ? failure.site.kind === "ask" && failure.site.fieldLabel === input.scope
+      : failure.site.kind === "agent";
+  }
+  if (input.kind === "edit") {
+    const operation = input.operation;
+    if (operation.op === "replace_block") {
+      return failure.site.kind === "replacement" && failure.site.blockIndex === operation.index;
+    }
+    if (operation.op === "set_leaf") {
+      return failure.site.kind === "edit" && failure.site.path.length === operation.path.length &&
+        failure.site.path.every((part, index) => part === operation.path[index]);
+    }
+  }
+  return failure.site.kind === "agent";
 }
 
 export function useTurnDispatch(): {
@@ -37,6 +60,9 @@ export function useTurnDispatch(): {
     useWorkspaceSessionStore
       .getState()
       .startTurn(originSessionId, toInFlightTurn(input, turnId), humanEntry);
+    if (record.callFailure && failureMatchesInput(record.callFailure, input)) {
+      useWorkspaceSessionStore.getState().dismissCallFailure(originSessionId);
+    }
     if (input.kind === "brief" || input.kind === "revision") {
       useWorkspaceSessionStore.getState().clearComposerDraft(originSessionId);
     }

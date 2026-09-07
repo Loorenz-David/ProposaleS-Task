@@ -9,6 +9,7 @@ import { WorkspaceDivider } from "./workspace-divider";
 import { ConfirmDialog } from "./confirm-dialog";
 import { useDividerWidth } from "../../hooks/use-divider-width";
 import { useCloseGuard } from "../../hooks/use-close-guard";
+import { useDepartureGuard } from "../../hooks/use-departure-guard";
 
 const subscribeToHydration = () => () => {};
 
@@ -20,6 +21,7 @@ export function ProposalWorkspace() {
   const [announcementKey, setAnnouncementKey] = useState(0);
   const { width, effectiveMax, setWidth, reset } = useDividerWidth(containerWidth);
   const closeGuard = useCloseGuard();
+  useDepartureGuard();
 
   const announceReset = () => {
     flushSync(() => setAnnouncementKey((key) => key + 1));

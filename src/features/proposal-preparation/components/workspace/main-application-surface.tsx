@@ -11,6 +11,7 @@ import { CreatingSurface } from "../creation/creating-surface";
 import { CreationFailureSurface } from "../creation/creation-failure-surface";
 import { ProposalPreparationIdleSurface } from "../idle/proposal-preparation-idle-surface";
 import { ProposalReviewSurface } from "../review/proposal-review-surface";
+import { TEMPORARY_FIXTURE_PRICING_ACKNOWLEDGMENT } from "../../client/view-models/created";
 
 export function MainApplicationSurface({ state, closeGuard }: { state?: MainSurfaceState; closeGuard?: CloseGuardController }) {
   const record = useWorkspaceSessionStore((store) =>
@@ -52,7 +53,7 @@ export function MainApplicationSurface({ state, closeGuard }: { state?: MainSurf
             kind: "approval",
             workflow: record.workflow ?? {},
             proposition: record.workflow!.currentProposition!,
-            acknowledgment: surface.review.acknowledgment,
+            acknowledgment: TEMPORARY_FIXTURE_PRICING_ACKNOWLEDGMENT,
           })}
           onAskAgent={(ask) => void dispatch(activeSessionId, { kind: "revision", instruction: `About ${ask.fieldLabel}: ${ask.text}`, scope: ask.fieldLabel })}
           onBackToReview={() => dismissCallFailure(activeSessionId)}

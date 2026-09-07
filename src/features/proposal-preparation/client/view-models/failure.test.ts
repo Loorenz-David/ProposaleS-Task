@@ -28,6 +28,18 @@ describe("failure adapters", () => {
     expect(toCreationFailureViewModel(failure("conflict")).existingDraft).not.toBeNull();
   });
 
+  it("R6.7: offers retry exactly when the DTO flag is true, except validation", () => {
+    const codes = [
+      "validation_error", "unauthenticated", "forbidden", "not_found", "conflict",
+      "approval_required", "integration_error", "rate_limited", "internal_error", "unknown_error",
+    ] as const;
+    for (const code of codes) {
+      expect(toCallFailureViewModel(failure(code, { details: { retryable: true } })).canRetry).toBe(code !== "validation_error");
+      expect(toCallFailureViewModel(failure(code, { details: { retryable: false } })).canRetry).toBe(false);
+      expect(toCallFailureViewModel(failure(code, { details: {} })).canRetry).toBe(false);
+    }
+  });
+
   it("maps all production run-failure reasons", () => {
     expect(["budget_exhausted", "model_output_invalid", "tool_output_invalid"].map((reason) => toRunFailureTurn(temporaryFixtureRunFailure(reason as Parameters<typeof temporaryFixtureRunFailure>[0])).headline)).toHaveLength(3);
   });
