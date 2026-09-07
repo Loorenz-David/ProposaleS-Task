@@ -1,6 +1,18 @@
 import type { z } from "zod";
 
 import { propositionSchema } from "../schemas/proposition";
+import { FIXTURE_CATALOG } from "./catalog";
+import {
+  MAX_ALTERNATIVE_REASON_CHARS,
+  MAX_ASSUMPTION_CHARS,
+  MAX_COMMENT_CHARS,
+  MAX_NARRATIVE_CHARS,
+  MAX_NOTE_TEXT_CHARS,
+  MAX_RATIONALE_CHARS,
+  MAX_TITLE_CHARS,
+  MAX_WARNING_CHARS,
+} from "../schemas/shared";
+import { MAX_ALTERNATIVES_PER_BLOCK, MAX_BLOCKS } from "../schemas/proposition";
 
 export type Proposition = z.infer<typeof propositionSchema>;
 
@@ -116,5 +128,86 @@ export function leafInferred(descriptor: ConsequentialLeafDescriptor): Propositi
     ? { known: true, value: descriptor.value, source: "inferred" }
     : { value: descriptor.value, source: "inferred" };
   setAtPath(proposition, descriptor.path, leaf);
+  return proposition as Proposition;
+}
+
+const catalogItem = (variationId: string) => {
+  const item = FIXTURE_CATALOG.find((candidate) => candidate.variationId === variationId);
+  if (!item) throw new Error(`missing fixture catalog item ${variationId}`);
+  return item;
+};
+
+const catalogTitle = (variationId: string) => catalogItem(variationId).title.en!;
+const catalogRef = (variationId: string) => ({ variationId });
+
+function fixtureBlock(variationId: string, alternatives: Proposition["blocks"][number]["alternatives"]): Proposition["blocks"][number] {
+  const item = catalogItem(variationId);
+  return {
+    contentId: { value: variationId, source: "proposales_content", ref: catalogRef(variationId) },
+    productId: item.productId,
+    title: { value: catalogTitle(variationId), source: "proposales_content", ref: catalogRef(variationId) },
+    description: { known: false },
+    quantity: { known: false },
+    optional: { known: false },
+    reviewerComment: { known: false },
+    pricing: "library",
+    alternatives,
+  };
+}
+
+export function propositionWithAlternatives(): Proposition {
+  const proposition = validProposition({ version: 3 });
+  proposition.blocks = [
+    fixtureBlock("1", [
+      { variationId: "2", productId: "500102", title: catalogTitle("2"), matchStrength: "possible", score: 400, reason: inferred("closest") },
+      { variationId: "3", productId: "500103", title: catalogTitle("3"), matchStrength: "weak", score: 200, reason: inferred("fallback") },
+    ]),
+    fixtureBlock("5", []),
+  ];
+  proposition.warnings = [
+    { kind: "weak_match", text: inferred("A weak match needs review.") },
+    { kind: "non_strong_selection", text: inferred("A selected item is not strong.") },
+  ];
+  proposition.unresolvedItems = [
+    { itemKey: "quantities", resolution: "unresolved" },
+    { itemKey: "deadline_and_terms_notes", resolution: "deferred_by_user" },
+  ];
+  proposition.assumptions = [{ path: ["blocks", "0"], note: inferred("A review assumption.") }];
+  proposition.agentRationale = { known: true, value: "Reused the closest catalog match.", source: "inferred" };
+  return proposition;
+}
+
+export function maximalConformingProposition(): Proposition {
+  const proposition = propositionWithAlternatives() as AnyRecord;
+  proposition.title = { known: true, value: "x".repeat(MAX_TITLE_CHARS), source: "inferred" };
+  proposition.descriptionNarrative = { known: true, value: "x".repeat(MAX_NARRATIVE_CHARS), source: "inferred" };
+  proposition.recipient.value.firstName = { known: true, value: "x".repeat(MAX_TITLE_CHARS), source: "brief" };
+  proposition.recipient.value.lastName = { known: true, value: "x".repeat(MAX_TITLE_CHARS), source: "brief" };
+  proposition.recipient.value.phone = { known: true, value: "x".repeat(MAX_TITLE_CHARS), source: "brief" };
+  proposition.recipient.value.companyName = { known: true, value: "x".repeat(MAX_TITLE_CHARS), source: "brief" };
+  proposition.blocks = Array.from({ length: MAX_BLOCKS }, (_, blockIndex) => {
+    const variationId = String((blockIndex % 14) + 1);
+    const block = fixtureBlock(variationId, Array.from({ length: MAX_ALTERNATIVES_PER_BLOCK }, (_, alternativeIndex) => {
+      const altId = String(((alternativeIndex + 1) % 14) + 1);
+      return {
+        variationId: altId,
+        productId: catalogItem(altId).productId,
+        title: "x".repeat(MAX_TITLE_CHARS),
+        matchStrength: "possible" as const,
+        score: 400,
+        reason: inferred("x".repeat(MAX_ALTERNATIVE_REASON_CHARS)),
+      };
+    }));
+    block.title = { value: "x".repeat(MAX_TITLE_CHARS), source: "proposales_content", ref: catalogRef(variationId) };
+    block.description = { known: true, value: "x".repeat(MAX_NARRATIVE_CHARS), source: "proposales_content", ref: catalogRef(variationId) };
+    block.reviewerComment = { known: true, value: "x".repeat(MAX_COMMENT_CHARS), source: "inferred" };
+    return block;
+  });
+  proposition.commercialNotes[0].text = { value: "x".repeat(MAX_NOTE_TEXT_CHARS), source: "brief", ref: { quote: "x".repeat(300) } };
+  proposition.commercialAssumptions = proposition.commercialAssumptions.map((assumption: AnyRecord) => ({ ...assumption, statedValue: { value: "x".repeat(MAX_ASSUMPTION_CHARS), source: "brief" } }));
+  proposition.assumptions = [{ path: ["blocks", "0"], note: inferred("x".repeat(MAX_ASSUMPTION_CHARS)) }];
+  proposition.warnings = [{ kind: "weak_match", text: inferred("x".repeat(MAX_WARNING_CHARS)), reason: "x".repeat(MAX_RATIONALE_CHARS) }];
+  proposition.unresolvedItems = [{ itemKey: "quantities", resolution: "unresolved" }];
+  proposition.agentRationale = { known: true, value: "x".repeat(MAX_RATIONALE_CHARS), source: "inferred" };
   return proposition as Proposition;
 }

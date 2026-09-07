@@ -1,7 +1,7 @@
 ---
 plan: 10
 phase: Conversation context, retrieval record, agent message assembly
-state: PROMPT_READY
+state: IMPLEMENTED
 date: 2026-09-07
 author: implementation-planner round 2 (multi-turn continuity refactor)
 ---
@@ -141,3 +141,63 @@ Handoff: `handoffs/reviewer/phase-10-projection-round-0.handoff.reviewer.md`. 33
 **The entry table's low mutation density was a symptom, not a coincidence.** Dispatch flagged 5/25 = 0.20 as a signal to test rather than a verdict; tested, **C5 and C6 carried no named mutation at all**, and four of the five that existed sat on rows that were already the strongest. Nine of the fourteen rows in §5 of the handoff ("what could still pass this") collapse under three additions: C4(f)'s whole-request deep-equal (§9.1 rule 19), exact-string equality on C3, and exact-count presence on C4(d).
 
 Table **6 / 25 / 5 → 6 / 30 / 14**; MUT-10-1 … MUT-10-14 contiguous. Contracts `02`, `03`, `11` added to Read-first (all three CROSS-CUTTING; the list named five and missed three). Tracker row 10 read `PROJECTING`, which is not a member of the charter's state machine — corrected to `PROMPT_READY` at this fold and the vocabulary noted in master §9. State `PROMPT_READY`; implementer prompt live.
+
+### Implementer round 1 — IMPLEMENTED 2026-09-07
+
+Handoff: handoffs/implementer/phase-10-round-1.implementer.md. Built the four pure modules and the two fixture factories inside the phase perimeter. No service, I/O, provider call, network access, environment read, install, or phase-9 runtime change. The local RenderableResult union follows the projection routing because DomainResult is phase 11's later, unspecified type; block retrieval entries carry identity only because blockSchema has no ranking fields; question rendering carries id/topic only because question text is model-authored.
+
+Coverage map, one line per row (all 30 row ids appear in executing test names):
+
+- C1(a) → conversation.test.ts C1(a) → exact parsed JSON round trip; full shape.
+- C1(b) → conversation.test.ts C1(b) → exact Zod code, raw numeric path, and keys for context and turn; full shape.
+- C1(c) → conversation.test.ts C1(c) → exact cap issue path plus cap acceptance; full shape.
+- C1(d) → conversation.test.ts C1(d) → exact over-cap issue path plus trimmed padded acceptance; full shape.
+- C1(e) → conversation.test.ts C1(e) → exact UUID/timestamp issue paths; full shape.
+- C1(f) → conversation.test.ts C1(f) → exact custom paths for both assistant cases and strict human case; full shape.
+- C1(g) → conversation.test.ts C1(g) → constant relation and parity assertions; full contract shape.
+- C2(a) → conversation.test.ts C2(a) → exact bounded length, zero omissions, and order; full shape.
+- C2(b) → conversation.test.ts C2(b) → exact surviving id sequence and omission count; full shape.
+- C2(c) → conversation.test.ts C2(c) → input clone, reference independence, and repeat equality; full shape.
+- C2(d) → conversation.test.ts C2(d) → exact empty object and schema parse; full shape.
+- C2(e) → conversation.test.ts C2(e) → exact accumulated omission count and cap; full shape.
+- C3(a) → conversation.test.ts C3(a) → whole-string equality for all rendered proposition lines; full shape.
+- C3(b) → conversation.test.ts C3(b) → whole-string equality and explicit absence of question text; full shape.
+- C3(c) → conversation.test.ts C3(c) → whole-string equality for failure output; full shape.
+- C3(d) → conversation.test.ts C3(d) → oversized cardinality relation, cap, marker, and determinism; full shape.
+- C3(e) → conversation.test.ts C3(e) → leak absence paired with warning/content presence; full shape.
+- C3(f) → conversation.test.ts C3(f) → type equality between renderable and assistant statuses; full type shape.
+- C4(a) → build-messages.test.ts C4(a) → ordered labels and minimal optional-block list; full shape.
+- C4(b) → build-messages.test.ts C4(b) → exact history lines, omission line, separator, and one-based window; full shape.
+- C4(c) → build-messages.test.ts C4(c) → latest instruction is last and absent from history; full shape.
+- C4(d) → build-messages.test.ts C4(d) → exact-count sentinels paired with delimiter containment; full shape.
+- C4(e) → build-messages.test.ts C4(e) → shared scanner absence plus positive forbidden-form controls and AgentMessage type; full shape.
+- C4(f) → build-messages.test.ts C4(f) → deep equality of the complete six-message request; full shape.
+- C5(a) → retrieval-record.test.ts C5(a) → exact whole candidates for both blocks and both alternatives; full shape.
+- C5(b) → retrieval-record.test.ts C5(b) → exact overwrite/add values, cloned input, and distinct Map; full shape.
+- C5(c) → retrieval-record.test.ts C5(c) → empty size and negative lookup; full shape.
+- C5(d) → retrieval-record.test.ts C5(d) → exact identity-only entries for human and Proposales sources; full shape.
+- C6(a) → conversation.test.ts C6(a) → workflow parser issue at flattened conversation; full shape.
+- C6(b) → conversation.test.ts C6(b) → raw schema issue with path [] and key state; full shape.
+
+Baseline after the test files were added but before production edits: npm test reported 31 files / 421 passing and 4 phase files / 28 failing tests (28 failed, 449 total), all because the four target modules were absent. Closing L4: npm test 35 files / 451 tests green; npm run typecheck green; npm run lint green. Build was not run per prompt because main's pre-existing globals.css/tokens.css failure is explicitly non-signal.
+
+Mutation ledger (each probe was applied and reverted; restored file digest is the digest printed after final restoration):
+
+| Mutation | Site | Command and observed red | Restored digest |
+|---|---|---|---|
+| MUT-10-1 | schemas/conversation.ts, assistant version refinement | vitest conversation schema; C1(f) failed at missing-version assertion | 66b6fc0be28fbc83b3ba3511ff7703dd0f0777ee8605f914c0a5024c8e1b959c |
+| MUT-10-2 | domain/conversation.ts, append trim | vitest conversation domain; C2(b) and the shared cap assertion in C2(e) failed | 4645778216c82915ab1f9a8f0503fcf57f66357d18cec2465c14ce9f56bbdc3c |
+| MUT-10-3 | domain/conversation.ts, render cut | vitest conversation domain; C3(d) exceeded 3000 and lacked marker | 4645778216c82915ab1f9a8f0503fcf57f66357d18cec2465c14ce9f56bbdc3c |
+| MUT-10-4 | agent/build-messages.ts, instruction appended to history | vitest build messages; C4(c), C4(d), and C4(f) observed duplicated/misplaced instruction | 0c2dfece49422897b9ea92ed6d1e0a3b055849a521cbd44f350bbe5b6d0a1711 |
+| MUT-10-5 | agent/build-messages.ts, bare brief | vitest build messages; C4(a), C4(d), and C4(f) failed | 0c2dfece49422897b9ea92ed6d1e0a3b055849a521cbd44f350bbe5b6d0a1711 |
+| MUT-10-6 | domain/conversation.ts, omitted count assignment | vitest conversation domain; C2(e) failed with 3 instead of 5 | 4645778216c82915ab1f9a8f0503fcf57f66357d18cec2465c14ce9f56bbdc3c |
+| MUT-10-7 | domain/conversation.ts, alternatives loop | vitest conversation domain; C3(a) failed whole-string equality | 4645778216c82915ab1f9a8f0503fcf57f66357d18cec2465c14ce9f56bbdc3c |
+| MUT-10-8 | domain/conversation.ts, warning text leak | vitest conversation domain; C3(a) and C3(e) observed free-text leak | 4645778216c82915ab1f9a8f0503fcf57f66357d18cec2465c14ce9f56bbdc3c |
+| MUT-10-9 | agent/build-messages.ts, empty catalog-language body | vitest build messages; C4(f) failed whole-request equality | 0c2dfece49422897b9ea92ed6d1e0a3b055849a521cbd44f350bbe5b6d0a1711 |
+| MUT-10-10 | domain/retrieval-record.ts, empty seed | vitest retrieval record; C5(a), C5(b), and C5(d) failed | f78e7700391e5391f2da7306a9eb02a621c9a259e03a484b40447acec0e18e24 |
+| MUT-10-11 | domain/retrieval-record.ts, human block strong/SCORE_MAX seed | vitest retrieval record; C5(d) failed exact identity-only assertion | f78e7700391e5391f2da7306a9eb02a621c9a259e03a484b40447acec0e18e24 |
+| MUT-10-12 | schemas/workflow-state.ts, proposalWorkflowStateSchemaFor strict factory | vitest conversation schema -t C6; C6(a) failed after correctly sited probe. Initial draft-reference-helper probe was discarded as false green. | b7927fc8f5058fc73a13ed7b2ad6b3ad5d57bc0634566abce86b497f8063eb5a |
+| MUT-10-13 | schemas/conversation.ts, context strictness | vitest conversation schema -t C6; C6(b) parsed forbidden state key | 66b6fc0be28fbc83b3ba3511ff7703dd0f0777ee8605f914c0a5024c8e1b959c |
+| MUT-10-14 | domain/conversation.ts, extra renderable created status | npm run typecheck; C3(f) type equality failed and renderer failure branch became a compile error | 4645778216c82915ab1f9a8f0503fcf57f66357d18cec2465c14ce9f56bbdc3c |
+
+The named mutations sum to 14 and all 14 were executed. Mutation files were separate from the implementation perimeter: schemas/workflow-state.ts was applied-and-reverted only for MUT-10-12. No architecture graph exists. The final tree is ready for checkpoint commit; this phase is IMPLEMENTED, not APPROVED.
