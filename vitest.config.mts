@@ -25,6 +25,7 @@ export default defineConfig({
           include: [
             "src/lib/**/*.test.ts",
             "src/features/**/*.test.ts",
+            "test/isolation.test.ts",
             "test/setup/node.test.ts",
           ],
           exclude: [...configDefaults.exclude, "e2e/**", "**/*.live.test.ts"],

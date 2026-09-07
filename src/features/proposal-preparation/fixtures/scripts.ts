@@ -134,5 +134,8 @@ export function selectSecondAlternative(): GenerateStepResult[] {
 
 export function selectPrevious(): GenerateStepResult[] {
   const output = agentPropositionOutput();
-  return [finalStep({ ...output, blocks: [{ ...(output.blocks as Array<Record<string, unknown>>)[0], alternatives: [] }] })];
+  return [
+    getContentStep("1", "call-get-previous"),
+    finalStep({ ...output, blocks: [{ ...(output.blocks as Array<Record<string, unknown>>)[0], alternatives: [] }] }),
+  ];
 }
