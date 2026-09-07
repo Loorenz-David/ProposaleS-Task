@@ -5,7 +5,7 @@ import { AI_CALL_TIMEOUT_MS } from "@/lib/ai/config";
 import { createScriptedAiClient } from "@/lib/ai/scripted";
 import type { GenerateStepResult } from "@/lib/ai/types";
 import { defineTool } from "@/lib/agent/define-tool";
-import { run } from "@/lib/agent/run";
+import { MAX_OUTPUT_RETRIES, run } from "@/lib/agent/run";
 import type { AgentMessage, RunBudgets, RunDeps, ToolContext } from "@/lib/agent/types";
 
 const outputSchema = z.strictObject({ answer: z.string() });
@@ -20,6 +20,7 @@ function usage(inputTokens: number | null = 1, outputTokens: number | null = 1, 
 }
 function final(value: unknown, stepUsage = usage()): GenerateStepResult { return { kind: "final", output: value, usage: stepUsage }; }
 function calls(...toolCalls: Array<{ toolCallId: string; name: string; input: unknown }>): GenerateStepResult { return { kind: "tool_calls", calls: toolCalls, usage: usage() }; }
+function callsWithUsage(stepUsage: ReturnType<typeof usage>, ...toolCalls: Array<{ toolCallId: string; name: string; input: unknown }>): GenerateStepResult { return { kind: "tool_calls", calls: toolCalls, usage: stepUsage }; }
 function logger() { return { info: vi.fn(), warn: vi.fn(), error: vi.fn() }; }
 function deps(steps: readonly GenerateStepResult[], now: () => number = () => 0): RunDeps & { ai: ReturnType<typeof createScriptedAiClient> } {
   const ai = createScriptedAiClient(steps);
@@ -39,10 +40,17 @@ describe("agent run", () => {
   });
 
   it("C3(a) enforces the tool-call budget and C3(d) discards the draft", async () => {
-    const result = await executeRun([calls({ toolCallId: "1", name: "missing", input: {} }), calls({ toolCallId: "2", name: "missing", input: {} }), calls({ toolCallId: "3", name: "missing", input: {} }), final(output)], { budgets: { ...baseBudgets, maxToolCalls: 3 } });
-    expect(result.result).toMatchObject({ status: "failed", failure: { reason: "budget_exhausted", budget: "tool_calls" }, toolCalls: expect.any(Array) });
-    expect(result.result).not.toHaveProperty("output");
-    expect(result.dependencies.ai.calls).toHaveLength(3);
+    const tool = defineTool({ name: "one", description: "one", kind: "read", input: z.strictObject({}), output: z.strictObject({ ok: z.boolean() }), execute: async () => ({ ok: true }) });
+    const dependencies = deps([calls({ toolCallId: "1", name: "one", input: {} }), calls({ toolCallId: "2", name: "one", input: {} }), calls({ toolCallId: "3", name: "one", input: {} }), final(output)]);
+    const result = await run({ system: "system", initialMessages: [], tools: [tool], outputSchema, toolContext: baseContext, budgets: { ...baseBudgets, maxToolCalls: 3 } }, dependencies);
+    expect(result).toMatchObject({ status: "failed", failure: { reason: "budget_exhausted", budget: "tool_calls" } });
+    expect(result).not.toHaveProperty("output");
+    expect(dependencies.ai.calls).toHaveLength(3);
+    expect(result.toolCalls).toEqual([
+      { toolCallId: "1", name: "one", ok: true },
+      { toolCallId: "2", name: "one", ok: true },
+      { toolCallId: "3", name: "one", ok: true },
+    ]);
   });
 
   it("C3(b) checks wall time at the exact boundary", async () => {
@@ -82,6 +90,13 @@ describe("agent run", () => {
     expect(bound.ai.stepOptions[0].timeoutMs).toBe(500);
   });
 
+  it("C3(i) keeps a positive timeout when the clock moves after the budget check", async () => {
+    let index = 0;
+    const dependencies = deps([final(output)], () => [0, 0, 100][index++] ?? 100);
+    await run({ system: "system", initialMessages: [], tools: [], outputSchema, toolContext: baseContext, budgets: { ...baseBudgets, wallTimeMs: 100 } }, dependencies);
+    expect(dependencies.ai.stepOptions[0].timeoutMs).toBe(1);
+  });
+
   it("C3(g) reports wall time first when two budgets are exhausted", async () => {
     let index = 0;
     const result = await executeRun([final({ wrong: true }, usage(1, 100, 101))], { budgets: { wallTimeMs: 10, maxToolCalls: 5, maxTokens: 100 } }, () => [0, 0, 10][index++] ?? 10);
@@ -98,8 +113,10 @@ describe("agent run", () => {
   });
 
   it("C4(a) accumulates usage on a successful output", async () => {
-    const { result } = await executeRun([calls({ toolCallId: "1", name: "missing", input: {} }), final(output, usage(20, 10, 30))]);
-    expect(result).toMatchObject({ usage: { inputTokens: 21, outputTokens: 11, totalTokens: 32 } });
+    const tool = defineTool({ name: "one", description: "one", kind: "read", input: z.strictObject({}), output: z.strictObject({ ok: z.boolean() }), execute: async () => ({ ok: true }) });
+    const dependencies = deps([callsWithUsage(usage(10, 5, 15), { toolCallId: "1", name: "one", input: {} }), final(output, usage(20, 10, 30))]);
+    const result = await run({ system: "system", initialMessages: [], tools: [tool], outputSchema, toolContext: baseContext }, dependencies);
+    expect(result).toEqual(expect.objectContaining({ usage: { inputTokens: 30, outputTokens: 15, totalTokens: 45 } }));
   });
 
   it("C4(b) accumulates usage on failure", async () => {
@@ -123,7 +140,14 @@ describe("agent run", () => {
     const { result, dependencies } = await executeRun([final("{\"answer\":\"partial"), final(output)]);
     expect(result).toMatchObject({ status: "output", output });
     expect(dependencies.ai.calls).toHaveLength(2);
-    expect((dependencies.ai.calls[1].messages.at(-1) as { content: string }).content).toContain("path");
+    expect((dependencies.ai.calls[1].messages.at(-1) as { content: string }).content).toContain(JSON.stringify([{ path: [] }]));
+
+    const nestedSchema = z.strictObject({ items: z.array(z.strictObject({ answer: z.string() })) });
+    const nestedDependencies = deps([final({ items: [{ answer: 5 }] }), final({ items: [{ answer: "done" }] })]);
+    const nestedResult = await run({ system: "system", initialMessages: [], tools: [], outputSchema: nestedSchema, toolContext: baseContext, budgets: baseBudgets }, nestedDependencies);
+    expect(nestedResult).toMatchObject({ status: "output" });
+    expect(nestedDependencies.ai.calls).toHaveLength(2);
+    expect((nestedDependencies.ai.calls[1].messages.at(-1) as { content: string }).content).toContain(JSON.stringify([{ path: ["items", "0", "answer"] }]));
   });
 
   it("C5(b) fails after the bounded invalid-output retries with string paths", async () => {
@@ -166,7 +190,7 @@ describe("agent run", () => {
     const result = await run({ system: "system", initialMessages: [], tools: [searchContentTool], outputSchema, toolContext: baseContext }, dependencies);
     expect(result.status).toBe("output");
     expect(dependencies.ai.calls).toHaveLength(2);
-    expect(dependencies.ai.calls[1].messages.at(-1)).toMatchObject({ role: "tool", results: [{ toolCallId: "tc-1", output: { error: { code: "invalid_arguments" } } }] });
+    expect(dependencies.ai.calls[1].messages.at(-1)).toMatchObject({ role: "tool", results: [{ toolCallId: "tc-1", output: { error: { code: "invalid_arguments", issues: [{ path: ["query"], message: "Invalid input: expected string, received number" }] } } }] });
   });
 
   it("C7(c) ends on invalid tool output", async () => {
@@ -209,5 +233,25 @@ describe("agent run", () => {
     toolDeps.logger = withTool;
     await run({ system: "system", initialMessages: [], tools: [tool], outputSchema, toolContext: baseContext }, toolDeps);
     expect(withTool.info.mock.calls.find(([event]) => event === "agent.run.end")?.[1]).toMatchObject({ toolCallCount: 1 });
+  });
+
+  it("C7(f) logs each tool name and injected duration", async () => {
+    let clock = 0;
+    const tool = defineTool({ name: "echo", description: "echo", kind: "read", input: z.strictObject({}), output: z.strictObject({ answer: z.string() }), execute: async () => { clock = 25; return { answer: "tool-value" }; } });
+    const log = logger();
+    const dependencies = deps([calls({ toolCallId: "tc-1", name: "echo", input: {} }), final(output)], () => clock);
+    dependencies.logger = log;
+    await run({ system: "system", initialMessages: [], tools: [tool], outputSchema, toolContext: baseContext }, dependencies);
+    const records = log.info.mock.calls;
+    expect(records.find(([event]) => event === "agent.run.tool")?.[1]).toEqual({ runId: "run-1", traceId: "trace-1", toolCallId: "tc-1", name: "echo", ok: true, durationMs: 25 });
+    expect(records.find(([event]) => event === "agent.run.end")?.[1]).toMatchObject({ durationMs: 25 });
+  });
+
+  it("C7(g) reports a missing tool truthfully and continues", async () => {
+    const dependencies = deps([calls({ toolCallId: "tc-1", name: "search_proposals", input: {} }), final(output)]);
+    const result = await run({ system: "system", initialMessages: [], tools: [], outputSchema, toolContext: baseContext }, dependencies);
+    expect(result).toMatchObject({ status: "output" });
+    expect(dependencies.ai.calls).toHaveLength(2);
+    expect(dependencies.ai.calls[1].messages.at(-1)).toEqual({ role: "tool", results: [{ toolCallId: "tc-1", name: "search_proposals", output: { error: { code: "unknown_tool", name: "search_proposals" } } }] });
   });
 });

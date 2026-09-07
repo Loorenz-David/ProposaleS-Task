@@ -2,7 +2,7 @@ import "server-only";
 
 import type { ContentItem } from "@/lib/proposales";
 
-import type { ContentCandidate, MatchStrength } from "../../schemas/content-candidate";
+import type { ContentCandidate, ContentDetail, MatchStrength } from "../../schemas/content-candidate";
 import { SCORE_MAX, strengthForScore } from "./strength";
 
 // Score is a match-strength ratio over an integer 0-1000 scale, not a money value:
@@ -55,18 +55,33 @@ function compareVariationIds(a: string, b: string): number {
 
 const STRENGTH_RANK: Record<MatchStrength, number> = { weak: 0, possible: 1, strong: 2 };
 
-type ScoredEntry = { item: ContentItem; score: number; strength: MatchStrength };
+type ScoredEntry = { item: ContentItem; detail: ContentDetail; score: number; strength: MatchStrength };
+
+export function toContentDetail(item: ContentItem | undefined, language: string): ContentDetail | null {
+  if (item === undefined) return null;
+  const title = item.title[language];
+  if (title === undefined || title.trim().length === 0) return null;
+  const rawDescription = item.description[language] ?? "";
+  const truncated = rawDescription.length > MAX_CANDIDATE_DESCRIPTION_CHARS;
+  return {
+    variationId: item.variationId,
+    productId: item.productId,
+    title,
+    description: truncated ? rawDescription.slice(0, MAX_CANDIDATE_DESCRIPTION_CHARS) : rawDescription,
+    truncated,
+  };
+}
 
 export function rankCandidates(query: string, catalog: ContentItem[], language: string): ContentCandidate[] {
   const scored: ScoredEntry[] = [];
 
   for (const item of catalog) {
-    const title = item.title[language];
-    if (title === undefined || title.trim().length === 0) continue;
+    const detail = toContentDetail(item, language);
+    if (detail === null) continue;
     const score = scoreItem(query, item, language);
     const strength = strengthForScore(score);
     if (strength === null) continue;
-    scored.push({ item, score, strength });
+    scored.push({ item, detail, score, strength });
   }
 
   scored.sort((a, b) => {
@@ -77,24 +92,15 @@ export function rankCandidates(query: string, catalog: ContentItem[], language: 
 
   const queryTokensInOrder = [...new Set(tokenize(query))];
 
-  return scored.slice(0, MAX_CANDIDATES).map(({ item, score, strength }) => {
-    const title = item.title[language]!;
-    const rawDescription = item.description[language] ?? "";
-    const truncated = rawDescription.length > MAX_CANDIDATE_DESCRIPTION_CHARS;
-    const description = truncated ? rawDescription.slice(0, MAX_CANDIDATE_DESCRIPTION_CHARS) : rawDescription;
-
-    const titleTokens = new Set(tokenize(title));
-    const descriptionTokens = new Set(tokenize(rawDescription));
+  return scored.slice(0, MAX_CANDIDATES).map(({ item, detail, score, strength }) => {
+    const titleTokens = new Set(tokenize(detail.title));
+    const descriptionTokens = new Set(tokenize(item.description[language] ?? ""));
     const reason = queryTokensInOrder
       .filter((token) => titleTokens.has(token) || descriptionTokens.has(token))
       .join(", ");
 
     return {
-      variationId: item.variationId,
-      productId: item.productId,
-      title,
-      description,
-      truncated,
+      ...detail,
       score,
       matchStrength: strength,
       reason,

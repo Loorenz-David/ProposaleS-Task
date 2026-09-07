@@ -5,7 +5,7 @@ import type { ContentItem } from "@/lib/proposales";
 import type { Logger } from "@/lib/logger";
 
 export type ToolKind = "read" | "prepare" | "mutate";
-export type ToolErrorCode = "invalid_arguments" | "invalid_tool_output" | "language_unresolved";
+export type ToolErrorCode = "invalid_arguments" | "invalid_tool_output" | "language_unresolved" | "unknown_tool";
 export type RunFailureReason = "budget_exhausted" | "model_output_invalid" | "tool_output_invalid" | "script_exhausted";
 
 export type ToolIssue = { path: string[]; message: string };
@@ -23,7 +23,8 @@ export type ToolInvokeResult<O> =
   | { ok: true; value: O }
   | { ok: false; error: { code: "invalid_arguments"; issues: ToolIssue[] } }
   | { ok: false; error: { code: "invalid_tool_output" } }
-  | { ok: false; error: { code: "language_unresolved" } };
+  | { ok: false; error: { code: "language_unresolved" } }
+  | { ok: false; error: { code: "unknown_tool"; name: string } };
 
 export type ToolDescriptor = {
   name: string;

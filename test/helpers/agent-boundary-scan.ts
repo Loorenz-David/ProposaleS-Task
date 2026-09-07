@@ -1,13 +1,22 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-export const AGENT_SCAN_FILES = [
-  "src/lib/agent/types.ts",
-  "src/lib/agent/define-tool.ts",
-  "src/lib/agent/run.ts",
-  "src/features/proposal-preparation/server/tools/search-content.tool.ts",
-  "src/features/proposal-preparation/server/tools/get-content.tool.ts",
-] as const;
+function sourceFiles(relativeDirectory: string): string[] {
+  const absoluteDirectory = resolve(process.cwd(), relativeDirectory);
+  return readdirSync(absoluteDirectory)
+    .filter((fileName) => fileName.endsWith(".ts") && !fileName.endsWith(".test.ts"))
+    .map((fileName) => `${relativeDirectory}/${fileName}`)
+    .sort();
+}
+
+export function getAgentScanFiles(): string[] {
+  return [
+    ...sourceFiles("src/lib/agent"),
+    ...sourceFiles("src/features/proposal-preparation/server/tools"),
+  ];
+}
+
+export const AGENT_SCAN_FILES = getAgentScanFiles();
 
 export const FORBIDDEN_FORMS = [
   { name: "fetch", pattern: /\bfetch\s*\(/, example: "fetch(\"/x\")" },

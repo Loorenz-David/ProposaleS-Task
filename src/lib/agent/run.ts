@@ -69,6 +69,7 @@ export async function run<O>(
       traceId: options.toolContext.traceId,
       toolCallCount: recordedToolCalls.length,
       status: result.status,
+      durationMs: deps.now() - startedAt,
     });
     return result;
   };
@@ -128,21 +129,24 @@ export async function run<O>(
     for (const call of step.calls) {
       const beforeTool = budgetFailure();
       if (beforeTool !== null) return beforeTool;
-      if (recordedToolCalls.length >= budgets.maxToolCalls) return failure("budget_exhausted", "tool_calls");
       recordedToolCalls.push({ toolCallId: call.toolCallId, name: call.name, ok: false });
       const tool = toolByName.get(call.name);
       const ctx: ToolContext = {
         ...options.toolContext,
         remainingBudget: remainingBudget(budgets, deps.now() - startedAt, recordedToolCalls.length, numericTokens),
       };
+      const toolStartedAt = deps.now();
       const result = tool === undefined
-        ? { ok: false as const, error: { code: "invalid_arguments" as const, issues: [{ path: ["name"], message: "Unknown tool" }] } }
+        ? { ok: false as const, error: { code: "unknown_tool" as const, name: call.name } }
         : await tool.invoke(call.input, ctx);
+      const durationMs = deps.now() - toolStartedAt;
       if (result.ok) {
         recordedToolCalls[recordedToolCalls.length - 1] = { ...recordedToolCalls[recordedToolCalls.length - 1], ok: true };
+        deps.logger.info("agent.run.tool", { runId: options.toolContext.runId, traceId: options.toolContext.traceId, toolCallId: call.toolCallId, name: call.name, ok: true, durationMs });
         results.push({ toolCallId: call.toolCallId, name: call.name, output: result.value });
         continue;
       }
+      deps.logger.info("agent.run.tool", { runId: options.toolContext.runId, traceId: options.toolContext.traceId, toolCallId: call.toolCallId, name: call.name, ok: false, durationMs });
       if (result.error.code === "invalid_tool_output") return failure("tool_output_invalid");
       results.push({ toolCallId: call.toolCallId, name: call.name, output: { error: result.error } });
     }

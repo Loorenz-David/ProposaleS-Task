@@ -1,7 +1,10 @@
+import { unlinkSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-import { hasForbiddenForm, AGENT_SCAN_FILES, FORBIDDEN_FORMS, readAgentScanFile } from "../../../../../test/helpers/agent-boundary-scan";
+import { AGENT_SCAN_FILES, FORBIDDEN_FORMS, getAgentScanFiles, hasForbiddenForm, readAgentScanFile } from "../../../../../test/helpers/agent-boundary-scan";
 import { defineTool } from "@/lib/agent/define-tool";
 import { FIXTURE_CATALOG } from "../../fixtures/catalog";
 import { MAX_SEARCH_QUERY_CHARS, searchContentInputSchema } from "../../schemas/content-candidate";
@@ -29,14 +32,25 @@ describe("preparation tools", () => {
   });
 
   it("C2(d) scans the complete agent perimeter with one shared predicate", () => {
-    expect(AGENT_SCAN_FILES).toEqual([
+    const expectedFiles = [
       "src/lib/agent/types.ts",
       "src/lib/agent/define-tool.ts",
       "src/lib/agent/run.ts",
       "src/features/proposal-preparation/server/tools/search-content.tool.ts",
       "src/features/proposal-preparation/server/tools/get-content.tool.ts",
-    ]);
+    ];
+    expect(AGENT_SCAN_FILES).toEqual(expect.arrayContaining(expectedFiles));
     for (const file of AGENT_SCAN_FILES) expect(hasForbiddenForm(readAgentScanFile(file)), file).toBe(false);
+
+    const leakPath = resolve(process.cwd(), "src/lib/agent/leak.ts");
+    try {
+      writeFileSync(leakPath, 'export const leak = fetch("https://example.com/x");\n');
+      const scannedFiles = getAgentScanFiles();
+      expect(scannedFiles).toContain("src/lib/agent/leak.ts");
+      expect(hasForbiddenForm(readAgentScanFile("src/lib/agent/leak.ts"))).toBe(true);
+    } finally {
+      unlinkSync(leakPath);
+    }
   });
 
   it("C2(e) proves the shared scanner sees every forbidden form", () => {
@@ -48,29 +62,42 @@ describe("preparation tools", () => {
     expect(hasForbiddenForm("const safe = 1;\nimport type { ContentItem } from \"@/lib/proposales\";")).toBe(false);
   });
 
-  it("C6(a) searches the context catalog and returns concrete ranking values", async () => {
-    const result = await searchContentTool.invoke({ query: "consulting service track" }, {
+  it("C6(a) forwards the query and language to ranking", async () => {
+    const context = {
       runId: "run-1", traceId: "trace-1", companyId: 1,
       remainingBudget: { wallTimeMs: 1000, maxToolCalls: 1, maxTokens: 100 },
       catalog: FIXTURE_CATALOG, language: "en",
-    });
-    expect(result).toEqual({
-      ok: true,
-      value: expect.objectContaining({ candidates: expect.arrayContaining([
-        expect.objectContaining({ variationId: "2", score: 1000, matchStrength: "strong" }),
-      ]) }),
-    });
+    } as const;
+    const track = await searchContentTool.invoke({ query: "consulting service track" }, context);
+    const premium = await searchContentTool.invoke({ query: "premium" }, context);
+    const swedishPremium = await searchContentTool.invoke({ query: "premiumtjänst" }, { ...context, language: "sv" });
+
+    expect(track).toMatchObject({ ok: true });
+    expect(premium).toMatchObject({ ok: true });
+    expect(swedishPremium).toMatchObject({ ok: true });
+    if (track.ok && premium.ok && swedishPremium.ok) {
+      expect(track.value.candidates).toHaveLength(10);
+      expect(track.value.candidates[0]).toMatchObject({ variationId: "2", score: 1000, matchStrength: "strong" });
+      expect(premium.value.candidates).toHaveLength(2);
+      expect(premium.value.candidates[0]).toMatchObject({ variationId: "7", score: 1000, matchStrength: "strong" });
+      expect(swedishPremium.value.candidates).toHaveLength(1);
+      expect(swedishPremium.value.candidates[0]).toMatchObject({ variationId: "11", score: 1000, matchStrength: "strong" });
+    }
   });
 
-  it("C6(b) gets known, unknown, and unlocalized content", async () => {
+  it("C6(b) gets known, unknown, missing-title, and blank-title content", async () => {
     const ctx = {
       runId: "run-1", traceId: "trace-1", companyId: 1,
       remainingBudget: { wallTimeMs: 1000, maxToolCalls: 1, maxTokens: 100 },
       catalog: FIXTURE_CATALOG, language: "en",
     } as const;
     await expect(getContentTool.invoke({ variationId: "1" }, ctx)).resolves.toMatchObject({ ok: true, value: { item: { variationId: "1", productId: "500101", title: "Consulting Training Service Bundle", truncated: false } } });
+    await expect(getContentTool.invoke({ variationId: "12" }, ctx)).resolves.toMatchObject({ ok: true, value: { item: { variationId: "12", description: expect.any(String), truncated: true } } });
+    const longResult = await getContentTool.invoke({ variationId: "12" }, ctx);
+    if (longResult.ok && longResult.value.item !== null) expect(longResult.value.item.description).toHaveLength(280);
     await expect(getContentTool.invoke({ variationId: "999" }, ctx)).resolves.toEqual({ ok: true, value: { item: null } });
     await expect(getContentTool.invoke({ variationId: "7" }, { ...ctx, language: "sv" })).resolves.toEqual({ ok: true, value: { item: null } });
+    await expect(getContentTool.invoke({ variationId: "8" }, { ...ctx, language: "sv" })).resolves.toEqual({ ok: true, value: { item: null } });
   });
 
   it("C6(c) validates the output shape and strips vendor-only fields", async () => {
@@ -112,6 +139,8 @@ describe("preparation tools", () => {
     Object.defineProperty(ctx, "catalog", { get: catalogGetter });
     const result = await searchContentTool.invoke({ query: "service" }, ctx);
     expect(result).toEqual({ ok: false, error: { code: "language_unresolved" } });
+    expect(catalogGetter).not.toHaveBeenCalled();
+    await expect(getContentTool.invoke({ variationId: "1" }, ctx)).resolves.toEqual({ ok: false, error: { code: "language_unresolved" } });
     expect(catalogGetter).not.toHaveBeenCalled();
   });
 });
