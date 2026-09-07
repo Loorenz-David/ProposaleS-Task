@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronRight, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import Image from "next/image";
 
 import type { IntroSlide as IntroSlideModel, IntroSlideBody } from "./intro-content";
 import { IntroDemoPrompt } from "./intro-demo-prompt";
@@ -60,48 +61,22 @@ export function IntroSlide({ slide, headingId, descriptionId }: IntroSlideProps)
 }
 
 function IntroSlideBodyView({ body }: { body: IntroSlideBody }) {
-  if (body.kind === "flow") {
-    return (
-      <ol className="mt-6 flex flex-wrap items-center gap-2">
-        {body.stages.map((stage, index) => (
-          <li key={stage} className="flex items-center gap-2">
-            {index > 0 ? (
-              <ChevronRight
-                aria-hidden="true"
-                className="text-[var(--color-fg-quietest)]"
-                size={15}
-              />
-            ) : null}
-            <span className="rounded-xl border border-[var(--color-border-control)] bg-[var(--color-bg-control)] px-3 py-2 text-12-5 font-semibold text-[var(--color-fg-control)]">
-              {stage}
-            </span>
-          </li>
-        ))}
-      </ol>
-    );
-  }
-
-  if (body.kind === "steps") {
+  if (body.kind === "diagram") {
     return (
       <>
-        <ol className="mt-6 space-y-3">
-          {body.steps.map((step) => (
-            <li key={step.ordinal} className="flex gap-3">
-              <span
-                aria-hidden="true"
-                className="mt-px font-mono text-11 font-medium tabular-nums text-[var(--color-fg-quiet)]"
-              >
-                {step.ordinal}
-              </span>
-              <div className="min-w-0">
-                <p className="text-13-5 font-semibold text-[var(--color-fg)]">{step.title}</p>
-                <p className="mt-1 text-13 leading-relaxed text-[var(--color-fg-muted)]">
-                  {step.detail}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ol>
+        {/* No frame and no plate: the artwork is transparent and already draws its own cards,
+            so a border here would box a picture that has no edges of its own. */}
+        <Image
+          alt={body.alt}
+          className={
+            body.fit === "compact"
+              ? "mx-auto mt-6 h-auto w-full max-w-[560px]"
+              : "mt-6 h-auto w-full"
+          }
+          height={body.height}
+          src={body.src}
+          width={body.width}
+        />
         {body.boundary ? (
           <p className="mt-5 rounded-xl border border-[var(--color-border-control)] bg-[var(--color-bg-control)] p-4 text-13 leading-relaxed text-[var(--color-fg-secondary)]">
             <span className="mr-2 font-mono text-10 uppercase tracking-label text-[var(--color-accent-ink-on-dark)]">

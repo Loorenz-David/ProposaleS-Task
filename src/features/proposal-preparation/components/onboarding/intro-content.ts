@@ -8,7 +8,9 @@
  * The six slides tell one deliberate story — what it is, how it works, what to type, what to
  * watch, how work is organised, and how to start — so slides differ in internal composition
  * on purpose. Each `IntroSlideBody` variant is its own editorial layout, not a shared card
- * template with different text poured into it.
+ * template with different text poured into it. Slides 1 and 2 carry rendered diagrams; the
+ * compositions they used to draw from their own copy are gone, so their `alt` text is now the
+ * only place that copy exists.
  */
 
 /** The demo brief a reviewer is invited to paste. Intentionally incomplete. */
@@ -18,12 +20,53 @@ export const DEMO_BRIEF =
   "days and probably airport transfers. A few people may stay an extra night.";
 
 /**
+ * The screen recording shown above slide 3's demo brief. Like the diagrams, it is authored
+ * here and never derived from input, so the user-supplied-URL rules in contract 10 §9 do not
+ * come into play. `next.config.ts` allowlists this origin for `next/image`.
+ */
+/** The base every hosted intro asset is built from. One origin, named once. */
+const MEDIA_ORIGIN = "https://test-bootstrap-local.s3.eu-north-1.amazonaws.com/proposales_media";
+
+/**
+ * The two rendered diagrams. They replace the compositions slides 1 and 2 used to draw from
+ * their own copy, so the information they carry now lives in the artwork — which is exactly why
+ * each one's `alt` restates it in full rather than naming the picture. A reviewer using a screen
+ * reader, or a browser that failed to load the image, gets the same six steps.
+ */
+export const FLOW_DIAGRAM = {
+  src: `${MEDIA_ORIGIN}/step_1.png`,
+  width: 1893,
+  height: 831,
+  alt:
+    "Four stages in sequence. Brief: you describe the request. Agent: the Copilot interprets " +
+    "and structures it. Review: you review and approve. Proposales: a structured proposal " +
+    "draft is created.",
+} as const;
+
+export const WORKFLOW_DIAGRAM = {
+  src: `${MEDIA_ORIGIN}/step_2.png`,
+  width: 1271,
+  height: 1238,
+  alt:
+    "A loop of six steps. 01 Describe: write naturally, the brief can be incomplete or messy. " +
+    "02 Reason: the agent searches the available Proposales content. 03 Clarify: consequential " +
+    "unknowns become questions, not assumptions. 04 Review: inspect the proposition, edit it, " +
+    "or ask for a revision. 05 Approve: nothing is created until you explicitly approve. " +
+    "06 Create draft: the approved payload is executed as a Proposales draft.",
+} as const;
+
+export const DEMO_WALKTHROUGH_CLIP = `${MEDIA_ORIGIN}/Screen+Recording+2026-09-07+at+15.57.19.mov`;
+
+/**
  * Optional media for a slide. Rendered by `intro-media.tsx` between the description and the
  * body, so a slide can gain a still or a clip without changing its body variant.
+ *
+ * `loop` selects the video posture `intro-media.tsx` documents: absent, the clip waits to be
+ * played; true, it is an ambient muted demonstration that repeats and honours reduced motion.
  */
 export type IntroMedia =
   | { kind: "image"; src: string; alt: string; width: number; height: number }
-  | { kind: "video"; src: string; title: string; poster?: string };
+  | { kind: "video"; src: string; title: string; poster?: string; loop?: boolean };
 
 /**
  * A slide-specific secondary action, rendered in the footer beside the primary control.
@@ -42,13 +85,26 @@ export type IntroSlideLink = { href: string; label: string };
 /** The status vocabulary the real session tab strip derives (`client/view-models/session-tab.ts`). */
 export type IntroTabStatus = "working" | "questions" | "ready";
 
+/**
+ * A rendered diagram standing in for a slide's composition.
+ *
+ * `fit` is the one thing the artwork cannot decide for itself: a wide strip wants the full
+ * column, while a near-square loop at full width would push everything under it off the
+ * dialog's scroll. It selects a width treatment, not a class name — layout stays in the
+ * component ([15-ui-styling-and-component-system.md] §2), and this file stays data.
+ */
+export type IntroDiagram = {
+  kind: "diagram";
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  fit: "full" | "compact";
+  boundary?: { label: string; detail: string };
+};
+
 export type IntroSlideBody =
-  | { kind: "flow"; stages: string[] }
-  | {
-      kind: "steps";
-      steps: { ordinal: string; title: string; detail: string }[];
-      boundary?: { label: string; detail: string };
-    }
+  | IntroDiagram
   | { kind: "demo-prompt" }
   | { kind: "proof-points"; points: { label: string; detail: string }[] }
   | {
@@ -79,7 +135,7 @@ export const INTRO_SLIDES: readonly IntroSlide[] = [
     heading: "From messy brief to proposal draft.",
     description:
       "Proposal Copilot is an agentic interaction layer over the Proposales API. Give it incomplete commercial intent and it helps turn that intent into a structured proposal ready for human review.",
-    body: { kind: "flow", stages: ["Brief", "Agent", "Review", "Proposales"] },
+    body: { kind: "diagram", ...FLOW_DIAGRAM, fit: "full" },
     supporting:
       "This demo uses a fictional hotel chain, Nordhaven Hotels, backed by real Content Library items in Proposales.",
     link: {
@@ -93,15 +149,11 @@ export const INTRO_SLIDES: readonly IntroSlide[] = [
     description:
       "The agent does the assembling. Every consequential decision stays with you, and nothing reaches Proposales until you approve it.",
     body: {
-      kind: "steps",
-      steps: [
-        { ordinal: "01", title: "Describe", detail: "Write naturally. The brief can be incomplete or messy." },
-        { ordinal: "02", title: "Reason", detail: "The agent searches the available Proposales content." },
-        { ordinal: "03", title: "Clarify", detail: "Consequential unknowns become questions, not assumptions." },
-        { ordinal: "04", title: "Review", detail: "Inspect the proposition, edit it, or ask for a revision." },
-        { ordinal: "05", title: "Approve", detail: "Nothing is created until you explicitly approve." },
-        { ordinal: "06", title: "Create draft", detail: "The approved payload is executed as a Proposales draft." },
-      ],
+      kind: "diagram",
+      ...WORKFLOW_DIAGRAM,
+      fit: "compact",
+      // Kept as text on purpose: the artwork draws the six steps but makes no claim about who
+      // authorizes creation, and that claim is the point of the slide.
       boundary: {
         label: "The boundary",
         detail: "The agent prepares the action. Human approval authorizes creation.",
@@ -113,6 +165,12 @@ export const INTRO_SLIDES: readonly IntroSlide[] = [
     heading: "Try a deliberately incomplete brief.",
     description:
       "Paste this into the composer on the left. It is missing several facts a real proposal would need.",
+    media: {
+      kind: "video",
+      src: DEMO_WALKTHROUGH_CLIP,
+      title: "Screen recording: pasting the demo brief into the composer and sending it.",
+      loop: true,
+    },
     body: { kind: "demo-prompt" },
     supporting:
       "The ambiguity is intentional. A useful agent should recognise the hotel context and find relevant Nordhaven content — and it should also ask about the missing commercial facts rather than inventing them.",

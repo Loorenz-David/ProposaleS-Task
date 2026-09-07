@@ -2,10 +2,10 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 
 import { IntroProvider } from "./intro-context";
-import type { IntroSlide as IntroSlideModel } from "./intro-content";
+import type { IntroSlideBody, IntroSlide as IntroSlideModel } from "./intro-content";
 import { IntroSlide } from "./intro-slide";
 import { ProposalCopilotIntro } from "./proposal-copilot-intro";
 import { ProposalWorkspace } from "../workspace/proposal-workspace";
@@ -168,6 +168,22 @@ describe("ProposalCopilotIntro", () => {
     expect(screen.getByText(DEMO_BRIEF_LITERAL)).toBeInTheDocument();
   });
 
+  it("shows the walkthrough clip above the demo brief, looping and named", () => {
+    spyOnPlayback();
+    const { dialog } = renderIntro();
+    fireEvent.click(screen.getByRole("button", { name: /^Slide 3 of 6:/ }));
+
+    const video = dialog.querySelector("video")!;
+    expect(video).toHaveAttribute("loop");
+    expect(video).not.toHaveAttribute("controls");
+    expect(video.muted).toBe(true);
+    expect(video.getAttribute("aria-label")).toBeTruthy();
+    // Above the brief, not below it: the clip shows what the brief is for.
+    expect(video.compareDocumentPosition(screen.getByText(DEMO_BRIEF_LITERAL))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
   it("copies the demo brief and confirms it", async () => {
     renderIntro();
     fireEvent.click(screen.getByRole("button", { name: /^Slide 3 of 6:/ }));
@@ -211,10 +227,13 @@ describe("ProposalCopilotIntro", () => {
   });
 
   it("keeps every slide's content and controls present under reduced motion", () => {
-    // The component reads no motion preference: the only motion is a CSS transition that
-    // globals.css already collapses under `prefers-reduced-motion`. Stubbing the query proves
-    // behaviour is identical, and the class assertion proves the collapsed transition cannot
-    // strand a slide invisible — the suppressed state exists only behind `starting:`.
+    // Two kinds of motion live here. The slide transition is CSS, which globals.css already
+    // collapses under `prefers-reduced-motion`; slide 3's ambient clip is not, so
+    // `intro-media.tsx` reads the preference itself. This test owns the first: stubbing the
+    // query proves content and controls are identical, and the class assertion proves the
+    // collapsed transition cannot strand a slide invisible — the suppressed state exists only
+    // behind `starting:`. The clip's own behaviour is proved in "slide media" below.
+    const realMatchMedia = window.matchMedia;
     window.matchMedia = ((query: string) => ({
       matches: query.includes("prefers-reduced-motion"),
       media: query,
@@ -225,6 +244,9 @@ describe("ProposalCopilotIntro", () => {
       removeListener: () => {},
       dispatchEvent: () => false,
     })) as unknown as typeof window.matchMedia;
+    onTestFinished(() => {
+      window.matchMedia = realMatchMedia;
+    });
 
     const { dialog } = renderIntro();
     for (let step = 0; step < SLIDE_HEADINGS.length; step += 1) {
@@ -284,6 +306,56 @@ describe("ProposalCopilotIntro session step", () => {
   });
 });
 
+/**
+ * A body for slides under test that are not about their body. Deliberately the plainest
+ * variant: it renders no controls and no media, so it cannot be mistaken for what a media or
+ * region assertion is actually looking at.
+ */
+const PROBE_BODY: IntroSlideBody = { kind: "checklist", items: ["One"], note: "Probe note" };
+
+/** A slide carrying an ambient clip — the shape slide 3 uses, without depending on its copy. */
+function ambientSlide(): IntroSlideModel {
+  return {
+    id: "probe",
+    heading: "Probe",
+    description: "Probe description",
+    media: { kind: "video", src: "/probe.mp4", title: "A looping clip", loop: true },
+    body: PROBE_BODY,
+  };
+}
+
+/**
+ * Spies on the playback methods jsdom does not implement, restoring them after the test —
+ * this project does not enable `restoreMocks`, so a spy left standing would reach the next one.
+ */
+function spyOnPlayback() {
+  const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockReturnValue(undefined as never);
+  const pause = vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
+  onTestFinished(() => {
+    play.mockRestore();
+    pause.mockRestore();
+  });
+  return { play, pause };
+}
+
+/** Pins the motion preference for one test and restores the real query afterwards. */
+function stubReducedMotion(matches: boolean) {
+  const real = window.matchMedia;
+  window.matchMedia = ((query: string) => ({
+    matches: query.includes("prefers-reduced-motion") ? matches : false,
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia;
+  onTestFinished(() => {
+    window.matchMedia = real;
+  });
+}
+
 describe("ProposalCopilotIntro slide regions", () => {
   it("renders an image slide's media region with its alt text", () => {
     const slide = {
@@ -291,7 +363,7 @@ describe("ProposalCopilotIntro slide regions", () => {
       heading: "Probe",
       description: "Probe description",
       media: { kind: "image", src: "/probe.png", alt: "A labelled probe", width: 640, height: 360 },
-      body: { kind: "flow", stages: ["One", "Two"] },
+      body: PROBE_BODY,
     } satisfies IntroSlideModel;
     render(<IntroSlide descriptionId="d" headingId="h" slide={slide} />);
     expect(screen.getByRole("img", { name: "A labelled probe" })).toBeInTheDocument();
@@ -303,7 +375,7 @@ describe("ProposalCopilotIntro slide regions", () => {
       heading: "Probe",
       description: "Probe description",
       media: { kind: "video", src: "/probe.mp4", title: "A labelled clip" },
-      body: { kind: "flow", stages: ["One", "Two"] },
+      body: PROBE_BODY,
     } satisfies IntroSlideModel;
     const { container } = render(<IntroSlide descriptionId="d" headingId="h" slide={slide} />);
     const video = container.querySelector("video")!;
@@ -313,12 +385,155 @@ describe("ProposalCopilotIntro slide regions", () => {
     expect(video).toHaveAttribute("preload", "none");
   });
 
+  it("carries each diagram's information in its alt text, not just a name for the picture", () => {
+    renderIntro();
+
+    // Slide 1's four stages.
+    const flow = screen.getByRole("img");
+    for (const stage of ["Brief", "Agent", "Review", "Proposales"]) {
+      expect(flow).toHaveAccessibleName(new RegExp(stage));
+    }
+
+    fireEvent.click(screen.getByRole("button", { name: /^Slide 2 of 6:/ }));
+    // Slide 2's six steps, each with the detail the removed text composition used to carry.
+    const workflow = screen.getByRole("img");
+    for (const step of ["Describe", "Reason", "Clarify", "Review", "Approve", "Create draft"]) {
+      expect(workflow).toHaveAccessibleName(new RegExp(step));
+    }
+    expect(workflow).toHaveAccessibleName(/incomplete or messy/);
+    expect(workflow).toHaveAccessibleName(/nothing is created until you explicitly approve/i);
+  });
+
+  it("renders a diagram bare, with no frame of its own", () => {
+    const slide = {
+      id: "probe",
+      heading: "Probe",
+      description: "d",
+      body: {
+        kind: "diagram",
+        src: "/probe.png",
+        alt: "A described diagram",
+        width: 800,
+        height: 400,
+        fit: "full",
+      },
+      } satisfies IntroSlideModel;
+    const { container } = render(<IntroSlide descriptionId="d" headingId="h" slide={slide} />);
+
+    // The artwork is transparent and draws its own cards; a border would box an edgeless picture.
+    expect(container.querySelector(".border")).toBeNull();
+    expect(screen.getByRole("img", { name: "A described diagram" })).toBeInTheDocument();
+  });
+
+  it("holds a compact diagram back from the full column so it cannot swallow the dialog", () => {
+    const base = {
+      id: "probe",
+      heading: "Probe",
+      description: "d",
+      body: { kind: "diagram", src: "/p.png", alt: "A", width: 1271, height: 1238, fit: "compact" },
+    } satisfies IntroSlideModel;
+    const { container: compact } = render(
+      <IntroSlide descriptionId="d" headingId="h" slide={base} />,
+    );
+    expect(compact.querySelector("img")!.className).toContain("max-w-[560px]");
+
+    const { container: full } = render(
+      <IntroSlide
+        descriptionId="d"
+        headingId="h"
+        slide={{ ...base, body: { ...base.body, fit: "full" } }}
+      />,
+    );
+    expect(full.querySelector("img")!.className).not.toContain("max-w-");
+  });
+
+  it("renders a looping clip as a chrome-free, muted, embedded frame", () => {
+    spyOnPlayback();
+    const { container } = render(
+      <IntroSlide descriptionId="d" headingId="h" slide={ambientSlide()} />,
+    );
+    const video = container.querySelector("video")!;
+    expect(video).toHaveAttribute("aria-label", "A looping clip");
+    expect(video).toHaveAttribute("loop");
+    // The point of the ambient posture: no timeline, no volume, no menu.
+    expect(video).not.toHaveAttribute("controls");
+    // Muted is what the reviewer asked for, and what makes autoplay permitted.
+    expect(video.muted).toBe(true);
+    // Playback is started from the effect, never declared — so reduced motion can pre-empt it.
+    expect(video).not.toHaveAttribute("autoplay");
+  });
+
+  it("gives a looping clip a real button for the pause the missing controls would have offered", () => {
+    stubReducedMotion(false);
+    const { play, pause } = spyOnPlayback();
+    const { container } = render(
+      <IntroSlide descriptionId="d" headingId="h" slide={ambientSlide()} />,
+    );
+    const video = container.querySelector("video")!;
+
+    // The element drives the label, so it tells the truth even when autoplay is refused.
+    fireEvent.play(video);
+    const control = screen.getByRole("button", { name: "Pause: A looping clip" });
+    // Covering the frame is what makes tapping the picture work; being a button is what makes
+    // tabbing to it work. One control, both gestures.
+    expect(control.className).toContain("absolute inset-0");
+
+    Object.defineProperty(video, "paused", { configurable: true, value: false });
+    fireEvent.click(control);
+    expect(pause).toHaveBeenCalled();
+
+    fireEvent.pause(video);
+    play.mockClear();
+    Object.defineProperty(video, "paused", { configurable: true, value: true });
+    fireEvent.click(screen.getByRole("button", { name: "Play: A looping clip" }));
+    expect(play).toHaveBeenCalled();
+  });
+
+  it("starts a looping clip when motion is not restricted", () => {
+    stubReducedMotion(false);
+    const { play, pause } = spyOnPlayback();
+
+    render(<IntroSlide descriptionId="d" headingId="h" slide={ambientSlide()} />);
+
+    expect(play).toHaveBeenCalled();
+    expect(pause).not.toHaveBeenCalled();
+  });
+
+  it("never starts a looping clip when the reviewer asked for reduced motion", () => {
+    stubReducedMotion(true);
+    const { play, pause } = spyOnPlayback();
+
+    render(<IntroSlide descriptionId="d" headingId="h" slide={ambientSlide()} />);
+
+    expect(play).not.toHaveBeenCalled();
+    expect(pause).toHaveBeenCalled();
+  });
+
+  it("leaves a non-looping clip to the platform's own player, playing nothing on its own", () => {
+    stubReducedMotion(false);
+    const { play } = spyOnPlayback();
+    const slide = {
+      ...ambientSlide(),
+      media: { kind: "video", src: "/probe.mp4", title: "Opt in" },
+    } satisfies IntroSlideModel;
+
+    const { container } = render(<IntroSlide descriptionId="d" headingId="h" slide={slide} />);
+    const video = container.querySelector("video")!;
+
+    expect(play).not.toHaveBeenCalled();
+    expect(video).not.toHaveAttribute("loop");
+    expect(video).toHaveAttribute("controls");
+    expect(video).toHaveAttribute("preload", "none");
+    // No supplied control, because the platform is already providing one.
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
   it("omits the media region when a slide declares none", () => {
     const { container } = render(
       <IntroSlide
         descriptionId="d"
         headingId="h"
-        slide={{ id: "probe", heading: "Probe", description: "d", body: { kind: "flow", stages: ["One"] } }}
+        slide={{ id: "probe", heading: "Probe", description: "d", body: PROBE_BODY }}
       />,
     );
     expect(container.querySelector("img, video")).toBeNull();
