@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ExternalLink } from "lucide-react";
 
 import type { IntroSlide as IntroSlideModel, IntroSlideBody } from "./intro-content";
 import { IntroDemoPrompt } from "./intro-demo-prompt";
@@ -38,6 +38,22 @@ export function IntroSlide({ slide, headingId, descriptionId }: IntroSlideProps)
         <p className="mt-5 max-w-prose text-13 leading-relaxed text-[var(--color-fg-muted)]">
           {slide.supporting}
         </p>
+      ) : null}
+      {slide.link ? (
+        // Secondary by construction: an outlined control in the content area, well below the
+        // filled primary in the footer. The icon carries "this leaves the app" visually; the
+        // accessible name carries it for assistive technology, matching how
+        // `created-surface.tsx` already names its Proposales link.
+        <a
+          aria-label={`${slide.link.label} (opens in a new tab)`}
+          className="mt-5 inline-flex items-center gap-2 rounded-xl border border-[var(--color-border-control-raised)] bg-[var(--color-bg-control)] px-4 py-2 text-12-5 font-semibold text-[var(--color-fg-control)] no-underline hover:border-[var(--color-accent)] hover:text-[var(--color-fg)]"
+          href={slide.link.href}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          <ExternalLink aria-hidden="true" size={15} />
+          {slide.link.label}
+        </a>
       ) : null}
     </div>
   );

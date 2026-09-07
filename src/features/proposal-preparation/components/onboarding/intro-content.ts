@@ -32,6 +32,13 @@ export type IntroMedia =
  */
 export type IntroSlideAction = { kind: "copy-demo-prompt"; label: string };
 
+/**
+ * A slide-scoped link out of the application, rendered at the foot of the slide's own content
+ * rather than beside the primary navigation — it is an aside for a curious reviewer, not a
+ * step in the tour. Only slide 1 carries one.
+ */
+export type IntroSlideLink = { href: string; label: string };
+
 /** The status vocabulary the real session tab strip derives (`client/view-models/session-tab.ts`). */
 export type IntroTabStatus = "working" | "questions" | "ready";
 
@@ -61,6 +68,7 @@ export type IntroSlide = {
   media?: IntroMedia;
   body: IntroSlideBody;
   supporting?: string;
+  link?: IntroSlideLink;
   action?: IntroSlideAction;
 };
 
@@ -74,6 +82,10 @@ export const INTRO_SLIDES: readonly IntroSlide[] = [
     body: { kind: "flow", stages: ["Brief", "Agent", "Review", "Proposales"] },
     supporting:
       "This demo uses a fictional hotel chain, Nordhaven Hotels, backed by real Content Library items in Proposales.",
+    link: {
+      href: "https://github.com/Loorenz-David/ProposaleS-Task",
+      label: "View source on GitHub",
+    },
   },
   {
     id: "how-it-works",

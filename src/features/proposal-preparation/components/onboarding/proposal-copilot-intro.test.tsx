@@ -333,6 +333,27 @@ describe("ProposalCopilotIntro slide regions", () => {
     expect(screen.queryByRole("button", { name: "Copy demo prompt" })).not.toBeInTheDocument();
   });
 
+  it("offers the source repository from step 1 only, safely and as a secondary control", () => {
+    renderIntro();
+    const link = screen.getByRole("link", { name: "View source on GitHub (opens in a new tab)" });
+    expect(link).toHaveAttribute("href", "https://github.com/Loorenz-David/ProposaleS-Task");
+    expect(link).toHaveAttribute("target", "_blank");
+    // noopener and noreferrer both required: the new tab must not reach back through
+    // window.opener, and the destination must not receive the referrer.
+    expect(link.getAttribute("rel")?.split(/\s+/)).toEqual(expect.arrayContaining(["noopener", "noreferrer"]));
+
+    // Secondary: it sits in the slide's content, not in the footer beside the primary action.
+    const footer = document.querySelector<HTMLElement>("[data-intro-dialog] footer")!;
+    expect(footer).not.toContainElement(link);
+    expect(within(footer).getByRole("button", { name: "Next" })).toBeInTheDocument();
+
+    // And it appears on step 1 alone.
+    for (let step = 1; step < SLIDE_HEADINGS.length; step += 1) {
+      fireEvent.click(next());
+      expect(screen.queryByRole("link", { name: /View source on GitHub/ })).not.toBeInTheDocument();
+    }
+  });
+
   it("states the approval boundary on the workflow step", () => {
     renderIntro();
     fireEvent.click(screen.getByRole("button", { name: /^Slide 2 of 6:/ }));
