@@ -759,3 +759,46 @@ against §12A.23's landmark-identity claims and against the idle state's honesty
 and focus table, C6's landmark sequence, and every Playwright row. The coordinator's probes were
 spent on the two guards above and on the instrument shapes; the behavioural tables were read, not
 attacked.
+
+### Review round 3 received; two coordinator additions — 2026-09-07
+
+`handoffs/reviewer/phase-03-review-round-3.handoff.reviewer.md`, verdict `CHANGES_REQUESTED`,
+actor Claude (Opus 5). **Six blocking, eleven should-fix, nine notes, one owner card.** Not yet
+routed: the card's answer moves C5(d) and the re-baselined tab orders, so routing waits on it.
+
+**The coordinator's consumption of round 2 missed one of them, recorded plainly.** B5 — task 8's
+inherited repair of §11.3 follow-up 16 was neither implemented nor declared, and
+`workspace.test.tsx` is untouched. The perimeter was reconciled against the handoff's *declaration*
+and found exact; it was not reconciled against the plan's **tasks**, which is where a required file
+that never appears is visible. A declared perimeter can be internally consistent and still be short
+of what the phase owed.
+
+**B3 independently corroborated by two routes before the handoff was read.** The store's
+`closeSession` is correct — `state.activeSessionId === sessionId ? … : state.activeSessionId` — so
+the defect is in the component, exactly as the review says: `onFocus={() => activateSession(id)}` on
+the trigger fires for the *programmatic* focus repair the close performs, activating a session the
+user did not choose. The coordinator reached the same hole from the other side, by planting "closing
+a background tab also sets the active session to `sessionIds[0]`" and watching **49/49 pass** —
+C3(a)'s test reads `document.activeElement` and never reads `activeSessionId`, so the row's primary
+clause is unasserted. Two other close mutations the round did not use — activating the *previous*
+index instead of the same one, and creating the sole-tab replacement without activating it — both
+reddened, so the rest of the close table does bite.
+
+**Coordinator addition 1 — the round's closing stamp does not reproduce on the tree it handed
+over.** `e2e/session-tabs.spec.ts` `C4(b)` ("keeps the active tab inside the visible strip after
+every movement operation") **fails 3 of 4 isolated runs** at `5f34897` with the tree clean. The
+handoff records 69/69 green. A full-suite run here returned 68 passed with `C2(a)` red, and a second
+returned 67 with `C4(b)` red as well. This is the phase's own browser evidence for its own
+guarantee, and it is unstable — a green stamp taken once on an unstable suite is not evidence the
+suite is green. The review round took **zero** L4 runs and cited the stamp, correctly under the
+budget it was given, so nothing in the pipeline had re-measured it until now. Route to the fix round
+as a blocking item in its own right.
+
+**Coordinator addition 2 — §11.3 follow-up 18 recurred**, as its own register entry predicted:
+`C2(a)`'s dev-overlay tab stop went red again in a full-suite run. It is still the known
+intermittent and still not a product defect, but phase 03 now has **two** unstable end-to-end rows
+rather than one, and the phase cannot take a credible approval stamp while that is true.
+
+**Consequence for the gate.** The premise "the code currently works" does not hold: B3 is a
+user-visible defect on the exact interaction owner decision 15 was ratified to enable, and the suite
+is not reproducibly green. The phase is not approvable as it stands.
