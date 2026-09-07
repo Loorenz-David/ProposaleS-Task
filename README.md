@@ -100,7 +100,7 @@ npm run test:live    # opt-in live suites; a no-op unless LIVE_SMOKE=1
 LIVE_SMOKE=1 npm run test:live
 ```
 
-They read real credentials from `.env`. One of them **creates a real Proposales draft**, titled `[DISPOSABLE COPILOT SMOKE] <timestamp>`, and prints its uuid so it can be deleted by hand; it also prints the observed editor-URL origin, which is how `PROPOSALES_EDITOR_ORIGIN` should be set. The other runs the real AI provider against a fixture catalog with Proposales faked, and writes nothing anywhere.
+They read real credentials from `.env`. One of them **creates a real Proposales draft**, titled `[DISPOSABLE COPILOT SMOKE] <timestamp>`, and prints its uuid so it can be deleted by hand; it also prints the observed editor-URL origin, which is how `PROPOSALES_EDITOR_ORIGIN` should be set. The other runs the real AI provider against a fixture catalog with Proposales faked, and writes nothing anywhere. Both pass; neither runs in CI, because one of them writes.
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs typecheck, lint, unit tests, end-to-end tests, and the production build on every push and pull request.
 

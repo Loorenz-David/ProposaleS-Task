@@ -917,9 +917,21 @@ The remaining failure was the evaluation's, not the model's. It asserted that a 
 
 The row now drives both turns: prepare, and if the answer is a clarification, answer every question and let `answerClarification` run with clarification disallowed, where a proposition **is** guaranteed. That is strictly more coverage than the original — it exercises answer binding and the asks-once rule, which a single-turn assertion never reached — so it is a correction, not a relaxation.
 
+### 13.3c Sixth live run: green
+
+`LIVE_SMOKE=1 npm run test:live` passes end to end against the real Proposales API and the real OpenAI provider. **The backend is proven live, not only offline.**
+
+- Smoke: catalog read, one disposable draft created, Applied Pricing read back, observed editor origin `https://secure.proposales.com` matching the configured value.
+- Eval, tool use: two `search_content` calls and one `get_content` before any answer, language derived as `en`.
+- Eval, proposition: a first turn that committed directly to a proposition — one block, `Consulting Training Service Bundle`, no warnings, every consequential leaf properly sourced.
+
+Two details worth keeping. The model **asked** on the run before and **committed** on this one from the same brief, so the turn shape is genuinely non-deterministic and the row is written to accept either. And the successful run shows two `final` steps: the first output was rejected, the retry succeeded. That retry path was decoration while the provider constrained decoding to the schema; with constrained decoding off it is load-bearing, and it worked.
+
+**What the six live runs cost and bought.** They found four defects, none of which any offline test could have caught: three OpenAI dialect restrictions that made the agent path completely non-functional under the configured provider, and a prompt that never stated the schema's most load-bearing shape. The offline suite could not see any of them — it scripts the model, so it never sends a schema to a provider and never depends on a model reading the prompt. Row Z1 asserted the agent schema converts to JSON Schema without throwing, and it does; that claim was true and useless. This is the argument for the opt-in live suites existing at all.
+
 ### 13.4 Known limitations at submission
 
 - No transport. `server/actions.ts` is owned by the frontend stream's phase 16; the backend is exercised through `server/index.ts` with plain arguments.
-- The live suites are opt-in. The owner ran them four times on 2026-09-07. The smoke passed every time and verified the editor origin (§13.3a). The eval drove three real provider defects out of the OpenAI boundary and then one defect out of its own assertions (§13.3a, §13.3b); its two-turn form has not yet been run to completion.
-- The configured provider is OpenAI, and its constrained-decode mode is deliberately off (§13.3a). The model is therefore not forced to emit conforming JSON; it is checked afterwards and retried, so a weaker model may spend more retries reaching a valid proposition than the offline scripted suite suggests.
+- The live suites are opt-in and **pass** (§13.3c), run by the owner on 2026-09-07. They are not part of the offline gate and never run in CI: one of them writes a real draft.
+- The configured provider is OpenAI, and its constrained-decode mode is deliberately off (§13.3a). The model is therefore not forced to emit conforming JSON; it is checked afterwards and retried. The live run confirms this is real rather than theoretical — the passing run used one retry — so a weaker model, or a schema change that adds absence-shaped leaves, may spend more retries than the scripted suite suggests. `MAX_OUTPUT_RETRIES` is the ceiling, and exhausting it is a `failed` turn, never a fabricated proposition.
 - Deferred without commercial-safety impact: the phase-15 isolation extras (`console.log` scan, runtime-neutral-module scan, candidates 1–6), phase 14's attempt-counting row C7(e), phase 11's planted write tool C8(d), and the exhaustive edit-path and diff matrices.

@@ -74,7 +74,7 @@ Every consequential leaf carries its own `source` inside the leaf, never in a si
 
 `workflow.test.ts` is the end-to-end proof: clarification → skip → proposition → human edit → revision → approval → created draft → applied pricing → editor URL, with one write and no price-bearing key anywhere in the request.
 
-Two opt-in live suites sit behind `LIVE_SMOKE=1 npm run test:live` and are excluded from the default suite:
+Two opt-in live suites sit behind `LIVE_SMOKE=1 npm run test:live` and are excluded from the default suite. Both **pass** against the real Proposales API and the real AI provider:
 
 - `src/lib/proposales/smoke.live.test.ts` creates **one real draft** prefixed `[DISPOSABLE COPILOT SMOKE]`, reads it back, and prints its uuid for manual deletion along with the observed editor-URL origin.
 - `server/agent/preparation.live.test.ts` runs the real provider against the fixture catalog with Proposales faked, and writes nothing anywhere.
@@ -85,3 +85,4 @@ Two opt-in live suites sit behind `LIVE_SMOKE=1 npm run test:live` and are exclu
 - Revision resolves references through the conversation window; turns older than the window are gone, and the omitted count is reported rather than silently dropped.
 - The read-back can fail without failing the turn. A created draft with `appliedPricing.available: false` and a reason is the correct outcome — losing the draft would be worse than reporting no pricing.
 - A misconfigured `PROPOSALES_EDITOR_ORIGIN` returns the created draft with a notice; the returned state then fails its next strict parse, which is loud and intended.
+- Under OpenAI, the provider is not asked to constrain decoding to the output schema: its structured-output dialect cannot express a top-level union, which this agent's output is. `src/lib/ai/openai-schema.ts` absorbs the difference, and the model's output is validated and retried afterwards rather than guaranteed by the vendor. Exhausting the retries is a `failed` turn, never a fabricated proposition.
