@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **State** | `IMPLEMENTED` |
+| **State** | `APPROVED` |
 | **Criteria** | 5 |
 | **Projection** | **required** — derivations are a silent-failure family. Round 0 run 2026-09-07, `AMENDMENTS_REQUIRED`, all 24 rows routed |
 | **Serves** | F10 · F14 · F6 · F30 |
@@ -417,3 +417,58 @@ not its test.
 row in the phase: it renders the whole workspace, iterates all six statuses, and asserts both the
 landmark **count** and the landmark **element identity** — a row that could easily have been written
 to pass on any render and was not.
+
+### Phase 04 `APPROVED` — coordinator, 2026-09-07, without a review round, on the owner's explicit decision
+
+*"I won't spend another session on the review, if the code works that is all i need for this mvp."*
+The compiled review prompt was never run; it is archived unexecuted with this phase's rows.
+
+**One coordinator edit to application code, declared because it crosses a standing instruction.**
+The owner's standing rule is *"i will do it my self you should remain only orchestrator"*. Asked
+whether to ship the duplicate or have the coordinator remove it, the owner chose the latter
+explicitly. The edit is `components/agent/agent-status-line.tsx`: the `data-agent-status-text` span
+deleted, `justify-between` → `justify-end` so the surviving label keeps design 03 §3.2's right
+placement, and a comment naming why the slot is empty. Nothing else. **This authorization was for one
+edit and does not generalise.**
+
+**The fix closed finding B1 as well, verified rather than assumed.** Before it, hard-coding the phase
+label to a literal — severing it from its source completely — left 205/205 green, because the test
+asserted text content on the enclosing status line and the neighbouring span satisfied it. With the
+neighbour gone the same mutation **reddens C3(c)/C6(b)**, re-run and observed. One deletion resolved a
+user-visible defect and a guard that could not fail.
+
+**Approval-gate stamp**, taken on the handed-over tree: `npm run typecheck` clean, `npm run lint`
+clean, `npm test` **205/205** across 23 files, `CI=1 npx playwright test` **69/69**, `npm run build`
+compiled with 3 static routes.
+
+**One honest note about that stamp.** The first end-to-end attempt returned 68/69, failing exactly the
+focus-order row that produced §11.3 follow-up 18. It was **not** the code: an orphaned `next-server`
+(parent process gone) held port 3000, Playwright could not start its own, and reusing that instance
+reproduced the dev-server-state phenomenon follow-up 18 documents. The coordinator declined to record
+the green it had strong grounds to predict, and re-stamped on a fresh server after the owner freed the
+port — 69/69. The prior lesson applied in the other direction: **a red on a confounded server is no
+more citable than a green on one.**
+
+**What this approval covers.** Perimeter reconciled against the tree *and* the plan's tasks; all seven
+inherited tripwires verified individually; `DERIVATION_REGISTER` checked row-by-row against §12A.7's
+nine; **four independent coordinator mutations of shapes the round's ledger never used**, two of which
+bit (deleting the `idle` precedence row reddened C1(e) and C2(g); dropping the status text from the
+tab's accessible name reddened C3(a) and C3(c)) and two of which passed and became findings; and the
+full stamp above.
+
+**What this approval does NOT cover, recorded rather than glossed.** No independent adversarial re-read
+of the measurement layer happened. Four things the review prompt named as depth targets were never
+spent: **C2's overlap set carries one mutation** (swap rows 2/3) where seven rows are at risk from a
+mis-ordered chain, and no one asked what a *different* adjacent-pair swap would redden; **C3(a)
+asserts the accessible name at one status and C3(c) at a second**, two of six, and whether that is
+sampling a total table (rule 2, which owner decision 18 explicitly does not relax) was never
+adjudicated; **C3(e) is a four-alternative denylist** whose alternatives were never judged against the
+closed named set standing rule 18A licenses; and the trace chain was checked in one direction by the
+round itself and never independently in the other. The residual risk sits entirely in the instruments,
+over code the coordinator's own mutations found sound.
+
+**Still open, both deferred with the measurement set** (§11.3 follow-ups 24 and 25): nothing catches a
+component reading a custom property declared nowhere — demonstrated on this phase's own new code, six
+colour bindings behind no instrument — and follow-up 17's repair sits at describe scope rather than on
+its sibling. Neither is user-visible; both are protection against future regression rather than
+present defects, which is precisely the trade owner decision 18 states.

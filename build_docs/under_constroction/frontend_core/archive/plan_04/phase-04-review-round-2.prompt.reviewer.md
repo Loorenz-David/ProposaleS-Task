@@ -5,6 +5,13 @@ round: 2
 date: 2026-09-07
 ---
 
+> **ARCHIVED UNEXECUTED, 2026-09-07.** This review round was never run. The owner closed phase 04
+> after the implement round on an explicit decision — *"I won't spend another session on the review,
+> if the code works that is all i need for this mvp"* — so this prompt is the record of the review
+> that was compiled and declined, not of one that happened. Its §6 depth targets are the honest list
+> of what phase 04's approval does **not** cover; master plan §11.1 carries the same list. Do not
+> reuse it as a template: a review prompt is authored just-in-time against current state.
+
 # Phase 04 — Derived presentation (review, round 2)
 
 ## 0. Role and workspace

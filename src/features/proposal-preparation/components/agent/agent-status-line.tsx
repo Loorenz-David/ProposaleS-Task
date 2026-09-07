@@ -16,11 +16,12 @@ export function AgentStatusLine() {
   return (
     <div
       data-testid="agent-status-line"
-      className="flex items-center justify-between border-b border-[var(--color-border-hairline)] px-[18px] pb-3 pt-2"
+      className="flex items-center justify-end border-b border-[var(--color-border-hairline)] px-[18px] pb-3 pt-2"
     >
-      <span data-agent-status-text className="text-12-5 font-semibold text-[var(--color-fg-secondary)]">
-        {statusText}
-      </span>
+      {/* Design 03 §3.2 puts the session note on the left of this line and the phase label
+          on the right. Owner decision 19 removes the note from V1, so the line carries the
+          phase label alone — the derivation register's own row (§12A.7). Rendering the
+          status text here as well would print the same word twice. */}
       <span data-agent-phase-label className="font-mono text-10 uppercase text-[var(--color-fg-quiet)]">
         {statusText}
       </span>
