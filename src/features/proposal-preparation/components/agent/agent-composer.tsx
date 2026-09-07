@@ -74,7 +74,14 @@ export const AgentComposer = forwardRef<HTMLTextAreaElement, AgentComposerProps>
           ref={attachField}
           id="agent-composer"
           aria-describedby="agent-composer-hint"
-          className="min-h-[38px] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent py-1 text-sm leading-normal text-[var(--color-fg)] placeholder:text-[var(--color-fg-quiet)]"
+          /*
+           * No ring of its own. A text field always matches `:focus-visible`, however it was
+           * focused, so the global keyboard-focus outline would draw a second box inside the
+           * one the wrapper already lights up — and it would draw it on a plain tap. The
+           * composer's focus treatment is the wrapper's `--color-border-focus` border, which is
+           * what that token is for.
+           */
+          className="min-h-[38px] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent py-1 text-sm leading-normal text-[var(--color-fg)] outline-none placeholder:text-[var(--color-fg-quiet)]"
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={onKeyDown}
           placeholder="Paste a brief or describe the proposal…"

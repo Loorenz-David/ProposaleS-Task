@@ -40,10 +40,15 @@ export function useBlockImages(variationIds: string[]): BlockImagesState {
       ...Object.fromEntries(missing.map((id) => [id, { status: "pending" as const }])),
     }));
 
-    let abandoned = false;
+    /**
+     * The result is not abandoned on cleanup. Development runs under StrictMode, which invokes
+     * this effect twice: the second run finds every id already requested and starts nothing, so
+     * abandoning the first run's response leaves every item pending forever. Applying it late is
+     * safe instead — each entry is keyed by its variation id, and a set update on an unmounted
+     * component is a no-op.
+     */
     void (async () => {
       const fetched = await blockImagesTransport.load(missing);
-      if (abandoned) return;
       const found = new Map(fetched.map((image) => [image.variationId, image.url]));
       setImages((current) => ({
         ...current,
@@ -53,9 +58,6 @@ export function useBlockImages(variationIds: string[]): BlockImagesState {
         })),
       }));
     })();
-    return () => {
-      abandoned = true;
-    };
   }, [key]);
 
   return images;

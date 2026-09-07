@@ -3,15 +3,9 @@ import "server-only";
 import { ValidationError } from "@/lib/errors/app-error";
 import { zodIssues } from "@/lib/errors/zod-issues";
 import type { ProposalesClient } from "@/lib/proposales";
-import { getProposalesClient } from "@/lib/proposales";
 
 import { blockImagesInputSchema, type BlockImages } from "../../schemas/block-images";
-
-const defaultDeps = {
-  get proposales(): ProposalesClient {
-    return getProposalesClient();
-  },
-};
+import { defaultDeps } from "./default-deps";
 
 /**
  * Reads the first image of each requested content variation. The vendor only returns images for a

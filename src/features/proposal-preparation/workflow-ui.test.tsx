@@ -178,6 +178,11 @@ describe("proposal preparation, end to end offline", () => {
     expect(screen.queryByRole("region", { name: "Agent questions" })).not.toBeInTheDocument();
     expect(composer()).toBeInTheDocument();
     await screen.findByRole("heading", { name: "Consulting and training proposal", level: 1 });
+    // The line item's catalog image is fetched after the proposition is on screen, through the
+    // real transport, action and service — the vendor returns images only for a variation read.
+    await waitFor(() =>
+      expect(document.querySelector('img[src="https://cdn.proposales.test/consulting-bundle.png"]')).not.toBeNull(),
+    );
     const afterProposition = activeRecord();
     expect(afterProposition.latestResult?.status).toBe("proposition");
     expect(afterProposition.workflow?.currentProposition?.version).toBe(1);
@@ -398,7 +403,9 @@ describe("proposal preparation, end to end offline", () => {
     // Not retryable: nothing about trying again changes a deployment decision.
     expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
     expect(holder.proposales.writes).toBe(0);
-    expect(holder.proposales.calls).toHaveLength(2);
+    // The refusal happens before the service, so the only vendor traffic is the reads the turn
+    // and the review surface already made — nothing the approval would have added.
+    expect(holder.proposales.calls.map((call) => call.op)).toEqual(["listContent", "getCompany", "getContent"]);
   });
 
   it("T-INT-9c: approving a state that already has a draft conflicts, and names the existing one", async () => {

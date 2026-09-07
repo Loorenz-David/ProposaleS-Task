@@ -20,6 +20,9 @@ export const FIXTURE_CATALOG: ContentItem[] = [
       en: "Includes a guided workshop for onboarding.",
       sv: "Inkluderar en guidad introduktion för teamet.",
     },
+    // Only a single-variation read carries images, which is why the fake returns them from
+    // getContent and never from listContent.
+    images: ["https://cdn.proposales.test/consulting-bundle.png"],
   },
   {
     variationId: "2",
