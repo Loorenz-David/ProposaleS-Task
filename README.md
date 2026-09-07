@@ -4,7 +4,7 @@ An AI-assisted workflow for turning incomplete commercial intent (briefs, meetin
 
 ## Status
 
-**Persistent workspace shell established; product workflow not yet implemented.** The repository has a working Next.js scaffold with typecheck, lint, unit, end-to-end, and build steps running locally and in CI, a complete set of normative architecture contracts, agent bootstrap for Claude Code and Codex, and a vendored Proposales API reference. The root route now renders the two-pane Proposal Preparation shell with named landmarks, a keyboard- and pointer-operable divider, and an honest idle state. The production visual foundation is a Tailwind theme layer defining every visual value once, with base element typography and global focus and reduced-motion treatment. No shared UI primitive exists yet; one is created only when a second feature genuinely needs it ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md) §4). No proposal generation, session workflow, agent turn, schema, or business flow exists yet.
+**Persistent workspace shell and page-lifetime session tab runtime established; product workflow not yet implemented.** The repository has a working Next.js scaffold with typecheck, lint, unit, end-to-end, and build steps running locally and in CI, a complete set of normative architecture contracts, agent bootstrap for Claude Code and Codex, and a vendored Proposales API reference. The root route now renders the two-pane Proposal Preparation shell with named landmarks, a keyboard- and pointer-operable divider, an honest idle state, and a keyboard-accessible, reorderable, closable session tab strip. The production visual foundation is a Tailwind theme layer defining every visual value once, with base element typography and global focus and reduced-motion treatment. The session strip uses Radix Tabs for its tab mechanics; no shared local UI wrapper exists. No proposal generation, agent turn, schema, or business flow exists yet.
 
 ## Intended workflow
 
@@ -40,6 +40,8 @@ Verified against `package.json`.
 | Runtime validation | Zod 4 |
 | Unit and component tests | Vitest 5 with React Testing Library and jest-dom; node project for server tests, jsdom project for app/component tests |
 | End-to-end tests | Playwright, Chromium |
+| Headless interaction primitives | Radix Tabs 1.1.21 (with Roving Focus 1.1.19) |
+| Icons | Lucide React 1.41.0; session controls use native text glyphs where sufficient |
 | Lint | ESLint 9 with `eslint-config-next` |
 | Hosting | Vercel |
 
@@ -96,7 +98,7 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs typecheck, lint, 
 ## Testing strategy
 
 - **Vitest and React Testing Library** cover everything below the browser: pure functions, schemas, domain rules, services, adapters with mocked HTTP, and component tests. Every `*.test.ts(x)` under `src/` or `test/` is claimed by exactly one project: the `jsdom` project claims every `.tsx` test and every `.ts` test under a feature's `hooks/`; the `node` project claims everything else (`src/lib/**`, `src/styles/**`, `src/app/**`, `src/features/**` outside `hooks/`, `test/**`). Vitest excludes `e2e/` and `*.live.test.ts` so the default projects never overlap with end-to-end or opt-in live tests.
-- **Playwright** covers critical browser-level flows from `e2e/`. It starts `npm run dev` itself and runs against Chromium. Today `e2e/workspace.spec.ts` checks the workspace landmarks, skip link, divider interactions, narrow-width containment, idle state, and the carried visual-foundation checks.
+- **Playwright** covers critical browser-level flows from `e2e/`. It starts `npm run dev` itself and runs against Chromium. Today `e2e/workspace.spec.ts` checks the workspace landmarks, skip link, divider interactions, narrow-width containment, idle state, and the carried visual-foundation checks; `e2e/session-tabs.spec.ts` checks session-tab geometry, focus, hit targets, elision, and URL stability.
 - Layers, what each must prove, and the rules for agent evals: [11-testing-principles.md](architectural_contracts/11-testing-principles.md).
 
 ## Agent development
@@ -138,7 +140,7 @@ A refresh detects possible contract drift; a dependency-aware review of the diff
 └── .env.example                 # Configuration inventory
 ```
 
-Feature code lives under `src/features/<feature>/` and integrations under `src/lib/<system>/` per [03-feature-architecture.md](architectural_contracts/03-feature-architecture.md); `src/features/proposal-preparation` currently owns the persistent workspace shell and its idle surface, divider hook, and presentation state type. Sessions, turns, and proposal workflow remain future work.
+Feature code lives under `src/features/<feature>/` and integrations under `src/lib/<system>/` per [03-feature-architecture.md](architectural_contracts/03-feature-architecture.md); `src/features/proposal-preparation` owns the persistent workspace shell, page-lifetime session runtime and tab strip, idle surface, divider hook, and presentation state type. Turns and proposal workflow remain future work.
 
 ## Deployment
 
@@ -150,6 +152,7 @@ Established:
 
 - Next.js scaffold, TypeScript, lint, unit and end-to-end test harnesses, CI.
 - The persistent Proposal Preparation workspace shell: fixed agent surface, session-controlled main-surface seam, user-controlled divider, named landmarks, skip link, and honest idle state. The divider width is page-lifetime state and is not persisted. No shared UI primitive exists yet.
+- The page-lifetime session runtime and tab strip: independent session records, creation, activation, keyboard/pointer reorder, close focus destinations, active-tab reveal, and explicit non-wrapping Radix tab mechanics. Session state is not persisted.
 - Architecture contracts and agent bootstrap.
 - Vendored Proposales reference and refresh workflow.
 

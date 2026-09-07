@@ -1,0 +1,1 @@
+export const ACTIVE_TAB_REVEAL_MARGIN_PX = 8;

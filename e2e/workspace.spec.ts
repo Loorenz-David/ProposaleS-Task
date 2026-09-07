@@ -91,12 +91,16 @@ async function stopAnnouncementCounter(page: Page) {
 test.describe("phase 01 evidence relocated from bootstrap", () => {
   test("C2(a): :focus-visible produces a visible indicator on an injected native control", async ({ page }) => {
     await page.goto("/");
+    await expect(page.getByRole("tab").first()).toBeVisible();
     await page.evaluate(() => {
       const probe = document.createElement("button");
       probe.id = "__c2a-focus-probe";
       probe.textContent = "focus probe";
       document.body.appendChild(probe);
     });
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
     await page.keyboard.press("Tab");
     await page.keyboard.press("Tab");
     await page.keyboard.press("Tab");
@@ -370,6 +374,10 @@ test("C2(d): reset announces once and drag announces nothing", async ({ page }) 
 
 test("C2(e): divider is reachable from the document start", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByRole("tab").first()).toBeVisible();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Tab");
   await page.keyboard.press("Tab");
   await page.keyboard.press("Tab");
   await expect(page.getByRole("separator")).toBeFocused();
@@ -434,8 +442,12 @@ test.describe("C4: narrow-width conditions", () => {
     test(`C4(${width}-3): every phase control is keyboard reachable`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
       await page.goto("/");
+      await expect(page.getByRole("tab").first()).toBeVisible();
       await page.keyboard.press("Tab");
       await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
+      await page.keyboard.press("Tab");
+      await page.keyboard.press("Tab");
+      await page.keyboard.press("Tab");
       await page.keyboard.press("Tab");
       await expect(page.getByRole("separator")).toBeFocused();
     });

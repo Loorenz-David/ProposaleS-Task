@@ -227,6 +227,81 @@ none is a licence to skip a criterion.
 
 ## Review log
 
+### Implementer pre-code coverage map and contract selection — 2026-09-07
+
+Applicable contracts re-emitted before coding: `02-runtime-boundaries.md` (client
+boundary and DOM/browser APIs), `03-feature-architecture.md` (feature placement and
+dependency direction), `05-client-architecture.md` (feature store, state ownership,
+focus and async UI), `15-ui-styling-and-component-system.md` (Tailwind and primitive
+semantics), `11-testing-principles.md` (store/component/browser runner split),
+`13-decision-checklist.md`, `12-anti-patterns.md` (matching client/state/testing
+sections), and `14-documentation-principles.md` (closeout). `06-data-contracts` is not
+applicable: this phase adds no trust-boundary data; persistence, server, integration,
+security, and agent contracts are likewise not applicable. The durable feature README
+does not exist yet.
+
+The map below is written before production edits. `held` rows are intentionally not
+counted as covered in this phase. Every planned test has a row; browser-computed rows
+run only in Playwright, and store transitions run without rendering.
+
+| Row | Planned test id → assertion shape → runner |
+|---|---|
+| C1(a) | `session-store › creates stable ids across create/move/close` → distinct nominal ids survive operations → node |
+| C1(b) | `session-store source allowlist › permitted generator only` → construction site subject + allowlisted generator/no counter/index/thread position → node |
+| C1(c) | held → phase 05 dispatch surface + phase 16 browser boundary |
+| C1(d) | held → phase 05 dispatch surface + returned workflow state |
+| C1(e) | held → phase 05 dispatch probe; not runnable here |
+| C2(a) | `moveSession › moves one index and preserves other order` → exact list order → node |
+| C2(b) | `moveSession › preserves active id on pointer and keyboard calls` → same active id on both callers → node |
+| C2(c)-i | `moveSession › same index preserves list reference` → reference equality/no write → node |
+| C2(c)-ii | `SessionTabStrip › same-index keyboard move has no announcement` → live-region child count unchanged → jsdom |
+| C2(c)-iii | `SessionTabStrip › same-index keyboard move keeps focus` → active element identity unchanged → jsdom |
+| C2(d) | `moveSession › out-of-range targets are no-ops` → list/active unchanged → node |
+| C2(e) | `moveSession › pointer and keyboard adapters share indices and function` → identical result and one move function → node; `drag handler ›` → jsdom |
+| C2(f) | `SessionTabStrip › keyboard reorder retains focus and announces position` → moved tab focused + one announcement → jsdom |
+| C2(g) | `SessionTabStrip › reorder has keyboard path` → modifier-arrow moves without pointer → jsdom |
+| C2(h) | `moveSession › applies against list changed during drag` → removed id never targeted, current list used → node |
+| C3(a) | `closeSession › closes background and repairs focus target` → active unchanged/focus preserved or clamped → jsdom |
+| C3(b) | `closeSession › active middle chooses same index and focuses it` → active id + focus → jsdom |
+| C3(c) | `closeSession › active last chooses previous and focuses it` → active id + focus → jsdom |
+| C3(d) | `closeSession › sole tab creates replacement before removal` → fresh active record + focus → jsdom |
+| C3(e) | `closeSession › never exposes empty transition list` → each transition observer state non-empty → node |
+| C3(f) | `closeSession › never focuses body` → focus destination is tab → jsdom |
+| C3(g) | `closeSession › never reuses a closed id` → A/B, close A, create C distinct → node |
+| C3(h) | `closeSession mutation › same-index active choice is required` → planted first-index choice reddens → jsdom |
+| C3(i) | `close gate source allowlist › one named gate owns all removals` → subject + exact call-site allowlist → node |
+| C4(a) | `revealActiveTabScrollLeft › five movement cases` → pure margin arithmetic contract → node |
+| C4(b) | `session tabs › active tab stays inside strip after switch/reorder/close/create/resize` → browser geometry + margin → Playwright |
+| C4(c) | `source allowlist › no scrollIntoView construct` → AST subject + member allowlist → node |
+| C4(d) | `source allowlist › no document query/selector construct` → AST subject + browser access allowlist → node |
+| C4(e) | `source allowlist › no window width during render` → AST subject + render-phase access allowlist → node |
+| C4(f)-i | `C4(c) mutation › novel scroll method reddens` → planted non-denylisted call caught → node |
+| C4(f)-ii | `C4(d) mutation › novel document access reddens` → planted non-denylisted access caught → node |
+| C4(f)-iii | `C4(e) mutation › novel viewport access reddens` → planted render access caught → node |
+| C5(a) | `SessionTabStrip › named horizontal tablist` → role/orientation/name → jsdom |
+| C5(b) | `SessionTabStrip › selected and roving tabindex` → one 0, rest -1, selected state → jsdom |
+| C5(c) | `SessionTabStrip › complete grounded key map` → all enumerated keys/no-wrap/activation → jsdom |
+| C5(d) | `SessionTabStrip › every tab has sibling named close control` → keyboard reachability + sibling structure → jsdom |
+| C5(e) | `session tabs › visible focus indicators` → browser computed focus styles → Playwright |
+| C5(f) | `session tabs › close hit area` → browser bounding box ≥ 24px → Playwright |
+| C5(g) | `session tabs › title span elision name` → overflowing `[data-elided]` name equals own text → Playwright |
+| C6(a) | `ProposalWorkspace › landmark counts/identity after each operation` → per-commit count and node identity → jsdom |
+| C6(b) | `ProposalWorkspace › landmark elements never remount` → element identity across operations → jsdom |
+| C6(c) | `session tabs › operations do not change URL/history` → URL and history unchanged → Playwright |
+| C6(d) | held → phase 04 status + phase 14 Main Surface state |
+| C6(e) | `activation history mutation › pushState reddens URL test` → planted history entry caught → Playwright |
+| C6(f) | `active-session remount mutation › conditional AgentSurface reddens identity test` → planted remount caught → jsdom |
+| C7(a) | `createSession › appends at end` → insertion-at-zero mutation reddens → node |
+| C7(b) | `createSession › activates created session` → active id equals new id → node |
+| C7(c) | `createSession › creates separate empty record` → no shared/copied/serialized fields → node |
+| C7(d) | `SessionTabStrip › new session control is named and keyboard reachable` → accessible button → jsdom |
+| C7(e) | `SessionTabStrip › new control is sibling outside tablist scroll region` → DOM relationship → jsdom |
+
+The pre-production test transcription is the set of tests named above. Its expected
+baseline is red because the session store, tab strip, reveal helper, and browser spec do
+not yet exist; any inherited-suite red is compared against the 154/154 and 66/66 baseline
+recorded before edits.
+
 ### Pre-dispatch plan lint — coordinator, 2026-09-07
 
 Run before compiling the projection prompt, against the tree at gate commit `3796dc1`. The five
@@ -491,3 +566,101 @@ preference file aside changed nothing. The failures clustered immediately after 
 against that transitional state is the leading hypothesis and is **unproven**. **The classification
 does not depend on it** — the extra tab stop belongs to the dev server under every hypothesis — but
 a repair chosen on the assumption that this is purely a race would be chosen on a guess.
+
+### Implementer round 2 — Codex, 2026-09-07
+
+Implemented the page-lifetime session runtime and tab strip. The feature-scoped Zustand store owns
+the active id, ordered ids, and separate runtime records; ids are UUID-backed nominal client ids and
+are never persisted or used as backend generation ids. The strip uses `@radix-ui/react-tabs@1.1.21`
+with its resolved `@radix-ui/react-roving-focus@1.1.19`; the package was justified by the tablist,
+roving focus, keyboard movement and selection widget. The explicit `loop={false}` is set on
+`Tabs.List`, the boundary where the composite's public configurable default is overridden, so
+non-wrapping navigation is owned by this application rather than inherited from Radix.
+
+Delegated decisions and reasons:
+
+- `typescript@6.0.3` AST traversal is used for the C4 allowlists; it measures member expressions
+  over a non-empty production source set rather than matching a denylist of forbidden spellings.
+- `ACTIVE_TAB_REVEAL_MARGIN_PX` is `8`; it is a small, named clearance and tests assert the
+  arithmetic contract rather than this literal.
+- The landmark remains the persistent `aside`, never a tabpanel. Radix `Tabs.Content` is mounted
+  with `forceMount` as empty, visually hidden relationship targets, one per session; no outgoing
+  work surface is placed inside them and the landmark never unmounts.
+- Activation uses Radix's controlled root in `manual` mode, explicit `onFocus` activation, click
+  activation, and `onMouseDown` prevention so a drag cannot activate a tab. This avoids adding
+  `user-event` and matches the foundation's `onMouseDown` activation source.
+- The new-session button is a direct sibling of the tablist, outside the tablist's scrolling box,
+  pinned at the strip edge.
+- Store tests assert list/active/identity transitions without rendering; jsdom tests assert focus,
+  announcements, roles and key handling; Playwright owns geometry, focus-visible, hit-area,
+  elision and URL/history measurements.
+
+The strip satisfies the two frozen phase-02 rows by putting the actual horizontal scroller on the
+tablist with the literal `overflow-x-auto` class, keeping every pane div within pane width, and
+placing `data-elided` plus `aria-label` on the inner title span rather than the tab. The title span
+also carries the frozen row's permitted `data-horizontal-scroll` marker because its intrinsic text
+width can exceed its truncated client box; the tab's richer accessible name is not confused with
+the span's own name.
+
+Mutation ledger (16 declared = 1 + 1 + 3 + 1 + 1 + 1 + 1 + 1 + 3 + 1 + 1 + 1):
+
+| # | Row/site | Red observed | Revert |
+|---:|---|---|---|
+| 1 | C1(b), module-level `counter` at store source | C1(b) source allowlist | reverted |
+| 2 | C2(b), move returned a changed `activeSessionId` | C2(a,b,d,h) active-id assertion | reverted |
+| 3 | C2(c)-i, same-index move omitted the guard | list-reference assertion | reverted |
+| 4 | C2(c)-ii, interaction announced same-index | announcement-count assertion | reverted |
+| 5 | C2(c)-iii, interaction focused same-index | focus callback assertion | reverted |
+| 6 | C3(e), close published an empty intermediate state | non-empty transition assertion | reverted |
+| 7 | C3(g), create used the current array index as id | closed-id uniqueness assertion | reverted |
+| 8 | C3(h), active close chose index zero | same-index replacement assertion | reverted |
+| 9 | C3(i), second direct `closeSession` removal call | single-gate source allowlist | reverted |
+| 10 | C4(f)-i, novel `scrollIntoView` call | operation allowlist | reverted |
+| 11 | C4(f)-ii, novel `document.getElementById` access | document-member allowlist | reverted |
+| 12 | C4(f)-iii, novel render-time `window.innerWidth` access | window-member allowlist | reverted |
+| 13 | C5(c), removed explicit `loop={false}` | explicit configuration assertion | reverted |
+| 14 | C6(e), activation pushed a history entry | Playwright URL/history assertion | reverted |
+| 15 | C6(f), keyed `AgentSurface` by active id | landmark identity assertion | reverted |
+| 16 | C7(a), creation inserted at index zero | append-order assertion | reverted |
+
+The baseline was taken before production edits at tree `c677e0186d7193c20d941cbde8e51a7b30063bf9`:
+154/154 unit tests, 66/66 end-to-end tests, typecheck and build green; lint first encountered an
+environment-only parallel `test-results/` directory race and passed on the authorized serial retry.
+The known dev-overlay focus row failed in one inherited full-file run and passed on its mandated
+isolated rerun, so it remains an intermittent registered finding, not a re-baseline defect.
+
+Before closing implementation, evaluate documentation impact according to
+`architectural_contracts/14-documentation-principles.md`. Update any authoritative
+documentation made false, incomplete, or misleading by the verified implementation. Do not
+modify documentation merely because files changed.
+
+The impact review updated the root README's status, tech-stack rows, browser-evidence description,
+feature ownership and current-scope statements. No feature README or integration README exists;
+no architecture contract was made stale. The phase plan Review log and tracker are updated as this
+phase's pipeline records.
+
+### Implementer closing stamp — 2026-09-07
+
+The final implementation tree passed the required closing commands after two small closeout
+corrections: the tab trigger's arbitrary `rounded-t-[9px]` was replaced by the existing themed
+`rounded-t-lg` token, and the inherited `C2(e)` absolute-tab-order probe now waits for the
+phase-created tab before counting the three added tab stops. The latter remains within the one
+permitted `C2(e)` re-baseline; no frozen assertion was weakened and `C1(e)` was not changed.
+
+Final results, run serially from the repository root:
+
+- `npm test` — **183/183** unit tests, 19 files, green.
+- `npm run test:e2e` — **69/69** Playwright tests, green. The first post-change full run exposed the
+  known startup sensitivity in `C2(e)`; its isolated rerun passed, and the full suite passed after
+  the permitted readiness wait was added. The known `C2(a)` dev-overlay row was green in the final
+  full run.
+- `npm run typecheck` — green.
+- `npm run lint` — green.
+- `npm run build` — green; Next.js 16.3.4 production build completed.
+- `git diff --check` — green after restoring generated `next-env.d.ts` and `tsconfig.tsbuildinfo`.
+
+The final test-count delta from the recorded baseline is +29 unit tests and +3 end-to-end tests;
+the inherited suite's product assertions remain green. The declared mutation ledger remains 16/16:
+all red observations were reverted. The pre-code coverage map remains 42 runnable rows covered in
+this phase and 4 structurally held rows routed to their named later-phase triggers; no row was
+silently dropped. No architecture graph exists in this repository, so there is no graph delta.
