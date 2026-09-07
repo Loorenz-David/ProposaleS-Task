@@ -24,7 +24,7 @@ Implement `executeApprovedProposal` (the `approval_required` entry guard, recove
 
 ## Dependencies (gate)
 
-Phase 13 `APPROVED`.
+Phase 13 `SUBMISSION_SPRINT`. (Written as `Phase 13 APPROVED`; the collapsed sprint means phase 13 never reached that state, and this phase was built on its implementation rather than on its approval.)
 
 ## Files expected to change
 

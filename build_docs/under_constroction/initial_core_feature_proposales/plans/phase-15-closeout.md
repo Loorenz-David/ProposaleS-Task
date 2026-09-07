@@ -23,7 +23,7 @@ Prove the complete workflow end to end against the fakes, scan the tree for boun
 
 ## Dependencies (gate)
 
-Phase 14 `APPROVED`.
+Phase 14 `SUBMISSION_SPRINT`. (Written as `Phase 14 APPROVED`; the collapsed sprint means phase 14 never reached that state, and this phase was built on its implementation rather than on its approval.)
 
 ## Files expected to change
 

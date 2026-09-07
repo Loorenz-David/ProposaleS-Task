@@ -23,7 +23,7 @@ Implement the approval side of execution without touching Proposales: the envelo
 
 ## Dependencies (gate)
 
-Phase 12 `APPROVED`.
+Phase 12 `SUBMISSION_SPRINT`. (Written as `Phase 12 APPROVED`; the collapsed sprint means phase 12 never reached that state, and this phase was built on its implementation rather than on its approval.)
 
 ## Files expected to change
 

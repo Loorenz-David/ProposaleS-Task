@@ -23,7 +23,7 @@ Implement `editProposition` (closed edit operations producing `human` leaves; do
 
 ## Dependencies (gate)
 
-Phase 11 `APPROVED`.
+Phase 11 `SUBMISSION_SPRINT`. (Written as `Phase 11 APPROVED`; the collapsed sprint means phase 11 never reached that state, and this phase was built on its implementation rather than on its approval.)
 
 ## Files expected to change
 
