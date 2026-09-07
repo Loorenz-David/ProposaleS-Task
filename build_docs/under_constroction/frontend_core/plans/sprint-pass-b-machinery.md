@@ -955,3 +955,69 @@ false lead, recorded here so it is not mistaken for a product defect if rediscov
 - Checkpoint stamp: `npm test` — 57 files / 328 tests green (unchanged count; no test added or
   removed, four rewritten). `npm run test:e2e` — full suite, 80/80 green on a fresh server
   (69 inherited from phases 01–04 unchanged, 11 in `proposal-flow.spec.ts`, all passing).
+
+### WP10 — fixture-era audit and closeout
+
+No product code changed in this package beyond the one documentation patch below. Each row is the
+actual command/inspection run against the tree at this checkpoint, not an assumption.
+
+1. **One adapter per surface — yes.** `toThreadViewModel` (agent-surface.tsx, one call site) composes
+   `toPillViewModels` internally (thread.ts, one call site — pills are not a second crossing, they are
+   part of the thread surface per phase 15's own "thread and pills" grouping). `toMainSurfaceViewModel`
+   (main-application-surface.tsx, one call site) composes `toReviewSurfaceViewModel`,
+   `toCreatedViewModel`, and `toCreationFailureViewModel` internally (main-surface.ts, one call site
+   each). `toPreviewViewModel` is called once, directly from the component (main-application-surface.tsx).
+   `toTabViewModel` is called from three sites — `agent-status-line.tsx`, `session-tab-strip.tsx`, and
+   `use-status-announcement.ts` — and this is the contract-mandated shape, not a violation: intention
+   §12A.3 states the tab dot and the status line are "two renderings of this same function applied to
+   the same record" specifically so they can never disagree without a synchronisation rule, and the
+   status-announcement hook is a third, equally pure caller of the same derivation. `toCallFailureViewModel`
+   (agent column) and `toCreationFailureViewModel` (review surface) are two different functions over the
+   same `failure.ts` module rendering at the two different sites §12A.16's own routing table requires
+   (validation-style errors at their issuing surface; approval failures on the review surface) — not two
+   crossings of one value.
+2. **No `Temporary*` prop, no fixture import, in any component — yes.**
+   `grep -rln "Temporary" src/features/proposal-preparation/components --include="*.tsx" --include="*.ts" | grep -v "\.test\."`
+   returns nothing. No production component file imports anything from `client/fixtures/`.
+3. **No boundary-crossing `as` cast — yes, three occurrences reviewed and none is one.**
+   `import * as Popover` / `import * as Tabs` are ES namespace imports, not type casts.
+   `session-tab-strip.tsx:161` casts Radix's untyped `onValueChange` string into the branded
+   `WorkspaceSessionId` — a UI-library-interop cast on a client-owned id, pre-existing since phase 03,
+   not a cast against a mismatched backend shape. `failure.ts:53-55` casts `ErrorDto.code` into the
+   closed `ErrorTreatmentKey` union only after a runtime `KNOWN_KEYS.has(...)` check — a guarded
+   narrowing inside the adapter whose whole job is exactly this class choice (§12A.8's "choose a
+   presentation class from a domain value by a rule stated in this section"), not an unchecked
+   make-it-compile cast.
+4. **Fixture naming — yes, without exception.** All six fixture modules under `client/fixtures/` match
+   `*.temporary-fixture.ts`; every export matches `temporaryFixture*` except the one named constant
+   `TEMPORARY_FIXTURE_TURN_LATENCY_MS`, which carries the same era marker in SCREAMING_SNAKE_CASE per
+   the naming convention for constants.
+5. **No real personal/company/customer data — yes.** The only proper nouns in any fixture are the
+   fictional "Studio North", "Mara", "Alexandra Halden", and "Halden & Vik Studio North Collection
+   House"; the one email fixture uses the IANA-reserved `.invalid` TLD, which cannot resolve to a real
+   domain.
+6. **No forbidden import reaches the client graph — yes.**
+   `grep -rn "@/lib/proposales|@/lib/ai|@/lib/agent|@/lib/env/server|server/" src/features/proposal-preparation/{components,hooks,client}`
+   returns nothing.
+7. **No persistence API anywhere under the feature — yes.**
+   `grep -rn "localStorage|sessionStorage|indexedDB|document\.cookie|URLSearchParams|history\." src/features/proposal-preparation`
+   (test files included in the scan) returns nothing.
+8. **The store exposes no serialisation surface — yes.** `use-workspace-session-store.ts` exports none
+   of `serialize`, `hydrate`, `persist`, `toJSON`, `fromJSON`.
+9. **Documentation impact (contract 14 §8) — the root README's status paragraph, "Intended workflow"
+   implementation claim, "Current scope" bullets, "Repository structure" prose, and Tech Stack table
+   had all gone false across the WP1–WP9 work and are patched in this checkpoint to describe verified
+   behaviour only: the full presentation/interaction cycle now exists on era-marked fixtures behind one
+   scripted, non-reasoning adapter; the fields/preview toggle and line-item replacement flows are named
+   explicitly; Radix Popover is added to the primitives list and the tech-stack table alongside Radix
+   Tabs; the claim that "turns and proposal workflow remain future work" is corrected to name what is
+   genuinely still unbuilt — real agent reasoning, the transport boundary, the real Proposales adapter
+   and mutation, and the real editor handoff URL. **The feature README
+   (`src/features/proposal-preparation/README.md`) is deliberately still not written** — master plan
+   §11.3 follow-up 7 and this plan's own instruction (§15 "Do not write the feature README") both place
+   it at the later integration sprint's closeout, once real behaviour exists to describe; writing one now
+   over fixture-era behaviour would itself be the "planned behaviour presented as implemented" defect
+   contract 14 forbids.
+
+Files touched: `README.md` only (Status, Intended workflow, Current scope, Repository structure, Tech
+stack). No file under `src/` changed in this package.

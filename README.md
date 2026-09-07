@@ -4,11 +4,11 @@ An AI-assisted workflow for turning incomplete commercial intent (briefs, meetin
 
 ## Status
 
-**Persistent workspace shell and page-lifetime session tab runtime established; product workflow not yet implemented.** The repository has a working Next.js scaffold with typecheck, lint, unit, end-to-end, and build steps running locally and in CI, a complete set of normative architecture contracts, agent bootstrap for Claude Code and Codex, and a vendored Proposales API reference. The root route now renders the two-pane Proposal Preparation shell with named landmarks, a keyboard- and pointer-operable divider, an honest idle state, and a keyboard-accessible, reorderable, closable session tab strip. The production visual foundation is a Tailwind theme layer defining every visual value once, with base element typography and global focus and reduced-motion treatment. The session strip uses Radix Tabs for its tab mechanics; no shared local UI wrapper exists. No proposal generation, agent turn, schema, or business flow exists yet.
+**The full human-in-the-loop workflow is implemented end to end on era-marked fixtures; no real agent, no real Proposales mutation, and no persistence exist yet.** The repository has a working Next.js scaffold with typecheck, lint, unit, end-to-end, and build steps running locally and in CI, a complete set of normative architecture contracts, agent bootstrap for Claude Code and Codex, and a vendored Proposales API reference. The root route renders the two-pane Proposal Preparation shell with named landmarks, a keyboard- and pointer-operable divider, and a keyboard-accessible, reorderable, closable session tab strip. Inside that shell, a session can be driven through a full cycle — a brief, a structured clarification exchange, a reviewable proposition with provenance and a client preview, inline edits and line-item replacement, and an approval that produces a created or failed draft presentation — entirely against a scripted, in-memory turn adapter under `client/fixtures/*.temporary-fixture.ts`. That adapter stands in for both the AI agent and the Proposales backend: it returns fixed results by turn kind, never reads what the user typed, and computes nothing. No real agent reasoning, no real backend call, no real money, and no persistence of any kind exist behind it. The production visual foundation is a Tailwind theme layer defining every visual value once, with base element typography and global focus and reduced-motion treatment. The session strip uses Radix Tabs and the review surface's field-level dialog uses Radix Popover; no shared local UI wrapper exists.
 
 ## Intended workflow
 
-This is the architecture the product will follow. None of it is implemented.
+This is the architecture the product will follow. The presentation shape of every step is implemented against fixtures (see Status); the AI reasoning and the real Proposales mutation are not.
 
 ```
 Human intent (brief, notes, requirements)
@@ -40,7 +40,7 @@ Verified against `package.json`.
 | Runtime validation | Zod 4 |
 | Unit and component tests | Vitest 5 with React Testing Library and jest-dom; node project for server tests, jsdom project for app/component tests |
 | End-to-end tests | Playwright, Chromium |
-| Headless interaction primitives | Radix Tabs 1.1.21 (with Roving Focus 1.1.19) |
+| Headless interaction primitives | Radix Tabs 1.1.21 (with Roving Focus 1.1.19), Radix Popover 1.1.23 |
 | Icons | Lucide React 1.41.0; session controls use native text glyphs where sufficient |
 | Lint | ESLint 9 with `eslint-config-next` |
 | Hosting | Vercel |
@@ -140,7 +140,7 @@ A refresh detects possible contract drift; a dependency-aware review of the diff
 └── .env.example                 # Configuration inventory
 ```
 
-Feature code lives under `src/features/<feature>/` and integrations under `src/lib/<system>/` per [03-feature-architecture.md](architectural_contracts/03-feature-architecture.md); `src/features/proposal-preparation` owns the persistent workspace shell, page-lifetime session runtime and tab strip, idle surface, divider hook, and presentation state type. Turns and proposal workflow remain future work.
+Feature code lives under `src/features/<feature>/` and integrations under `src/lib/<system>/` per [03-feature-architecture.md](architectural_contracts/03-feature-architecture.md); `src/features/proposal-preparation` owns the persistent workspace shell, page-lifetime session runtime and tab strip, and the full proposal-preparation presentation and interaction layer described under Status and Current scope. Its `client/fixtures/` directory holds every era-marked fixture and the one scripted turn adapter that stands in for the real agent and backend; `client/view-models/` holds the presentation boundary that will absorb the real contracts unchanged. A real agent, a real backend transport, and real turns remain future work.
 
 ## Deployment
 
@@ -153,6 +153,7 @@ Established:
 - Next.js scaffold, TypeScript, lint, unit and end-to-end test harnesses, CI.
 - The persistent Proposal Preparation workspace shell: fixed agent surface, session-controlled main-surface seam, user-controlled divider, named landmarks, skip link, and honest idle state. The divider width is page-lifetime state and is not persisted. No shared UI primitive exists yet.
 - The page-lifetime session runtime and tab strip: independent session records, creation, activation, keyboard/pointer reorder, close focus destinations, active-tab reveal, and explicit non-wrapping Radix tab mechanics. Session state is not persisted.
+- The full presentation and interaction layer of the proposal-preparation workflow, against era-marked fixtures: brief submission and a scripted working state; a structured clarification exchange (single and batch, answer or explicit skip, never both); a review surface with per-leaf provenance, absence, unresolved-information, and validation-error presentation; inline field edits and line-item replacement from retained alternatives; a field-scoped "ask the agent" instruction on a Radix Popover; a read-only client preview with its approximation disclosure; and an approval flow producing a created, recovered, or failed draft presentation with Applied Pricing rendered exactly as returned. Every domain object behind this is a hand-written, explicitly temporary type in `types/temporary-turn.ts`, populated by one scripted adapter in `client/fixtures/turns.temporary-fixture.ts` that returns fixed results by turn kind and never reads, parses, or reasons about what the user typed. Session close and discard are guarded by a meaningful-work predicate with a native confirmation dialog; a departure warning covers an in-flight draft creation; retained context (the fields/preview toggle, an opened line-item replacement) is restored independently per session on switch.
 - Architecture contracts and agent bootstrap.
 - Vendored Proposales reference and refresh workflow.
 
@@ -169,7 +170,7 @@ Decided for the frontend:
 - Tailwind CSS as the production styling mechanism. Visual values are defined once, in the Tailwind theme layer at `src/styles/theme.css` ([15-ui-styling-and-component-system.md](architectural_contracts/15-ui-styling-and-component-system.md)).
 - Zustand for feature-scoped client stores only, above `useState` and `useReducer` ([05-client-architecture.md](architectural_contracts/05-client-architecture.md) §5.1).
 
-Future product implementation (not started): brief intake, agent reasoning and tools, prepared-proposal review and approval, the Proposales adapter, and the editor handoff.
+Future product implementation: real AI agent reasoning and tools (today's brief, clarification, and revision turns are all a scripted stand-in), the browser-to-server transport boundary, the real Proposales adapter and mutation, and the real editor handoff URL. None of these has any implementation yet, fixture-backed or otherwise.
 
 ## Documentation map
 
