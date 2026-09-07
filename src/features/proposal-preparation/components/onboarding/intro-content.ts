@@ -20,11 +20,11 @@ export const DEMO_BRIEF =
   "days and probably airport transfers. A few people may stay an extra night.";
 
 /**
- * The screen recording shown above slide 3's demo brief. Like the diagrams, it is authored
- * here and never derived from input, so the user-supplied-URL rules in contract 10 §9 do not
- * come into play. `next.config.ts` allowlists this origin for `next/image`.
+ * The base every hosted intro asset is built from. One origin, named once. Like the diagrams
+ * it serves, it is authored here and never derived from input, so the user-supplied-URL rules
+ * in contract 10 §9 do not come into play. `next.config.ts` allowlists this origin for
+ * `next/image`.
  */
-/** The base every hosted intro asset is built from. One origin, named once. */
 const MEDIA_ORIGIN = "https://test-bootstrap-local.s3.eu-north-1.amazonaws.com/proposales_media";
 
 /**
@@ -55,18 +55,23 @@ export const WORKFLOW_DIAGRAM = {
     "06 Create draft: the approved payload is executed as a Proposales draft.",
 } as const;
 
-export const DEMO_WALKTHROUGH_CLIP = `${MEDIA_ORIGIN}/Screen+Recording+2026-09-07+at+15.57.19.mov`;
-
 /**
  * Optional media for a slide. Rendered by `intro-media.tsx` between the description and the
- * body, so a slide can gain a still or a clip without changing its body variant.
+ * body, so a slide can gain a still, a clip or the product-demo animation without changing its
+ * body variant.
  *
  * `loop` selects the video posture `intro-media.tsx` documents: absent, the clip waits to be
  * played; true, it is an ambient muted demonstration that repeats and honours reduced motion.
+ *
+ * `animation` has no `src`: the demonstration it names is drawn by
+ * `demo-animation/demo-scene.tsx` rather than fetched, so the only thing a slide chooses about
+ * it is the accessible name it is given. There is exactly one such piece, which is why the
+ * variant names no artwork.
  */
 export type IntroMedia =
   | { kind: "image"; src: string; alt: string; width: number; height: number }
-  | { kind: "video"; src: string; title: string; poster?: string; loop?: boolean };
+  | { kind: "video"; src: string; title: string; poster?: string; loop?: boolean }
+  | { kind: "animation"; title: string };
 
 /**
  * A slide-specific secondary action, rendered in the footer beside the primary control.
@@ -166,10 +171,11 @@ export const INTRO_SLIDES: readonly IntroSlide[] = [
     description:
       "Paste this into the composer on the left. It is missing several facts a real proposal would need.",
     media: {
-      kind: "video",
-      src: DEMO_WALKTHROUGH_CLIP,
-      title: "Screen recording: pasting the demo brief into the composer and sending it.",
-      loop: true,
+      kind: "animation",
+      title:
+        "Animation: the whole loop, from pasting this brief to the created Proposales draft — " +
+        "the agent asks about the rooms and the extra night, the proposition is reviewed and an " +
+        "assumed transfer count corrected, and the draft is created only after approval.",
     },
     body: { kind: "demo-prompt" },
     supporting:

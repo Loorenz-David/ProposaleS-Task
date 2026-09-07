@@ -1,0 +1,126 @@
+{
+  "measuredAt": "2026-09-07",
+  "provider": "openai",
+  "model": "gpt-5.6-luna",
+  "fixture": "BRIEFS.vagueScope + FIXTURE_CATALOG",
+  "safety": "Real OpenAI; fake Proposales client; zero writes; no model output retained.",
+  "completeWorkflowSample": {
+    "firstTurn": {
+      "allowClarification": true,
+      "status": "clarification",
+      "latencyMs": 5300,
+      "clarificationQuestionCount": 2,
+      "modelSteps": 2,
+      "toolCalls": 0,
+      "usage": { "inputTokens": 7425, "outputTokens": 131, "totalTokens": 7556 },
+      "steps": [
+        {
+          "phase": "language_derivation",
+          "latencyMs": 1872,
+          "schemaChars": 222,
+          "systemChars": 363,
+          "messagesChars": 235,
+          "toolsChars": 2,
+          "outcome": "final",
+          "usage": { "inputTokens": 152, "outputTokens": 43, "totalTokens": 195 }
+        },
+        {
+          "phase": "main_clarification",
+          "latencyMs": 3416,
+          "schemaChars": 48800,
+          "systemChars": 3334,
+          "messagesChars": 258,
+          "toolsChars": 792,
+          "outcome": "final",
+          "usage": { "inputTokens": 7273, "outputTokens": 88, "totalTokens": 7361 }
+        }
+      ]
+    },
+    "secondTurn": {
+      "allowClarification": false,
+      "status": "proposition",
+      "latencyMs": 17216,
+      "modelSteps": 4,
+      "toolCalls": 5,
+      "usage": { "inputTokens": 23691, "outputTokens": 1120, "totalTokens": 24811 },
+      "steps": [
+        {
+          "phase": "language_derivation",
+          "latencyMs": 1483,
+          "schemaChars": 222,
+          "systemChars": 363,
+          "messagesChars": 834,
+          "toolsChars": 2,
+          "outcome": "final",
+          "usage": { "inputTokens": 350, "outputTokens": 40, "totalTokens": 390 }
+        },
+        {
+          "phase": "main_tool_selection",
+          "latencyMs": 2341,
+          "schemaChars": 48231,
+          "systemChars": 3335,
+          "messagesChars": 857,
+          "toolsChars": 792,
+          "outcome": "tool_calls",
+          "emittedToolCalls": 2,
+          "usage": { "inputTokens": 7387, "outputTokens": 73, "totalTokens": 7460 }
+        },
+        {
+          "phase": "main_tool_selection_after_search",
+          "latencyMs": 3550,
+          "schemaChars": 48231,
+          "systemChars": 3335,
+          "messagesChars": 3263,
+          "toolsChars": 792,
+          "outcome": "tool_calls",
+          "emittedToolCalls": 3,
+          "usage": { "inputTokens": 7877, "outputTokens": 160, "totalTokens": 8037 }
+        },
+        {
+          "phase": "proposition_generation_after_tool_results",
+          "latencyMs": 9800,
+          "schemaChars": 48231,
+          "systemChars": 3335,
+          "messagesChars": 4354,
+          "toolsChars": 792,
+          "outcome": "final",
+          "usage": { "inputTokens": 8077, "outputTokens": 847, "totalTokens": 8924 }
+        }
+      ]
+    },
+    "completeLatencyMs": 22516,
+    "proposalesWrites": 0
+  },
+  "additionalSuccessfulWorkflowSample": {
+    "completeLatencyApproxMs": 44000,
+    "firstTurnLatencyApproxMs": 9160,
+    "secondTurnLatencyApproxMs": 34860,
+    "secondTurnToolCalls": 5,
+    "secondTurnIncludedOneOutputCorrectionRetry": true,
+    "note": "This run was successful but the aggregate input/output-token telemetry line was not retained. Server logs retained per-step total tokens and timings only. It is used as latency/retry variance evidence, not as the primary token baseline."
+  },
+  "singleSampleSchemaVariantExperiment": {
+    "request": "Same short clarification task, no tools; output was not retained.",
+    "warning": "One sample per variant is insufficient to infer latency causality because output lengths and provider variance differed.",
+    "variants": [
+      {
+        "name": "current_inline_union",
+        "schemaChars": 48800,
+        "latencyMs": 3317,
+        "usage": { "inputTokens": 6464, "outputTokens": 139, "totalTokens": 6603 }
+      },
+      {
+        "name": "experimental_zod_reused_ref_union",
+        "schemaChars": 28638,
+        "latencyMs": 5343,
+        "usage": { "inputTokens": 5859, "outputTokens": 223, "totalTokens": 6082 }
+      },
+      {
+        "name": "experimental_clarification_only",
+        "schemaChars": 625,
+        "latencyMs": 5745,
+        "usage": { "inputTokens": 129, "outputTokens": 324, "totalTokens": 453 }
+      }
+    ]
+  }
+}

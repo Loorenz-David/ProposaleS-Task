@@ -3,10 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   devIndicators: false,
   images: {
-    // The reviewer intro's diagrams and its walkthrough clip are hosted, not bundled: they are
-    // demonstration assets, not application code. `next/image` refuses a remote host it has not
-    // been told about, so the one origin the intro references is named here — an allowlist of
-    // exactly one, which is also what keeps it from becoming a general-purpose image proxy.
+    // The reviewer intro's two diagrams are hosted, not bundled: they are demonstration assets,
+    // not application code. `next/image` refuses a remote host it has not been told about, so
+    // the one origin the intro references is named here — an allowlist of exactly one, which is
+    // also what keeps it from becoming a general-purpose image proxy. The intro's third step is
+    // no longer among the consumers: its walkthrough is drawn in the browser now
+    // (`components/onboarding/demo-animation/`) and fetches nothing.
     remotePatterns: [
       {
         protocol: "https",

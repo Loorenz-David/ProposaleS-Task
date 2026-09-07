@@ -43,6 +43,8 @@ The `style` prop is reserved for values that **cannot be known at build time**:
 
 The rule is: if the value is the same on every render, it is a class. Style objects as the general styling architecture are prohibited — this is the most common shape a prototype arrives in ([16-design-prototype-porting.md](16-design-prototype-porting.md) §4).
 
+One recorded exemption narrows this section: the interior of a composition rendered as a pure function of an authored time axis, drawn in a fixed pixel coordinate space its frame scales as a unit ([README.md](README.md) "Resolved decisions", *Rendered animation interiors*). It exempts the `style` prop and nothing else: §2's single definition of visual values still holds inside it, and the chrome around the composition is Tailwind. It is not available to production interface.
+
 Global CSS in `src/styles/globals.css` is limited to the reset, base element typography, the focus treatment, and the reduced-motion treatment. Feature-specific rules do not go there.
 
 ## 4. Shared primitives (`src/components/ui/`)

@@ -1,0 +1,77 @@
+{
+  "measuredAt": "2026-09-07",
+  "method": "Compact JSON.stringify of z.toJSONSchema(..., { io: 'input' }); OpenAI-adapted counts mirror src/lib/ai/openai-schema.ts.",
+  "currentInline": {
+    "allowClarificationTrue": {
+      "rawChars": 48800,
+      "rawBytes": 48800,
+      "openAiAdaptedChars": 48859,
+      "propositionBranchChars": 47899,
+      "clarificationBranchChars": 568,
+      "objectSchemas": 169,
+      "propertyDeclarations": 653,
+      "requiredEntries": 263,
+      "oneOfNodes": 41,
+      "anyOfNodes": 1,
+      "refs": 4,
+      "definitions": 1,
+      "propertyNames": 1
+    },
+    "allowClarificationFalse": {
+      "rawChars": 48231,
+      "rawBytes": 48231,
+      "openAiAdaptedChars": 48290,
+      "propositionBranchChars": 47899,
+      "objectSchemas": 167,
+      "propertyDeclarations": 649,
+      "requiredEntries": 259,
+      "oneOfNodes": 41,
+      "anyOfNodes": 1,
+      "refs": 4,
+      "definitions": 1,
+      "propertyNames": 1
+    },
+    "selectedRepeatedPropertyDeclarations": {
+      "known": 54,
+      "value": 69,
+      "source": 68,
+      "ref": 68,
+      "variationId": 69,
+      "questionId": 68,
+      "editTurn": 68,
+      "turnId": 68,
+      "quote": 68
+    },
+    "topLevelPropositionPropertySubtreeChars": {
+      "blocks": 9526,
+      "recipient": 7721,
+      "commercialNotes": 6990,
+      "commercialAssumptions": 6590,
+      "warnings": 2890,
+      "descriptionNarrative": 2728,
+      "agentRationale": 2728,
+      "title": 2724,
+      "language": 2696,
+      "assumptions": 2581,
+      "requestedOverrides": 250,
+      "kind": 39
+    },
+    "openAiStrictScanAfterAdapter": {
+      "objectSchemasWithAtLeastOneOptionalProperty": 126,
+      "optionalPropertyDeclarations": 390
+    }
+  },
+  "controlledRepresentationExperiment": {
+    "zodReusedRefAllowClarificationTrueChars": 28638,
+    "zodReusedRefAllowClarificationFalseChars": 28026,
+    "reductionVersusCurrentTruePercent": 41.32,
+    "definitions": 56,
+    "refs": 206
+  },
+  "languageDerivationSchemaChars": 222,
+  "localTimingRepresentativeRun": {
+    "schemaGenerationAllowClarificationTrueMeanMs": 1.44,
+    "schemaGenerationAllowClarificationFalseMeanMs": 1.39,
+    "validAgentPropositionSafeParseMeanMs": 0.01
+  }
+}

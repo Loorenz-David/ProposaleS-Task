@@ -168,20 +168,43 @@ describe("ProposalCopilotIntro", () => {
     expect(screen.getByText(DEMO_BRIEF_LITERAL)).toBeInTheDocument();
   });
 
-  it("shows the walkthrough clip above the demo brief, looping and named", () => {
-    spyOnPlayback();
+  it("shows the demo animation above the demo brief, named and running", () => {
+    stubReducedMotion(false);
+    stubAnimationFrame();
     const { dialog } = renderIntro();
     fireEvent.click(screen.getByRole("button", { name: /^Slide 3 of 6:/ }));
 
-    const video = dialog.querySelector("video")!;
-    expect(video).toHaveAttribute("loop");
-    expect(video).not.toHaveAttribute("controls");
-    expect(video.muted).toBe(true);
-    expect(video.getAttribute("aria-label")).toBeTruthy();
-    // Above the brief, not below it: the clip shows what the brief is for.
-    expect(video.compareDocumentPosition(screen.getByText(DEMO_BRIEF_LITERAL))).toBe(
+    // One picture to assistive technology, not a second announced copy of the application.
+    const scene = dialog.querySelector<HTMLElement>("[role=img]")!;
+    expect(scene.getAttribute("aria-label")).toBeTruthy();
+    expect(within(scene).queryByText("Proposal Copilot")).toBeInTheDocument();
+
+    // Started on arrival, and the control says so.
+    expect(
+      screen.getByRole("button", { name: `Pause: ${scene.getAttribute("aria-label")}` }),
+    ).toBeInTheDocument();
+
+    // Above the brief, not below it: the animation shows what the brief is for.
+    expect(scene.compareDocumentPosition(screen.getByText(DEMO_BRIEF_LITERAL))).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
+  });
+
+  it("never runs the demo animation when the reviewer asked for reduced motion", () => {
+    stubReducedMotion(true);
+    const raf = stubAnimationFrame();
+    const { dialog } = renderIntro();
+    fireEvent.click(screen.getByRole("button", { name: /^Slide 3 of 6:/ }));
+
+    // A requestAnimationFrame loop is neither a transition nor an animation, so `globals.css`
+    // cannot reach it — the component has to honour the preference itself.
+    expect(raf).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /^Play: / })).toBeInTheDocument();
+
+    // And it rests on the finished proposal rather than the empty workspace frame zero shows,
+    // so the still a paused reviewer is left with is the one that says what the tool produces.
+    // The applied total only exists in the created state, well past every reveal it staggers.
+    expect(within(dialog).getByText("187,960 SEK")).toBeInTheDocument();
   });
 
   it("copies the demo brief and confirms it", async () => {
@@ -336,6 +359,21 @@ function spyOnPlayback() {
     pause.mockRestore();
   });
   return { play, pause };
+}
+
+/**
+ * Holds the animation frame loop still for one test. The demo animation drives itself from
+ * `requestAnimationFrame`, which jsdom does implement — left real, a frame can land outside
+ * `act` after the assertions have run.
+ */
+function stubAnimationFrame() {
+  const request = vi.spyOn(window, "requestAnimationFrame").mockReturnValue(0);
+  const cancel = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+  onTestFinished(() => {
+    request.mockRestore();
+    cancel.mockRestore();
+  });
+  return request;
 }
 
 /** Pins the motion preference for one test and restores the real query afterwards. */

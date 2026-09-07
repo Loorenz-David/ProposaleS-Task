@@ -5,20 +5,29 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 import type { IntroMedia } from "./intro-content";
+import { IntroDemoAnimation } from "./intro-demo-animation";
 
 /**
  * The optional media region of a slide, between the description and the body.
  *
- * A slide gains a still or a clip through its `media` field alone; neither layout nor
- * navigation changes. Two video postures, chosen by `loop`:
+ * A slide gains a still, a clip or the product-demo animation through its `media` field alone;
+ * neither layout nor navigation changes. Two video postures, chosen by `loop`:
  *
  * - Default (`loop` absent) — a clip the reviewer opts into. Native `controls`, no autoplay,
  *   and `preload="none"` so it costs nothing until asked for.
  * - Ambient (`loop: true`) — a short screen recording demonstrating the step it sits above. It
  *   plays muted on arrival and repeats, and it is chrome-free on purpose: no timeline, no
  *   volume, no menu. It reads as an embedded illustration, not a media player.
+ *
+ * The `animation` kind is the ambient posture again, drawn rather than decoded
+ * ([intro-demo-animation.tsx]). It is deliberately the same shape on screen: a reviewer should
+ * read it as the demonstration for its step, not as a different kind of object.
  */
 export function IntroMediaRegion({ media }: { media: IntroMedia }) {
+  if (media.kind === "animation") {
+    return <IntroDemoAnimation title={media.title} />;
+  }
+
   if (media.kind === "image") {
     return (
       <div className="mt-5 overflow-hidden rounded-2xl border border-[var(--color-border-card)]">
