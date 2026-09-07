@@ -36,4 +36,15 @@ describe("InlineEditableValue", () => {
     expect(screen.getByText("Save failed")).toBeInTheDocument();
     expect(screen.getByText("Use a clearer title")).toBeInTheDocument();
   });
+
+  it("R5.2: keeps the server value rendered until a new view model arrives", () => {
+    const onCommit = vi.fn();
+    render(<Harness onCommit={onCommit} />);
+    fireEvent.click(screen.getByRole("button", { name: /Edit Title/ }));
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Typed but not saved" } });
+    fireEvent.keyDown(screen.getByRole("textbox"), { key: "Enter" });
+    expect(onCommit).toHaveBeenCalledWith("Typed but not saved");
+    expect(screen.getByRole("button", { name: "Edit Title, currently Current title" })).toHaveTextContent("Current title");
+    expect(screen.queryByText("Typed but not saved")).toBeNull();
+  });
 });

@@ -22,6 +22,22 @@ export type MainSurfaceViewModel =
   | { kind: "creating"; label: string }
   | { kind: "created"; created: CreatedViewModel };
 
+function validationIssues(record: SessionRuntimeRecord) {
+  if (record.callFailure?.site.kind !== "edit" || record.callFailure.error.code !== "validation_error") {
+    return [];
+  }
+  const issues = record.callFailure.error.details?.issues;
+  if (!Array.isArray(issues)) return [];
+  return issues.flatMap((issue) => {
+    if (!issue || typeof issue !== "object") return [];
+    const path = "path" in issue ? issue.path : null;
+    const message = "message" in issue ? issue.message : null;
+    return Array.isArray(path) && path.every((part) => typeof part === "string") && typeof message === "string"
+      ? [{ path, message }]
+      : [];
+  });
+}
+
 export function toMainSurfaceViewModel(record: SessionRuntimeRecord): MainSurfaceViewModel {
   if (record.inFlightTurn?.kind === "approval") {
     return { kind: "creating", label: "Creating draft in Proposales" };
@@ -30,7 +46,7 @@ export function toMainSurfaceViewModel(record: SessionRuntimeRecord): MainSurfac
     return { kind: "created", created: toCreatedViewModel(record) };
   }
   if (record.workflow?.currentProposition) {
-    const review = toReviewSurfaceViewModel(record);
+    const review = toReviewSurfaceViewModel(record, validationIssues(record));
     return {
       kind: "review",
       review,

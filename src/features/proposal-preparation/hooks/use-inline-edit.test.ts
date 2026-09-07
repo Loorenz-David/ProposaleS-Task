@@ -26,4 +26,11 @@ describe("useInlineEdit", () => {
     expect(onCommit).not.toHaveBeenCalled();
     expect(onCancel).toHaveBeenCalledOnce();
   });
+
+  it("refuses a second edit while a save is in flight", () => {
+    const onCommit = vi.fn();
+    const { result } = renderHook(() => useInlineEdit(onCommit, undefined, () => false));
+    act(() => result.current.startEdit(["title"]));
+    expect(result.current.editingPath).toBeNull();
+  });
 });

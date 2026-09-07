@@ -46,4 +46,31 @@ describe("review view model", () => {
     expect(viewModel.fields[0]?.leaf.validationMessage).toBe("Title issue");
     expect(viewModel.surfaceErrors).toEqual(["Surface issue"]);
   });
+
+  it("R5.5: matches validation paths element-wise, including keys containing dots", () => {
+    const record = temporaryFixtureSessionRuntimeRecord({ workflow: { currentProposition: temporaryFixturePropositionV1 } });
+    const viewModel = toReviewSurfaceViewModel(record, [
+      { path: ["recipient.firstName"], message: "Dotted key issue" },
+      { path: ["recipient", "firstName"], message: "First name issue" },
+      { path: ["recipient"], message: "Prefix issue" },
+      { path: ["not-rendered", "leaf"], message: "Surface issue" },
+    ]);
+    expect(viewModel.fields.find((field) => field.leaf.path.join(".") === "recipient.firstName")?.leaf.validationMessage).toBe("First name issue");
+    expect(viewModel.surfaceErrors).toEqual(["Dotted key issue", "Prefix issue", "Surface issue"]);
+  });
+
+  it("R5.6: preserves alternatives exactly as returned", () => {
+    const alternatives = [
+      ...temporaryFixturePropositionV1.blocks[0]!.alternatives,
+      temporaryFixturePropositionV1.blocks[0]!.alternatives[0]!,
+    ];
+    const proposition = {
+      ...temporaryFixturePropositionV1,
+      blocks: [{ ...temporaryFixturePropositionV1.blocks[0]!, alternatives }],
+    };
+    const viewModel = review(proposition);
+    expect(viewModel.blocks[0]?.alternatives.map((alternative) => alternative.variationId)).toEqual(
+      alternatives.map((alternative) => alternative.variationId),
+    );
+  });
 });

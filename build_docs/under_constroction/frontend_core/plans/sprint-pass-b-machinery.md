@@ -786,3 +786,20 @@ focus-order row is not evidence (master plan §11.1, follow-up 18). Free the por
   the omission assertions R4.3/R4.4/R4.5; reverted. Mutation file was
   `client/view-models/clarification.ts`, applied and reverted before commit.
 - Checkpoint stamp: `npm test` — 54 files / 307 tests green.
+
+### WP5 checkpoint
+
+- Wired array-path edit dispatch, one-edit-at-a-time saving/disabled controls, single-operation
+  replacement/removal, scoped Ask Agent revision wording, terminal no-op guards, and validation
+  DTO routing into leaf or surface errors with element-wise path comparison. The review adapter
+  preserves alternatives in returned order.
+- Acceptance evidence: dispatch, inline-edit, review, main-surface, and inline-value tests cover
+  R5.1–R5.8; the typed value remains absent from the rendered view until a new view model arrives.
+- Mutation ledger: M6 rendered the inline draft in place of the server leaf and reddened R5.2;
+  reverted. M7 changed validation comparison to dotted-string comparison and reddened the dotted
+  key row in R5.5; reverted. M8 sorted alternatives in the adapter and reddened R5.6; reverted.
+  Mutation files were `components/review/inline-editable-value.tsx` and
+  `client/view-models/review.ts`, applied and reverted before commit.
+- Pass A review contract extended with optional `isSubmitting` so approval is disabled for any
+  session turn, while preserving all existing props and visual structure.
+- Checkpoint stamp: `npm test` — 54 files / 314 tests green.

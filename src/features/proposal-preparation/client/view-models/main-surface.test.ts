@@ -26,4 +26,30 @@ describe("main surface derivation", () => {
     });
     expect(toMainSurfaceViewModel(record)).toMatchObject({ kind: "review", workSurface: "preview", openedBlock: { index: 0 }, creationFailure: { key: "integration_error" } });
   });
+
+  it("R5.4/R5.5: routes edit validation DTO paths to leaves and the surface", () => {
+    const record = temporaryFixtureSessionRuntimeRecord({
+      workflow: { currentProposition: temporaryFixturePropositionV1 },
+      callFailure: {
+        site: { kind: "edit", path: ["title"] },
+        error: {
+          code: "validation_error",
+          message: "Review the highlighted information before trying again.",
+          details: {
+            issues: [
+              { path: ["title"], message: "Title is invalid." },
+              { path: ["unknown", "leaf"], message: "Unknown leaf is invalid." },
+            ],
+          },
+        },
+        retry: { kind: "edit", operation: { op: "set_leaf", path: ["title"], value: "x" } },
+      },
+    });
+    const surface = toMainSurfaceViewModel(record);
+    expect(surface.kind).toBe("review");
+    if (surface.kind !== "review") return;
+    expect(surface.review.fields[0]?.leaf.validationMessage).toBe("Title is invalid.");
+    expect(surface.review.surfaceErrors).toEqual(["Unknown leaf is invalid."]);
+    expect(surface.review.fields[0]?.leaf.display).not.toBe("x");
+  });
 });

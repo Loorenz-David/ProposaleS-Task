@@ -45,6 +45,7 @@ export function MainApplicationSurface({ state, closeGuard }: { state?: MainSurf
         <ProposalReviewSurface
           clientPreview={toPreviewViewModel(record.workflow!.currentProposition!)}
           isEditSubmitting={record.inFlightTurn?.kind === "edit"}
+          isSubmitting={record.inFlightTurn !== null}
           openedBlock={surface.openedBlock}
           isTerminal={false}
           onApprove={() => void dispatch(activeSessionId, {
@@ -53,17 +54,26 @@ export function MainApplicationSurface({ state, closeGuard }: { state?: MainSurf
             proposition: record.workflow!.currentProposition!,
             acknowledgment: surface.review.acknowledgment,
           })}
-          onAskAgent={(ask) => void dispatch(activeSessionId, { kind: "revision", instruction: ask.text, scope: ask.fieldLabel })}
+          onAskAgent={(ask) => void dispatch(activeSessionId, { kind: "revision", instruction: `About ${ask.fieldLabel}: ${ask.text}`, scope: ask.fieldLabel })}
           onBackToReview={() => dismissCallFailure(activeSessionId)}
           onCancelEdit={() => undefined}
           onCloseBlock={() => setOpenedBlock(activeSessionId, null)}
-          onCommitEdit={(edit) => void dispatch(activeSessionId, { kind: "edit", operation: { op: "set_leaf", path: edit.path, value: edit.value } })}
+          onCommitEdit={(edit) => {
+            if (record.workflow?.draftReference) return;
+            void dispatch(activeSessionId, { kind: "edit", operation: { op: "set_leaf", path: edit.path, value: edit.value } });
+          }}
           onDiscard={() => {
             if (closeGuard && activeSessionId) closeGuard.requestClose(activeSessionId);
           }}
           onOpenBlock={(contentId) => setOpenedBlock(activeSessionId, contentId)}
-          onRemoveBlock={({ blockIndex }) => void dispatch(activeSessionId, { kind: "edit", operation: { op: "remove_block", index: blockIndex } })}
-          onReplaceBlock={({ blockIndex, variationId }) => void dispatch(activeSessionId, { kind: "edit", operation: { op: "replace_block", index: blockIndex, variationId } })}
+          onRemoveBlock={({ blockIndex }) => {
+            if (record.workflow?.draftReference) return;
+            void dispatch(activeSessionId, { kind: "edit", operation: { op: "remove_block", index: blockIndex } });
+          }}
+          onReplaceBlock={({ blockIndex, variationId }) => {
+            if (record.workflow?.draftReference) return;
+            void dispatch(activeSessionId, { kind: "edit", operation: { op: "replace_block", index: blockIndex, variationId } });
+          }}
           onRetryCreation={() => {
             if (record.callFailure) void dispatch(activeSessionId, record.callFailure.retry);
           }}

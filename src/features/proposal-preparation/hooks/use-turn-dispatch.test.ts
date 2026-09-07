@@ -205,4 +205,61 @@ describe("useTurnDispatch", () => {
     const source = readFileSync(path.join(__dirname, "../components/workspace/agent-surface.tsx"), "utf8");
     expect(source).not.toContain("composerDraft.trim()");
   });
+
+  it("R5.1/R5.3: dispatches one edit with its array path and marks only that leaf saving", () => {
+    const id = activeId();
+    const wait = deferred<ReturnType<typeof briefOutcome>>();
+    let received: unknown;
+    setTemporaryTurnAdapterForTests({
+      run: async (input) => {
+        received = input;
+        return wait.promise;
+      },
+    });
+    const { result } = renderHook(() => useTurnDispatch());
+    let pending!: Promise<void>;
+    act(() => {
+      pending = result.current.dispatch(id, {
+        kind: "edit",
+        operation: { op: "set_leaf", path: ["blocks", "0", "quantity"], value: "2" },
+      });
+    });
+    expect(received).toEqual({
+      kind: "edit",
+      operation: { op: "set_leaf", path: ["blocks", "0", "quantity"], value: "2" },
+    });
+    expect(useWorkspaceSessionStore.getState().sessions[id]?.inFlightTurn).toEqual({
+      turnId: expect.any(String),
+      kind: "edit",
+      path: ["blocks", "0", "quantity"],
+    });
+    wait.resolve(briefOutcome());
+    return pending;
+  });
+
+  it("R5.7: ask-agent uses the field label in the revision and preserves its scope", async () => {
+    const id = activeId();
+    const wait = deferred<ReturnType<typeof briefOutcome>>();
+    setTemporaryTurnAdapterForTests({ run: async () => wait.promise });
+    const { result } = renderHook(() => useTurnDispatch());
+    let pending!: Promise<void>;
+    act(() => {
+      pending = result.current.dispatch(id, {
+        kind: "revision",
+        instruction: "About Title: Make it clearer",
+        scope: "Title",
+      });
+    });
+    expect(useWorkspaceSessionStore.getState().sessions[id]?.thread[0]).toMatchObject({
+      kind: "human",
+      text: "About Title: Make it clearer",
+      scope: "Title",
+    });
+    wait.resolve(briefOutcome());
+    await pending;
+    expect(useWorkspaceSessionStore.getState().sessions[id]?.thread[1]).toMatchObject({
+      kind: "result",
+      scope: "Title",
+    });
+  });
 });

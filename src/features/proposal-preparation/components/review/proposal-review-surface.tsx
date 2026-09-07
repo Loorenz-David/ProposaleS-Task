@@ -14,6 +14,7 @@ export type ProposalReviewSurfaceProps = {
   clientPreview?: PreviewViewModel;
   openedBlock?: import("../../client/view-models/review").BlockViewModel | null;
   isEditSubmitting?: boolean;
+  isSubmitting?: boolean;
   workSurface: WorkSurface;
   isTerminal: boolean;
   onWorkSurfaceChange: (workSurface: WorkSurface) => void;
@@ -30,8 +31,8 @@ export type ProposalReviewSurfaceProps = {
   onBackToReview: () => void;
 };
 
-export function ProposalReviewSurface({ viewModel, clientPreview, openedBlock = null, isEditSubmitting = false, workSurface, isTerminal, onWorkSurfaceChange, onDiscard, onApprove, onCommitEdit, onCancelEdit, onReplaceBlock, onRemoveBlock, onOpenBlock, onCloseBlock, onAskAgent }: ProposalReviewSurfaceProps) {
-  const inlineEdit = useInlineEdit(onCommitEdit, onCancelEdit);
+export function ProposalReviewSurface({ viewModel, clientPreview, openedBlock = null, isEditSubmitting = false, isSubmitting = false, workSurface, isTerminal, onWorkSurfaceChange, onDiscard, onApprove, onCommitEdit, onCancelEdit, onReplaceBlock, onRemoveBlock, onOpenBlock, onCloseBlock, onAskAgent }: ProposalReviewSurfaceProps) {
+  const inlineEdit = useInlineEdit(onCommitEdit, onCancelEdit, () => !isEditSubmitting);
   const unresolvedSummary = viewModel.readiness.unresolved || viewModel.readiness.deferred
     ? `${viewModel.readiness.unresolved} open, ${viewModel.readiness.deferred} deferred`
     : null;
@@ -42,15 +43,15 @@ export function ProposalReviewSurface({ viewModel, clientPreview, openedBlock = 
         {workSurface === "fields" ? (
           <>
             {viewModel.surfaceErrors.length > 0 ? <div role="alert" className="rounded-xl border border-[var(--color-attention)]/50 bg-[var(--color-attention-wash)] p-4 text-13 text-[var(--color-fg-body)]">{viewModel.surfaceErrors.join(" ")}</div> : null}
-            <ReviewFieldsCard canEdit={!isTerminal} editingPath={inlineEdit.editingPath} fields={viewModel.fields} onAskAgent={onAskAgent} onCancel={inlineEdit.cancel} onCommit={inlineEdit.commit} onStartEdit={inlineEdit.startEdit} />
-            <ReviewBlocksCard blocks={viewModel.blocks} canEdit={!isTerminal} editingPath={inlineEdit.editingPath} isSubmitting={isEditSubmitting} onCancel={inlineEdit.cancel} onCloseBlock={onCloseBlock} onCommit={inlineEdit.commit} onOpenBlock={onOpenBlock} onRemoveBlock={onRemoveBlock} onReplaceBlock={onReplaceBlock} onStartEdit={inlineEdit.startEdit} openedBlock={openedBlock} />
+            <ReviewFieldsCard canEdit={!isTerminal && !isEditSubmitting} editingPath={inlineEdit.editingPath} fields={viewModel.fields} onAskAgent={onAskAgent} onCancel={inlineEdit.cancel} onCommit={inlineEdit.commit} onStartEdit={inlineEdit.startEdit} />
+            <ReviewBlocksCard blocks={viewModel.blocks} canEdit={!isTerminal && !isEditSubmitting} editingPath={inlineEdit.editingPath} isSubmitting={isEditSubmitting} onCancel={inlineEdit.cancel} onCloseBlock={onCloseBlock} onCommit={inlineEdit.commit} onOpenBlock={onOpenBlock} onRemoveBlock={onRemoveBlock} onReplaceBlock={onReplaceBlock} onStartEdit={inlineEdit.startEdit} openedBlock={openedBlock} />
             <ReviewNotesCard notes={viewModel.notes} />
           </>
         ) : clientPreview ? <ClientPreviewSurface viewModel={clientPreview} /> : null}
         {!isTerminal ? (
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(240px,360px)] lg:items-start">
             <button type="button" onClick={onDiscard} className="rounded-xl border border-[var(--color-border-control-raised)] px-5 py-3 text-sm font-semibold text-[var(--color-fg-secondary)]">Discard proposition</button>
-            <ApprovalAction acknowledgment={viewModel.acknowledgment} isPending={false} onApprove={onApprove} unresolvedSummary={unresolvedSummary} />
+            <ApprovalAction acknowledgment={viewModel.acknowledgment} isPending={isSubmitting} onApprove={onApprove} unresolvedSummary={unresolvedSummary} />
           </div>
         ) : null}
       </div>
